@@ -1,4 +1,3 @@
 [build]
-  base = "concerts-app"
-  publish = "concerts-app/public"
-  functions = "concerts-app/netlify/functions"
+  publish = "public"
+  functions = "netlify/functions"
