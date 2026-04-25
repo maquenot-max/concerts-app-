@@ -1,8 +1,0 @@
-[build]
-  publish = "public"
-  functions = "netlify/functions"
-
-[[redirects]]
-  from = "/notion/*"
-  to = "/.netlify/functions/notion/:splat"
-  status = 200
