@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard PP Comm</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;font-size:14px}
+  #app{min-height:100vh}
+  header{background:#fff;border-bottom:1px solid #e5e5e5;padding:0 1.5rem;display:flex;align-items:center;gap:1rem;height:52px}
+  header h1{font-size:15px;font-weight:600;flex:1}
+  .nav{display:flex;gap:2px}
+  .nav button{padding:6px 14px;font-size:13px;border:none;background:transparent;cursor:pointer;color:#666;border-radius:6px}
+  .nav button.active{background:#f0f0ee;color:#1a1a1a;font-weight:500}
+  .nav button:hover:not(.active){background:#f5f5f3}
+  main{padding:1.5rem;max-width:1400px;margin:0 auto}
+  .panel{display:none}.panel.active{display:block}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+  .stat{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:12px 16px;text-align:center}
+  .stat-n{font-size:22px;font-weight:600}
+  .stat-n.red{color:#e24b4a}
+  .stat-l{font-size:11px;color:#888;margin-top:2px}
+  .filters{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap}
+  .filters input,.filters select{padding:6px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;background:#fff;color:#1a1a1a}
+  .filters input{width:200px}
+  .kanban{display:flex;gap:12px;overflow-x:auto;padding-bottom:1rem;min-height:100px}
+  .col{min-width:210px;max-width:210px;flex-shrink:0}
+  .col-head{padding:10px 12px;border-radius:10px 10px 0 0;border:1px solid #e5e5e5;border-bottom:none;background:#fafaf8}
+  .col-head.late{background:#fef5f5;border-color:#fcc}
+  .col-name{font-size:13px;font-weight:600}
+  .col-name.late{color:#c0392b}
+  .col-sub{font-size:11px;color:#999;margin-top:2px}
+  .col-sub.late{color:#e05555}
+  .pbar{height:3px;background:#eee;border-radius:2px;margin-top:8px;overflow:hidden}
+  .pfill{height:100%;border-radius:2px;background:#1a1a1a}
+  .pbar-meta{display:flex;justify-content:space-between;margin-top:4px}
+  .pbar-meta span{font-size:10px;color:#aaa}
+  .pbar-meta span.red{color:#e24b4a;font-weight:500}
+  .col-body{border:1px solid #e5e5e5;border-radius:0 0 10px 10px;background:#fff;overflow:hidden}
+  .col-head.late+.col-body{border-color:#fcc}
+  .titem{padding:8px 12px;border-bottom:1px solid #f0f0f0;display:flex;align-items:flex-start;gap:8px;cursor:pointer}
+  .titem:last-child{border-bottom:none}
+  .titem:hover{background:#fafaf8}
+  .chk{width:14px;height:14px;border:1.5px solid #ccc;border-radius:3px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff}
+  .chk.on{background:#1a1a1a;border-color:#1a1a1a}
+  .tname{font-size:12px;line-height:1.4}
+  .tlate{font-size:11px;color:#e24b4a;margin-top:2px;font-weight:500}
+  .pill{font-size:10px;padding:1px 6px;border-radius:20px;font-weight:500;display:inline-block;margin-top:3px}
+  .p-gen{background:#e6f1fb;color:#185fa5}
+  .p-aff{background:#faeeda;color:#854f0b}
+  .p-sp{background:#eeedfe;color:#534ab7}
+  .p-jx{background:#eaf3de;color:#3b6d11}
+  .p-rs{background:#faece7;color:#993c1d}
+  .p-ph{background:#fbeaf0;color:#993556}
+  .p-pr{background:#e1f5ee;color:#0f6e56}
+  .ok-col{border:1px solid #e5e5e5;border-radius:0 0 10px 10px;padding:10px 12px;background:#fff}
+  .ok-badge{font-size:11px;color:#3b6d11;background:#eaf3de;padding:2px 8px;border-radius:20px}
+  .card{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem}
+  .card h2{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  .form-group label{font-size:12px;color:#888;display:block;margin-bottom:3px}
+  .form-group input{width:100%;padding:7px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px}
+  .form-group input:focus{outline:none;border-color:#999}
+  .btn{padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid #ddd;background:#fff;color:#1a1a1a;font-weight:500}
+  .btn:hover{background:#f5f5f3}
+  .btn-primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+  .btn-primary:hover{background:#333}
+  .btn:disabled{opacity:0.5;cursor:not-allowed}
+  .crow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f0f0f0}
+  .crow:last-child{border-bottom:none}
+  .crow-name{font-size:13px;font-weight:500}
+  .crow-sub{font-size:12px;color:#888;margin-top:2px}
+  .dbtn{background:none;border:none;cursor:pointer;color:#ccc;font-size:12px;padding:3px 7px;border-radius:6px}
+  .dbtn:hover{color:#e24b4a;background:#fef0f0}
+  .prow{display:grid;grid-template-columns:16px 1fr 65px 140px 28px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0}
+  .prow:last-child{border-bottom:none}
+  .prow input[type=text],.prow input[type=number]{padding:5px 8px;border:1px solid #e0e0e0;border-radius:6px;font-size:12px}
+  .prow input[type=text]{width:100%}
+  .prow input[type=number]{width:65px}
+  .prow select{padding:5px 8px;border:1px solid #e0e0e0;border-radius:6px;font-size:12px;width:100%}
+  .proc-meta{display:flex;align-items:center;gap:6px}
+  .drag{color:#ccc;cursor:grab;font-size:13px;user-select:none}
+  .loading{text-align:center;padding:3rem;color:#aaa;font-size:13px}
+  .spin{display:inline-block;width:16px;height:16px;border:2px solid #eee;border-top-color:#999;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .saving{position:fixed;bottom:1rem;right:1rem;background:#1a1a1a;color:#fff;padding:6px 14px;border-radius:20px;font-size:12px;opacity:0;transition:opacity .3s}
+  .saving.show{opacity:1}
+  .empty-state{color:#aaa;font-size:13px;padding:2rem 0}
+  .group-title{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.05em;padding:10px 0 6px;border-bottom:2px solid #f0f0f0;margin-bottom:4px}
+  .group-title.second{margin-top:20px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Dashboard PP Comm</h1>
+    <nav class="nav">
+      <button class="active" onclick="showTab('kanban',this)">Tableau de bord</button>
+      <button onclick="showTab('concerts',this)">Concerts</button>
+      <button onclick="showTab('process',this)">Process com</button>
+    </nav>
+  </header>
+  <main>
+    <div id="tab-kanban" class="panel active">
+      <div class="stats" id="stats"></div>
+      <div class="filters">
+        <input type="text" id="search" placeholder="Rechercher un artiste..." oninput="renderKanban()">
+        <select id="fville" onchange="renderKanban()"><option value="">Toutes les villes</option></select>
+        <select id="fperiode" onchange="renderKanban()"><option value="">Toutes les periodes</option></select>
+      </div>
+      <div id="kanban-wrap"><div class="loading"><span class="spin"></span>Chargement...</div></div>
+    </div>
+    <div id="tab-concerts" class="panel">
+      <div class="card">
+        <h2>Nouveau concert</h2>
+        <div class="form-grid">
+          <div class="form-group"><label>Artiste</label><input type="text" id="f-art" placeholder="Nom de l'artiste"></div>
+          <div class="form-group"><label>Salle / Ville</label><input type="text" id="f-ville" placeholder="ex: Zenith - Dijon"></div>
+          <div class="form-group"><label>Date du concert</label><input type="date" id="f-dc"></div>
+          <div class="form-group"><label>Date d'annonce</label><input type="date" id="f-da"></div>
+        </div>
+        <button class="btn btn-primary" id="add-btn" onclick="addConcert()">Ajouter le concert</button>
+      </div>
+      <div id="clist"></div>
+    </div>
+    <div id="tab-process" class="panel">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <h2 style="margin:0">Taches types</h2>
+          <button class="btn" onclick="addTask()">+ Tache</button>
+        </div>
+        <div id="plist"></div>
+        <p style="font-size:12px;color:#aaa;margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0">
+          Jours negatifs = avant le concert. Positifs = apres l'annonce. Modifications appliquees a tous.
+        </p>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="saving" id="saving">Sauvegarde...</div>
+<script>
+const SUPABASE_URL = 'https://vkehaerkbvfxlyjvrpzi.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrZWhhZXJrYnZmeGx5anZycHppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTUyMTMsImV4cCI6MjA5MjY5MTIxM30.I5VTTUYXA0uKg6_WZ2XKIcXmnFvWR38Hkh4RVzgr9qg';
+
+const CATS = {
+  gen:{label:'General',cls:'p-gen'},
+  aff:{label:'Affichage',cls:'p-aff'},
+  sp:{label:'Sponsoring',cls:'p-sp'},
+  jx:{label:'Jeux concours',cls:'p-jx'},
+  rs:{label:'Reseaux sociaux',cls:'p-rs'},
+  ph:{label:'Phoner',cls:'p-ph'},
+  pr:{label:'Photographes',cls:'p-pr'}
+};
+
+const DEFAULT_PROCESS = [
+  {id:1,nom:'Creer budget',cat:'gen',jours:5,ref:'annonce'},
+  {id:2,nom:'Creer kit promo salle',cat:'gen',jours:0,ref:'annonce'},
+  {id:3,nom:'Envoyer kit promo salle',cat:'gen',jours:0,ref:'annonce'},
+  {id:4,nom:'Ajouter date sur site web',cat:'gen',jours:0,ref:'annonce'},
+  {id:5,nom:'Contacter production',cat:'gen',jours:6,ref:'annonce'},
+  {id:6,nom:'Creer visuel PP',cat:'aff',jours:0,ref:'annonce'},
+  {id:7,nom:'Annoncer date sur RS',cat:'rs',jours:0,ref:'annonce'},
+  {id:8,nom:'Creer evenement FB',cat:'rs',jours:0,ref:'annonce'},
+  {id:9,nom:'Lancer sponso Vague 1',cat:'sp',jours:15,ref:'annonce'},
+  {id:10,nom:'Commander / Livrer affiche',cat:'aff',jours:15,ref:'annonce'},
+  {id:11,nom:'Imprimer / Livrer bandeaux',cat:'aff',jours:15,ref:'annonce'},
+  {id:12,nom:'Proposer Phoner / Interview',cat:'ph',jours:20,ref:'annonce'},
+  {id:13,nom:'Gestion flyer multi-artiste',cat:'aff',jours:20,ref:'annonce'},
+  {id:14,nom:'Gestion affichage protege',cat:'aff',jours:20,ref:'annonce'},
+  {id:15,nom:'Faire un point globale',cat:'gen',jours:-120,ref:'concert'},
+  {id:16,nom:'Relancer pour affiche',cat:'aff',jours:-120,ref:'concert'},
+  {id:17,nom:'Faire un flyer dedie',cat:'aff',jours:-120,ref:'concert'},
+  {id:18,nom:'Relancer jeux concours',cat:'jx',jours:-120,ref:'concert'},
+  {id:19,nom:'Relancer sponso Vague 3 (2)',cat:'sp',jours:-90,ref:'concert'},
+  {id:20,nom:'Relancer Phoner / Interviews',cat:'ph',jours:-60,ref:'concert'},
+  {id:21,nom:'Relancer sponso Vague 3',cat:'sp',jours:-45,ref:'concert'},
+  {id:22,nom:'Faire un point globale',cat:'gen',jours:-30,ref:'concert'},
+  {id:23,nom:'Compiler demande photographes',cat:'pr',jours:-15,ref:'concert'},
+  {id:24,nom:'Repondre aux photographes',cat:'pr',jours:-7,ref:'concert'},
+  {id:25,nom:'Dernier check globale',cat:'gen',jours:-2,ref:'concert'}
+];
+
+let concerts = [], taskStates = {}, process = DEFAULT_PROCESS, nextId = 26;
+let dragSrcId = null, saveTimer = null;
+
+async function dbGet(key, fallback) {
+  const r = await fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.'+key+'&select=value', {
+    headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer '+SUPABASE_KEY}
+  });
+  const rows = await r.json();
+  if (!rows || !rows.length) return fallback;
+  try { return JSON.parse(rows[0].value); } catch(e) { return fallback; }
+}
+
+async function dbSet(key, value) {
+  await fetch(SUPABASE_URL+'/rest/v1/app_data', {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer '+SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates'
+    },
+    body: JSON.stringify({key, value: JSON.stringify(value)})
+  });
+}
+
+function scheduleSave() {
+  const el = document.getElementById('saving');
+  el.classList.add('show');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    await Promise.all([
+      dbSet('concerts', concerts),
+      dbSet('taskstates', taskStates),
+      dbSet('process', process)
+    ]);
+    el.classList.remove('show');
+  }, 800);
+}
+
+async function init() {
+  try {
+    const [c, ts, p] = await Promise.all([
+      dbGet('concerts', []),
+      dbGet('taskstates', {}),
+      dbGet('process', null)
+    ]);
+    concerts = c || [];
+    taskStates = ts || {};
+    process = p || DEFAULT_PROCESS;
+    nextId = process.length ? Math.max(...process.map(t => t.id)) + 1 : 26;
+  } catch(e) {
+    concerts = []; taskStates = {}; process = DEFAULT_PROCESS;
+  }
+  render();
+}
+
+function showTab(id, btn) {
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+function calcDate(c, t) {
+  const base = t.ref === 'annonce' ? c.da : c.dc;
+  if (!base) return null;
+  const d = new Date(base); d.setDate(d.getDate()+t.jours); return d;
+}
+function fmt(d) { return d ? d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) : '-'; }
+function isLate(d) { if (!d) return false; const n = new Date(); n.setHours(0,0,0,0); return d < n; }
+function tk(cid, tid) { return cid+'-'+tid; }
+function sortedProcess(c) {
+  return process.slice().sort((a,b) => {
+    const da=calcDate(c,a), db=calcDate(c,b);
+    if (!da&&!db) return 0; if (!da) return 1; if (!db) return -1;
+    return da-db;
+  });
+}
+function filtered() {
+  const s=(document.getElementById('search')||{value:''}).value.toLowerCase();
+  const v=(document.getElementById('fville')||{value:''}).value;
+  const p=(document.getElementById('fperiode')||{value:''}).value;
+  return concerts.filter(c => {
+    if (s && c.art.toLowerCase().indexOf(s)<0) return false;
+    if (v && (c.ville||'').indexOf(v)<0) return false;
+    if (p && (c.dc||'').indexOf(p)<0) return false;
+    return true;
+  });
+}
+function updateFilters() {
+  const villes={}, periodes={};
+  concerts.forEach(c => { if(c.ville) villes[c.ville]=1; if(c.dc) periodes[c.dc.substring(0,4)]=1; });
+  const fv=document.getElementById('fville'), fp=document.getElementById('fperiode');
+  const selV=fv.value, selP=fp.value;
+  fv.innerHTML='<option value="">Toutes les villes</option>';
+  Object.keys(villes).sort().forEach(v => fv.innerHTML+='<option value="'+v+'"'+(v===selV?' selected':'')+'>'+v+'</option>');
+  fp.innerHTML='<option value="">Toutes les periodes</option>';
+  Object.keys(periodes).sort().forEach(p => fp.innerHTML+='<option value="'+p+'"'+(p===selP?' selected':'')+'>'+p+'</option>');
+}
+
+async function addConcert() {
+  const art=document.getElementById('f-art').value.trim();
+  const ville=document.getElementById('f-ville').value.trim();
+  const dc=document.getElementById('f-dc').value;
+  const da=document.getElementById('f-da').value;
+  if (!art||!dc) { alert('Artiste et date de concert obligatoires.'); return; }
+  const btn=document.getElementById('add-btn');
+  btn.disabled=true; btn.textContent='Ajout...';
+  concerts.push({id:Date.now().toString(), art, ville, dc, da});
+  concerts.sort((a,b) => new Date(a.dc)-new Date(b.dc));
+  document.getElementById('f-art').value='';
+  document.getElementById('f-ville').value='';
+  document.getElementById('f-dc').value='';
+  document.getElementById('f-da').value='';
+  scheduleSave(); render();
+  btn.disabled=false; btn.textContent='Ajouter le concert';
+}
+
+function deleteConcert(id) {
+  if (!confirm('Supprimer ce concert ?')) return;
+  concerts=concerts.filter(c => c.id!==id);
+  scheduleSave(); render();
+}
+
+function toggleTask(cid, tid) {
+  const k=tk(cid,tid);
+  taskStates[k]=!taskStates[k];
+  scheduleSave(); renderKanban(); renderConcerts();
+}
+
+function addTask() {
+  process.push({id:nextId++, nom:'Nouvelle tache', cat:'gen', jours:-7, ref:'concert'});
+  scheduleSave(); renderProcess();
+}
+function updTask(id, field, val) {
+  const t=process.find(p => p.id===id);
+  if (t) { t[field]=field==='jours'?parseInt(val):val; scheduleSave(); }
+}
+function delTask(id) { process=process.filter(p => p.id!==id); scheduleSave(); renderProcess(); }
+
+function renderKanban() {
+  const today=new Date(); today.setHours(0,0,0,0);
+  let late=0, done=0, avenir=0;
+  concerts.forEach(c => {
+    if (new Date(c.dc)>=today) avenir++;
+    process.forEach(t => {
+      if (taskStates[tk(c.id,t.id)]) done++;
+      else if (isLate(calcDate(c,t))) late++;
+    });
+  });
+  document.getElementById('stats').innerHTML=
+    '<div class="stat"><div class="stat-n">'+concerts.length+'</div><div class="stat-l">Concerts</div></div>'+
+    '<div class="stat"><div class="stat-n">'+avenir+'</div><div class="stat-l">A venir</div></div>'+
+    '<div class="stat"><div class="stat-n red">'+late+'</div><div class="stat-l">En retard</div></div>'+
+    '<div class="stat"><div class="stat-n">'+done+'</div><div class="stat-l">Taches faites</div></div>';
+  updateFilters();
+  const list=filtered();
+  const wrap=document.getElementById('kanban-wrap');
+  if (!list.length) { wrap.innerHTML='<div class="empty-state">Aucun concert. Ajoute-en un dans l\'onglet Concerts.</div>'; return; }
+  wrap.innerHTML='<div class="kanban">'+list.map(c => {
+    const sorted=sortedProcess(c);
+    const lateTasks=sorted.filter(t => !taskStates[tk(c.id,t.id)]&&isLate(calcDate(c,t)));
+    const doneN=sorted.filter(t => taskStates[tk(c.id,t.id)]).length;
+    const pct=Math.round(doneN/sorted.length*100);
+    const ds=new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});
+    const hasLate=lateTasks.length>0;
+    const body=hasLate
+      ?'<div class="col-body">'+lateTasks.map(t => {
+          const cat=CATS[t.cat]||{cls:'p-gen',label:'?'};
+          return '<div class="titem" onclick="toggleTask(\''+c.id+'\','+t.id+')">'+
+            '<div class="chk"></div>'+
+            '<div><div class="tname">'+t.nom+'</div>'+
+            '<span class="pill '+cat.cls+'">'+cat.label+'</span>'+
+            '<div class="tlate">En retard · '+fmt(calcDate(c,t))+'</div></div></div>';
+        }).join('')+'</div>'
+      :'<div class="ok-col"><span class="ok-badge">Tout est a jour</span></div>';
+    return '<div class="col">'+
+      '<div class="col-head'+(hasLate?' late':'')+'">'+
+      '<div class="col-name'+(hasLate?' late':'')+'">'+c.art+'</div>'+
+      '<div class="col-sub'+(hasLate?' late':'')+'">'+( c.ville?c.ville+' · ':'')+ds+'</div>'+
+      '<div class="pbar"><div class="pfill" style="width:'+pct+'%"></div></div>'+
+      '<div class="pbar-meta"><span>'+pct+'%</span>'+(hasLate?'<span class="red">'+lateTasks.length+' retard'+(lateTasks.length>1?'s':'')+'</span>':'')+
+      '</div></div>'+body+'</div>';
+  }).join('')+'</div>';
+}
+
+function renderConcerts() {
+  const el=document.getElementById('clist');
+  if (!concerts.length) { el.innerHTML=''; return; }
+  el.innerHTML='<div class="card"><h2>'+concerts.length+' concert'+(concerts.length>1?'s':'')+'</h2>'+
+    concerts.map(c => {
+      const done=process.filter(t => taskStates[tk(c.id,t.id)]).length;
+      const pct=process.length?Math.round(done/process.length*100):0;
+      const ds=new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
+      return '<div class="crow">'+
+        '<div style="flex:1"><div class="crow-name">'+c.art+'</div>'+
+        '<div class="crow-sub">'+(c.ville?c.ville+' · ':'')+ds+(c.da?' · Annonce '+new Date(c.da).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'')+
+        '</div></div>'+
+        '<div style="display:flex;align-items:center;gap:6px">'+
+        '<div class="pbar" style="width:70px;margin-top:0"><div class="pfill" style="width:'+pct+'%"></div></div>'+
+        '<span style="font-size:12px;color:#aaa;min-width:28px">'+pct+'%</span></div>'+
+        '<button class="dbtn" onclick="deleteConcert(\''+c.id+'\')">x</button></div>';
+    }).join('')+'</div>';
+}
+
+function renderProcess() {
+  const annonce=process.filter(t => t.ref==='annonce').sort((a,b) => a.jours-b.jours);
+  const concert=process.filter(t => t.ref==='concert').sort((a,b) => a.jours-b.jours);
+  function renderGroup(tasks, title, second) {
+    return '<div class="group-title'+(second?' second':'')+'">'+title+'</div>'+
+      tasks.map(t => {
+        const cat=CATS[t.cat]||{cls:'p-gen',label:'?'};
+        return '<div class="prow" draggable="true" data-id="'+t.id+'"'+
+          ' ondragstart="dragStart(event,'+t.id+')" ondragover="dragOver(event)"'+
+          ' ondrop="dragDrop(event,'+t.id+')" ondragleave="dragLeave(event)">'+
+          '<span class="drag">&#8942;</span>'+
+          '<div class="proc-meta">'+
+          '<input type="text" value="'+t.nom+'" onchange="updTask('+t.id+',\'nom\',this.value)" style="flex:1">'+
+          '<span class="pill '+cat.cls+'" style="flex-shrink:0">'+cat.label+'</span></div>'+
+          '<input type="number" value="'+t.jours+'" onchange="updTask('+t.id+',\'jours\',this.value)">'+
+          '<select onchange="updTask('+t.id+',\'ref\',this.value)">'+
+          '<option value="concert"'+(t.ref==='concert'?' selected':'')+'>J avant concert</option>'+
+          '<option value="annonce"'+(t.ref==='annonce'?' selected':'')+'>J apres annonce</option>'+
+          '</select>'+
+          '<button class="dbtn" onclick="delTask('+t.id+')">x</button></div>';
+      }).join('');
+  }
+  document.getElementById('plist').innerHTML=
+    renderGroup(annonce,'Taches liees a la date d\'annonce', false)+
+    renderGroup(concert,'Taches liees a la date de concert', true);
+}
+
+function dragStart(e,id){dragSrcId=id;}
+function dragOver(e){e.preventDefault();}
+function dragLeave(e){}
+function dragDrop(e,targetId){
+  e.preventDefault();
+  if(dragSrcId===targetId)return;
+  const src=process.findIndex(p=>p.id===dragSrcId);
+  const tgt=process.findIndex(p=>p.id===targetId);
+  const item=process.splice(src,1)[0];
+  process.splice(tgt,0,item);
+  scheduleSave();renderProcess();
+}
+
+function render(){renderKanban();renderConcerts();renderProcess();}
+init();
+</script>
+</body>
+</html>
