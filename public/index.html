@@ -283,7 +283,8 @@ async function notionFetch(path, method='GET', body=null) {
     }
   };
   if (body) opts.body = JSON.stringify(body);
-  const r = await fetch('/.netlify/functions/notion' + path, opts);
+  const url = '/.netlify/functions/notion?path=' + encodeURIComponent(path);
+  const r = await fetch(url, opts);
   if (!r.ok) {
     const err = await r.json().catch(() => ({}));
     throw new Error(err.message || 'Erreur API Notion');
