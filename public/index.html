@@ -287,7 +287,7 @@ async function notionFetch(path, method='GET', body=null) {
   const r = await fetch(url, opts);
   if (!r.ok) {
     const err = await r.json().catch(() => ({}));
-    throw new Error(err.message || 'Erreur API Notion');
+    throw new Error(err.message || 'Erreur API Notion ' + r.status);
   }
   return r.json();
 }
