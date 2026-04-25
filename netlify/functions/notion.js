@@ -18,10 +18,12 @@ exports.handler = async function(event) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Token manquant' }) };
   }
 
-  // Extraire le path Notion depuis les query params
-  const params = event.queryStringParameters || {};
-  const notionPath = params.path || '/databases';
-  const bodyData = event.body || null;
+  const qs = event.queryStringParameters || {};
+  const notionPath = qs.path ? decodeURIComponent(qs.path) : '';
+
+  if (!notionPath) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Path manquant', received: JSON.stringify(qs) }) };
+  }
 
   const options = {
     hostname: 'api.notion.com',
@@ -55,7 +57,7 @@ exports.handler = async function(event) {
     req.on('error', (e) => {
       resolve({ statusCode: 500, body: JSON.stringify({ error: e.message }) });
     });
-    if (bodyData) req.write(bodyData);
+    if (event.body) req.write(event.body);
     req.end();
   });
 };
