@@ -1,24 +1,32 @@
 const https = require('https');
 
 exports.handler = async function(event) {
-  const raw = event.path || '';
-  const path = raw
-    .replace('/concerts-app/.netlify/functions/notion', '')
-    .replace('/.netlify/functions/notion', '')
-    || '/';
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, x-notion-token',
+        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+      },
+      body: ''
+    };
+  }
 
   const token = event.headers['x-notion-token'];
-
   if (!token) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Token manquant' }) };
   }
 
-  const notionPath = '/v1' + path + (event.rawQuery ? '?' + event.rawQuery : '');
+  // Extraire le path Notion depuis les query params
+  const params = event.queryStringParameters || {};
+  const notionPath = params.path || '/databases';
+  const bodyData = event.body || null;
 
   const options = {
     hostname: 'api.notion.com',
     port: 443,
-    path: notionPath,
+    path: '/v1' + notionPath,
     method: event.httpMethod,
     headers: {
       'Authorization': 'Bearer ' + token,
@@ -47,7 +55,7 @@ exports.handler = async function(event) {
     req.on('error', (e) => {
       resolve({ statusCode: 500, body: JSON.stringify({ error: e.message }) });
     });
-    if (event.body) req.write(event.body);
+    if (bodyData) req.write(bodyData);
     req.end();
   });
 };
