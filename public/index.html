@@ -516,7 +516,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
   <header>
     <h1 style="display:flex;align-items:center;gap:8px"><img src="favicon_io/favicon-32x32.png" style="width:20px;height:20px;border-radius:4px">Please Please Communication &mdash; Dashboard</h1>
     <nav class="nav" style="display:flex;gap:1px">
-      <button class="nav-rs-sep" onclick="showTab('rs',this)" style="padding:5px 14px;font-size:13px;border:none;background:transparent;cursor:pointer;color:var(--text-2);border-radius:6px;font-weight:500;transition:all .15s;margin-right:8px;border-right:1px solid var(--border)">Plannings RS</button>
+      <button class="nav-rs-sep" onclick="showTab('rs',this)" style="padding:5px 14px;font-size:13px;border:1px solid var(--border);background:var(--surface);cursor:pointer;color:var(--text-2);border-radius:6px;font-weight:600;transition:all .15s;margin-right:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)">📅 Plannings RS</button>
       <button class="active" onclick="showTab('kanban',this)">Tableau de bord</button>
       <button onclick="showTab('concerts',this)">Concerts</button>
       <button onclick="showTab('taches',this)">Taches</button>
@@ -1685,8 +1685,7 @@ function renderRS(){
     var isWE=dow===0||dow===6;
 
     var dayPosts=rsPosts.filter(function(p){return p.date===dateStr&&p.proj===rsCurrentProj;});
-    var dayAuto=autoMap[dateStr]||[];
-    var hasContent=dayPosts.length>0||dayAuto.length>0;
+    var hasContent=dayPosts.length>0;
 
     // Styles
     var headerStyle='';var numStyle='';var nameStyle='';
@@ -1695,7 +1694,7 @@ function renderRS(){
       numStyle='color:#2563eb;font-size:16px;font-weight:800;';
       nameStyle='color:#2563eb;font-weight:700;';
     } else if(isPast){
-      var hasUnposted=dayPosts.some(function(p){return p.status!=='posted';});
+      var hasUnposted=dayPosts.some(function(p){return p.status!=='posted'&&p.status!=='';});
       headerStyle=hasUnposted?'opacity:.7;border-left:2px solid #f0a030;':'opacity:.38;';
     } else if(isWE){
       headerStyle='background:#fafaf8;';
@@ -1710,10 +1709,10 @@ function renderRS(){
     }
 
     var chips='';
-    dayAuto.forEach(function(c){chips+='<span class="rs-chip auto">📢 '+c.art+'</span>';});
+
     dayPosts.forEach(function(p){
       var t=RS_TYPES[p.type]||RS_TYPES.autre;
-      var lbl=(p.format==='story'?'📱':'📄')+' '+t.label+(p.concert?' · '+p.concert.substring(0,12):p.note?' · '+p.note.substring(0,15):'');
+      var lbl=(p.autoRef?'📢 ':(p.format==='story'?'📱 ':'📄 '))+t.label+(p.concert?' · '+p.concert.substring(0,12):p.note?' · '+p.note.substring(0,15):'');
       chips+='<span class="rs-chip'+(p.ready?' ready':'')+(p.format==='story'?' story':'')+'">'+lbl+'</span>';
     });
 
@@ -1731,40 +1730,17 @@ function renderRS(){
 
     if(hasContent){
       daysHtml+='<div class="rs-posts-list">';
-      dayAuto.forEach(function(c){
-        var autoPost=rsPosts.find(function(p){return p.date===dateStr&&p.proj===rsCurrentProj&&p.autoRef===c.id;});
-        if(autoPost){
-          daysHtml+='<div class="rs-post auto">'
-            +'<div class="rs-post-row1"><span class="rs-post-format rs-fmt-post">Post</span>'
-            +'<span class="rs-post-type rs-t-annonce">Annonce</span>'
-            +'<span class="rs-post-concert">📢 '+c.art+'</span></div>'
-            +(autoPost.legend?'<div class="rs-post-legend">'+autoPost.legend+'</div>':'')
-            +(autoPost.link?'<div class="rs-post-link"><a href="'+autoPost.link+'" target="_blank">'+autoPost.link+'</a></div>':'')
-            +'<div class="rs-post-row2">'
-            +(autoPost.fb?'<span class="rs-net-badge fb">FB</span>':'')
-            +(autoPost.insta?'<span class="rs-net-badge insta">Insta</span>':'')
-            +(autoPost.tiktok?'<span class="rs-net-badge tiktok">TikTok</span>':'')
-            +'<button class="rs-post-btn" onclick="rsEditPost(\''+autoPost.id+'\')">✎ Enrichir</button>'
-            +'</div></div>';
-        } else {
-          daysHtml+='<div class="rs-post auto">'
-            +'<div class="rs-post-row1"><span class="rs-post-format rs-fmt-post">Post</span>'
-            +'<span class="rs-post-type rs-t-annonce">Annonce</span>'
-            +'<span class="rs-post-concert">📢 '+c.art+'</span>'
-            +'<button class="rs-post-btn" style="margin-left:auto" onclick="rsEnrichAuto(\''+dateStr+'\',\''+c.id+'\',\''+c.art+'\')">✎ Enrichir</button>'
-            +'</div></div>';
-        }
-      });
-      dayPosts.filter(function(p){return !p.autoRef;}).forEach(function(p){
+      dayPosts.forEach(function(p){
         var t=RS_TYPES[p.type]||RS_TYPES.autre;
         var fmtCls=p.format==='story'?'rs-fmt-story':'rs-fmt-post';
         var fmtLbl=p.format==='story'?'Story':'Post';
-        daysHtml+='<div class="rs-post'+(p.ready?' ready':'')+'">'
+        var isAuto=!!p.autoRef;
+        daysHtml+='<div class="rs-post'+(p.status==='posted'?' ready':'')+(isAuto?' auto':'')+'">'
           +'<div class="rs-post-row1">'
           +'<span class="rs-post-format '+fmtCls+'">'+fmtLbl+'</span>'
           +'<span class="rs-post-type '+t.cls+'">'+t.label+'</span>'
-          +(p.concert?'<span class="rs-post-concert">'+p.concert+'</span>':'')
-          +(p.note?'<span class="rs-post-note">'+(p.concert?'· ':'')+p.note+'</span>':'')
+          +(p.concert?'<span class="rs-post-concert">'+(isAuto?'📢 ':'')+p.concert+'</span>':'')
+          +(p.note&&!p.concert?'<span class="rs-post-note">'+p.note+'</span>':'')
           +'</div>'
           +(p.legend?'<div class="rs-post-legend">'+p.legend+'</div>':'')
           +(p.link?'<div class="rs-post-link"><a href="'+p.link+'" target="_blank">'+p.link+'</a></div>':'')
@@ -1772,12 +1748,12 @@ function renderRS(){
           +(p.fb?'<span class="rs-net-badge fb">FB</span>':'')
           +(p.insta?'<span class="rs-net-badge insta">Insta</span>':'')
           +(p.tiktok?'<span class="rs-net-badge tiktok">TikTok</span>':'')
-          +'<button class="rs-ready-btn'+(p.status==='posted'?' on posted':p.status==='ready'?' on':'')+'" onclick="rsToggleReady(\''+p.id+'\')">'+(p.status==='posted'?'✈ Posté':p.status==='ready'?'✓ Prêt':'○ Prêt')+'</button>'
+          +'<button class="rs-ready-btn'+(p.status==='posted'?' on posted':p.status==='ready'?' on':'')+'" onclick="rsToggleReady(\''+p.id+'\')">'          +(p.status==='posted'?'✈ Posté':p.status==='ready'?'✓ Prêt':'○ Prêt')+'</button>'
           +'<div class="rs-post-btns">'
           +'<button class="rs-post-btn" onclick="rsEditPost(\''+p.id+'\')">✎</button>'
-          +'<button class="rs-post-btn del" onclick="rsDelPost(\''+p.id+'\')">✕</button>'
+          +(isAuto?'':'<button class="rs-post-btn del" onclick="rsDelPost(\''+p.id+'\')">✕</button>')
           +'</div></div></div>';
-      });
+      })
       daysHtml+='</div>';
     }
     daysHtml+='</div></div>';
