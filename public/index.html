@@ -483,6 +483,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .rs-net-badge.fb{background:#1877f2;color:#fff}
 .rs-net-badge.insta{background:#e6683c;color:#fff}
 .rs-net-badge.tiktok{background:#010101;color:#fff}
+.rs-net-badge.linkedin{background:#0a66c2;color:#fff}
 .rs-ready-btn{font-size:10px;font-weight:600;padding:2px 9px;border-radius:20px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-3);transition:all .15s;margin-left:auto}
 .rs-ready-btn.on{background:#eef7f2;color:#2d7a4f;border-color:#b8e0ca}
 .rs-ready-btn.on.posted{background:#f0f4ff;color:#3050c0;border-color:#a0b8f0}
@@ -504,6 +505,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .rs-modal-net.on.fb{background:#1877f2;color:#fff;border-color:#1877f2}
 .rs-modal-net.on.insta{background:#e6683c;color:#fff;border-color:#e6683c}
 .rs-modal-net.on.tiktok{background:#010101;color:#fff;border-color:#010101}
+.rs-modal-net.on.linkedin{background:#0a66c2;color:#fff;border-color:#0a66c2}
 .rs-modal-fmt{display:flex;gap:6px}
 .rs-modal-fmt-btn{padding:4px 14px;border-radius:var(--radius-sm);cursor:pointer;border:1px solid var(--border);font-size:11px;font-weight:700;background:var(--bg);color:var(--text-3);transition:all .15s;user-select:none}
 .rs-modal-fmt-btn.on.post{background:#e8f0ff;color:#3050b0;border-color:#90b0f0}
@@ -694,6 +696,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
         <div class="rs-modal-net fb" id="rs-net-fb" onclick="rsToggleNet('fb')">Facebook</div>
         <div class="rs-modal-net insta" id="rs-net-insta" onclick="rsToggleNet('insta')">Instagram</div>
         <div class="rs-modal-net tiktok" id="rs-net-tiktok" onclick="rsToggleNet('tiktok')">TikTok</div>
+        <div class="rs-modal-net linkedin" id="rs-net-linkedin" onclick="rsToggleNet('linkedin')">LinkedIn</div>
       </div>
     </div>
     <div class="rs-modal-actions">
@@ -1747,7 +1750,7 @@ function renderRS(){
       +'<div class="rs-chips">'+chips+'</div>'
       +'<button class="rs-add-day-btn" onclick="event.stopPropagation();rsOpenModal(\''+dateStr+'\')">+ Ajouter</button>'
       +'</div>'
-      +'<div id="rslist-'+dateStr+'" style="display:'+(isToday&&hasContent?'block':'none')+'">';
+      +'<div id="rslist-'+dateStr+'" style="display:none">';
 
     if(hasContent){
       daysHtml+='<div class="rs-posts-list">';
@@ -1769,6 +1772,7 @@ function renderRS(){
           +(p.fb?'<span class="rs-net-badge fb">FB</span>':'')
           +(p.insta?'<span class="rs-net-badge insta">Insta</span>':'')
           +(p.tiktok?'<span class="rs-net-badge tiktok">TikTok</span>':'')
+          +(p.linkedin?'<span class="rs-net-badge linkedin">LinkedIn</span>':'')
           +'<button class="rs-ready-btn'+(p.status==='posted'?' on posted':p.status==='ready'?' on':'')+'" onclick="rsToggleReady(\''+p.id+'\')">'          +(p.status==='posted'?'✈ Posté':p.status==='ready'?'✓ Prêt':'○ Prêt')+'</button>'
           +'<div class="rs-post-btns">'
           +'<button class="rs-post-btn" onclick="rsEditPost(\''+p.id+'\')">✎</button>'
@@ -1877,7 +1881,7 @@ function rsOpenModal(dateStr){
   document.getElementById('rs-legend').value='';
   document.getElementById('rs-link').value='';
   document.getElementById('rs-type').value='annonce';
-  rsFmt='post';rsNetState={fb:false,insta:false,tiktok:false};
+  rsFmt='post';rsNetState={fb:false,insta:false,tiktok:false,linkedin:false};
   rsUpdateFmt();rsUpdateNets();
   // Concerts dans le select
   var sel=document.getElementById('rs-concert');
@@ -1895,7 +1899,7 @@ function rsEditPost(id){
   document.getElementById('rs-legend').value=p.legend||'';
   document.getElementById('rs-link').value=p.link||'';
   document.getElementById('rs-type').value=p.type||'annonce';
-  rsFmt=p.format||'post';rsNetState={fb:!!p.fb,insta:!!p.insta,tiktok:!!p.tiktok};
+  rsFmt=p.format||'post';rsNetState={fb:!!p.fb,insta:!!p.insta,tiktok:!!p.tiktok,linkedin:!!p.linkedin};
   rsUpdateFmt();rsUpdateNets();
   var sel=document.getElementById('rs-concert');
   rsFillConcertSelect(sel,p.concert||'');
@@ -1914,7 +1918,7 @@ function rsUpdateFmt(){
 
 function rsToggleNet(net){rsNetState[net]=!rsNetState[net];rsUpdateNets();}
 function rsUpdateNets(){
-  ['fb','insta','tiktok'].forEach(function(n){
+  ['fb','insta','tiktok','linkedin'].forEach(function(n){
     var el=document.getElementById('rs-net-'+n);
     if(el)el.classList.toggle('on',!!rsNetState[n]);
   });
@@ -1929,10 +1933,10 @@ function rsSavePost(){
   if(!note&&!concert)return;
   if(rsEditId){
     var p=rsPosts.find(function(x){return x.id===rsEditId;});
-    if(p){p.note=note;p.legend=legend;p.link=link;p.type=type;p.concert=concert;p.format=rsFmt;p.fb=rsNetState.fb;p.insta=rsNetState.insta;p.tiktok=rsNetState.tiktok;}
+    if(p){p.note=note;p.legend=legend;p.link=link;p.type=type;p.concert=concert;p.format=rsFmt;p.fb=rsNetState.fb;p.insta=rsNetState.insta;p.tiktok=rsNetState.tiktok;p.linkedin=rsNetState.linkedin;}
   } else {
     var autoRef=document.getElementById('rs-modal-save').dataset.autoref||null;
-    rsPosts.push({id:rsNewId(),proj:rsCurrentProj,date:rsCurrentDate,type:type,format:rsFmt,concert:concert,note:note,legend:legend,link:link,fb:rsNetState.fb,insta:rsNetState.insta,tiktok:rsNetState.tiktok,ready:false,autoRef:autoRef||undefined});
+    rsPosts.push({id:rsNewId(),proj:rsCurrentProj,date:rsCurrentDate,type:type,format:rsFmt,concert:concert,note:note,legend:legend,link:link,fb:rsNetState.fb,insta:rsNetState.insta,tiktok:rsNetState.tiktok,linkedin:rsNetState.linkedin,ready:false,autoRef:autoRef||undefined});
     delete document.getElementById('rs-modal-save').dataset.autoref;
   }
   scheduleSave();rsCloseModal();renderRS();
@@ -1951,7 +1955,7 @@ function rsEnrichAuto(dateStr,concertId,concertArt){
   document.getElementById('rs-legend').value='';
   document.getElementById('rs-link').value='';
   document.getElementById('rs-type').value='annonce';
-  rsFmt='post';rsNetState={fb:false,insta:false,tiktok:false};
+  rsFmt='post';rsNetState={fb:false,insta:false,tiktok:false,linkedin:false};
   rsUpdateFmt();rsUpdateNets();
   var sel=document.getElementById('rs-concert');
   rsFillConcertSelect(sel,concertArt);
