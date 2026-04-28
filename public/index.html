@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Please Please Communication - Dashboard</title>
 <link rel="icon" type="image/x-icon" href="favicon_io/favicon.ico">
@@ -706,6 +707,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
   </div>
 </div>
 <div class="saving" id="saving">Sauvegarde...</div>
+<div class="saving" id="sync-banner" style="bottom:3.5rem;background:#2d7a4f"></div>
 <script>
 var SUPABASE_URL='https://vkehaerkbvfxlyjvrpzi.supabase.co';
 var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrZWhhZXJrYnZmeGx5anZycHppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTUyMTMsImV4cCI6MjA5MjY5MTIxM30.I5VTTUYXA0uKg6_WZ2XKIcXmnFvWR38Hkh4RVzgr9qg';
@@ -749,6 +751,12 @@ var tkCols=[],tkTasks=[],tkEditId=null,tkAddColId=null;
 var rsPosts=[],rsEditId=null,rsCurrentProj="pp",rsCurrentDate=null,rsCurrentMonth=new Date(),rsFmt="post",rsNetState={fb:false,insta:false,tiktok:false};
 var dragSrcId=null,saveTimer=null,currentFicheId=null;
 
+// ── CLIENT SUPABASE ──────────────────────────────────────
+var _supabase=null;
+function getSupabase(){
+  if(!_supabase)_supabase=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  return _supabase;
+}
 async function dbGet(key,fallback){
   var r=await fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.'+key+'&select=value',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
   var rows=await r.json();
@@ -758,8 +766,76 @@ async function dbGet(key,fallback){
 async function dbSet(key,value){
   await fetch(SUPABASE_URL+'/rest/v1/app_data',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:JSON.stringify(value)})});
 }
+
+// ── REALTIME : écouter les changements ────────────────────
+var _rtChannel=null;
+var _lastSaveTs=0; // timestamp de notre dernière sauvegarde locale
+var _reloadPending=false;
+
+function initRealtime(){
+  if(_rtChannel)return;
+  var sb=getSupabase();
+  _rtChannel=sb.channel('app_data_changes')
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'app_data'},function(payload){
+      // Ignorer nos propres sauvegardes (dans les 2s qui suivent notre save)
+      if(Date.now()-_lastSaveTs<2000)return;
+      // Ne pas recharger si l'utilisateur est en train d'interagir
+      var modalOpen=document.querySelector('.tk-modal.open,.rs-modal.open,.overlay.open');
+      var inputFocused=document.activeElement&&['INPUT','TEXTAREA','SELECT'].indexOf(document.activeElement.tagName)>=0;
+      if(modalOpen||inputFocused){
+        _reloadPending=true;
+        showSyncBanner('En attente...');
+        return;
+      }
+      reloadFromRemote(payload.new.key);
+    })
+    .subscribe(function(status){
+      if(status==='SUBSCRIBED'){
+        console.log('Realtime connecté');
+        showSyncBanner('Connecté',true);
+      }
+    });
+
+  // Recharger dès que l'utilisateur ferme une modale ou quitte un champ
+  document.addEventListener('focusout',function(){
+    if(_reloadPending){
+      var modalOpen=document.querySelector('.tk-modal.open,.rs-modal.open,.overlay.open');
+      if(!modalOpen){_reloadPending=false;reloadFromRemote(null);}
+    }
+  });
+}
+
+async function reloadFromRemote(changedKey){
+  showSyncBanner('Synchronisation...');
+  try{
+    var keys=changedKey?[changedKey]:['concerts','taskstates','process','tkcols','tktasks','rsposts'];
+    for(var i=0;i<keys.length;i++){
+      var k=keys[i];
+      if(k==='concerts')concerts=(await dbGet('concerts',[]))||[];
+      else if(k==='taskstates')taskStates=(await dbGet('taskstates',{}))||{};
+      else if(k==='process'){var raw=(await dbGet('process',null))||DEFAULT_PROCESS;process=raw.map(function(t){return Object.assign({prereq:null,cat:t.cat||'gen'},t);});}
+      else if(k==='tkcols')tkCols=(await dbGet('tkcols',[]))||[];
+      else if(k==='tktasks')tkTasks=(await dbGet('tktasks',[]))||[];
+      else if(k==='rsposts')rsPosts=(await dbGet('rsposts',[]))||[];
+    }
+    render();
+    showSyncBanner('À jour ✓',true);
+  }catch(e){
+    showSyncBanner('Erreur sync');
+    console.error('Realtime reload error',e);
+  }
+}
+
+function showSyncBanner(msg,fadeOut){
+  var el=document.getElementById('sync-banner');
+  if(!el)return;
+  el.textContent=msg;
+  el.classList.add('show');
+  if(fadeOut){setTimeout(function(){el.classList.remove('show');},2000);}
+}
+
 function scheduleSave(){
-  var el=document.getElementById('saving');el.classList.add('show');clearTimeout(saveTimer);
+  var el=document.getElementById('saving');el.classList.add('show');_lastSaveTs=Date.now();clearTimeout(saveTimer);
   saveTimer=setTimeout(async function(){await Promise.all([dbSet('concerts',concerts),dbSet('taskstates',taskStates),dbSet('process',process),dbSet('tkcols',tkCols),dbSet('tktasks',tkTasks),dbSet('rsposts',rsPosts)]);el.classList.remove('show');},800);
 }
 async function init(){
@@ -789,6 +865,7 @@ async function init(){
     });
   }
   render();
+  initRealtime();
 }
 function showTab(id,btn){
   document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('active');});
