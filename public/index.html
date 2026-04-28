@@ -1801,14 +1801,6 @@ function renderRS(){
       headerStyle='background:#fafaf8;';
     }
 
-    // Séparateur de mois
-    var isFirstDayOfMonth=dayNum===1||(cur.getTime()===winStart.getTime()&&dayNum>1);
-    if(isFirstDayOfMonth){
-      var mLabel=dateObj.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-      mLabel=mLabel.charAt(0).toUpperCase()+mLabel.slice(1);
-      daysHtml+='<div style="padding:8px 16px 4px;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;background:var(--bg);border-bottom:1px solid var(--border-light)">'+mLabel+'</div>';
-    }
-
     var chips='';
 
     dayPosts.forEach(function(p){
@@ -1821,8 +1813,10 @@ function renderRS(){
 
     daysHtml+='<div class="rs-day" id="rsday-wrap-'+dateStr+'">'
       +'<div class="rs-day-header'+(isWE&&!isToday?' weekend':'')+'" id="rsday-'+dateStr+'" style="'+headerStyle+'" onclick="'+rowClick+'">'
-      +'<span class="rs-day-num" style="'+numStyle+'">'+dayNum+'</span>'
-      +'<span style="font-size:9px;color:var(--text-3);min-width:22px;text-transform:uppercase;font-weight:600">'+monthName+'</span>'
+      +'<span style="display:inline-flex;flex-direction:column;align-items:center;min-width:36px;line-height:1">'
+      +'<span class="rs-day-num" style="'+numStyle+'line-height:1;">'+dayNum+'</span>'
+      +'<span style="font-size:9px;color:'+(isToday?'#2563eb':(isPast?'#ccc':'var(--text-3)'))+';text-transform:uppercase;font-weight:700;letter-spacing:.03em;margin-top:1px;">'+monthName+'</span>'
+      +'</span>'
       +'<span style="font-size:10px;min-width:36px;'+nameStyle+(isPast&&!isToday?'color:#ccc;':'')+(isWE&&!isToday&&!isPast?'color:var(--text-3);':'')+'">'+dayName+'</span>'
       +'<div class="rs-chips">'+chips+'</div>'
       +'<button class="rs-add-day-btn" onclick="event.stopPropagation();rsOpenModal(\''+dateStr+'\')">+ Ajouter</button>'
