@@ -511,6 +511,8 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .rs-modal-fmt-btn{padding:4px 14px;border-radius:var(--radius-sm);cursor:pointer;border:1px solid var(--border);font-size:11px;font-weight:700;background:var(--bg);color:var(--text-3);transition:all .15s;user-select:none}
 .rs-modal-fmt-btn.on.post{background:#e8f0ff;color:#3050b0;border-color:#90b0f0}
 .rs-modal-fmt-btn.on.story{background:#fff0e8;color:#b05020;border-color:#f0a070}
+.rs-modal-fmt-btn.on.tirage{background:#f0fff0;color:#1a7a3a;border-color:#80d0a0}
+.rs-fmt-tirage{background:#f0fff0;color:#1a7a3a;border:1px solid #80d0a0}
 .rs-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 </style>
 </head>
@@ -667,6 +669,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
       <div class="rs-modal-fmt">
         <div class="rs-modal-fmt-btn post on" id="rs-fmt-post" onclick="rsToggleFmt('post')">Post</div>
         <div class="rs-modal-fmt-btn story" id="rs-fmt-story" onclick="rsToggleFmt('story')">Story</div>
+        <div class="rs-modal-fmt-btn tirage" id="rs-fmt-tirage" onclick="rsToggleFmt('tirage')">Tirage au sort</div>
       </div>
     </div>
     <div>
@@ -1805,7 +1808,7 @@ function renderRS(){
 
     dayPosts.forEach(function(p){
       var t=RS_TYPES[p.type]||RS_TYPES.autre;
-      var lbl=(p.autoRef?'📢 ':(p.format==='story'?'📱 ':'📄 '))+t.label+(p.concert?' · '+p.concert.substring(0,12):p.note?' · '+p.note.substring(0,15):'');
+      var lbl=(p.autoRef?'📢 ':(p.format==='story'?'📱 ':p.format==='tirage'?'🎲 ':'📄 '))+t.label+(p.concert?' · '+p.concert.substring(0,12):p.note?' · '+p.note.substring(0,15):'');
       chips+='<span class="rs-chip'+(p.ready?' ready':'')+(p.format==='story'?' story':'')+'">'+lbl+'</span>';
     });
 
@@ -1827,8 +1830,8 @@ function renderRS(){
       daysHtml+='<div class="rs-posts-list">';
       dayPosts.forEach(function(p){
         var t=RS_TYPES[p.type]||RS_TYPES.autre;
-        var fmtCls=p.format==='story'?'rs-fmt-story':'rs-fmt-post';
-        var fmtLbl=p.format==='story'?'Story':'Post';
+        var fmtCls=p.format==='story'?'rs-fmt-story':p.format==='tirage'?'rs-fmt-tirage':'rs-fmt-post';
+        var fmtLbl=p.format==='story'?'Story':p.format==='tirage'?'Tirage au sort':'Post';
         var isAuto=!!p.autoRef;
         daysHtml+='<div class="rs-post'+(p.status==='posted'?' ready':'')+(isAuto?' auto':'')+'">'
           +'<div class="rs-post-row1">'
@@ -1983,8 +1986,10 @@ function rsToggleFmt(fmt){
 function rsUpdateFmt(){
   var bp=document.getElementById('rs-fmt-post');
   var bs=document.getElementById('rs-fmt-story');
+  var bt=document.getElementById('rs-fmt-tirage');
   if(bp){bp.classList.toggle('on',rsFmt==='post');}
   if(bs){bs.classList.toggle('on',rsFmt==='story');}
+  if(bt){bt.classList.toggle('on',rsFmt==='tirage');}
 }
 
 function rsToggleNet(net){rsNetState[net]=!rsNetState[net];rsUpdateNets();}
