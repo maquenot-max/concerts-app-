@@ -516,7 +516,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
   <header>
     <h1 style="display:flex;align-items:center;gap:8px"><img src="favicon_io/favicon-32x32.png" style="width:20px;height:20px;border-radius:4px">Please Please Communication &mdash; Dashboard</h1>
     <nav class="nav" style="display:flex;gap:1px">
-      <button class="nav-rs-sep" onclick="showTab('rs',this)" style="padding:5px 14px;font-size:13px;border:1px solid var(--border);background:var(--surface);cursor:pointer;color:var(--text-2);border-radius:6px;font-weight:600;transition:all .15s;margin-right:16px;box-shadow:0 1px 3px rgba(0,0,0,.06)">📅 Plannings RS</button>
+      <button onclick="showTab('rs',this)" style="padding:5px 14px;font-size:13px;border:none;background:transparent;cursor:pointer;color:var(--text-2);border-radius:6px;font-weight:500;transition:all .15s;margin-right:12px;border-right:2px solid var(--border);padding-right:16px">Plannings RS</button>
       <button class="active" onclick="showTab('kanban',this)">Tableau de bord</button>
       <button onclick="showTab('concerts',this)">Concerts</button>
       <button onclick="showTab('taches',this)">Taches</button>
@@ -974,7 +974,10 @@ function toggleTask(cid,tid){
 }
 function annonceDone(cid){
   taskStates['annonce-'+cid]=true;
-  scheduleSave();renderAnnonces();renderConcerts();
+  // Marquer le post auto comme posté dans le planning RS
+  var autoPost=rsPosts.find(function(p){return p.autoRef===cid&&p.proj==='pp';});
+  if(autoPost&&autoPost.status!=='posted'){autoPost.status='posted';autoPost.ready=true;}
+  scheduleSave();renderAnnonces();renderConcerts();renderRS();
 }
 function annonceUndo(cid){
   delete taskStates['annonce-'+cid];
@@ -1655,18 +1658,36 @@ function renderRS(){
   var winStart=new Date(today);winStart.setDate(winStart.getDate()-rsWindowBefore);
   var winEnd=new Date(today);winEnd.setDate(winEnd.getDate()+rsWindowAfter);
 
-  // Annonces auto PP : sur toute la plage
-  var autoMap={};
+  // Annonces auto PP : créer/maintenir un post auto par concert PP non encore annoncé
   if(rsCurrentProj==='pp'){
     concerts.forEach(function(c){
-      if(!c.da||taskStates['annonce-'+c.id])return;
-      var da=new Date(c.da);da.setHours(0,0,0,0);
-      if(da>=winStart&&da<=winEnd){
-        var ds=c.da.substring(0,10);
-        if(!autoMap[ds])autoMap[ds]=[];
-        autoMap[ds].push(c);
+      if(!c.da)return; // pas de date d'annonce = pas de post auto
+      var ds=c.da.substring(0,10);
+      var existing=rsPosts.find(function(p){return p.autoRef===c.id&&p.proj==='pp';});
+      if(!existing){
+        // Créer le post auto
+        rsPosts.push({id:rsNewId(),proj:'pp',date:ds,type:'annonce',format:'post',
+          concert:c.art,note:'',legend:'',link:'',fb:false,insta:false,tiktok:false,
+          status:'',ready:false,autoRef:c.id});
+        scheduleSave();
+      } else {
+        // Mettre à jour la date si elle a changé
+        if(existing.date!==ds){existing.date=ds;scheduleSave();}
+        // Si l'annonce est cochée ET le post n'est pas encore "posté", le marquer posté
+        if(taskStates['annonce-'+c.id]&&existing.status!=='posted'){
+          existing.status='posted';existing.ready=true;scheduleSave();
+        }
       }
     });
+    // Nettoyer les posts auto des concerts supprimés
+    var toRemove=rsPosts.filter(function(p){
+      if(!p.autoRef||p.proj!=='pp')return false;
+      return !concerts.find(function(x){return x.id===p.autoRef;});
+    });
+    if(toRemove.length){
+      toRemove.forEach(function(p){rsPosts=rsPosts.filter(function(x){return x.id!==p.id;});});
+      scheduleSave();
+    }
   }
 
   // Générer les jours de la plage
@@ -1694,7 +1715,7 @@ function renderRS(){
       numStyle='color:#2563eb;font-size:16px;font-weight:800;';
       nameStyle='color:#2563eb;font-weight:700;';
     } else if(isPast){
-      var hasUnposted=dayPosts.some(function(p){return p.status!=='posted'&&p.status!=='';});
+      var hasUnposted=dayPosts.some(function(p){return p.status!=='posted';});
       headerStyle=hasUnposted?'opacity:.7;border-left:2px solid #f0a030;':'opacity:.38;';
     } else if(isWE){
       headerStyle='background:#fafaf8;';
