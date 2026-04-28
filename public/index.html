@@ -1846,6 +1846,29 @@ function rsSetupModal(){
   document.getElementById('rs-modal').addEventListener('click',function(e){if(e.target===this)rsCloseModal();});
 }
 
+function rsFillConcertSelect(sel, selectedVal){
+  var projs=[
+    {label:'● Please Please',val:'__pp__'},
+    {label:'● ANTDT',val:'__antdt__'},
+    {label:'● Golden Coast',val:'__gc__'},
+    {label:'● Saline Royale',val:'__sr__'}
+  ];
+  var html='<option value="">— Note libre —</option>';
+  // Groupes projets
+  projs.forEach(function(p){
+    html+='<option value="'+p.val+'">'+p.label+'</option>';
+  });
+  // Séparateur
+  html+='<option disabled>────────────</option>';
+  // Concerts sans doublons, triés par date
+  var seen={};
+  var sorted=concerts.slice().sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
+  sorted.forEach(function(c){
+    if(!seen[c.art]){seen[c.art]=1;html+='<option value="'+c.art+'">'+c.art+'</option>';}
+  });
+  sel.innerHTML=html;
+  sel.value=selectedVal||'';
+}
 function rsOpenModal(dateStr){
   rsCurrentDate=dateStr;rsEditId=null;
   document.getElementById('rs-modal-title').textContent='Ajouter un contenu — '+dateStr;
@@ -1858,9 +1881,7 @@ function rsOpenModal(dateStr){
   rsUpdateFmt();rsUpdateNets();
   // Concerts dans le select
   var sel=document.getElementById('rs-concert');
-  sel.innerHTML='<option value="">— Note libre —</option>';
-  concerts.forEach(function(c){sel.innerHTML+='<option value="'+c.art+'">'+c.art+'</option>';});
-  sel.value='';
+  rsFillConcertSelect(sel,'');
   document.getElementById('rs-modal').classList.add('open');
   setTimeout(function(){document.getElementById('rs-note').focus();},50);
 }
@@ -1877,9 +1898,7 @@ function rsEditPost(id){
   rsFmt=p.format||'post';rsNetState={fb:!!p.fb,insta:!!p.insta,tiktok:!!p.tiktok};
   rsUpdateFmt();rsUpdateNets();
   var sel=document.getElementById('rs-concert');
-  sel.innerHTML='<option value="">— Note libre —</option>';
-  concerts.forEach(function(c){sel.innerHTML+='<option value="'+c.art+'">'+c.art+'</option>';});
-  sel.value=p.concert||'';
+  rsFillConcertSelect(sel,p.concert||'');
   document.getElementById('rs-modal').classList.add('open');
 }
 
@@ -1935,8 +1954,7 @@ function rsEnrichAuto(dateStr,concertId,concertArt){
   rsFmt='post';rsNetState={fb:false,insta:false,tiktok:false};
   rsUpdateFmt();rsUpdateNets();
   var sel=document.getElementById('rs-concert');
-  sel.innerHTML='<option value="'+concertArt+'">'+concertArt+'</option>';
-  sel.value=concertArt;
+  rsFillConcertSelect(sel,concertArt);
   // Stocker la ref auto pour liaison
   document.getElementById('rs-modal-save').dataset.autoref=concertId;
   document.getElementById('rs-modal').classList.add('open');
