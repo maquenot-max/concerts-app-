@@ -548,7 +548,10 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
           <div id="tk-widget-wrap"></div>
         </div>
       </div>
-      <div id="next-concert-wrap"></div>
+      <div id="today-row-wrap" style="display:flex;gap:12px;margin-bottom:1.5rem;align-items:stretch">
+        <div id="next-concert-wrap" style="flex:1;min-width:0"></div>
+        <div id="today-rs-wrap" style="flex:2;min-width:0"></div>
+      </div>
       <div id="ventes-filter-wrap"></div>
       <div class="filters">
         <input type="text" id="search" placeholder="Rechercher un artiste..." oninput="renderKanban()">
@@ -1122,7 +1125,7 @@ function renderKanban(){
     if(new Date(c.dc)>=today)avenir++;
     process.forEach(function(t){if(taskStates[tk(c.id,t.id)])done++;else if(isUnlocked(c,t)&&isLate(calcDate(c,t)))late++;});
   });
-  // Bannière prochain concert
+  // Bannière prochain concert (1/3)
   var ncWrap=document.getElementById('next-concert-wrap');
   if(ncWrap){
     var nextC=concerts.filter(function(c){return c.dc&&new Date(c.dc)>=today;}).sort(function(a,b){return new Date(a.dc)-new Date(b.dc);})[0];
@@ -1132,16 +1135,55 @@ function renderKanban(){
       var ncFmt=ncDate.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
       var cntCls='ncb-countdown'+(ncDiff<=7?' verysoon':ncDiff<=30?' soon':'');
       var cntTxt=ncDiff===0?"Aujourd'hui !":ncDiff===1?'Demain !':'J - '+ncDiff;
-      ncWrap.innerHTML='<div class="next-concert-banner">'
+      ncWrap.innerHTML='<div class="next-concert-banner" style="height:100%;flex-direction:column;align-items:flex-start;gap:6px;padding:10px 16px">'
         +'<span class="ncb-label">Prochain concert</span>'
-        +'<div class="ncb-sep"></div>'
-        +'<span class="ncb-art">'+nextC.art+'</span>'
-        +(nextC.ville?'<div class="ncb-sep"></div><span class="ncb-info">'+formatLieu(nextC.ville)+'</span>':'')
-        +'<div class="ncb-sep"></div>'
+        +'<span class="ncb-art" style="font-size:14px">'+nextC.art+'</span>'
+        +(nextC.ville?'<span class="ncb-info">'+formatLieu(nextC.ville)+'</span>':'')
         +'<span class="ncb-info">'+ncFmt+'</span>'
-        +'<span class="'+cntCls+'">'+cntTxt+'</span>'
+        +'<span class="'+cntCls+'" style="margin-left:0;margin-top:auto">'+cntTxt+'</span>'
         +'</div>';
     } else { ncWrap.innerHTML=''; }
+  }
+  // Widget posts du jour (2/3)
+  var todayRsWrap=document.getElementById('today-rs-wrap');
+  if(todayRsWrap){
+    var todayStr=today.toISOString().slice(0,10);
+    var projects=[
+      {id:'pp',label:'Please Please'},
+      {id:'antdt',label:'ANTDT'}
+    ];
+    var cols=projects.map(function(proj){
+      var posts=rsPosts.filter(function(p){return p.proj===proj.id&&p.date===todayStr;});
+      var items=posts.length
+        ? posts.map(function(p){
+            var t=RS_TYPES[p.type]||RS_TYPES.autre;
+            var fmtCls=p.format==='story'?'rs-fmt-story':p.format==='tirage'?'rs-fmt-tirage':'rs-fmt-post';
+            var fmtLbl=p.format==='story'?'Story':p.format==='tirage'?'🎲':'Post';
+            var nets=['fb','insta','tiktok','linkedin'].filter(function(n){return p[n];})
+              .map(function(n){return '<span class="rs-net-badge '+n+'">'+n.charAt(0).toUpperCase()+n.slice(1)+'</span>';}).join('');
+            var readyCls=p.ready?(p.status==='posted'?' on posted':' on'):'';
+            return '<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;display:flex;flex-direction:column;gap:4px'+(p.ready?';border-left:3px solid #2d7a4f;background:#fafff9':'')+'">'
+              +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+              +'<span class="rs-post-format '+fmtCls+'">'+fmtLbl+'</span>'
+              +'<span class="rs-post-type rs-t-'+p.type+'" style="font-size:9px;font-weight:700;padding:1px 7px;border-radius:20px">'+t.label+'</span>'
+              +(p.concert?'<span style="font-size:11px;font-weight:600;color:var(--text)">'+p.concert.substring(0,18)+'</span>':p.note?'<span style="font-size:11px;color:var(--text-2)">'+p.note.substring(0,22)+'</span>':'')
+              +'</div>'
+              +(nets?'<div style="display:flex;gap:4px">'+nets+'</div>':'')
+              +'</div>';
+          }).join('')
+        : '<div style="font-size:11px;color:#ccc;font-style:italic;padding:4px 2px">Aucun contenu prévu</div>';
+      return '<div style="flex:1;min-width:0;border-right:1px solid var(--border-light);padding:10px 12px;display:flex;flex-direction:column;gap:6px;last-child:border-right:none">'
+        +'<div style="font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">'+proj.label+'</div>'
+        +items
+        +'</div>';
+    }).join('');
+    todayRsWrap.innerHTML='<div class="next-concert-banner" style="height:100%;flex-direction:column;gap:0;padding:0;overflow:hidden">'
+      +'<div style="padding:8px 14px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:8px">'
+      +'<span class="ncb-label">Posts du jour</span>'
+      +'<span style="font-size:10px;color:var(--text-3)">'+today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+'</span>'
+      +'</div>'
+      +'<div style="display:flex;flex:1;overflow:hidden">'+cols+'</div>'
+      +'</div>';
   }
   // Filtre ventes (init une seule fois)
   var vfWrap=document.getElementById('ventes-filter-wrap');
@@ -1816,10 +1858,7 @@ function renderRS(){
 
     daysHtml+='<div class="rs-day" id="rsday-wrap-'+dateStr+'">'
       +'<div class="rs-day-header'+(isWE&&!isToday?' weekend':'')+'" id="rsday-'+dateStr+'" style="'+headerStyle+'" onclick="'+rowClick+'">'
-      +'<span style="display:inline-flex;flex-direction:column;align-items:center;min-width:36px;line-height:1">'
-      +'<span class="rs-day-num" style="'+numStyle+'line-height:1;">'+dayNum+'</span>'
-      +'<span style="font-size:9px;color:'+(isToday?'#2563eb':(isPast?'#ccc':'var(--text-3)'))+';text-transform:uppercase;font-weight:700;letter-spacing:.03em;margin-top:1px;">'+monthName+'</span>'
-      +'</span>'
+      +'<span class="rs-day-num" style="'+numStyle+'">'+dayNum+' <span style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.01em;">'+monthName+'</span></span>'
       +'<span style="font-size:10px;min-width:36px;'+nameStyle+(isPast&&!isToday?'color:#ccc;':'')+(isWE&&!isToday&&!isPast?'color:var(--text-3);':'')+'">'+dayName+'</span>'
       +'<div class="rs-chips">'+chips+'</div>'
       +'<button class="rs-add-day-btn" onclick="event.stopPropagation();rsOpenModal(\''+dateStr+'\')">+ Ajouter</button>'
