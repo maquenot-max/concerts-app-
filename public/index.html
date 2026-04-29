@@ -548,10 +548,8 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
           <div id="tk-widget-wrap"></div>
         </div>
       </div>
-      <div style="display:flex;gap:12px;margin-bottom:1.5rem">
-        <div id="next-concert-wrap" style="flex:1;min-width:0"></div>
-        <div id="today-rs-wrap" style="flex:2;min-width:0"></div>
-      </div>
+      <div id="next-concert-wrap" style="margin-bottom:8px"></div>
+      <div id="today-rs-wrap" style="margin-bottom:1.5rem"></div>
       <div id="ventes-filter-wrap"></div>
       <div class="filters">
         <input type="text" id="search" placeholder="Rechercher un artiste..." oninput="renderKanban()">
@@ -641,6 +639,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
     </div>
     <div class="fiche-footer">
       <button class="reset-btn" onclick="resetFicheTasks()">&#8635; Reinit. taches</button>
+      <button class="btn" onclick="openBudgetModal()" style="background:#e8f5ee;color:#1a7a4f;border:1px solid #b8e0ca;font-weight:600">📊 Budget Promo</button>
       <button class="btn btn-primary" onclick="closeFicheBtn()">Fermer</button>
       <button class="btn btn-danger" onclick="deleteFicheConcert()">Supprimer</button>
     </div>
@@ -2104,6 +2103,594 @@ function rsDelPost(id){
 }
 function render(){renderKanban();renderConcerts();renderProcess();renderTaches();renderTkWidget();renderRS();}
 init();
+</script>
+<!-- ── MODAL BUDGET PROMO ───────────────────────────────── -->
+<div id="budget-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center">
+  <div id="budget-box" style="background:var(--surface);border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.18);width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;padding:0">
+    <!-- Header -->
+    <div style="padding:18px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text)">📊 Créer le budget promo</div>
+        <div id="budget-subtitle" style="font-size:11px;color:var(--text-3);margin-top:2px"></div>
+      </div>
+      <button onclick="closeBudgetModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-3)">✕</button>
+    </div>
+    <!-- Connexion Google -->
+    <div id="budget-auth-section" style="padding:16px 24px;border-bottom:1px solid var(--border-light)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="budget-auth-status" style="width:8px;height:8px;border-radius:50%;background:#ccc;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div id="budget-auth-label" style="font-size:12px;font-weight:600;color:var(--text)">Non connecté à Google</div>
+          <div id="budget-auth-sub" style="font-size:10px;color:var(--text-3)">Nécessaire pour créer le Sheet dans ton Drive</div>
+        </div>
+        <button id="budget-auth-btn" onclick="budgetGoogleAuth()" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-size:11px;font-weight:600;cursor:pointer;color:var(--text)">Se connecter</button>
+      </div>
+      <div id="budget-client-id-wrap" style="margin-top:10px;display:none">
+        <label style="font-size:10px;color:var(--text-3);display:block;margin-bottom:4px">CLIENT ID GOOGLE OAUTH 2.0</label>
+        <div style="display:flex;gap:6px">
+          <input id="budget-client-id" type="text" placeholder="xxxx.apps.googleusercontent.com" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:monospace;background:var(--bg)">
+          <button onclick="budgetSaveClientId()" style="padding:6px 12px;border-radius:6px;border:none;background:#1a7a4f;color:#fff;font-size:11px;font-weight:600;cursor:pointer">OK</button>
+        </div>
+        <div style="font-size:9px;color:var(--text-3);margin-top:4px">
+          <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#1a7a4f">Google Cloud Console</a> → Créer des identifiants → ID client OAuth → Application Web → Ajouter <code>http://localhost</code> (ou ton domaine) aux origines autorisées
+        </div>
+      </div>
+    </div>
+    <!-- Formulaire -->
+    <div style="padding:16px 24px">
+      <!-- Infos pré-remplies -->
+      <div style="background:var(--bg);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--text-2)">
+        <div style="font-weight:700;color:var(--text);margin-bottom:6px;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Infos depuis la fiche</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+          <div>🎤 <span id="bud-info-art" style="font-weight:600;color:var(--text)"></span></div>
+          <div>📍 <span id="bud-info-ville"></span></div>
+          <div>📅 <span id="bud-info-date"></span></div>
+          <div id="bud-info-flags" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+        </div>
+      </div>
+      <!-- Budget alloué -->
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;font-weight:700;color:var(--text);display:block;margin-bottom:6px">Budget alloué (€ HT) <span style="color:#e53">*</span></label>
+        <div style="display:flex;gap:8px">
+          <input id="bud-montant" type="number" min="0" step="100" placeholder="ex: 3000" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;background:var(--bg)">
+        </div>
+        <div id="bud-template-hint" style="margin-top:6px;font-size:10px;padding:5px 10px;border-radius:6px;display:none"></div>
+      </div>
+      <!-- Style musical -->
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;font-weight:700;color:var(--text);display:block;margin-bottom:6px">Style musical</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="bud-style-btns">
+          <button class="bud-style-btn" data-style="pop" onclick="budSelectStyle(this)">🎤 Pop / Variété</button>
+          <button class="bud-style-btn" data-style="electro" onclick="budSelectStyle(this)">🎧 Électro / Dance</button>
+          <button class="bud-style-btn" data-style="rap" onclick="budSelectStyle(this)">🎤 Rap / Hip-hop</button>
+          <button class="bud-style-btn" data-style="rock" onclick="budSelectStyle(this)">🎸 Rock / Metal</button>
+          <button class="bud-style-btn" data-style="jazz" onclick="budSelectStyle(this)">🎷 Jazz / Classique</button>
+          <button class="bud-style-btn" data-style="autre" onclick="budSelectStyle(this)">🎵 Autre</button>
+        </div>
+      </div>
+      <!-- Aperçu template -->
+      <div id="bud-template-preview" style="display:none;margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <div style="padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3)">Lignes pré-remplies selon le template</div>
+        <div id="bud-template-lines" style="padding:10px 12px;display:flex;flex-direction:column;gap:3px;font-size:11px"></div>
+      </div>
+      <!-- Jauge & billetterie -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+        <div>
+          <label style="font-size:10px;font-weight:700;color:var(--text-3);display:block;margin-bottom:4px;text-transform:uppercase">Jauge</label>
+          <input id="bud-jauge" type="number" placeholder="ex: 2712" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg);box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:10px;font-weight:700;color:var(--text-3);display:block;margin-bottom:4px;text-transform:uppercase">Mise en vente</label>
+          <input id="bud-mev" type="date" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;background:var(--bg);box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:10px;font-weight:700;color:var(--text-3);display:block;margin-bottom:4px;text-transform:uppercase">Vendu à ce jour</label>
+          <input id="bud-vendu" type="number" placeholder="ex: 858" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg);box-sizing:border-box">
+        </div>
+      </div>
+    </div>
+    <!-- Footer -->
+    <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;align-items:center">
+      <div id="budget-status-msg" style="flex:1;font-size:11px;color:var(--text-3)"></div>
+      <button onclick="closeBudgetModal()" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:12px;cursor:pointer">Annuler</button>
+      <button id="budget-create-btn" onclick="budgetCreateSheet()" style="padding:8px 18px;border-radius:8px;border:none;background:#1a7a4f;color:#fff;font-size:12px;font-weight:700;cursor:pointer;opacity:.5" disabled>Créer le Google Sheet</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.bud-style-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:11px;cursor:pointer;transition:all .15s;color:var(--text-2)}
+.bud-style-btn.active{background:#e8f5ee;border-color:#80d0a0;color:#1a7a4f;font-weight:700}
+</style>
+
+<script>
+// ── BUDGET PROMO — GOOGLE SHEETS ─────────────────────────
+
+var BUDGET_CLIENT_ID = localStorage.getItem('budget_goog_client_id') || '';
+var budgetGToken = null;
+var budSelectedStyle = null;
+
+// Templates selon budget + style + salle
+var BUDGET_TEMPLATES = {
+  small: { // < 1500€
+    label: 'Template Petit budget (< 1 500€)',
+    color: '#93c47d',
+    lines: {
+      street: [
+        {nom:'Collage petites affiches (60x40)', qte:100, pu:1.0},
+        {nom:'Impression et diffusion flyers', qte:'10 000', pu:'', total:150}
+      ],
+      espaces: [],
+      digital: [
+        {nom:'Sponsorisation Instagram / Facebook vague 1', total:100},
+        {nom:'Sponsorisation Instagram / Facebook vague 2', total:100},
+        {nom:'Newsletter Please Please mensuelle'},
+        {nom:'Intégration agenda culturels'},
+        {nom:'Post/Stories réseaux sociaux Please Please'}
+      ],
+      radio: [
+        {nom:'Jeu concours presse locale', type:'2x2 places'}
+      ]
+    }
+  },
+  standard: { // 1500–4000€
+    label: 'Template Standard (1 500–4 000€)',
+    color: '#6fa8dc',
+    lines: {
+      street: [
+        {nom:'Collage grandes affiches (80x120)', qte:300, pu:1.1},
+        {nom:'Collage petites affiches (60x40)', qte:200, pu:1.0},
+        {nom:'Impression de bandeaux', qte:400, pu:0.3},
+        {nom:'Forfait impression et diffusion flyers', qte:'50 000', total:200}
+      ],
+      espaces: [
+        {nom:'Campagne DOOH', presta:'JC Decaux', total:1400}
+      ],
+      digital: [
+        {nom:'Sponsorisation Instagram / Facebook vague 1', total:200},
+        {nom:'Sponsorisation Instagram / Facebook vague 2', total:200},
+        {nom:'Sponsorisation Instagram / Facebook vague 3', total:200},
+        {nom:'Newsletter Please Please mensuelle'},
+        {nom:'Intégration agenda culturels'},
+        {nom:'Post/Stories réseaux sociaux Please Please'}
+      ],
+      radio: [
+        {nom:'Jeu concours Bien Public', type:'2x2 places'},
+        {nom:'OP Speak + Spot radio locale', type:'5x2 places'},
+        {nom:'Jeu concours web local', type:'1x2 places'}
+      ]
+    }
+  },
+  large: { // > 4000€
+    label: 'Template Grand budget (> 4 000€)',
+    color: '#e06666',
+    lines: {
+      street: [
+        {nom:'Collage grandes affiches (80x120)', qte:500, pu:1.1},
+        {nom:'Collage petites affiches (60x40)', qte:300, pu:1.0},
+        {nom:'Impression de bandeaux', qte:600, pu:0.3},
+        {nom:'Forfait impression et diffusion flyers', qte:'80 000', total:300},
+        {nom:'Pose d\'affiches 4x3', qte:10, pu:80}
+      ],
+      espaces: [
+        {nom:'Campagne DOOH', presta:'JC Decaux', total:2000},
+        {nom:'Encart presse', presta:'Bien Public', total:500}
+      ],
+      digital: [
+        {nom:'Sponsorisation Instagram / Facebook vague 1', total:300},
+        {nom:'Sponsorisation Instagram / Facebook vague 2', total:300},
+        {nom:'Sponsorisation Instagram / Facebook vague 3', total:300},
+        {nom:'Sponsorisation TikTok', total:200},
+        {nom:'Newsletter Please Please mensuelle'},
+        {nom:'Intégration agenda culturels'},
+        {nom:'Post/Stories réseaux sociaux Please Please'},
+        {nom:'Partenariat influenceur(s)', total:500}
+      ],
+      radio: [
+        {nom:'Jeu concours Bien Public', type:'2x2 places'},
+        {nom:'OP Speak + Spot Cherie FM', type:'5x2 places'},
+        {nom:'OP Speak + Spot K6FM', type:'5x2 places'},
+        {nom:'OP Speak + Spot Ici Bourgogne', type:'5x2 places'},
+        {nom:'OP McDonald\'s', type:'2x2 places'},
+        {nom:'Jeu concours J\'aime Dijon', type:'1x2 places'}
+      ]
+    }
+  }
+};
+
+// Ajustements par style musical
+var STYLE_ADJUSTMENTS = {
+  electro: {addDigital:[{nom:'Campagne TikTok Ads vague 1', total:200},{nom:'Campagne TikTok Ads vague 2', total:200}], removeRadio:true},
+  rap:     {addDigital:[{nom:'Sponsorisation TikTok supplémentaire', total:150}]},
+  jazz:    {addRadio:[{nom:'Émission culturelle radio', type:'Interview'}], removeDooh:true},
+  rock:    {addStreet:[{nom:'Affichage sauvage / stickers', qte:500, pu:0.1}]},
+  pop:     {},
+  autre:   {}
+};
+
+function getBudgetTemplate(montant, style) {
+  var tpl = montant < 1500 ? 'small' : montant <= 4000 ? 'standard' : 'large';
+  var t = JSON.parse(JSON.stringify(BUDGET_TEMPLATES[tpl]));
+  var adj = STYLE_ADJUSTMENTS[style] || {};
+  if (adj.addDigital) t.lines.digital = t.lines.digital.concat(adj.addDigital);
+  if (adj.addRadio) t.lines.radio = t.lines.radio.concat(adj.addRadio);
+  if (adj.addStreet) t.lines.street = t.lines.street.concat(adj.addStreet);
+  if (adj.removeDooh) t.lines.espaces = t.lines.espaces.filter(function(l){return !l.presta||l.presta.indexOf('Decaux')<0;});
+  return t;
+}
+
+function openBudgetModal() {
+  if (!currentFicheId) return;
+  var c = concerts.find(function(x){return x.id===currentFicheId;});
+  if (!c) return;
+
+  // Remplir les infos fiche
+  document.getElementById('bud-info-art').textContent = c.art || '—';
+  document.getElementById('bud-info-ville').textContent = c.ville || '—';
+  document.getElementById('bud-info-date').textContent = c.dc ? new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : '—';
+  var flags = document.getElementById('bud-info-flags');
+  flags.innerHTML = '';
+  if (taskStates['skip-'+c.id+'-sp']) flags.innerHTML += '<span style="background:#fff0e8;color:#b05020;border:1px solid #f0a070;border-radius:20px;padding:1px 7px;font-size:9px;font-weight:700">Sponso prod</span>';
+  if (taskStates['skip-'+c.id+'-col']) flags.innerHTML += '<span style="background:#f5f5f5;color:#888;border:1px solid #ddd;border-radius:20px;padding:1px 7px;font-size:9px;font-weight:700">Pas d\'affiche</span>';
+
+  document.getElementById('budget-subtitle').textContent = c.art + (c.ville ? ' · ' + c.ville : '') + (c.dc ? ' · ' + new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) : '');
+  document.getElementById('bud-montant').value = '';
+  document.getElementById('bud-jauge').value = '';
+  document.getElementById('bud-mev').value = '';
+  document.getElementById('bud-vendu').value = '';
+  document.getElementById('bud-template-preview').style.display = 'none';
+  document.getElementById('bud-template-hint').style.display = 'none';
+  document.getElementById('budget-status-msg').textContent = '';
+  budSelectedStyle = null;
+  document.querySelectorAll('.bud-style-btn').forEach(function(b){b.classList.remove('active');});
+
+  // Auth state
+  updateBudgetAuthUI();
+
+  document.getElementById('budget-overlay').style.display = 'flex';
+}
+
+function closeBudgetModal() {
+  document.getElementById('budget-overlay').style.display = 'none';
+}
+
+function budSelectStyle(btn) {
+  document.querySelectorAll('.bud-style-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  budSelectedStyle = btn.dataset.style;
+  budUpdatePreview();
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  var inp = document.getElementById('bud-montant');
+  if (inp) inp.addEventListener('input', budUpdatePreview);
+});
+
+function budUpdatePreview() {
+  var montant = parseFloat(document.getElementById('bud-montant').value) || 0;
+  var hint = document.getElementById('bud-template-hint');
+  var preview = document.getElementById('bud-template-preview');
+  var createBtn = document.getElementById('budget-create-btn');
+
+  if (!montant) { hint.style.display='none'; preview.style.display='none'; createBtn.disabled=true; createBtn.style.opacity='.5'; return; }
+
+  var tplKey = montant < 1500 ? 'small' : montant <= 4000 ? 'standard' : 'large';
+  var tplInfo = BUDGET_TEMPLATES[tplKey];
+  hint.style.display = 'block';
+  hint.style.background = tplKey==='small'?'#e8f5e9':tplKey==='standard'?'#e8f0ff':'#fff0f0';
+  hint.style.color = tplKey==='small'?'#2e7d32':tplKey==='standard'?'#3050b0':'#c62828';
+  hint.textContent = tplInfo.label;
+
+  if (!budSelectedStyle) { preview.style.display='none'; createBtn.disabled=true; createBtn.style.opacity='.5'; return; }
+
+  var tpl = getBudgetTemplate(montant, budSelectedStyle);
+  var lines = document.getElementById('bud-template-lines');
+  var sections = [{key:'street',label:'Street Marketing'},{key:'espaces',label:"Achat d'espaces"},{key:'digital',label:'Digital'},{key:'radio',label:'Radio / TV / Presse'}];
+  var html = '';
+  sections.forEach(function(s){
+    var rows = tpl.lines[s.key];
+    if (!rows || !rows.length) return;
+    html += '<div style="font-weight:700;color:var(--text-3);font-size:9px;text-transform:uppercase;letter-spacing:.05em;margin-top:6px;margin-bottom:2px">'+s.label+'</div>';
+    rows.forEach(function(r){
+      var price = r.total ? r.total+'€' : (r.qte && r.pu ? (r.qte*r.pu).toFixed(0)+'€' : '—');
+      html += '<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border-light)">'
+        +'<span style="color:var(--text-2)">'+r.nom+'</span>'
+        +'<span style="font-weight:600;color:var(--text);min-width:40px;text-align:right">'+price+'</span></div>';
+    });
+  });
+  lines.innerHTML = html;
+  preview.style.display = 'block';
+  createBtn.disabled = false;
+  createBtn.style.opacity = '1';
+}
+
+// ── GOOGLE AUTH ───────────────────────────────────────────
+
+function updateBudgetAuthUI() {
+  var status = document.getElementById('budget-auth-status');
+  var label = document.getElementById('budget-auth-label');
+  var sub = document.getElementById('budget-auth-sub');
+  var btn = document.getElementById('budget-auth-btn');
+  var cidWrap = document.getElementById('budget-client-id-wrap');
+
+  if (budgetGToken) {
+    status.style.background = '#34a853';
+    label.textContent = 'Connecté à Google ✓';
+    sub.textContent = 'Prêt à créer le Sheet dans ton Drive';
+    btn.textContent = 'Déconnecter';
+    btn.onclick = function(){ budgetGToken=null; updateBudgetAuthUI(); };
+    cidWrap.style.display = 'none';
+  } else if (BUDGET_CLIENT_ID) {
+    status.style.background = '#fbbc04';
+    label.textContent = 'Client ID configuré';
+    sub.textContent = 'Clique sur "Se connecter" pour autoriser l\'accès';
+    btn.textContent = 'Se connecter';
+    btn.onclick = budgetGoogleAuth;
+    cidWrap.style.display = 'none';
+  } else {
+    status.style.background = '#ea4335';
+    label.textContent = 'Client ID manquant';
+    sub.textContent = 'Saisis ton Client ID Google OAuth pour continuer';
+    btn.textContent = 'Configurer';
+    btn.onclick = function(){ cidWrap.style.display = cidWrap.style.display==='none'?'block':'none'; };
+    cidWrap.style.display = 'block';
+  }
+}
+
+function budgetSaveClientId() {
+  var val = document.getElementById('budget-client-id').value.trim();
+  if (!val) return;
+  BUDGET_CLIENT_ID = val;
+  localStorage.setItem('budget_goog_client_id', val);
+  updateBudgetAuthUI();
+}
+
+function budgetGoogleAuth() {
+  if (!BUDGET_CLIENT_ID) { alert('Configure d\'abord ton Client ID Google.'); return; }
+  var redirect = window.location.origin + window.location.pathname;
+  var scope = encodeURIComponent('https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file');
+  var url = 'https://accounts.google.com/o/oauth2/v2/auth'
+    + '?client_id=' + encodeURIComponent(BUDGET_CLIENT_ID)
+    + '&redirect_uri=' + encodeURIComponent(redirect)
+    + '&response_type=token'
+    + '&scope=' + scope;
+  var popup = window.open(url, 'google_auth', 'width=500,height=600');
+  var timer = setInterval(function(){
+    try {
+      if (!popup || popup.closed) { clearInterval(timer); return; }
+      var hash = popup.location.hash;
+      if (hash && hash.indexOf('access_token') >= 0) {
+        var params = {};
+        hash.substring(1).split('&').forEach(function(p){ var kv=p.split('='); params[kv[0]]=decodeURIComponent(kv[1]||''); });
+        if (params.access_token) {
+          budgetGToken = params.access_token;
+          popup.close();
+          clearInterval(timer);
+          updateBudgetAuthUI();
+          document.getElementById('budget-status-msg').textContent = '✓ Connecté avec succès';
+        }
+      }
+    } catch(e) {}
+  }, 500);
+}
+
+// ── CRÉATION DU GOOGLE SHEET ──────────────────────────────
+
+function budgetCreateSheet() {
+  if (!budgetGToken) { alert('Connecte-toi à Google d\'abord.'); return; }
+  var montant = parseFloat(document.getElementById('bud-montant').value);
+  if (!montant || !budSelectedStyle) { alert('Remplis le budget et le style musical.'); return; }
+
+  var c = concerts.find(function(x){return x.id===currentFicheId;});
+  if (!c) return;
+
+  var btn = document.getElementById('budget-create-btn');
+  btn.disabled = true; btn.textContent = '⏳ Création...';
+  document.getElementById('budget-status-msg').textContent = 'Création du Google Sheet en cours...';
+
+  var tpl = getBudgetTemplate(montant, budSelectedStyle);
+  var skipSp = !!taskStates['skip-'+c.id+'-sp'];
+  var skipCol = !!taskStates['skip-'+c.id+'-col'];
+  var jauge = document.getElementById('bud-jauge').value || '';
+  var mev = document.getElementById('bud-mev').value || '';
+  var vendu = document.getElementById('bud-vendu').value || '';
+
+  var dcDate = c.dc ? new Date(c.dc) : null;
+  var dateStr = dcDate ? dcDate.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+  var dcISO = dcDate ? dcDate.toISOString().slice(0,10).replace(/-/g,'') : '';
+  var artSlug = (c.art||'ARTISTE').toUpperCase().replace(/[^A-Z0-9]/g,'_');
+  var villeSlug = c.ville ? c.ville.split('/')[0].trim().toUpperCase().replace(/[^A-Z0-9]/g,'_') : 'LIEU';
+  var sheetTitle = dcISO + '_' + artSlug + '_' + villeSlug + '__BUDGET_PROMO';
+
+  // Construire les données du sheet
+  var rows = buildSheetData(c, tpl, montant, jauge, mev, vendu, dateStr, skipSp, skipCol);
+
+  // 1) Créer le spreadsheet
+  fetch('https://sheets.googleapis.com/v4/spreadsheets', {
+    method: 'POST',
+    headers: {'Authorization':'Bearer '+budgetGToken,'Content-Type':'application/json'},
+    body: JSON.stringify({
+      properties: {title: sheetTitle},
+      sheets: [{properties: {title: 'PREV', gridProperties: {rowCount: 120, columnCount: 9}}}]
+    })
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if (!data.spreadsheetId) throw new Error(JSON.stringify(data));
+    var sid = data.spreadsheetId;
+    var sheetId = data.sheets[0].properties.sheetId;
+
+    // 2) Écrire les données
+    return fetch('https://sheets.googleapis.com/v4/spreadsheets/'+sid+'/values/PREV!A1:I120?valueInputOption=USER_ENTERED', {
+      method: 'PUT',
+      headers: {'Authorization':'Bearer '+budgetGToken,'Content-Type':'application/json'},
+      body: JSON.stringify({range:'PREV!A1:I120', majorDimension:'ROWS', values: rows.values})
+    })
+    .then(function(){
+      // 3) Appliquer le formatage
+      return applySheetFormatting(sid, sheetId, rows, montant);
+    })
+    .then(function(){
+      var url = 'https://docs.google.com/spreadsheets/d/'+sid+'/edit';
+      // Sauvegarder le lien dans la fiche
+      c.budget = url;
+      scheduleSave();
+      if (document.getElementById('fi-budget')) document.getElementById('fi-budget').value = url;
+      renderConcerts();
+
+      document.getElementById('budget-status-msg').innerHTML = '✅ Sheet créé ! <a href="'+url+'" target="_blank" style="color:#1a7a4f;font-weight:700">Ouvrir dans Google Sheets ↗</a>';
+      btn.textContent = 'Créer le Google Sheet';
+      btn.disabled = false;
+    });
+  })
+  .catch(function(err){
+    console.error(err);
+    document.getElementById('budget-status-msg').textContent = '❌ Erreur : ' + (err.message||err);
+    btn.textContent = 'Créer le Google Sheet';
+    btn.disabled = false;
+  });
+}
+
+function buildSheetData(c, tpl, montant, jauge, mev, vendu, dateStr, skipSp, skipCol) {
+  var values = [];
+  var merges = [];
+  var formats = [];
+
+  // Ligne 1–2 : en-tête artiste / salle / date
+  var artiste = c.art || '';
+  var salle = c.ville || '';
+  values.push(['','','',artiste,'','','','','']);
+  values.push(['','','',salle,'','','','','']);
+  values.push(['','','',dateStr,'','','','','']);
+  values.push(['','','','Promotion Locale','','','','','']);
+  values.push([]);
+
+  // Ligne 6 : récap
+  var streetRows = tpl.lines.street || [];
+  var espaceRows = tpl.lines.espaces || [];
+  var digitalRows = tpl.lines.digital || [];
+  var radioRows = tpl.lines.radio || [];
+
+  // On calculera les rows de chaque section dynamiquement
+  var streetStart = 13; // row index (1-based) de la 1ère ligne street
+  var streetCount = Math.max(streetRows.length, 10);
+  var streetEnd = streetStart + streetCount - 1;
+  var streetTotal = streetStart + streetCount; // ligne total street
+
+  var espaceStart = streetTotal + 3;
+  var espaceCount = Math.max(espaceRows.length, 10);
+  var espaceEnd = espaceStart + espaceCount - 1;
+  var espaceTotal = espaceStart + espaceCount;
+
+  var digitalStart = espaceTotal + 3;
+  var digitalCount = Math.max(digitalRows.length, 10);
+  var digitalEnd = digitalStart + digitalCount - 1;
+  var digitalTotal = digitalStart + digitalCount;
+
+  values.push(['Récap budget promo','','','INFORMATIONS GLOBALES','','','','Kit Promo','']);
+  values.push(['Budget alloué', montant, '', 'Mise en vente', '', mev||'', 'Kit Promo','','']);
+  values.push(['Dépenses prévisionnelles','=F'+streetTotal+'+F'+espaceTotal+'+F'+digitalTotal,'','Jauge','',jauge||'','Break','0','']);
+  values.push(['Dépenses engagées','','','Vendu à ce jour','=TODAY()',vendu||'','Reste à vendre','=F8-F9','']);
+  values.push([]);
+
+  // Section STREET MARKETING
+  values.push(['STREET MARKETING','','','','','','','','']);
+  values.push(['Désignation','Prestataire','Quantité','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']);
+
+  streetRows.forEach(function(r){
+    var formula = r.total ? r.total : (r.qte && r.pu ? '=C'+( values.length+1)+'*D'+(values.length+1) : '');
+    values.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', r.total||formula, '', 'Engagé', '']);
+  });
+  // Lignes vides jusqu'à streetCount
+  while (values.length < streetStart + streetCount - 1) values.push(['','','','','','','','','']);
+  values.push(['','','','=SUM(E'+streetStart+':E'+streetEnd+')','','=SUM(F'+streetStart+':F'+streetEnd+')','','','']);
+  values.push([]);
+
+  // Section ACHAT D'ESPACES
+  values.push(["ACHAT D'ESPACES",'','','','','','','','']);
+  values.push(['Désignation','Prestataire','Quantité','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']);
+  espaceRows.forEach(function(r){ values.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', r.total||'', '', 'Engagé', '']); });
+  while (values.length < espaceStart + espaceCount - 1) values.push(['','','','','','','','','']);
+  values.push(['','','','=SUM(E'+espaceStart+':E'+espaceEnd+')','','=SUM(F'+espaceStart+':F'+espaceEnd+')','','','']);
+  values.push([]);
+
+  // Section DIGITAL
+  values.push(['DIGITAL','','','','','','','','']);
+  values.push(['Désignation','Prestataire','Quantité','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']);
+  digitalRows.forEach(function(r){ values.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', r.total||'', '', 'Engagé', '']); });
+  while (values.length < digitalStart + digitalCount - 1) values.push(['','','','','','','','','']);
+  values.push(['','','','=SUM(E'+digitalStart+':E'+digitalEnd+')','','=SUM(F'+digitalStart+':F'+digitalEnd+')','','','']);
+  values.push([]);
+
+  // Section RADIO / TV / PRESSE
+  var radioHeaderRow = values.length + 1;
+  values.push(['OPERATIONS RADIO / TV / PRESSE','','','','','','','','']);
+  values.push(['Désignation','Prestataire','Type','','','','Commentaire','Statut','']);
+  radioRows.forEach(function(r){ values.push([r.nom, r.presta||'', r.type||'', '', '', '', '', 'Engagé', '']); });
+
+  return {values: values, streetStart: streetStart, streetTotal: streetTotal, espaceStart: espaceStart, espaceTotal: espaceTotal, digitalStart: digitalStart, digitalTotal: digitalTotal, radioHeaderRow: radioHeaderRow};
+}
+
+function applySheetFormatting(sid, sheetId, rows, montant) {
+  var blue   = {red:0.435, green:0.647, blue:0.859};
+  var blueHd = {red:0.624, green:0.773, blue:0.91};
+  var pink   = {red:0.835, green:0.651, blue:0.741};
+  var white  = {red:1,     green:1,     blue:1};
+  var darkTxt= {red:0,     green:0,     blue:0};
+  var boldFont = {bold:true, fontSize:10, fontFamily:'Arial'};
+  var normalFont = {fontSize:10, fontFamily:'Arial'};
+
+  function cellFmt(r1,c1,r2,c2,bg,font,halign){
+    var f = {ranges:[{sheetId:sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2}],
+      fields:'userEnteredFormat.backgroundColor,userEnteredFormat.textFormat,userEnteredFormat.horizontalAlignment',
+      userEnteredFormat:{backgroundColor:bg, textFormat:font||normalFont, horizontalAlignment:halign||'LEFT'}};
+    return {repeatCell:f};
+  }
+
+  var sectionRows = [
+    rows.streetStart - 2, rows.espaceStart - 2,
+    rows.digitalStart - 2, rows.radioHeaderRow - 1
+  ];
+
+  var requests = [];
+
+  // Entêtes artiste bold
+  requests.push(cellFmt(0,3,4,8,{red:1,green:1,blue:1},{bold:true,fontSize:12,fontFamily:'Arial'}));
+
+  // Récap header
+  requests.push(cellFmt(5,0,6,2,blue,boldFont));
+  requests.push(cellFmt(5,3,6,8,pink,boldFont));
+
+  // Sections header (bleu clair)
+  sectionRows.forEach(function(r){
+    requests.push(cellFmt(r,0,r+1,8,blueHd,boldFont));
+  });
+
+  // Sous-entêtes colonnes
+  [rows.streetStart-2, rows.espaceStart-2, rows.digitalStart-2, rows.radioHeaderRow-1].forEach(function(r){
+    requests.push(cellFmt(r+1,0,r+2,8,{red:1,green:1,blue:1},boldFont));
+  });
+
+  // Lignes total (fond bleu pâle)
+  [rows.streetTotal-1, rows.espaceTotal-1, rows.digitalTotal-1].forEach(function(r){
+    requests.push(cellFmt(r,0,r+1,8,{red:0.812,green:0.886,blue:0.953},normalFont));
+  });
+
+  // Largeurs colonnes
+  var colWidths = [280, 150, 120, 120, 40, 100, 140, 100, 60];
+  colWidths.forEach(function(w,i){
+    requests.push({updateDimensionProperties:{range:{sheetId:sheetId,dimension:'COLUMNS',startIndex:i,endIndex:i+1},properties:{pixelSize:w},fields:'pixelSize'}});
+  });
+
+  // Freeze ligne 1
+  requests.push({updateSheetProperties:{properties:{sheetId:sheetId,gridProperties:{frozenRowCount:1}},fields:'gridProperties.frozenRowCount'}});
+
+  return fetch('https://sheets.googleapis.com/v4/spreadsheets/'+sid+':batchUpdate', {
+    method: 'POST',
+    headers: {'Authorization':'Bearer '+budgetGToken,'Content-Type':'application/json'},
+    body: JSON.stringify({requests: requests})
+  }).then(function(r){return r.json();});
+}
 </script>
 </body>
 </html>
