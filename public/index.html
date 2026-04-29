@@ -2528,7 +2528,7 @@ function budgetCreateSheet() {
     })
     .then(function(){
       // 3) Appliquer le formatage
-      return applySheetFormatting(sid, sheetId, rows, montant);
+      return applySheetFormatting(sid, sheetId, rows);
     })
     .then(function(){
       var url = 'https://docs.google.com/spreadsheets/d/'+sid+'/edit';
@@ -2552,138 +2552,251 @@ function budgetCreateSheet() {
 }
 
 function buildSheetData(c, tpl, montant, jauge, mev, vendu, dateStr, skipSp, skipCol) {
-  var values = [];
-  var merges = [];
-  var formats = [];
+  // Structure FIXE identique au modèle original :
+  // Lignes 1-4  : en-tête artiste/salle/date/type
+  // Ligne 5     : vide
+  // Lignes 6-9  : récap budget + infos globales
+  // Ligne 10    : vide
+  // Ligne 11    : STREET MARKETING (titre section)
+  // Ligne 12    : en-têtes colonnes
+  // Lignes 13-22: 10 lignes de données street
+  // Ligne 23    : total street
+  // Ligne 24    : vide
+  // Ligne 25    : ACHAT D'ESPACES
+  // Ligne 26    : en-têtes
+  // Lignes 27-36: 10 lignes espaces
+  // Ligne 37    : total espaces
+  // Ligne 38    : vide
+  // Ligne 39    : DIGITAL
+  // Ligne 40    : en-têtes
+  // Lignes 41-50: 10 lignes digital
+  // Ligne 51    : total digital
+  // Ligne 52    : vide
+  // Ligne 53    : OPERATIONS RADIO / TV / PRESSE
+  // Ligne 54    : en-têtes
+  // Lignes 55-64: 10 lignes radio
 
-  // Ligne 1–2 : en-tête artiste / salle / date
-  var artiste = c.art || '';
-  var salle = c.ville || '';
-  values.push(['','','',artiste,'','','','','']);
-  values.push(['','','',salle,'','','','','']);
-  values.push(['','','',dateStr,'','','','','']);
-  values.push(['','','','Promotion Locale','','','','','']);
-  values.push([]);
-
-  // Ligne 6 : récap
   var streetRows = tpl.lines.street || [];
   var espaceRows = tpl.lines.espaces || [];
   var digitalRows = tpl.lines.digital || [];
   var radioRows = tpl.lines.radio || [];
 
-  // On calculera les rows de chaque section dynamiquement
-  var streetStart = 13; // row index (1-based) de la 1ère ligne street
-  var streetCount = Math.max(streetRows.length, 10);
-  var streetEnd = streetStart + streetCount - 1;
-  var streetTotal = streetStart + streetCount; // ligne total street
-
-  var espaceStart = streetTotal + 3;
-  var espaceCount = Math.max(espaceRows.length, 10);
-  var espaceEnd = espaceStart + espaceCount - 1;
-  var espaceTotal = espaceStart + espaceCount;
-
-  var digitalStart = espaceTotal + 3;
-  var digitalCount = Math.max(digitalRows.length, 10);
-  var digitalEnd = digitalStart + digitalCount - 1;
-  var digitalTotal = digitalStart + digitalCount;
-
-  values.push(['Récap budget promo','','','INFORMATIONS GLOBALES','','','','Kit Promo','']);
-  values.push(['Budget alloué', montant, '', 'Mise en vente', '', mev||'', 'Kit Promo','','']);
-  values.push(['Dépenses prévisionnelles','=F'+streetTotal+'+F'+espaceTotal+'+F'+digitalTotal,'','Jauge','',jauge||'','Break','0','']);
-  values.push(['Dépenses engagées','','','Vendu à ce jour','=TODAY()',vendu||'','Reste à vendre','=F8-F9','']);
-  values.push([]);
-
-  // Section STREET MARKETING
-  values.push(['STREET MARKETING','','','','','','','','']);
-  values.push(['Désignation','Prestataire','Quantité','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']);
-
-  streetRows.forEach(function(r){
-    var formula = r.total ? r.total : (r.qte && r.pu ? '=C'+( values.length+1)+'*D'+(values.length+1) : '');
-    values.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', r.total||formula, '', 'Engagé', '']);
-  });
-  // Lignes vides jusqu'à streetCount
-  while (values.length < streetStart + streetCount - 1) values.push(['','','','','','','','','']);
-  values.push(['','','','=SUM(E'+streetStart+':E'+streetEnd+')','','=SUM(F'+streetStart+':F'+streetEnd+')','','','']);
-  values.push([]);
-
-  // Section ACHAT D'ESPACES
-  values.push(["ACHAT D'ESPACES",'','','','','','','','']);
-  values.push(['Désignation','Prestataire','Quantité','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']);
-  espaceRows.forEach(function(r){ values.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', r.total||'', '', 'Engagé', '']); });
-  while (values.length < espaceStart + espaceCount - 1) values.push(['','','','','','','','','']);
-  values.push(['','','','=SUM(E'+espaceStart+':E'+espaceEnd+')','','=SUM(F'+espaceStart+':F'+espaceEnd+')','','','']);
-  values.push([]);
-
-  // Section DIGITAL
-  values.push(['DIGITAL','','','','','','','','']);
-  values.push(['Désignation','Prestataire','Quantité','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']);
-  digitalRows.forEach(function(r){ values.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', r.total||'', '', 'Engagé', '']); });
-  while (values.length < digitalStart + digitalCount - 1) values.push(['','','','','','','','','']);
-  values.push(['','','','=SUM(E'+digitalStart+':E'+digitalEnd+')','','=SUM(F'+digitalStart+':F'+digitalEnd+')','','','']);
-  values.push([]);
-
-  // Section RADIO / TV / PRESSE
-  var radioHeaderRow = values.length + 1;
-  values.push(['OPERATIONS RADIO / TV / PRESSE','','','','','','','','']);
-  values.push(['Désignation','Prestataire','Type','','','','Commentaire','Statut','']);
-  radioRows.forEach(function(r){ values.push([r.nom, r.presta||'', r.type||'', '', '', '', '', 'Engagé', '']); });
-
-  return {values: values, streetStart: streetStart, streetTotal: streetTotal, espaceStart: espaceStart, espaceTotal: espaceTotal, digitalStart: digitalStart, digitalTotal: digitalTotal, radioHeaderRow: radioHeaderRow};
-}
-
-function applySheetFormatting(sid, sheetId, rows, montant) {
-  var blue   = {red:0.435, green:0.647, blue:0.859};
-  var blueHd = {red:0.624, green:0.773, blue:0.91};
-  var pink   = {red:0.835, green:0.651, blue:0.741};
-  var white  = {red:1,     green:1,     blue:1};
-  var darkTxt= {red:0,     green:0,     blue:0};
-  var boldFont = {bold:true, fontSize:10, fontFamily:'Arial'};
-  var normalFont = {fontSize:10, fontFamily:'Arial'};
-
-  function cellFmt(r1,c1,r2,c2,bg,font,halign){
-    var f = {ranges:[{sheetId:sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2}],
-      fields:'userEnteredFormat.backgroundColor,userEnteredFormat.textFormat,userEnteredFormat.horizontalAlignment',
-      userEnteredFormat:{backgroundColor:bg, textFormat:font||normalFont, horizontalAlignment:halign||'LEFT'}};
-    return {repeatCell:f};
+  // Formater date mise en vente
+  var mevStr = '';
+  if (mev) {
+    var mevD = new Date(mev);
+    mevStr = mevD.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
   }
 
-  var sectionRows = [
-    rows.streetStart - 2, rows.espaceStart - 2,
-    rows.digitalStart - 2, rows.radioHeaderRow - 1
-  ];
+  // Construire le tableau ligne par ligne (index 0-based = ligne Excel -1)
+  var V = [];
+  // Lignes 1-4
+  V.push(['','','',c.art||'','','','','','']);          // R1
+  V.push(['','','',c.ville||'','','','','','']);         // R2
+  V.push(['','','',dateStr,'','','','','']);             // R3
+  V.push(['','','','Promotion Locale','','','','','']);  // R4
+  V.push(['','','','','','','','','']);                  // R5 vide
+
+  // Ligne 6 : récap headers
+  V.push(['Récap budget promo','','','INFORMATIONS GLOBALES','','','','Kit Promo','']); // R6
+
+  // Lignes 7-9 : données récap
+  // Dépenses prévisionnelles = somme des totaux sections (F23+F37+F51)
+  // Dépenses engagées = somme des IF(Hx="Engagé",Fx,0) sur toutes les lignes de données
+  var engageFormula = '';
+  var engageCells = [];
+  for(var i=13;i<=22;i++) engageCells.push(i);
+  for(var i=27;i<=36;i++) engageCells.push(i);
+  for(var i=41;i<=50;i++) engageCells.push(i);
+  engageFormula = '=' + engageCells.map(function(r){return 'IF(H'+r+'="Engagé",F'+r+',0)';}).join('+');
+
+  V.push(['Budget alloué', montant, '', 'Mise en vente', '', mevStr, 'Kit Promo','','']);  // R7
+  V.push(['Dépenses prévisionnelles','=F23+F37+F51','','Jauge','',jauge||'','Break','0','']); // R8
+  V.push(['Dépenses engagées',engageFormula,'','Vendu au ','=TODAY()',vendu||'','Reste à vendre','=IF(F8>0,F8-F9,"")','']); // R9
+
+  V.push(['','','','','','','','','']); // R10 vide
+
+  // ── STREET MARKETING (R11-R23) ──
+  V.push(['STREET MARKETING','','','','','','','','']); // R11
+  V.push(['Désignation','Prestataire','Quantité','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']); // R12
+  // 10 lignes de données R13-R22
+  for(var i=0;i<10;i++){
+    var r = streetRows[i];
+    if(r){
+      var rowNum = 13+i;
+      var total = r.total ? r.total : (r.qte && r.pu ? '=C'+rowNum+'*D'+rowNum : '');
+      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', total, r.comment||'', 'Engagé', '']);
+    } else {
+      V.push(['','','','','','','','','']);
+    }
+  }
+  V.push(['','','','=SUM(E13:E22)','','=SUM(F13:F22)','','','']); // R23 total
+
+  V.push(['','','','','','','','','']); // R24 vide
+
+  // ── ACHAT D'ESPACES (R25-R37) ──
+  V.push(["ACHAT D'ESPACES",'','','','','','','','']); // R25
+  V.push(['Désignation','Prestataire','Quantité','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']); // R26
+  for(var i=0;i<10;i++){
+    var r = espaceRows[i];
+    if(r){
+      var rowNum = 27+i;
+      var total = r.total ? r.total : (r.qte && r.pu ? '=C'+rowNum+'*D'+rowNum : '');
+      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', total, r.comment||'', 'Engagé', '']);
+    } else {
+      V.push(['','','','','','','','','']);
+    }
+  }
+  V.push(['','','','=SUM(E27:E36)','','=SUM(F27:F36)','','','']); // R37 total
+
+  V.push(['','','','','','','','','']); // R38 vide
+
+  // ── DIGITAL (R39-R51) ──
+  V.push(['DIGITAL','','','','','','','','']); // R39
+  V.push(['Désignation','Prestataire','Quantité','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']); // R40
+  for(var i=0;i<10;i++){
+    var r = digitalRows[i];
+    if(r){
+      var rowNum = 41+i;
+      var total = r.total ? r.total : '';
+      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', total, r.comment||'', 'Engagé', '']);
+    } else {
+      V.push(['','','','','','','','','']);
+    }
+  }
+  V.push(['','','','=SUM(E41:E50)','','=SUM(F41:F50)','','','']); // R51 total
+
+  V.push(['','','','','','','','','']); // R52 vide
+
+  // ── RADIO / TV / PRESSE (R53-R64) ──
+  V.push(['OPERATIONS RADIO / TV / PRESSE','','','','','','','','']); // R53
+  V.push(['Désignation','Prestataire','Type','','','','Commentaire','Statut','']); // R54
+  for(var i=0;i<10;i++){
+    var r = radioRows[i];
+    if(r){
+      V.push([r.nom, r.presta||'', r.type||'', '', '', '', r.comment||'', 'Engagé', '']);
+    } else {
+      V.push(['','','','','','','','','']);
+    }
+  }
+
+  return {
+    values: V,
+    // positions 0-based pour le formatage
+    r: {
+      recap: 5,        // R6 (0-based=5)
+      street: 10,      // R11
+      streetHdr: 11,   // R12
+      streetData: 12,  // R13
+      streetTot: 22,   // R23
+      espace: 24,      // R25
+      espaceHdr: 25,
+      espaceData: 26,
+      espaceTot: 36,   // R37
+      digital: 38,     // R39
+      digitalHdr: 39,
+      digitalData: 40,
+      digitalTot: 50,  // R51
+      radio: 52,       // R53
+      radioHdr: 53,
+      radioData: 54
+    }
+  };
+}
+
+function applySheetFormatting(sid, sheetId, rows) {
+  var r = rows.r;
+
+  // Couleurs exactes du modèle original (tirées d'openpyxl)
+  var BLUE_RECAP  = {red:0.435, green:0.647, blue:0.859};   // #6FA8DC - récap gauche
+  var PINK_RECAP  = {red:0.835, green:0.651, blue:0.741};   // #D5A6BD - récap droite
+  var BLUE_SEC    = {red:0.624, green:0.773, blue:0.910};   // #9FC5E8 - titre sections
+  var BLUE_TOT    = {red:0.812, green:0.886, blue:0.953};   // #CFE2F3 - ligne totaux
+  var WHITE       = {red:1, green:1, blue:1};
+
+  var boldArial   = {bold:true,  fontSize:10, fontFamily:'Arial'};
+  var boldArial12 = {bold:true,  fontSize:12, fontFamily:'Arial'};
+  var normArial   = {bold:false, fontSize:10, fontFamily:'Arial'};
 
   var requests = [];
 
-  // Entêtes artiste bold
-  requests.push(cellFmt(0,3,4,8,{red:1,green:1,blue:1},{bold:true,fontSize:12,fontFamily:'Arial'}));
+  function fmt(r1,c1,r2,c2, bg, font, halign, wrapStrategy) {
+    var uf = {backgroundColor: bg, textFormat: font||normArial, horizontalAlignment: halign||'LEFT'};
+    if(wrapStrategy) uf.wrapStrategy = wrapStrategy;
+    requests.push({repeatCell:{
+      ranges:[{sheetId:sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2}],
+      cell:{userEnteredFormat: uf},
+      fields:'userEnteredFormat.backgroundColor,userEnteredFormat.textFormat,userEnteredFormat.horizontalAlignment'+(wrapStrategy?',userEnteredFormat.wrapStrategy':'')
+    }});
+  }
 
-  // Récap header
-  requests.push(cellFmt(5,0,6,2,blue,boldFont));
-  requests.push(cellFmt(5,3,6,8,pink,boldFont));
+  function merge(r1,c1,r2,c2){
+    requests.push({mergeCells:{range:{sheetId:sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},mergeType:'MERGE_ALL'}});
+  }
 
-  // Sections header (bleu clair)
-  sectionRows.forEach(function(r){
-    requests.push(cellFmt(r,0,r+1,8,blueHd,boldFont));
+  function colWidth(col, px){
+    requests.push({updateDimensionProperties:{range:{sheetId:sheetId,dimension:'COLUMNS',startIndex:col,endIndex:col+1},properties:{pixelSize:px},fields:'pixelSize'}});
+  }
+
+  function rowHeight(row, px){
+    requests.push({updateDimensionProperties:{range:{sheetId:sheetId,dimension:'ROWS',startIndex:row,endIndex:row+1},properties:{pixelSize:px},fields:'pixelSize'}});
+  }
+
+  function dropdown(r1,c1,r2,c2, values){
+    requests.push({setDataValidation:{range:{sheetId:sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},
+      rule:{condition:{type:'ONE_OF_LIST',values:values.map(function(v){return {userEnteredValue:v};})},showCustomUi:true,strict:false}
+    }});
+  }
+
+  // ── Largeurs colonnes (A=280, B=150, C=100, D=130, E=40, F=110, G=150, H=100, I=60)
+  [280,150,100,130,40,110,150,100,60].forEach(function(w,i){ colWidth(i,w); });
+
+  // ── En-tête artiste/salle/date (R1-R4, col D bold 12)
+  fmt(0,3,4,4, WHITE, boldArial12);
+
+  // ── Récap R6 : gauche bleu bold, droite rose bold
+  fmt(r.recap, 0, r.recap+1, 3, BLUE_RECAP, boldArial);
+  fmt(r.recap, 3, r.recap+1, 9, PINK_RECAP, boldArial);
+  // R7-R9 : labels bold
+  fmt(r.recap+1, 0, r.recap+4, 1, WHITE, boldArial);
+  fmt(r.recap+1, 3, r.recap+4, 5, WHITE, boldArial);
+  fmt(r.recap+1, 6, r.recap+4, 7, WHITE, boldArial);
+
+  // ── Sections : titre bleu + en-têtes colonnes bold
+  [r.street, r.espace, r.digital, r.radio].forEach(function(row){
+    fmt(row, 0, row+1, 9, BLUE_SEC, boldArial);
+    fmt(row+1, 0, row+2, 9, WHITE, boldArial);
   });
 
-  // Sous-entêtes colonnes
-  [rows.streetStart-2, rows.espaceStart-2, rows.digitalStart-2, rows.radioHeaderRow-1].forEach(function(r){
-    requests.push(cellFmt(r+1,0,r+2,8,{red:1,green:1,blue:1},boldFont));
+  // ── Lignes de données : fond blanc, alternance légère possible
+  [r.streetData, r.espaceData, r.digitalData, r.radioData].forEach(function(start){
+    fmt(start, 0, start+10, 9, WHITE, normArial);
   });
 
-  // Lignes total (fond bleu pâle)
-  [rows.streetTotal-1, rows.espaceTotal-1, rows.digitalTotal-1].forEach(function(r){
-    requests.push(cellFmt(r,0,r+1,8,{red:0.812,green:0.886,blue:0.953},normalFont));
+  // ── Lignes totaux : fond bleu pâle
+  [r.streetTot, r.espaceTot, r.digitalTot].forEach(function(row){
+    fmt(row, 0, row+1, 9, BLUE_TOT, normArial);
   });
 
-  // Largeurs colonnes
-  var colWidths = [280, 150, 120, 120, 40, 100, 140, 100, 60];
-  colWidths.forEach(function(w,i){
-    requests.push({updateDimensionProperties:{range:{sheetId:sheetId,dimension:'COLUMNS',startIndex:i,endIndex:i+1},properties:{pixelSize:w},fields:'pixelSize'}});
+  // ── Dropdown Engagé/Prévisionnel sur col H pour toutes les lignes de données
+  [r.streetData, r.espaceData, r.digitalData, r.radioData].forEach(function(start){
+    dropdown(start, 7, start+10, 8, ['Engagé','Prévisionnel']);
   });
 
-  // Freeze ligne 1
-  requests.push({updateSheetProperties:{properties:{sheetId:sheetId,gridProperties:{frozenRowCount:1}},fields:'gridProperties.frozenRowCount'}});
+  // ── Hauteurs de lignes
+  rowHeight(r.recap, 22);
+  [r.street, r.espace, r.digital, r.radio].forEach(function(row){ rowHeight(row, 22); });
+
+  // ── Merges : titre artiste sur D1:H1, salle D2:H2, etc.
+  merge(0,3,1,8); // D1:H1 artiste
+  merge(1,3,2,8); // D2:H2 salle
+  merge(2,3,3,8); // D3:H3 date
+  merge(3,3,4,8); // D4:H4 type
+
+  // Merge titres sections sur toute la largeur
+  [r.street, r.espace, r.digital, r.radio].forEach(function(row){
+    merge(row,0,row+1,9);
+  });
 
   return fetch('https://sheets.googleapis.com/v4/spreadsheets/'+sid+':batchUpdate', {
     method: 'POST',
