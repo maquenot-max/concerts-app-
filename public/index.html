@@ -2447,7 +2447,7 @@ function budgetSaveClientId() {
 
 function budgetGoogleAuth() {
   if (!BUDGET_CLIENT_ID) { alert('Configure d\'abord ton Client ID Google.'); return; }
-  var redirect = window.location.origin + window.location.pathname;
+  var redirect = 'https://dashboardppcomm.netlify.app';
   var scope = encodeURIComponent('https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file');
   var url = 'https://accounts.google.com/o/oauth2/v2/auth'
     + '?client_id=' + encodeURIComponent(BUDGET_CLIENT_ID)
