@@ -2668,21 +2668,15 @@ function buildSheetData(c, tpl, montant, jauge, mev, vendu, dateStr, skipSp, ski
 }
 
 function insertLogo(sid, sheetId) {
-  var LOGO_URL = 'https://drive.google.com/uc?export=view&id=1etG2jgYORGJUl-Rthp0jaaI_HQnZ4szX';
+  var LOGO_URL = 'https://dashboardppcomm.netlify.app/logo.png';
   return fetch('https://sheets.googleapis.com/v4/spreadsheets/'+sid+':batchUpdate', {
     method: 'POST',
     headers: {'Authorization':'Bearer '+budgetGToken,'Content-Type':'application/json'},
     body: JSON.stringify({requests:[{
       addImage:{
         image:{
-          imageProperties:{
-            contentUri: LOGO_URL
-          },
-          anchorCell:{
-            sheetId: sheetId,
-            rowIndex: 0,
-            columnIndex: 0
-          },
+          imageProperties:{ contentUri: LOGO_URL },
+          anchorCell:{ sheetId:sheetId, rowIndex:0, columnIndex:0 },
           offsetXPixels: 5,
           offsetYPixels: 5,
           widthPixels: 220,
@@ -2691,15 +2685,7 @@ function insertLogo(sid, sheetId) {
       }
     }]})
   }).then(function(r){return r.json();}).then(function(res){
-    if(res.error) {
-      console.warn('addImage échoué, tentative IMAGE():', res.error.message);
-      // Fallback : insérer via formule IMAGE() dans la cellule A1
-      return fetch('https://sheets.googleapis.com/v4/spreadsheets/'+sid+'/values/PREV!A1?valueInputOption=USER_ENTERED', {
-        method: 'PUT',
-        headers: {'Authorization':'Bearer '+budgetGToken,'Content-Type':'application/json'},
-        body: JSON.stringify({range:'PREV!A1', majorDimension:'ROWS', values:[['=IMAGE("'+LOGO_URL+'",4,85,220)']]})
-      }).then(function(r){return r.json();});
-    }
+    if(res.error) console.warn('Logo non inséré:', res.error.message);
     return res;
   });
 }
