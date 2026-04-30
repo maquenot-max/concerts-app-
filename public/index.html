@@ -525,7 +525,8 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
       <button class="active" onclick="showTab('kanban',this)">Tableau de bord</button>
       <button onclick="showTab('concerts',this)">Concerts</button>
       <button onclick="showTab('taches',this)">Taches</button>
-      <button onclick="showTab('process',this)">Process</button>
+      <button id="btn-process" onclick="showTab('process',this);budgetConfigClick()">Process</button>
+      <button id="btn-budgetconfig" onclick="showTab('budgetconfig',this)" style="display:none;opacity:0.5;font-size:11px">⚙ Budget</button>
     </nav>
   </header>
   <main>
@@ -582,6 +583,56 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
         <select id="cville" onchange="renderConcerts()"><option value="">Toutes les villes</option></select>
       </div>
       <div id="clist"></div>
+    </div>
+    <div id="tab-budgetconfig" class="panel">
+      <div class="card" style="max-width:900px;margin:0 auto">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+          <h2 style="margin:0">⚙ Configuration Budget Promo</h2>
+          <span style="font-size:11px;color:var(--text-3);background:var(--bg);padding:3px 10px;border-radius:20px;border:1px solid var(--border)">Sauvegardé sur Supabase</span>
+          <button class="btn btn-primary" style="margin-left:auto" onclick="saveBudgetConfig()">💾 Sauvegarder</button>
+        </div>
+
+        <!-- Onglets internes -->
+        <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px">
+          <button class="bc-tab active" onclick="showBcTab('templates',this)" style="padding:8px 18px;border:none;background:none;cursor:pointer;font-weight:600;font-size:13px;border-bottom:2px solid #2563eb;margin-bottom:-2px;color:#2563eb">Templates</button>
+          <button class="bc-tab" onclick="showBcTab('styles',this)" style="padding:8px 18px;border:none;background:none;cursor:pointer;font-size:13px;color:var(--text-3)">Styles musicaux</button>
+          <button class="bc-tab" onclick="showBcTab('salles',this)" style="padding:8px 18px;border:none;background:none;cursor:pointer;font-size:13px;color:var(--text-3)">Salles / Villes</button>
+        </div>
+
+        <!-- Section Templates -->
+        <div id="bc-templates">
+          <p style="font-size:12px;color:var(--text-3);margin-bottom:16px">Configure les lignes pré-remplies pour chaque tranche de budget. Les 3 lignes fixes (Newsletter, Agenda, Posts PP) sont toujours présentes et non modifiables ici.</p>
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <button class="bc-tpl-btn active" onclick="showBcTemplate('small',this)" style="padding:6px 14px;border-radius:6px;border:2px solid #2d7a4f;background:#e8f5ee;color:#2d7a4f;font-size:12px;font-weight:700;cursor:pointer">Petit (< 1 500€)</button>
+            <button class="bc-tpl-btn" onclick="showBcTemplate('standard',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Standard (1 500–4 000€)</button>
+            <button class="bc-tpl-btn" onclick="showBcTemplate('large',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Grand (> 4 000€)</button>
+          </div>
+          <div id="bc-tpl-editor"></div>
+        </div>
+
+        <!-- Section Styles -->
+        <div id="bc-styles" style="display:none">
+          <p style="font-size:12px;color:var(--text-3);margin-bottom:16px">Configure les opérations Radio / TV / Presse et les ajustements digitaux pour chaque style musical.</p>
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <button class="bc-style-btn active" onclick="showBcStyle('rap',this)" style="padding:6px 14px;border-radius:6px;border:2px solid #2d7a4f;background:#e8f5ee;color:#2d7a4f;font-size:12px;font-weight:700;cursor:pointer">🎤 Rap</button>
+            <button class="bc-style-btn" onclick="showBcStyle('pop',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">🎵 Pop</button>
+            <button class="bc-style-btn" onclick="showBcStyle('variete',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">🎶 Variété</button>
+            <button class="bc-style-btn" onclick="showBcStyle('autre',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">🎵 Autre</button>
+          </div>
+          <div id="bc-style-editor"></div>
+        </div>
+
+        <!-- Section Salles -->
+        <div id="bc-salles" style="display:none">
+          <p style="font-size:12px;color:var(--text-3);margin-bottom:16px">Configure les lignes spécifiques par salle / ville. Les OP media radio peuvent être ajustés ici.</p>
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+            <button class="bc-salle-btn active" onclick="showBcSalle('zenith',this)" style="padding:6px 14px;border-radius:6px;border:2px solid #2d7a4f;background:#e8f5ee;color:#2d7a4f;font-size:12px;font-weight:700;cursor:pointer">🏟 Zénith Dijon</button>
+            <button class="bc-salle-btn" onclick="showBcSalle('reims',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">🏟 Reims Arena</button>
+            <button class="bc-salle-btn" onclick="showBcSalle('default',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">📍 Autres salles</button>
+          </div>
+          <div id="bc-salle-editor"></div>
+        </div>
+      </div>
     </div>
     <div id="tab-process" class="panel">
       <div class="card">
@@ -878,6 +929,7 @@ function showTab(id,btn){
   document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('active');});
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
   btn.classList.add('active');document.getElementById('tab-'+id).classList.add('active');
+  if(id==='budgetconfig'){ renderBcTemplateEditor(); renderBcStyleEditor(); renderBcSalleEditor(); }
 }
 function calcDate(c,t){var base=t.ref==='annonce'?c.da:c.dc;if(!base)return null;var d=new Date(base);d.setDate(d.getDate()+t.jours);return d;}
 function formatLieu(ville){
@@ -1204,6 +1256,13 @@ function renderKanban(){
   if(!list.length){wrap.innerHTML='<div class="empty-state">Aucun concert.</div>';return;}
   wrap.innerHTML='<div class="grid">'+list.map(function(c){
     var sorted=sortedProcess(c);
+    var skipSpK=!!taskStates['skip-'+c.id+'-sp'];
+    var skipColK=!!taskStates['skip-'+c.id+'-col'];
+    if(skipSpK||skipColK){sorted=sorted.filter(function(t){
+      if(skipSpK&&t.cat==='sp')return false;
+      if(skipColK&&(t.cat==='col'||t.cat==='affp'))return false;
+      return true;
+    });}
     var lateTasks=sorted.filter(function(t){var d=calcDate(c,t);return !taskStates[tk(c.id,t.id)]&&isUnlocked(c,t)&&(isLate(d)||isToday(d));});
     var doneN=sorted.filter(function(t){return taskStates[tk(c.id,t.id)];}).length;
     var pct=Math.round(doneN/sorted.length*100);
@@ -2103,8 +2162,285 @@ function rsDelPost(id){
     if(el&&rsPosts.some(function(x){return x.date===date;}))el.style.display='block';
   },40);
 }
+// ── BUDGET CONFIG TOOL ──────────────────────────────────────────────────────
+
+var _bcClickCount = 0, _bcClickTimer = null;
+function budgetConfigClick() {
+  _bcClickCount++;
+  clearTimeout(_bcClickTimer);
+  _bcClickTimer = setTimeout(function(){ _bcClickCount = 0; }, 800);
+  if (_bcClickCount >= 5) {
+    _bcClickCount = 0;
+    var btn = document.getElementById('btn-budgetconfig');
+    if (btn) { btn.style.display = ''; }
+  }
+}
+
+var _bcCurrentTpl = 'small';
+var _bcCurrentStyle = 'rap';
+
+function showBcTab(name, btn) {
+  document.getElementById('bc-templates').style.display = name==='templates' ? '' : 'none';
+  document.getElementById('bc-styles').style.display = name==='styles' ? '' : 'none';
+  document.getElementById('bc-salles').style.display = name==='salles' ? '' : 'none';
+  document.querySelectorAll('.bc-tab').forEach(function(b){
+    b.style.borderBottom='none'; b.style.color='var(--text-3)'; b.style.fontWeight='';
+  });
+  btn.style.borderBottom='2px solid #2563eb'; btn.style.color='#2563eb'; btn.style.fontWeight='600';
+}
+
+var _bcCurrentSalle = 'zenith';
+
+function showBcSalle(salle, btn) {
+  _bcCurrentSalle = salle;
+  document.querySelectorAll('.bc-salle-btn').forEach(function(b){
+    b.style.border='1px solid var(--border)'; b.style.background='var(--bg)'; b.style.color='var(--text)'; b.style.fontWeight='';
+  });
+  btn.style.border='2px solid #2d7a4f'; btn.style.background='#e8f5ee'; btn.style.color='#2d7a4f'; btn.style.fontWeight='700';
+  renderBcSalleEditor();
+}
+
+function renderBcSalleEditor() {
+  var salle = REGLES_SALLES[_bcCurrentSalle] || {};
+  var affichage = salle.affichage || [];
+  var radio = salle.radio || [];
+  var html = '';
+
+  html += '<div style="margin-bottom:20px">';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Affichage</span>';
+  html += '<button onclick="bcAddSalleRow(\'affichage\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:11px;cursor:pointer">+ Ligne</button></div>';
+  html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
+  html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;background:var(--bg);padding:6px 10px;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>Qté</span><span>PU €</span><span>Total €</span><span></span></div>';
+  affichage.forEach(function(r,i){
+    html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
+    html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+    html += '<input value="'+(r.qte||'')+'" type="number" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'qte\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+    html += '<input value="'+(r.pu||'')+'" type="number" step="0.01" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'pu\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+    html += '<input value="'+(r.total||'')+'" type="number" placeholder="auto" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'total\',this.value?+this.value:undefined)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+    html += '<button onclick="bcDeleteSalleRow(\'affichage\','+i+')" style="border:none;background:none;color:#e53;cursor:pointer;font-size:16px;padding:0">×</button>';
+    html += '</div>';
+  });
+  if (!affichage.length) html += '<div style="padding:12px;font-size:12px;color:var(--text-3);text-align:center;font-style:italic">Aucune ligne</div>';
+  html += '</div></div>';
+
+  html += '<div style="margin-bottom:20px">';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-3)">OP Media Radio spécifiques</span>';
+  html += '<button onclick="bcAddSalleRow(\'radio\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:11px;cursor:pointer">+ Ligne</button></div>';
+  html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
+  html += '<div style="display:grid;grid-template-columns:1fr 120px 24px;background:var(--bg);padding:6px 10px;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>Type</span><span></span></div>';
+  radio.forEach(function(r,i){
+    html += '<div style="display:grid;grid-template-columns:1fr 120px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
+    html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateSalleRow(\'radio\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+    html += '<input value="'+escHtml(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateSalleRow(\'radio\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+    html += '<button onclick="bcDeleteSalleRow(\'radio\','+i+')" style="border:none;background:none;color:#e53;cursor:pointer;font-size:16px;padding:0">×</button>';
+    html += '</div>';
+  });
+  if (!radio.length) html += '<div style="padding:12px;font-size:12px;color:var(--text-3);text-align:center;font-style:italic">Aucun OP Media spécifique</div>';
+  html += '</div></div>';
+
+  document.getElementById('bc-salle-editor').innerHTML = html;
+}
+
+function bcUpdateSalleRow(section, idx, field, val) {
+  if (!REGLES_SALLES[_bcCurrentSalle][section]) return;
+  REGLES_SALLES[_bcCurrentSalle][section][idx][field] = val;
+}
+function bcDeleteSalleRow(section, idx) {
+  if (!REGLES_SALLES[_bcCurrentSalle][section]) return;
+  REGLES_SALLES[_bcCurrentSalle][section].splice(idx,1);
+  renderBcSalleEditor();
+}
+function bcAddSalleRow(section) {
+  if (!REGLES_SALLES[_bcCurrentSalle][section]) REGLES_SALLES[_bcCurrentSalle][section]=[];
+  var r = section==='radio' ? {nom:'Nouvelle ligne', type:''} : {nom:'Nouvelle ligne', qte:0, pu:0};
+  REGLES_SALLES[_bcCurrentSalle][section].push(r);
+  renderBcSalleEditor();
+}
+
+function showBcTemplate(tpl, btn) {
+  _bcCurrentTpl = tpl;
+  document.querySelectorAll('.bc-tpl-btn').forEach(function(b){
+    b.style.border='1px solid var(--border)'; b.style.background='var(--bg)'; b.style.color='var(--text)'; b.style.fontWeight='';
+  });
+  btn.style.border='2px solid #2d7a4f'; btn.style.background='#e8f5ee'; btn.style.color='#2d7a4f'; btn.style.fontWeight='700';
+  renderBcTemplateEditor();
+}
+
+function showBcStyle(style, btn) {
+  _bcCurrentStyle = style;
+  document.querySelectorAll('.bc-style-btn').forEach(function(b){
+    b.style.border='1px solid var(--border)'; b.style.background='var(--bg)'; b.style.color='var(--text)'; b.style.fontWeight='';
+  });
+  btn.style.border='2px solid #2d7a4f'; btn.style.background='#e8f5ee'; btn.style.color='#2d7a4f'; btn.style.fontWeight='700';
+  renderBcStyleEditor();
+}
+
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function renderBcTemplateEditor() {
+  var tpl = BUDGET_TEMPLATES[_bcCurrentTpl];
+  var sections = [
+    {key:'digital', label:'Digital (lignes variables)', showTarif:true},
+    {key:'espaces', label:"Achat d'espaces", showTarif:true},
+    {key:'radio',   label:'Radio / TV / Presse', showType:true},
+    {key:'street',  label:'Street Marketing', showStreet:true}
+  ];
+  var html = '';
+  sections.forEach(function(s) {
+    var rows = tpl[s.key] || [];
+    html += '<div style="margin-bottom:20px">';
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    html += '<span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-3);letter-spacing:.05em">'+s.label+'</span>';
+    html += '<button onclick="bcAddRow(\''+s.key+'\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:11px;cursor:pointer">+ Ligne</button></div>';
+    html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
+    if (s.showStreet) {
+      html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;gap:0;background:var(--bg);padding:6px 10px;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>Qté</span><span>PU €</span><span>Total €</span><span></span></div>';
+    } else {
+      html += '<div style="display:grid;grid-template-columns:1fr '+(s.showTarif?'80px':'100px')+' 90px 24px;gap:0;background:var(--bg);padding:6px 10px;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>'+(s.showTarif?'Total €':'Type')+'</span><span>Statut</span><span></span></div>';
+    }
+    rows.forEach(function(r,i){
+      if (s.showStreet) {
+        html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
+        html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateRow(\'street\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        html += '<input value="'+(r.qte||'')+'" type="number" onchange="bcUpdateRow(\'street\','+i+',\'qte\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        html += '<input value="'+(r.pu||'')+'" type="number" step="0.01" onchange="bcUpdateRow(\'street\','+i+',\'pu\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        html += '<input value="'+(r.total||'')+'" type="number" placeholder="auto" onchange="bcUpdateRow(\'street\','+i+',\'total\',+this.value||null)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+      } else {
+        html += '<div style="display:grid;grid-template-columns:1fr '+(s.showTarif?'80px':'100px')+' 90px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
+        html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateRow(\''+s.key+'\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        if (s.showTarif) {
+          html += '<input value="'+(r.total||'')+'" type="number" placeholder="€" onchange="bcUpdateRow(\''+s.key+'\','+i+',\'total\',+this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        } else {
+          html += '<input value="'+escHtml(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateRow(\''+s.key+'\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        }
+        html += '<select onchange="bcUpdateRow(\''+s.key+'\','+i+',\'statut\',this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px">';
+        html += '<option value="Pr\u00e9visionnel"'+(r.statut!=='Engag\u00e9'?' selected':'')+'>Prévisionnel</option>';
+        html += '<option value="Engag\u00e9"'+(r.statut==='Engag\u00e9'?' selected':'')+'>Engagé</option>';
+        html += '</select>';
+      }
+      html += '<button onclick="bcDeleteRow(\''+s.key+'\','+i+')" style="border:none;background:none;color:#e53;cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>';
+      html += '</div>';
+    });
+    if (!rows.length) html += '<div style="padding:12px;font-size:12px;color:var(--text-3);text-align:center;font-style:italic">Aucune ligne</div>';
+    html += '</div></div>';
+  });
+  document.getElementById('bc-tpl-editor').innerHTML = html;
+}
+
+function renderBcStyleEditor() {
+  var adj = STYLE_ADJUSTMENTS[_bcCurrentStyle] || {};
+  var sections = [
+    {key:'radio',   label:'Radio / TV / Presse spécifiques', rows:adj.radio||[]},
+    {key:'digital', label:'Digital supplémentaire',          rows:adj.digital||[], showTarif:true}
+  ];
+  var html = '<p style="font-size:12px;color:var(--text-3);margin-bottom:14px">Ces lignes s\'ajoutent au template budget quand ce style est sélectionné.</p>';
+  sections.forEach(function(s){
+    html += '<div style="margin-bottom:20px">';
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    html += '<span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-3)">'+s.label+'</span>';
+    html += '<button onclick="bcAddStyleRow(\''+s.key+'\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:11px;cursor:pointer">+ Ligne</button></div>';
+    html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
+    html += '<div style="display:grid;grid-template-columns:1fr 100px 24px;background:var(--bg);padding:6px 10px;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>'+(s.showTarif?'Total €':'Type')+'</span><span></span></div>';
+    s.rows.forEach(function(r,i){
+      html += '<div style="display:grid;grid-template-columns:1fr 100px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
+      html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateStyleRow(\''+s.key+'\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+      if (s.showTarif) {
+        html += '<input value="'+(r.total||'')+'" type="number" placeholder="€" onchange="bcUpdateStyleRow(\''+s.key+'\','+i+',\'total\',+this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+      } else {
+        html += '<input value="'+escHtml(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateStyleRow(\''+s.key+'\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+      }
+      html += '<button onclick="bcDeleteStyleRow(\''+s.key+'\','+i+')" style="border:none;background:none;color:#e53;cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>';
+      html += '</div>';
+    });
+    if (!s.rows.length) html += '<div style="padding:12px;font-size:12px;color:var(--text-3);text-align:center;font-style:italic">Aucune ligne spécifique</div>';
+    html += '</div></div>';
+  });
+  document.getElementById('bc-style-editor').innerHTML = html;
+}
+
+function bcUpdateRow(section, idx, field, val) {
+  if (!BUDGET_TEMPLATES[_bcCurrentTpl][section]) return;
+  BUDGET_TEMPLATES[_bcCurrentTpl][section][idx][field] = val;
+}
+function bcDeleteRow(section, idx) {
+  if (!BUDGET_TEMPLATES[_bcCurrentTpl][section]) return;
+  BUDGET_TEMPLATES[_bcCurrentTpl][section].splice(idx,1);
+  renderBcTemplateEditor();
+}
+function bcAddRow(section) {
+  if (!BUDGET_TEMPLATES[_bcCurrentTpl][section]) BUDGET_TEMPLATES[_bcCurrentTpl][section] = [];
+  var r = section==='radio'  ? {nom:'Nouvelle ligne', type:'', statut:'Pr\u00e9visionnel'}
+        : section==='street' ? {nom:'Nouvelle ligne', qte:0, pu:0}
+        : {nom:'Nouvelle ligne', total:0, statut:'Pr\u00e9visionnel'};
+  BUDGET_TEMPLATES[_bcCurrentTpl][section].push(r);
+  renderBcTemplateEditor();
+}
+function bcUpdateStyleRow(section, idx, field, val) {
+  if (!STYLE_ADJUSTMENTS[_bcCurrentStyle]) STYLE_ADJUSTMENTS[_bcCurrentStyle]={};
+  if (!STYLE_ADJUSTMENTS[_bcCurrentStyle][section]) return;
+  STYLE_ADJUSTMENTS[_bcCurrentStyle][section][idx][field] = val;
+}
+function bcDeleteStyleRow(section, idx) {
+  if (!STYLE_ADJUSTMENTS[_bcCurrentStyle]||!STYLE_ADJUSTMENTS[_bcCurrentStyle][section]) return;
+  STYLE_ADJUSTMENTS[_bcCurrentStyle][section].splice(idx,1);
+  renderBcStyleEditor();
+}
+function bcAddStyleRow(section) {
+  if (!STYLE_ADJUSTMENTS[_bcCurrentStyle]) STYLE_ADJUSTMENTS[_bcCurrentStyle]={};
+  if (!STYLE_ADJUSTMENTS[_bcCurrentStyle][section]) STYLE_ADJUSTMENTS[_bcCurrentStyle][section]=[];
+  var r = section==='radio' ? {nom:'Nouvelle ligne', type:''} : {nom:'Nouvelle ligne', total:0};
+  STYLE_ADJUSTMENTS[_bcCurrentStyle][section].push(r);
+  renderBcStyleEditor();
+}
+
+async function saveBudgetConfig() {
+  var btn = document.querySelector('#tab-budgetconfig .btn-primary');
+  if (btn) { btn.textContent='⏳ Sauvegarde...'; btn.disabled=true; }
+  try {
+    await supaSet('budget_templates', BUDGET_TEMPLATES);
+    await supaSet('style_adjustments', STYLE_ADJUSTMENTS);
+    await supaSet('regles_salles', REGLES_SALLES);
+    if (btn) { btn.textContent='✅ Sauvegardé !'; setTimeout(function(){ btn.textContent='💾 Sauvegarder'; btn.disabled=false; }, 2000); }
+  } catch(e) {
+    if (btn) { btn.textContent='❌ Erreur'; btn.disabled=false; }
+    console.error(e);
+  }
+}
+
+async function loadBudgetConfig() {
+  try {
+    var tpls = await supaGet('budget_templates');
+    if (tpls) BUDGET_TEMPLATES = tpls;
+    var adjs = await supaGet('style_adjustments');
+    if (adjs) STYLE_ADJUSTMENTS = adjs;
+    var salles = await supaGet('regles_salles');
+    if (salles) REGLES_SALLES = salles;
+  } catch(e) { console.warn('Budget config non chargé:', e); }
+}
+
+function supaGet(key) {
+  return fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.'+key+'&select=value',{
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+  }).then(function(r){return r.json();}).then(function(d){
+    return d&&d[0] ? JSON.parse(d[0].value) : null;
+  });
+}
+function supaSet(key, value) {
+  return fetch(SUPABASE_URL+'/rest/v1/app_data',{
+    method:'POST',
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+    body:JSON.stringify({key:key, value:JSON.stringify(value)})
+  });
+}
+
+function renderBudgetConfig() {
+  renderBcTemplateEditor();
+  renderBcStyleEditor();
+}
+
 function render(){renderKanban();renderConcerts();renderProcess();renderTaches();renderTkWidget();renderRS();}
 init();
+loadBudgetConfig();
 </script>
 <!-- ── MODAL BUDGET PROMO ───────────────────────────────── -->
 <div id="budget-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center">
@@ -2162,11 +2498,9 @@ init();
       <div style="margin-bottom:14px">
         <label style="font-size:11px;font-weight:700;color:var(--text);display:block;margin-bottom:6px">Style musical</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap" id="bud-style-btns">
-          <button class="bud-style-btn" data-style="pop" onclick="budSelectStyle(this)">🎤 Pop / Variété</button>
-          <button class="bud-style-btn" data-style="electro" onclick="budSelectStyle(this)">🎧 Électro / Dance</button>
           <button class="bud-style-btn" data-style="rap" onclick="budSelectStyle(this)">🎤 Rap / Hip-hop</button>
-          <button class="bud-style-btn" data-style="rock" onclick="budSelectStyle(this)">🎸 Rock / Metal</button>
-          <button class="bud-style-btn" data-style="jazz" onclick="budSelectStyle(this)">🎷 Jazz / Classique</button>
+          <button class="bud-style-btn" data-style="pop" onclick="budSelectStyle(this)">🎵 Pop</button>
+          <button class="bud-style-btn" data-style="variete" onclick="budSelectStyle(this)">🎶 Variété</button>
           <button class="bud-style-btn" data-style="autre" onclick="budSelectStyle(this)">🎵 Autre</button>
         </div>
       </div>
@@ -2174,21 +2508,6 @@ init();
       <div id="bud-template-preview" style="display:none;margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
         <div style="padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3)">Lignes pré-remplies selon le template</div>
         <div id="bud-template-lines" style="padding:10px 12px;display:flex;flex-direction:column;gap:3px;font-size:11px"></div>
-      </div>
-      <!-- Jauge & billetterie -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-        <div>
-          <label style="font-size:10px;font-weight:700;color:var(--text-3);display:block;margin-bottom:4px;text-transform:uppercase">Jauge</label>
-          <input id="bud-jauge" type="number" placeholder="ex: 2712" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg);box-sizing:border-box">
-        </div>
-        <div>
-          <label style="font-size:10px;font-weight:700;color:var(--text-3);display:block;margin-bottom:4px;text-transform:uppercase">Mise en vente</label>
-          <input id="bud-mev" type="date" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;background:var(--bg);box-sizing:border-box">
-        </div>
-        <div>
-          <label style="font-size:10px;font-weight:700;color:var(--text-3);display:block;margin-bottom:4px;text-transform:uppercase">Vendu à ce jour</label>
-          <input id="bud-vendu" type="number" placeholder="ex: 858" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg);box-sizing:border-box">
-        </div>
       </div>
     </div>
     <!-- Footer -->
@@ -2213,113 +2532,262 @@ var budgetGToken = null;
 var budSelectedStyle = null;
 
 // Templates selon budget + style + salle
-var BUDGET_TEMPLATES = {
-  small: { // < 1500€
-    label: 'Template Petit budget (< 1 500€)',
-    color: '#93c47d',
-    lines: {
-      street: [
-        {nom:'Collage petites affiches (60x40)', qte:100, pu:1.0},
-        {nom:'Impression et diffusion flyers', qte:'10 000', pu:'', total:150}
-      ],
-      espaces: [],
-      digital: [
-        {nom:'Sponsorisation Instagram / Facebook vague 1', total:100},
-        {nom:'Sponsorisation Instagram / Facebook vague 2', total:100},
-        {nom:'Newsletter Please Please mensuelle'},
-        {nom:'Intégration agenda culturels'},
-        {nom:'Post/Stories réseaux sociaux Please Please'}
-      ],
-      radio: [
-        {nom:'Jeu concours presse locale', type:'2x2 places'}
-      ]
-    }
+// ── Lignes FIXES présentes dans TOUS les budgets ──────────────────────────
+var LIGNES_FIXES_DIGITAL = [
+  {nom:'Newsletter Please Please mensuelle',    statut:'Engag\u00e9'},
+  {nom:'Int\u00e9gration agenda culturels',     statut:'Engag\u00e9'},
+  {nom:'Post/Stories r\u00e9seaux sociaux Please Please', statut:'Engag\u00e9'}
+];
+
+// ── Règles par ville/salle ────────────────────────────────────────────────
+var REGLES_SALLES = {
+  'zenith': {
+    affichage: [
+      {nom:'Collage grandes affiches (80x120)', qte:400, pu:1.1},
+      {nom:'Collage petites affiches (60x40)',  qte:300, pu:1.0},
+      {nom:'Impression de bandeaux',            qte:700, pu:0.3},
+      {nom:'Forfait impression et diffusion flyer Z\u00e9nith', qte:50000, total:200}
+    ]
   },
-  standard: { // 1500–4000€
-    label: 'Template Standard (1 500–4 000€)',
-    color: '#6fa8dc',
-    lines: {
-      street: [
-        {nom:'Collage grandes affiches (80x120)', qte:300, pu:1.1},
-        {nom:'Collage petites affiches (60x40)', qte:200, pu:1.0},
-        {nom:'Impression de bandeaux', qte:400, pu:0.3},
-        {nom:'Forfait impression et diffusion flyers', qte:'50 000', total:200}
-      ],
-      espaces: [
-        {nom:'Campagne DOOH', presta:'JC Decaux', total:1400}
-      ],
-      digital: [
-        {nom:'Sponsorisation Instagram / Facebook vague 1', total:200},
-        {nom:'Sponsorisation Instagram / Facebook vague 2', total:200},
-        {nom:'Sponsorisation Instagram / Facebook vague 3', total:200},
-        {nom:'Newsletter Please Please mensuelle'},
-        {nom:'Intégration agenda culturels'},
-        {nom:'Post/Stories réseaux sociaux Please Please'}
-      ],
-      radio: [
-        {nom:'Jeu concours Bien Public', type:'2x2 places'},
-        {nom:'OP Speak + Spot radio locale', type:'5x2 places'},
-        {nom:'Jeu concours web local', type:'1x2 places'}
-      ]
-    }
+  'reims': {
+    affichage: [
+      {nom:'Collage grandes affiches (80x120)', qte:600, pu:1.1},
+      {nom:'Impression de bandeaux',            qte:600, pu:0.3},
+      {nom:'Forfait impression et diffusion flyer Z\u00e9nith', qte:50000, total:200}
+    ]
   },
-  large: { // > 4000€
-    label: 'Template Grand budget (> 4 000€)',
-    color: '#e06666',
-    lines: {
-      street: [
-        {nom:'Collage grandes affiches (80x120)', qte:500, pu:1.1},
-        {nom:'Collage petites affiches (60x40)', qte:300, pu:1.0},
-        {nom:'Impression de bandeaux', qte:600, pu:0.3},
-        {nom:'Forfait impression et diffusion flyers', qte:'80 000', total:300},
-        {nom:'Pose d\'affiches 4x3', qte:10, pu:80}
-      ],
-      espaces: [
-        {nom:'Campagne DOOH', presta:'JC Decaux', total:2000},
-        {nom:'Encart presse', presta:'Bien Public', total:500}
-      ],
-      digital: [
-        {nom:'Sponsorisation Instagram / Facebook vague 1', total:300},
-        {nom:'Sponsorisation Instagram / Facebook vague 2', total:300},
-        {nom:'Sponsorisation Instagram / Facebook vague 3', total:300},
-        {nom:'Sponsorisation TikTok', total:200},
-        {nom:'Newsletter Please Please mensuelle'},
-        {nom:'Intégration agenda culturels'},
-        {nom:'Post/Stories réseaux sociaux Please Please'},
-        {nom:'Partenariat influenceur(s)', total:500}
-      ],
-      radio: [
-        {nom:'Jeu concours Bien Public', type:'2x2 places'},
-        {nom:'OP Speak + Spot Cherie FM', type:'5x2 places'},
-        {nom:'OP Speak + Spot K6FM', type:'5x2 places'},
-        {nom:'OP Speak + Spot Ici Bourgogne', type:'5x2 places'},
-        {nom:'OP McDonald\'s', type:'2x2 places'},
-        {nom:'Jeu concours J\'aime Dijon', type:'1x2 places'}
-      ]
-    }
+  'default': {
+    affichage: [
+      {nom:'Collage grandes affiches (80x120)', qte:400, pu:1.1},
+      {nom:'Collage petites affiches (60x40)',  qte:300, pu:1.0},
+      {nom:'Impression de bandeaux',            qte:700, pu:0.3}
+    ]
   }
 };
 
-// Ajustements par style musical
+function getSalleKey(ville) {
+  if (!ville) return 'default';
+  var v = ville.toLowerCase();
+  if (v.indexOf('zenith') >= 0 || v.indexOf('z\u00e9nith') >= 0) return 'zenith';
+  if (v.indexOf('reims') >= 0) return 'reims';
+  return 'default';
+}
+
+function getLignesAffichage(ville) {
+  var key = getSalleKey(ville);
+  return JSON.parse(JSON.stringify(REGLES_SALLES[key].affichage));
+}
+
+function getLignesDigital(base, skipSp) {
+  var lignes = (base.digital || []).map(function(l){
+    return Object.assign({}, l, {statut:'Pr\u00e9visionnel'});
+  });
+  if (skipSp) {
+    // Sponso prod : une seule ligne avec mention
+    lignes = [{nom:'Sponsorisation r\u00e9seaux sociaux', comment:'G\u00e9r\u00e9 par la prod', statut:'Pr\u00e9visionnel'}];
+  }
+  // Toujours ajouter les 3 lignes fixes en Engagé
+  return lignes.concat(JSON.parse(JSON.stringify(LIGNES_FIXES_DIGITAL)));
+}
+
+function coutAffichage(ville) {
+  var key = getSalleKey(ville);
+  var lignes = REGLES_SALLES[key].affichage;
+  return lignes.reduce(function(sum, l) {
+    if (l.total) return sum + l.total;
+    return sum + (l.qte||0) * (l.pu||0);
+  }, 0);
+}
+
+function arrondiCentaine(n) {
+  return Math.max(0, Math.round(n / 100) * 100);
+}
+
+function getBudgetTemplate(montant, style, ville, skipAffichage, skipSp) {
+  var tplKey = montant < 2000 ? 'small' : montant <= 4000 ? 'standard' : 'large';
+  var base = JSON.parse(JSON.stringify(BUDGET_TEMPLATES[tplKey]));
+
+  // ── Street
+  var street = skipAffichage ? [] : getLignesAffichage(ville);
+  var coutAff = skipAffichage ? 0 : coutAffichage(ville);
+  var resteApresAff = Math.max(0, montant - coutAff);
+
+  // ── Calcul sponso et DOOH selon tranche
+  var sponsoTotal = 0, doohTotal = 0, doohProtege = 0;
+
+  if (montant < 2000) {
+    // Tout le reste en sponso 3 vagues
+    sponsoTotal = resteApresAff;
+  } else if (montant <= 4000) {
+    // 40% sponso, 60% DOOH
+    sponsoTotal = arrondiCentaine(resteApresAff * 0.40);
+    doohTotal   = resteApresAff - sponsoTotal;
+  } else {
+    // 2500€ DOOH protégé + reste en sponso 3 vagues
+    doohProtege = 2500;
+    sponsoTotal = Math.max(0, resteApresAff - doohProtege);
+  }
+
+  // Vagues sponso : montant identique par vague, arrondi à la centaine inférieure
+  var vague = Math.floor(sponsoTotal / 3 / 100) * 100; // centaine inférieure identique
+  var v1 = vague, v2 = vague, v3 = vague;
+
+  // ── Digital
+  var digitalLines = [];
+  if (skipSp) {
+    digitalLines = [{nom:'Sponsorisation r\u00e9seaux sociaux', comment:'G\u00e9r\u00e9 par la prod', statut:'Pr\u00e9visionnel'}];
+  } else if (sponsoTotal > 0) {
+    if (v1 > 0) digitalLines.push({nom:'Sponsorisation Instagram / Facebook vague 1', total:v1, statut:'Pr\u00e9visionnel'});
+    if (v2 > 0) digitalLines.push({nom:'Sponsorisation Instagram / Facebook vague 2', total:v2, statut:'Pr\u00e9visionnel'});
+    if (v3 > 0) digitalLines.push({nom:'Sponsorisation Instagram / Facebook vague 3', total:v3, statut:'Pr\u00e9visionnel'});
+  }
+  // Lignes fixes toujours en Engagé
+  var digital = digitalLines.concat(JSON.parse(JSON.stringify(LIGNES_FIXES_DIGITAL)));
+
+  // ── Espaces (DOOH)
+  var espaces = [];
+  if (doohTotal > 0) {
+    espaces.push({nom:'Campagne DOOH', presta:'JC Decaux', total:doohTotal, statut:'Pr\u00e9visionnel'});
+  }
+  if (doohProtege > 0) {
+    street.push({nom:'Affichage prot\u00e9g\u00e9', total:doohProtege, statut:'Pr\u00e9visionnel'});
+  }
+
+  // ── Radio
+  var radio = (base.radio || []).map(function(l){
+    return Object.assign({}, l, {statut:'Pr\u00e9visionnel'});
+  });
+
+  // ── Ajustements style musical
+  var adj = STYLE_ADJUSTMENTS[style] || {};
+  if (adj.radio) radio = radio.concat(adj.radio.map(function(l){ return Object.assign({},l,{statut:'Pr\u00e9visionnel'}); }));
+  if (adj.digital) digital = digital.concat(adj.digital.map(function(l){ return Object.assign({},l,{statut:'Pr\u00e9visionnel'}); }));
+
+  // ── OP Media spécifiques à la salle
+  var salleKey = getSalleKey(ville);
+  var salleRadio = (REGLES_SALLES[salleKey] && REGLES_SALLES[salleKey].radio) || [];
+  if (salleRadio.length) radio = radio.concat(salleRadio.map(function(l){ return Object.assign({},l,{statut:'Pr\u00e9visionnel'}); }));
+
+  return {
+    label: base.label,
+    color: base.color,
+    lines: { street:street, espaces:espaces, digital:digital, radio:radio }
+  };
+}
+
+var BUDGET_TEMPLATES = {
+  small: {
+    label: 'Template Petit budget (< 1 500€)',
+    color: '#93c47d',
+    digital: [
+      {nom:'Sponsorisation Instagram / Facebook vague 1', total:100},
+      {nom:'Sponsorisation Instagram / Facebook vague 2', total:100}
+    ],
+    radio: []
+  },
+  standard: {
+    label: 'Template Standard (1 500–4 000€)',
+    color: '#6fa8dc',
+    espaces: [
+      {nom:'Campagne DOOH', presta:'JC Decaux', total:1400}
+    ],
+    digital: [
+      {nom:'Sponsorisation Instagram / Facebook vague 1', total:200},
+      {nom:'Sponsorisation Instagram / Facebook vague 2', total:200},
+      {nom:'Sponsorisation Instagram / Facebook vague 3', total:200}
+    ],
+    radio: [
+      {nom:'Jeu concours Bien Public', type:'2x2 places'},
+      {nom:'OP Speak + Spot radio locale', type:'5x2 places'},
+      {nom:'Jeu concours web local', type:'1x2 places'}
+    ]
+  },
+  large: {
+    label: 'Template Grand budget (> 4 000€)',
+    color: '#e06666',
+    espaces: [
+      {nom:'Campagne DOOH', presta:'JC Decaux', total:2000},
+      {nom:'Encart presse', presta:'Bien Public', total:500}
+    ],
+    digital: [
+      {nom:'Sponsorisation Instagram / Facebook vague 1', total:300},
+      {nom:'Sponsorisation Instagram / Facebook vague 2', total:300},
+      {nom:'Sponsorisation Instagram / Facebook vague 3', total:300},
+      {nom:'Sponsorisation TikTok', total:200},
+      {nom:'Partenariat influenceur(s)', total:500}
+    ],
+    radio: [
+      {nom:'Jeu concours Bien Public', type:'2x2 places'},
+      {nom:'OP Speak + Spot Cherie FM', type:'5x2 places'},
+      {nom:'OP Speak + Spot K6FM', type:'5x2 places'},
+      {nom:'OP Speak + Spot Ici Bourgogne', type:'5x2 places'},
+      {nom:"OP McDonald's", type:'2x2 places'},
+      {nom:"Jeu concours J'aime Dijon", type:'1x2 places'}
+    ]
+  }
+};
+
+// ── Templates budget selon montant ────────────────────────────────────────
+var BUDGET_TEMPLATES = {
+  small: {
+    label: 'Template Petit budget (< 1 500€)',
+    color: '#93c47d',
+    digital: [
+      {nom:'Sponsorisation Instagram / Facebook vague 1', total:100},
+      {nom:'Sponsorisation Instagram / Facebook vague 2', total:100}
+    ],
+    radio: []
+  },
+  standard: {
+    label: 'Template Standard (1 500–4 000€)',
+    color: '#6fa8dc',
+    espaces: [
+      {nom:'Campagne DOOH', presta:'JC Decaux', total:1400}
+    ],
+    digital: [
+      {nom:'Sponsorisation Instagram / Facebook vague 1', total:200},
+      {nom:'Sponsorisation Instagram / Facebook vague 2', total:200},
+      {nom:'Sponsorisation Instagram / Facebook vague 3', total:200}
+    ],
+    radio: [
+      {nom:'Jeu concours Bien Public', type:'2x2 places'},
+      {nom:'OP Speak + Spot radio locale', type:'5x2 places'},
+      {nom:'Jeu concours web local', type:'1x2 places'}
+    ]
+  },
+  large: {
+    label: 'Template Grand budget (> 4 000€)',
+    color: '#e06666',
+    espaces: [
+      {nom:'Campagne DOOH', presta:'JC Decaux', total:2000},
+      {nom:'Encart presse', presta:'Bien Public', total:500}
+    ],
+    digital: [
+      {nom:'Sponsorisation Instagram / Facebook vague 1', total:300},
+      {nom:'Sponsorisation Instagram / Facebook vague 2', total:300},
+      {nom:'Sponsorisation Instagram / Facebook vague 3', total:300},
+      {nom:'Sponsorisation TikTok', total:200},
+      {nom:'Partenariat influenceur(s)', total:500}
+    ],
+    radio: [
+      {nom:'Jeu concours Bien Public', type:'2x2 places'},
+      {nom:'OP Speak + Spot Cherie FM', type:'5x2 places'},
+      {nom:'OP Speak + Spot K6FM', type:'5x2 places'},
+      {nom:'OP Speak + Spot Ici Bourgogne', type:'5x2 places'},
+      {nom:"OP McDonald's", type:'2x2 places'},
+      {nom:"Jeu concours J'aime Dijon", type:'1x2 places'}
+    ]
+  }
+};
+
+// ── Ajustements par style musical ─────────────────────────────────────────
 var STYLE_ADJUSTMENTS = {
-  electro: {addDigital:[{nom:'Campagne TikTok Ads vague 1', total:200},{nom:'Campagne TikTok Ads vague 2', total:200}], removeRadio:true},
-  rap:     {addDigital:[{nom:'Sponsorisation TikTok supplémentaire', total:150}]},
-  jazz:    {addRadio:[{nom:'Émission culturelle radio', type:'Interview'}], removeDooh:true},
-  rock:    {addStreet:[{nom:'Affichage sauvage / stickers', qte:500, pu:0.1}]},
+  rap:     {},
   pop:     {},
+  variete: {},
   autre:   {}
 };
 
-function getBudgetTemplate(montant, style) {
-  var tpl = montant < 1500 ? 'small' : montant <= 4000 ? 'standard' : 'large';
-  var t = JSON.parse(JSON.stringify(BUDGET_TEMPLATES[tpl]));
-  var adj = STYLE_ADJUSTMENTS[style] || {};
-  if (adj.addDigital) t.lines.digital = t.lines.digital.concat(adj.addDigital);
-  if (adj.addRadio) t.lines.radio = t.lines.radio.concat(adj.addRadio);
-  if (adj.addStreet) t.lines.street = t.lines.street.concat(adj.addStreet);
-  if (adj.removeDooh) t.lines.espaces = t.lines.espaces.filter(function(l){return !l.presta||l.presta.indexOf('Decaux')<0;});
-  return t;
-}
 
 function openBudgetModal() {
   if (!currentFicheId) return;
@@ -2337,9 +2805,6 @@ function openBudgetModal() {
 
   document.getElementById('budget-subtitle').textContent = c.art + (c.ville ? ' · ' + c.ville : '') + (c.dc ? ' · ' + new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) : '');
   document.getElementById('bud-montant').value = '';
-  document.getElementById('bud-jauge').value = '';
-  document.getElementById('bud-mev').value = '';
-  document.getElementById('bud-vendu').value = '';
   document.getElementById('bud-template-preview').style.display = 'none';
   document.getElementById('bud-template-hint').style.display = 'none';
   document.getElementById('budget-status-msg').textContent = '';
@@ -2385,7 +2850,8 @@ function budUpdatePreview() {
 
   if (!budSelectedStyle) { preview.style.display='none'; createBtn.disabled=true; createBtn.style.opacity='.5'; return; }
 
-  var tpl = getBudgetTemplate(montant, budSelectedStyle);
+  var _c = currentFicheId ? concerts.find(function(x){return x.id===currentFicheId;}) : null;
+  var tpl = getBudgetTemplate(montant, budSelectedStyle, _c&&_c.ville||'', !!taskStates['skip-'+(_c&&_c.id||'')+'-col'], !!taskStates['skip-'+(_c&&_c.id||'')+'-sp']);
   var lines = document.getElementById('bud-template-lines');
   var sections = [{key:'street',label:'Street Marketing'},{key:'espaces',label:"Achat d'espaces"},{key:'digital',label:'Digital'},{key:'radio',label:'Radio / TV / Presse'}];
   var html = '';
@@ -2458,8 +2924,9 @@ function budgetGoogleAuth() {
     + '&redirect_uri=' + encodeURIComponent(redirect)
     + '&response_type=token'
     + '&scope=' + scope;
-  // Stocker qu'on attend un token OAuth
+  // Stocker qu'on attend un token OAuth + l'ID du concert en cours
   sessionStorage.setItem('budget_oauth_pending','1');
+  sessionStorage.setItem('budget_oauth_concert', currentFicheId || '');
   window.location.href = url;
 }
 
@@ -2475,12 +2942,16 @@ function budgetGoogleAuth() {
       history.replaceState(null,'',window.location.pathname);
       // Ré-ouvrir le modal budget si on était en train d'en créer un
       if (sessionStorage.getItem('budget_oauth_pending')) {
+        var concertId = sessionStorage.getItem('budget_oauth_concert');
         sessionStorage.removeItem('budget_oauth_pending');
+        sessionStorage.removeItem('budget_oauth_concert');
         setTimeout(function(){
           updateBudgetAuthUI();
-          // Afficher un message dans le modal si ouvert
-          var msg = document.getElementById('budget-status-msg');
-          if (msg) msg.textContent = '✓ Connecté ! Tu peux maintenant créer le Sheet.';
+          // Rouvrir la fiche concert puis le modal budget
+          if (concertId) {
+            openFiche(concertId);
+            setTimeout(function(){ openBudgetModal(); }, 300);
+          }
         }, 500);
       }
     }
@@ -2501,22 +2972,18 @@ function budgetCreateSheet() {
   btn.disabled = true; btn.textContent = '⏳ Création...';
   document.getElementById('budget-status-msg').textContent = 'Création du Google Sheet en cours...';
 
-  var tpl = getBudgetTemplate(montant, budSelectedStyle);
+  var tpl = getBudgetTemplate(montant, budSelectedStyle, c&&c.ville||'', !!taskStates['skip-'+(c&&c.id||'')+'-col'], !!taskStates['skip-'+(c&&c.id||'')+'-sp']);
   var skipSp = !!taskStates['skip-'+c.id+'-sp'];
   var skipCol = !!taskStates['skip-'+c.id+'-col'];
-  var jauge = document.getElementById('bud-jauge').value || '';
-  var mev = document.getElementById('bud-mev').value || '';
-  var vendu = document.getElementById('bud-vendu').value || '';
 
   var dcDate = c.dc ? new Date(c.dc) : null;
   var dateStr = dcDate ? dcDate.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
   var dcISO = dcDate ? dcDate.toISOString().slice(0,10).replace(/-/g,'') : '';
-  var artSlug = (c.art||'ARTISTE').toUpperCase().replace(/[^A-Z0-9]/g,'_');
-  var villeSlug = c.ville ? c.ville.split('/')[0].trim().toUpperCase().replace(/[^A-Z0-9]/g,'_') : 'LIEU';
-  var sheetTitle = dcISO + '_' + artSlug + '_' + villeSlug + '__BUDGET_PROMO';
+  var artNom = (c.art||'ARTISTE').toUpperCase();
+  var villeNom = c.ville ? c.ville.split('/')[0].trim().toUpperCase() : 'LIEU';
+  var sheetTitle = dcISO + '_' + artNom + ' ' + villeNom + '_BUDGET PROMO';
 
-  // Construire les données du sheet
-  var rows = buildSheetData(c, tpl, montant, jauge, mev, vendu, dateStr, skipSp, skipCol);
+  var rows = buildSheetData(c, tpl, montant, dateStr, skipSp, skipCol);
   console.log('=== BUDGET DEBUG ===');
   console.log('Formule B9:', rows.values[8][1]);
   console.log('Nb lignes:', rows.values.length);
@@ -2575,40 +3042,28 @@ function budgetCreateSheet() {
   });
 }
 
-function buildSheetData(c, tpl, montant, jauge, mev, vendu, dateStr, skipSp, skipCol) {
+function buildSheetData(c, tpl, montant, dateStr, skipSp, skipCol) {
   var streetRows = tpl.lines.street || [];
   var espaceRows = tpl.lines.espaces || [];
   var digitalRows = tpl.lines.digital || [];
   var radioRows = tpl.lines.radio || [];
-
-  // Format date mise en vente dd/MM/yyyy
-  var mevStr = '';
-  if (mev) {
-    var d = new Date(mev+'T12:00:00');
-    mevStr = ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear();
-  }
 
   // Formule française exacte du modèle — fonctionne avec locale fr_FR
   var e = 'Engag\u00e9';
   var engFormula = '=SI(H13="'+e+'";F13;0)+SI(H14="'+e+'";F14;0)+SI(H15="'+e+'";F15;0)+SI(H16="'+e+'";F16;0)+SI(H17="'+e+'";F17;0)+SI(H18="'+e+'";F18;0)+SI(H19="'+e+'";F19;0)+SI(H20="'+e+'";F20;0)+SI(H21="'+e+'";F21;0)+SI(H22="'+e+'";F22;0)+SI(H27="'+e+'";F27;0)+SI(H28="'+e+'";F28;0)+SI(H29="'+e+'";F29;0)+SI(H30="'+e+'";F30;0)+SI(H31="'+e+'";F31;0)+SI(H32="'+e+'";F32;0)+SI(H33="'+e+'";F33;0)+SI(H34="'+e+'";F34;0)+SI(H35="'+e+'";F35;0)+SI(H36="'+e+'";F36;0)+SI(H41="'+e+'";F41;0)+SI(H42="'+e+'";F42;0)+SI(H43="'+e+'";F43;0)+SI(H44="'+e+'";F44;0)+SI(H45="'+e+'";F45;0)+SI(H46="'+e+'";F46;0)+SI(H47="'+e+'";F47;0)+SI(H48="'+e+'";F48;0)+SI(H49="'+e+'";F49;0)+SI(H50="'+e+'";F50;0)';
 
   var V = [];
-  // R1-R4 : en-tête (D1:H1 fusionné dans le modèle)
-  V.push(['','','',c.art||'','','','','','']);       // R1
-  V.push(['','','',c.ville||'','','','','','']);      // R2
-  V.push(['','','',dateStr,'','','','','']);          // R3
-  V.push(['','','','Promotion Locale','','','','','']); // R4
-  V.push(['','','','','','','','','']);               // R5 vide
+  V.push(['','','',c.art||'','','','','','']);
+  V.push(['','','',c.ville||'','','','','','']);
+  V.push(['','','',dateStr,'','','','','']);
+  V.push(['','','','Promotion Locale','','','','','']);
+  V.push(['','','','','','','','','']);
 
-  // R6 : récap / infos globales
   V.push(['R\u00e9cap budget promo','','','INFORMATIONS GLOBALES','','','','Kit Promo','']);
-  // R7 : Budget alloué | Mise en vente | Kit Promo
-  V.push(['Budget allou\u00e9', montant, '', 'Mise en vente', mevStr, '', 'Kit Promo','','']);
-  // R8 : Dépenses prévisionnelles | Jauge | Break
-  V.push(['D\u00e9penses pr\u00e9visionnelles','=F23+F37+F51','','Jauge',jauge||'','','Break','0','']);
-  // R9 : Dépenses engagées | Vendu au | Reste à vendre
-  V.push(['D\u00e9penses engag\u00e9es',engFormula,'','Vendu au ','=TODAY()',vendu||'','Reste \u00e0 vendre','=F8-F9','']);
-  V.push(['','','','','','','','','']); // R10
+  V.push(['Budget allou\u00e9', montant, '', 'Mise en vente', '', '', 'Kit Promo','','']);
+  V.push(['D\u00e9penses pr\u00e9visionnelles','=F23+F37+F51','','Jauge','','','Break','0','']);
+  V.push(['D\u00e9penses engag\u00e9es',engFormula,'','Vendu au ','','','Reste \u00e0 vendre','=F8-F9','']);
+  V.push(['','','','','','','','','']);
 
   // R11-R23 : STREET MARKETING
   V.push(['STREET MARKETING','','','','','','','','']); // R11
@@ -2618,7 +3073,7 @@ function buildSheetData(c, tpl, montant, jauge, mev, vendu, dateStr, skipSp, ski
     if(r){
       var rn=13+i;
       var tot = r.total ? r.total : (r.qte&&r.pu ? '=C'+rn+'*D'+rn : '');
-      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', tot, r.comment||'', 'Engag\u00e9', '']);
+      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', tot, r.comment||'', r.statut||'Pr\u00e9visionnel', '']);
     } else V.push(['','','','','','','','','']);
   }
   V.push(['','','','=SUM(E13:E22)','','=SUM(F13:F22)','','','']); // R23 total
@@ -2632,7 +3087,7 @@ function buildSheetData(c, tpl, montant, jauge, mev, vendu, dateStr, skipSp, ski
     if(r){
       var rn=27+i;
       var tot = r.total ? r.total : (r.qte&&r.pu ? '=C'+rn+'*D'+rn : '');
-      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', tot, r.comment||'', 'Engag\u00e9', '']);
+      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', tot, r.comment||'', r.statut||'Pr\u00e9visionnel', '']);
     } else V.push(['','','','','','','','','']);
   }
   V.push(['','','','=SUM(E27:E36)','','=SUM(F27:F36)','','','']); // R37
@@ -2644,7 +3099,7 @@ function buildSheetData(c, tpl, montant, jauge, mev, vendu, dateStr, skipSp, ski
   for(var i=0;i<10;i++){
     var r=digitalRows[i];
     if(r){
-      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', r.total||'', r.comment||'', 'Engag\u00e9', '']);
+      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', r.total||'', r.comment||'', r.statut||'Pr\u00e9visionnel', '']);
     } else V.push(['','','','','','','','','']);
   }
   V.push(['','','','=SUM(E41:E50)','','=SUM(F41:F50)','','','']); // R51
@@ -2655,7 +3110,7 @@ function buildSheetData(c, tpl, montant, jauge, mev, vendu, dateStr, skipSp, ski
   V.push(['D\u00e9signation','Prestataire','Type','','','','Commentaire','Statut','']); // R54
   for(var i=0;i<10;i++){
     var r=radioRows[i];
-    if(r){ V.push([r.nom, r.presta||'', r.type||'', '', '', '', r.comment||'', 'Engag\u00e9', '']); }
+    if(r){ V.push([r.nom, r.presta||'', r.type||'', '', '', '', r.comment||'', r.statut||'Pr\u00e9visionnel', '']); }
     else V.push(['','','','','','','','','']);
   }
 
