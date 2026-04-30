@@ -398,7 +398,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .ftask.delegue{background:rgba(59,130,246,.05);border-left:3px solid rgba(59,130,246,.5)}
 
 /* ── BANNIERE PROCHAIN CONCERT ───────────────────────── */
-.next-concert-banner{display:flex;align-items:center;gap:12px;padding:7px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1.5rem;overflow:hidden}
+.next-concert-banner{display:flex;align-items:center;gap:12px;padding:7px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;width:100%;box-sizing:border-box}
 .ncb-label{font-size:9px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;flex-shrink:0}
 .ncb-sep{width:1px;height:14px;background:var(--border);flex-shrink:0}
 .ncb-art{font-size:13px;font-weight:700;color:var(--text);flex-shrink:0}
@@ -548,8 +548,10 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
           <div id="tk-widget-wrap"></div>
         </div>
       </div>
-      <div id="next-concert-wrap" style="margin-bottom:8px"></div>
-      <div id="today-rs-wrap" style="margin-bottom:1.5rem"></div>
+      <div style="display:flex;gap:12px;margin-bottom:1.5rem;align-items:stretch">
+        <div id="next-concert-wrap" style="flex:1;min-width:0;display:flex"></div>
+        <div id="today-rs-wrap" style="flex:2;min-width:0;display:flex"></div>
+      </div>
       <div id="ventes-filter-wrap"></div>
       <div class="filters">
         <input type="text" id="search" placeholder="Rechercher un artiste..." oninput="renderKanban()">
@@ -2447,32 +2449,43 @@ function budgetSaveClientId() {
 
 function budgetGoogleAuth() {
   if (!BUDGET_CLIENT_ID) { alert('Configure d\'abord ton Client ID Google.'); return; }
-  var redirect = 'https://dashboardppcomm.netlify.app';
+  var redirect = window.location.origin === 'http://localhost:8080' 
+    ? 'http://localhost:8080/index.html'
+    : 'https://dashboardppcomm.netlify.app';
   var scope = encodeURIComponent('https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file');
   var url = 'https://accounts.google.com/o/oauth2/v2/auth'
     + '?client_id=' + encodeURIComponent(BUDGET_CLIENT_ID)
     + '&redirect_uri=' + encodeURIComponent(redirect)
     + '&response_type=token'
     + '&scope=' + scope;
-  var popup = window.open(url, 'google_auth', 'width=500,height=600');
-  var timer = setInterval(function(){
-    try {
-      if (!popup || popup.closed) { clearInterval(timer); return; }
-      var hash = popup.location.hash;
-      if (hash && hash.indexOf('access_token') >= 0) {
-        var params = {};
-        hash.substring(1).split('&').forEach(function(p){ var kv=p.split('='); params[kv[0]]=decodeURIComponent(kv[1]||''); });
-        if (params.access_token) {
-          budgetGToken = params.access_token;
-          popup.close();
-          clearInterval(timer);
-          updateBudgetAuthUI();
-          document.getElementById('budget-status-msg').textContent = '✓ Connecté avec succès';
-        }
-      }
-    } catch(e) {}
-  }, 500);
+  // Stocker qu'on attend un token OAuth
+  sessionStorage.setItem('budget_oauth_pending','1');
+  window.location.href = url;
 }
+
+// Récupérer le token OAuth au chargement si on revient d'une auth Google
+(function(){
+  var hash = window.location.hash;
+  if (hash && hash.indexOf('access_token') >= 0) {
+    var params = {};
+    hash.substring(1).split('&').forEach(function(p){ var kv=p.split('='); params[kv[0]]=decodeURIComponent(kv[1]||''); });
+    if (params.access_token) {
+      budgetGToken = params.access_token;
+      // Nettoyer l'URL
+      history.replaceState(null,'',window.location.pathname);
+      // Ré-ouvrir le modal budget si on était en train d'en créer un
+      if (sessionStorage.getItem('budget_oauth_pending')) {
+        sessionStorage.removeItem('budget_oauth_pending');
+        setTimeout(function(){
+          updateBudgetAuthUI();
+          // Afficher un message dans le modal si ouvert
+          var msg = document.getElementById('budget-status-msg');
+          if (msg) msg.textContent = '✓ Connecté ! Tu peux maintenant créer le Sheet.';
+        }, 500);
+      }
+    }
+  }
+})();
 
 // ── CRÉATION DU GOOGLE SHEET ──────────────────────────────
 
@@ -2504,19 +2517,23 @@ function budgetCreateSheet() {
 
   // Construire les données du sheet
   var rows = buildSheetData(c, tpl, montant, jauge, mev, vendu, dateStr, skipSp, skipCol);
+  console.log('=== BUDGET DEBUG ===');
+  console.log('Formule B9:', rows.values[8][1]);
+  console.log('Nb lignes:', rows.values.length);
 
   // 1) Créer le spreadsheet
   fetch('https://sheets.googleapis.com/v4/spreadsheets', {
     method: 'POST',
     headers: {'Authorization':'Bearer '+budgetGToken,'Content-Type':'application/json'},
     body: JSON.stringify({
-      properties: {title: sheetTitle},
+      properties: {title: sheetTitle, locale: 'fr_FR'},
       sheets: [{properties: {title: 'PREV', gridProperties: {rowCount: 120, columnCount: 9}}}]
     })
   })
   .then(function(r){return r.json();})
   .then(function(data){
-    if (!data.spreadsheetId) throw new Error(JSON.stringify(data));
+    console.log('1) Spreadsheet créé:', data.spreadsheetId, '— erreur:', data.error);
+    if (!data.spreadsheetId) throw new Error('Création spreadsheet: '+JSON.stringify(data));
     var sid = data.spreadsheetId;
     var sheetId = data.sheets[0].properties.sheetId;
 
@@ -2526,25 +2543,32 @@ function budgetCreateSheet() {
       headers: {'Authorization':'Bearer '+budgetGToken,'Content-Type':'application/json'},
       body: JSON.stringify({range:'PREV!A1:I120', majorDimension:'ROWS', values: rows.values})
     })
-    .then(function(){
+    .then(function(r){return r.json();})
+    .then(function(writeRes){
+      console.log('2) Données écrites:', writeRes.updatedCells, 'cellules — erreur:', writeRes.error);
+      if(writeRes.error) throw new Error('Écriture données: '+JSON.stringify(writeRes.error));
       // 3) Appliquer le formatage
       return applySheetFormatting(sid, sheetId, rows);
     })
+    .then(function(fmtRes){
+      console.log('3) Formatage appliqué — erreur:', fmtRes && fmtRes.error);
+      if(fmtRes && fmtRes.error) console.warn('Détail erreur formatage:', JSON.stringify(fmtRes.error));
+      // 4) Insérer le logo PP Family en A1:C4
+      return insertLogo(sid, sheetId);
+    })
     .then(function(){
       var url = 'https://docs.google.com/spreadsheets/d/'+sid+'/edit';
-      // Sauvegarder le lien dans la fiche
       c.budget = url;
       scheduleSave();
       if (document.getElementById('fi-budget')) document.getElementById('fi-budget').value = url;
       renderConcerts();
-
       document.getElementById('budget-status-msg').innerHTML = '✅ Sheet créé ! <a href="'+url+'" target="_blank" style="color:#1a7a4f;font-weight:700">Ouvrir dans Google Sheets ↗</a>';
       btn.textContent = 'Créer le Google Sheet';
       btn.disabled = false;
     });
   })
   .catch(function(err){
-    console.error(err);
+    console.error('ERREUR CATCH:', err);
     document.getElementById('budget-status-msg').textContent = '❌ Erreur : ' + (err.message||err);
     btn.textContent = 'Créer le Google Sheet';
     btn.disabled = false;
@@ -2552,257 +2576,385 @@ function budgetCreateSheet() {
 }
 
 function buildSheetData(c, tpl, montant, jauge, mev, vendu, dateStr, skipSp, skipCol) {
-  // Structure FIXE identique au modèle original :
-  // Lignes 1-4  : en-tête artiste/salle/date/type
-  // Ligne 5     : vide
-  // Lignes 6-9  : récap budget + infos globales
-  // Ligne 10    : vide
-  // Ligne 11    : STREET MARKETING (titre section)
-  // Ligne 12    : en-têtes colonnes
-  // Lignes 13-22: 10 lignes de données street
-  // Ligne 23    : total street
-  // Ligne 24    : vide
-  // Ligne 25    : ACHAT D'ESPACES
-  // Ligne 26    : en-têtes
-  // Lignes 27-36: 10 lignes espaces
-  // Ligne 37    : total espaces
-  // Ligne 38    : vide
-  // Ligne 39    : DIGITAL
-  // Ligne 40    : en-têtes
-  // Lignes 41-50: 10 lignes digital
-  // Ligne 51    : total digital
-  // Ligne 52    : vide
-  // Ligne 53    : OPERATIONS RADIO / TV / PRESSE
-  // Ligne 54    : en-têtes
-  // Lignes 55-64: 10 lignes radio
-
   var streetRows = tpl.lines.street || [];
   var espaceRows = tpl.lines.espaces || [];
   var digitalRows = tpl.lines.digital || [];
   var radioRows = tpl.lines.radio || [];
 
-  // Formater date mise en vente
+  // Format date mise en vente dd/MM/yyyy
   var mevStr = '';
   if (mev) {
-    var mevD = new Date(mev);
-    mevStr = mevD.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+    var d = new Date(mev+'T12:00:00');
+    mevStr = ('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+d.getFullYear();
   }
 
-  // Construire le tableau ligne par ligne (index 0-based = ligne Excel -1)
+  // Formule française exacte du modèle — fonctionne avec locale fr_FR
+  var e = 'Engag\u00e9';
+  var engFormula = '=SI(H13="'+e+'";F13;0)+SI(H14="'+e+'";F14;0)+SI(H15="'+e+'";F15;0)+SI(H16="'+e+'";F16;0)+SI(H17="'+e+'";F17;0)+SI(H18="'+e+'";F18;0)+SI(H19="'+e+'";F19;0)+SI(H20="'+e+'";F20;0)+SI(H21="'+e+'";F21;0)+SI(H22="'+e+'";F22;0)+SI(H27="'+e+'";F27;0)+SI(H28="'+e+'";F28;0)+SI(H29="'+e+'";F29;0)+SI(H30="'+e+'";F30;0)+SI(H31="'+e+'";F31;0)+SI(H32="'+e+'";F32;0)+SI(H33="'+e+'";F33;0)+SI(H34="'+e+'";F34;0)+SI(H35="'+e+'";F35;0)+SI(H36="'+e+'";F36;0)+SI(H41="'+e+'";F41;0)+SI(H42="'+e+'";F42;0)+SI(H43="'+e+'";F43;0)+SI(H44="'+e+'";F44;0)+SI(H45="'+e+'";F45;0)+SI(H46="'+e+'";F46;0)+SI(H47="'+e+'";F47;0)+SI(H48="'+e+'";F48;0)+SI(H49="'+e+'";F49;0)+SI(H50="'+e+'";F50;0)';
+
   var V = [];
-  // Lignes 1-4
-  V.push(['','','',c.art||'','','','','','']);          // R1
-  V.push(['','','',c.ville||'','','','','','']);         // R2
-  V.push(['','','',dateStr,'','','','','']);             // R3
-  V.push(['','','','Promotion Locale','','','','','']);  // R4
-  V.push(['','','','','','','','','']);                  // R5 vide
+  // R1-R4 : en-tête (D1:H1 fusionné dans le modèle)
+  V.push(['','','',c.art||'','','','','','']);       // R1
+  V.push(['','','',c.ville||'','','','','','']);      // R2
+  V.push(['','','',dateStr,'','','','','']);          // R3
+  V.push(['','','','Promotion Locale','','','','','']); // R4
+  V.push(['','','','','','','','','']);               // R5 vide
 
-  // Ligne 6 : récap headers
-  V.push(['Récap budget promo','','','INFORMATIONS GLOBALES','','','','Kit Promo','']); // R6
+  // R6 : récap / infos globales
+  V.push(['R\u00e9cap budget promo','','','INFORMATIONS GLOBALES','','','','Kit Promo','']);
+  // R7 : Budget alloué | Mise en vente | Kit Promo
+  V.push(['Budget allou\u00e9', montant, '', 'Mise en vente', mevStr, '', 'Kit Promo','','']);
+  // R8 : Dépenses prévisionnelles | Jauge | Break
+  V.push(['D\u00e9penses pr\u00e9visionnelles','=F23+F37+F51','','Jauge',jauge||'','','Break','0','']);
+  // R9 : Dépenses engagées | Vendu au | Reste à vendre
+  V.push(['D\u00e9penses engag\u00e9es',engFormula,'','Vendu au ','=TODAY()',vendu||'','Reste \u00e0 vendre','=F8-F9','']);
+  V.push(['','','','','','','','','']); // R10
 
-  // Lignes 7-9 : données récap
-  // Dépenses prévisionnelles = somme des totaux sections (F23+F37+F51)
-  // Dépenses engagées = somme des IF(Hx="Engagé",Fx,0) sur toutes les lignes de données
-  var engageFormula = '';
-  var engageCells = [];
-  for(var i=13;i<=22;i++) engageCells.push(i);
-  for(var i=27;i<=36;i++) engageCells.push(i);
-  for(var i=41;i<=50;i++) engageCells.push(i);
-  engageFormula = '=' + engageCells.map(function(r){return 'IF(H'+r+'="Engagé",F'+r+',0)';}).join('+');
-
-  V.push(['Budget alloué', montant, '', 'Mise en vente', '', mevStr, 'Kit Promo','','']);  // R7
-  V.push(['Dépenses prévisionnelles','=F23+F37+F51','','Jauge','',jauge||'','Break','0','']); // R8
-  V.push(['Dépenses engagées',engageFormula,'','Vendu au ','=TODAY()',vendu||'','Reste à vendre','=IF(F8>0,F8-F9,"")','']); // R9
-
-  V.push(['','','','','','','','','']); // R10 vide
-
-  // ── STREET MARKETING (R11-R23) ──
+  // R11-R23 : STREET MARKETING
   V.push(['STREET MARKETING','','','','','','','','']); // R11
-  V.push(['Désignation','Prestataire','Quantité','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']); // R12
-  // 10 lignes de données R13-R22
+  V.push(['D\u00e9signation','Prestataire','Quantit\u00e9','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']); // R12
   for(var i=0;i<10;i++){
-    var r = streetRows[i];
+    var r=streetRows[i];
     if(r){
-      var rowNum = 13+i;
-      var total = r.total ? r.total : (r.qte && r.pu ? '=C'+rowNum+'*D'+rowNum : '');
-      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', total, r.comment||'', 'Engagé', '']);
-    } else {
-      V.push(['','','','','','','','','']);
-    }
+      var rn=13+i;
+      var tot = r.total ? r.total : (r.qte&&r.pu ? '=C'+rn+'*D'+rn : '');
+      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', tot, r.comment||'', 'Engag\u00e9', '']);
+    } else V.push(['','','','','','','','','']);
   }
   V.push(['','','','=SUM(E13:E22)','','=SUM(F13:F22)','','','']); // R23 total
+  V.push(['','','','','','','','','']); // R24
 
-  V.push(['','','','','','','','','']); // R24 vide
-
-  // ── ACHAT D'ESPACES (R25-R37) ──
-  V.push(["ACHAT D'ESPACES",'','','','','','','','']); // R25
-  V.push(['Désignation','Prestataire','Quantité','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']); // R26
+  // R25-R37 : ACHAT D'ESPACES
+  V.push(["ACHAT D\u2019ESPACES",'','','','','','','','']); // R25
+  V.push(['D\u00e9signation','Prestataire','Quantit\u00e9','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']); // R26
   for(var i=0;i<10;i++){
-    var r = espaceRows[i];
+    var r=espaceRows[i];
     if(r){
-      var rowNum = 27+i;
-      var total = r.total ? r.total : (r.qte && r.pu ? '=C'+rowNum+'*D'+rowNum : '');
-      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', total, r.comment||'', 'Engagé', '']);
-    } else {
-      V.push(['','','','','','','','','']);
-    }
+      var rn=27+i;
+      var tot = r.total ? r.total : (r.qte&&r.pu ? '=C'+rn+'*D'+rn : '');
+      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', tot, r.comment||'', 'Engag\u00e9', '']);
+    } else V.push(['','','','','','','','','']);
   }
-  V.push(['','','','=SUM(E27:E36)','','=SUM(F27:F36)','','','']); // R37 total
+  V.push(['','','','=SUM(E27:E36)','','=SUM(F27:F36)','','','']); // R37
+  V.push(['','','','','','','','','']); // R38
 
-  V.push(['','','','','','','','','']); // R38 vide
-
-  // ── DIGITAL (R39-R51) ──
+  // R39-R51 : DIGITAL
   V.push(['DIGITAL','','','','','','','','']); // R39
-  V.push(['Désignation','Prestataire','Quantité','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']); // R40
+  V.push(['D\u00e9signation','Prestataire','Quantit\u00e9','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']); // R40
   for(var i=0;i<10;i++){
-    var r = digitalRows[i];
+    var r=digitalRows[i];
     if(r){
-      var rowNum = 41+i;
-      var total = r.total ? r.total : '';
-      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', total, r.comment||'', 'Engagé', '']);
-    } else {
-      V.push(['','','','','','','','','']);
-    }
+      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', r.total||'', r.comment||'', 'Engag\u00e9', '']);
+    } else V.push(['','','','','','','','','']);
   }
-  V.push(['','','','=SUM(E41:E50)','','=SUM(F41:F50)','','','']); // R51 total
+  V.push(['','','','=SUM(E41:E50)','','=SUM(F41:F50)','','','']); // R51
+  V.push(['','','','','','','','','']); // R52
 
-  V.push(['','','','','','','','','']); // R52 vide
-
-  // ── RADIO / TV / PRESSE (R53-R64) ──
+  // R53-R64 : RADIO / TV / PRESSE
   V.push(['OPERATIONS RADIO / TV / PRESSE','','','','','','','','']); // R53
-  V.push(['Désignation','Prestataire','Type','','','','Commentaire','Statut','']); // R54
+  V.push(['D\u00e9signation','Prestataire','Type','','','','Commentaire','Statut','']); // R54
   for(var i=0;i<10;i++){
-    var r = radioRows[i];
-    if(r){
-      V.push([r.nom, r.presta||'', r.type||'', '', '', '', r.comment||'', 'Engagé', '']);
-    } else {
-      V.push(['','','','','','','','','']);
-    }
+    var r=radioRows[i];
+    if(r){ V.push([r.nom, r.presta||'', r.type||'', '', '', '', r.comment||'', 'Engag\u00e9', '']); }
+    else V.push(['','','','','','','','','']);
   }
 
-  return {
-    values: V,
-    // positions 0-based pour le formatage
-    r: {
-      recap: 5,        // R6 (0-based=5)
-      street: 10,      // R11
-      streetHdr: 11,   // R12
-      streetData: 12,  // R13
-      streetTot: 22,   // R23
-      espace: 24,      // R25
-      espaceHdr: 25,
-      espaceData: 26,
-      espaceTot: 36,   // R37
-      digital: 38,     // R39
-      digitalHdr: 39,
-      digitalData: 40,
-      digitalTot: 50,  // R51
-      radio: 52,       // R53
-      radioHdr: 53,
-      radioData: 54
-    }
-  };
+  return {values:V, r:{
+    recap:5, street:10, streetHdr:11, streetData:12, streetTot:22,
+    espace:24, espaceHdr:25, espaceData:26, espaceTot:36,
+    digital:38, digitalHdr:39, digitalData:40, digitalTot:50,
+    radio:52, radioHdr:53, radioData:54
+  }};
 }
 
-function applySheetFormatting(sid, sheetId, rows) {
-  var r = rows.r;
-
-  // Couleurs exactes du modèle original (tirées d'openpyxl)
-  var BLUE_RECAP  = {red:0.435, green:0.647, blue:0.859};   // #6FA8DC - récap gauche
-  var PINK_RECAP  = {red:0.835, green:0.651, blue:0.741};   // #D5A6BD - récap droite
-  var BLUE_SEC    = {red:0.624, green:0.773, blue:0.910};   // #9FC5E8 - titre sections
-  var BLUE_TOT    = {red:0.812, green:0.886, blue:0.953};   // #CFE2F3 - ligne totaux
-  var WHITE       = {red:1, green:1, blue:1};
-
-  var boldArial   = {bold:true,  fontSize:10, fontFamily:'Arial'};
-  var boldArial12 = {bold:true,  fontSize:12, fontFamily:'Arial'};
-  var normArial   = {bold:false, fontSize:10, fontFamily:'Arial'};
-
-  var requests = [];
-
-  function fmt(r1,c1,r2,c2, bg, font, halign, wrapStrategy) {
-    var uf = {backgroundColor: bg, textFormat: font||normArial, horizontalAlignment: halign||'LEFT'};
-    if(wrapStrategy) uf.wrapStrategy = wrapStrategy;
-    requests.push({repeatCell:{
-      ranges:[{sheetId:sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2}],
-      cell:{userEnteredFormat: uf},
-      fields:'userEnteredFormat.backgroundColor,userEnteredFormat.textFormat,userEnteredFormat.horizontalAlignment'+(wrapStrategy?',userEnteredFormat.wrapStrategy':'')
-    }});
-  }
-
-  function merge(r1,c1,r2,c2){
-    requests.push({mergeCells:{range:{sheetId:sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},mergeType:'MERGE_ALL'}});
-  }
-
-  function colWidth(col, px){
-    requests.push({updateDimensionProperties:{range:{sheetId:sheetId,dimension:'COLUMNS',startIndex:col,endIndex:col+1},properties:{pixelSize:px},fields:'pixelSize'}});
-  }
-
-  function rowHeight(row, px){
-    requests.push({updateDimensionProperties:{range:{sheetId:sheetId,dimension:'ROWS',startIndex:row,endIndex:row+1},properties:{pixelSize:px},fields:'pixelSize'}});
-  }
-
-  function dropdown(r1,c1,r2,c2, values){
-    requests.push({setDataValidation:{range:{sheetId:sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2},
-      rule:{condition:{type:'ONE_OF_LIST',values:values.map(function(v){return {userEnteredValue:v};})},showCustomUi:true,strict:false}
-    }});
-  }
-
-  // ── Largeurs colonnes (A=280, B=150, C=100, D=130, E=40, F=110, G=150, H=100, I=60)
-  [280,150,100,130,40,110,150,100,60].forEach(function(w,i){ colWidth(i,w); });
-
-  // ── En-tête artiste/salle/date (R1-R4, col D bold 12)
-  fmt(0,3,4,4, WHITE, boldArial12);
-
-  // ── Récap R6 : gauche bleu bold, droite rose bold
-  fmt(r.recap, 0, r.recap+1, 3, BLUE_RECAP, boldArial);
-  fmt(r.recap, 3, r.recap+1, 9, PINK_RECAP, boldArial);
-  // R7-R9 : labels bold
-  fmt(r.recap+1, 0, r.recap+4, 1, WHITE, boldArial);
-  fmt(r.recap+1, 3, r.recap+4, 5, WHITE, boldArial);
-  fmt(r.recap+1, 6, r.recap+4, 7, WHITE, boldArial);
-
-  // ── Sections : titre bleu + en-têtes colonnes bold
-  [r.street, r.espace, r.digital, r.radio].forEach(function(row){
-    fmt(row, 0, row+1, 9, BLUE_SEC, boldArial);
-    fmt(row+1, 0, row+2, 9, WHITE, boldArial);
-  });
-
-  // ── Lignes de données : fond blanc, alternance légère possible
-  [r.streetData, r.espaceData, r.digitalData, r.radioData].forEach(function(start){
-    fmt(start, 0, start+10, 9, WHITE, normArial);
-  });
-
-  // ── Lignes totaux : fond bleu pâle
-  [r.streetTot, r.espaceTot, r.digitalTot].forEach(function(row){
-    fmt(row, 0, row+1, 9, BLUE_TOT, normArial);
-  });
-
-  // ── Dropdown Engagé/Prévisionnel sur col H pour toutes les lignes de données
-  [r.streetData, r.espaceData, r.digitalData, r.radioData].forEach(function(start){
-    dropdown(start, 7, start+10, 8, ['Engagé','Prévisionnel']);
-  });
-
-  // ── Hauteurs de lignes
-  rowHeight(r.recap, 22);
-  [r.street, r.espace, r.digital, r.radio].forEach(function(row){ rowHeight(row, 22); });
-
-  // ── Merges : titre artiste sur D1:H1, salle D2:H2, etc.
-  merge(0,3,1,8); // D1:H1 artiste
-  merge(1,3,2,8); // D2:H2 salle
-  merge(2,3,3,8); // D3:H3 date
-  merge(3,3,4,8); // D4:H4 type
-
-  // Merge titres sections sur toute la largeur
-  [r.street, r.espace, r.digital, r.radio].forEach(function(row){
-    merge(row,0,row+1,9);
-  });
-
+function insertLogo(sid, sheetId) {
+  var LOGO_URL = 'https://drive.google.com/uc?export=view&id=1etG2jgYORGJUl-Rthp0jaaI_HQnZ4szX';
   return fetch('https://sheets.googleapis.com/v4/spreadsheets/'+sid+':batchUpdate', {
     method: 'POST',
     headers: {'Authorization':'Bearer '+budgetGToken,'Content-Type':'application/json'},
-    body: JSON.stringify({requests: requests})
-  }).then(function(r){return r.json();});
+    body: JSON.stringify({requests:[{
+      addImage:{
+        image:{
+          imageProperties:{
+            contentUri: LOGO_URL
+          },
+          anchorCell:{
+            sheetId: sheetId,
+            rowIndex: 0,
+            columnIndex: 0
+          },
+          offsetXPixels: 5,
+          offsetYPixels: 5,
+          widthPixels: 220,
+          heightPixels: 85
+        }
+      }
+    }]})
+  }).then(function(r){return r.json();}).then(function(res){
+    if(res.error) {
+      console.warn('addImage échoué, tentative IMAGE():', res.error.message);
+      // Fallback : insérer via formule IMAGE() dans la cellule A1
+      return fetch('https://sheets.googleapis.com/v4/spreadsheets/'+sid+'/values/PREV!A1?valueInputOption=USER_ENTERED', {
+        method: 'PUT',
+        headers: {'Authorization':'Bearer '+budgetGToken,'Content-Type':'application/json'},
+        body: JSON.stringify({range:'PREV!A1', majorDimension:'ROWS', values:[['=IMAGE("'+LOGO_URL+'",4,85,220)']]})
+      }).then(function(r){return r.json();});
+    }
+    return res;
+  });
+}
+
+function applySheetFormatting(sid, sheetId, rows) {
+  var rv = rows.r;
+  var requests = [];
+
+  // Couleurs EXACTES extraites du fichier original
+  var BG_BLUE_REC = {red:0.4353, green:0.6588, blue:0.8627}; // FF6FA8DC
+  var BG_PINK     = {red:0.8353, green:0.6510, blue:0.7412}; // FFD5A6BD
+  var BG_BLUE_SEC = {red:0.6235, green:0.7725, blue:0.9098}; // FF9FC5E8
+  var BG_BLUE_TOT = {red:0.8118, green:0.8863, blue:0.9529}; // FFCFE2F3
+  var BG_WHITE    = {red:1, green:1, blue:1};
+
+  // Formats EXACTS du modèle original
+  var FMT_EUR  = '#,##0.00\\ [$\u20AC-1]';
+  var FMT_NUM  = '#,##0';
+  var FMT_DATE = 'dd/MM/yyyy';
+
+  var FB = {bold:true,  fontSize:10, fontFamily:'Arial'};
+  var FN = {bold:false, fontSize:10, fontFamily:'Arial'};
+  var F14B= {bold:true, fontSize:14, fontFamily:'Arial'};
+
+  function rng(r1,c1,r2,c2){return {sheetId:sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2};}
+
+  function fmt(r1,c1,r2,c2,bg,font,align){
+    requests.push({repeatCell:{range:rng(r1,c1,r2,c2),
+      cell:{userEnteredFormat:{backgroundColor:bg, textFormat:font||FN, horizontalAlignment:align||'LEFT'}},
+      fields:'userEnteredFormat.backgroundColor,userEnteredFormat.textFormat,userEnteredFormat.horizontalAlignment'
+    }});
+  }
+
+  function nfmt(r1,c1,r2,c2,pat){
+    requests.push({repeatCell:{range:rng(r1,c1,r2,c2),
+      cell:{userEnteredFormat:{numberFormat:{type:'NUMBER',pattern:pat}}},
+      fields:'userEnteredFormat.numberFormat'
+    }});
+  }
+
+  function mrg(r1,c1,r2,c2){
+    requests.push({mergeCells:{range:rng(r1,c1,r2,c2),mergeType:'MERGE_ALL'}});
+  }
+
+  function colW(c,px){
+    requests.push({updateDimensionProperties:{
+      range:{sheetId:sheetId,dimension:'COLUMNS',startIndex:c,endIndex:c+1},
+      properties:{pixelSize:px},fields:'pixelSize'
+    }});
+  }
+
+  // Masquer colonne I et J
+  requests.push({updateDimensionProperties:{
+    range:{sheetId:sheetId,dimension:'COLUMNS',startIndex:8,endIndex:10},
+    properties:{pixelSize:0,hiddenByUser:true},fields:'pixelSize,hiddenByUser'
+  }});
+
+  function dd(r1,c1,r2,c2,vals){
+    // Chips natifs Google Sheets via condition ONE_OF_LIST + showCustomUi
+    requests.push({setDataValidation:{range:rng(r1,c1,r2,c2),
+      rule:{
+        condition:{type:'ONE_OF_LIST',values:vals.map(function(v){return {userEnteredValue:v};})},
+        showCustomUi:true,
+        strict:false
+      }
+    }});
+    // Formatage conditionnel pour les couleurs de chips
+    requests.push({addConditionalFormatRule:{rule:{ranges:[rng(r1,c1,r2,c2)],
+      booleanRule:{condition:{type:'TEXT_EQ',values:[{userEnteredValue:vals[0]}]},
+      format:{backgroundColor:{red:0.714,green:0.843,blue:0.659}}}},index:0}});
+    requests.push({addConditionalFormatRule:{rule:{ranges:[rng(r1,c1,r2,c2)],
+      booleanRule:{condition:{type:'TEXT_EQ',values:[{userEnteredValue:vals[1]}]},
+      format:{backgroundColor:{red:0.957,green:0.800,blue:0.800}}}},index:0}});
+  }
+
+  function condColor(r1,c1,r2,c2,text,bg){
+    requests.push({addConditionalFormatRule:{
+      rule:{ranges:[rng(r1,c1,r2,c2)],
+        booleanRule:{
+          condition:{type:'TEXT_EQ',values:[{userEnteredValue:text}]},
+          format:{backgroundColor:bg}
+        }
+      }, index:0
+    }});
+  }
+
+  // ── Largeurs colonnes exactes du modèle (en pixels, ~7.5px par caractère)
+  // A=32.25ch, D=8.63ch, E=10ch, F=16ch, H=16.25ch
+  colW(0, 242); // A : 32.25ch
+  colW(1,  96); // B : ~12ch
+  colW(2,  80); // C : ~10ch
+  colW(3,  65); // D : 8.63ch
+  colW(4,  75); // E : 10ch
+  colW(5, 120); // F : 16ch
+  colW(6, 130); // G : ~17ch
+  colW(7, 122); // H : 16.25ch
+
+  // ── R1-R4 : fusions D:H, centré bold 14
+  mrg(0,3,1,8); mrg(1,3,2,8); mrg(2,3,3,8); mrg(3,3,4,8);
+  fmt(0,3,1,8, BG_WHITE, F14B, 'CENTER'); // R1 artiste
+  fmt(1,3,2,8, BG_WHITE, F14B, 'CENTER'); // R2 salle
+  fmt(2,3,3,8, BG_WHITE, F14B, 'CENTER'); // R3 date
+  fmt(3,3,4,8, BG_WHITE, FN,   'LEFT');   // R4 Promotion Locale
+  nfmt(2,3,3,8, 'dddd" "d" "mmmm" "yyyy'); // R3 format date long
+
+  // ── R6 : A6:B6 bleu récap | D6:H6 rose — fusions exactes du modèle
+  mrg(5,0,6,2); mrg(5,3,6,8);
+  fmt(5,0,6,2, BG_BLUE_REC, FB, 'CENTER');
+  fmt(5,3,6,8, BG_PINK,     FB, 'CENTER');
+  fmt(5,7,6,9, BG_WHITE,    FB, 'LEFT'); // Kit Promo col H
+
+  // ── R7 : labels bold, valeurs normales, formats
+  // A7 label, B7 valeur €, D7 label bold left, D7:E7 fusionné, F7 date, G7 bold, H7 vide
+  mrg(6,3,7,5); // D7:E7
+  fmt(6,0,7,1, BG_WHITE, FN, 'LEFT');    // A7 Budget alloué
+  fmt(6,1,7,2, BG_WHITE, FN, 'LEFT');    // B7 montant
+  nfmt(6,1,7,2, FMT_EUR);               // B7 format €
+  fmt(6,3,7,4, BG_WHITE, FB, 'LEFT');    // D7 Mise en vente bold
+  fmt(6,5,7,6, BG_WHITE, FN, 'CENTER'); // F7 date
+  nfmt(6,5,7,6, FMT_DATE);             // F7 format date
+  fmt(6,6,7,7, BG_WHITE, FB, 'LEFT');   // G7 Kit Promo bold
+
+  // ── R8
+  mrg(7,3,8,5); // D8:E8
+  fmt(7,0,8,1, BG_WHITE, FN, 'LEFT');   // A8
+  fmt(7,1,8,2, BG_WHITE, FN, 'LEFT');   // B8 dépenses prev
+  nfmt(7,1,8,2, FMT_EUR);
+  fmt(7,3,8,4, BG_WHITE, FB, 'LEFT');   // D8 Jauge bold
+  fmt(7,5,8,6, BG_WHITE, FN, 'CENTER'); // F8 jauge
+  nfmt(7,5,8,6, FMT_NUM);
+  fmt(7,6,8,7, BG_WHITE, FB, 'LEFT');   // G8 Break bold
+  fmt(7,7,8,8, BG_WHITE, FN, 'CENTER'); // H8 break value
+  nfmt(7,7,8,8, FMT_NUM);
+
+  // ── R9
+  mrg(8,3,9,5); // D9:E9
+  fmt(8,0,9,1, BG_WHITE, FN, 'LEFT');   // A9
+  fmt(8,1,9,2, BG_WHITE, FN, 'LEFT');   // B9 dépenses engagées
+  nfmt(8,1,9,2, FMT_EUR);
+  fmt(8,3,9,4, BG_WHITE, FB, 'LEFT');   // D9 Vendu au bold
+  fmt(8,4,9,5, BG_WHITE, FB, 'LEFT');   // E9 =TODAY() bold
+  fmt(8,5,9,6, BG_WHITE, FN, 'CENTER'); // F9 vendu
+  nfmt(8,5,9,6, FMT_NUM);
+  fmt(8,6,9,7, BG_WHITE, FB, 'LEFT');   // G9 Reste à vendre bold
+  fmt(8,7,9,8, BG_WHITE, FN, 'CENTER'); // H9 reste
+  nfmt(8,7,9,8, FMT_NUM);
+
+  // ── Titres sections : A:H fusionné, FF9FC5E8, bold centré
+  [rv.street, rv.espace, rv.digital, rv.radio].forEach(function(row){
+    mrg(row,0,row+1,8);
+    fmt(row,0,row+1,8, BG_BLUE_SEC, FB, 'CENTER');
+  });
+
+  // ── En-têtes colonnes : bold centré, pas de fond (blanc) + bordure basse
+  [rv.streetHdr, rv.espaceHdr, rv.digitalHdr, rv.radioHdr].forEach(function(row){
+    fmt(row,0,row+1,8, BG_WHITE, FB, 'CENTER');
+    mrg(row,3,row+1,5); // D:E fusionné sur l'en-tête
+    nfmt(row,3,row+1,6, FMT_EUR);
+    // Bordure basse sous les titres de colonnes
+    requests.push({updateBorders:{range:rng(row,0,row+1,8),
+      bottom:{style:'SOLID_MEDIUM',color:{red:0.4,green:0.4,blue:0.4}}
+    }});
+  });
+
+  // Fusion C54:F54 pour "Type" de la section Radio
+  mrg(rv.radioHdr,2,rv.radioHdr+1,6);
+  fmt(rv.radioHdr,2,rv.radioHdr+1,6, BG_WHITE, FB, 'CENTER');
+
+  // ── Lignes données : fusions D:E sur chaque ligne, formats €
+  [rv.streetData, rv.espaceData, rv.digitalData].forEach(function(start){
+    fmt(start,0,start+10,8, BG_WHITE, FN, 'LEFT');
+    for(var i=0;i<10;i++){ mrg(start+i,3,start+i+1,5); } // D:E fusionné
+    fmt(start,2,start+10,3, BG_WHITE, FN, 'CENTER'); // C quantité centré
+    nfmt(start,3,start+10,4, FMT_EUR); // D tarif unitaire
+    fmt(start,3,start+10,5, BG_WHITE, FN, 'RIGHT'); // D:E tarif unitaire aligné droite
+    nfmt(start,5,start+10,6, FMT_EUR); // F tarif total
+    fmt(start,5,start+10,6, BG_WHITE, FN, 'RIGHT'); // F aligné droite
+    dd(start,7,start+10,8, ['Engag\u00e9','Pr\u00e9visionnel']);
+  });
+
+  // Radio : fusions C:F sur chaque ligne (type s'étend)
+  fmt(rv.radioData,0,rv.radioData+10,8, BG_WHITE, FN, 'LEFT');
+  for(var i=0;i<10;i++){ mrg(rv.radioData+i,2,rv.radioData+i+1,6); }
+  fmt(rv.radioData,2,rv.radioData+10,3, BG_WHITE, FN, 'LEFT');
+  dd(rv.radioData,7,rv.radioData+10,8, ['Engag\u00e9','Pr\u00e9visionnel']);
+
+  // ── Lignes totaux : FFCFE2F3, formats €
+  [rv.streetTot, rv.espaceTot, rv.digitalTot].forEach(function(row){
+    fmt(row,0,row+1,8, BG_BLUE_TOT, FN, 'LEFT');
+    nfmt(row,3,row+1,4, FMT_EUR);
+    nfmt(row,5,row+1,6, FMT_EUR);
+  });
+
+  // ── Bordures : contours extérieurs épais + séparateurs de colonnes fins
+  var B_MED  = {style:'SOLID_MEDIUM', color:{red:0.4,green:0.4,blue:0.4}};
+  var B_THIN = {style:'SOLID', color:{red:0.7,green:0.7,blue:0.7}};
+  var B_NONE = {style:'NONE'};
+
+  function outerWithCols(r1,c1,r2,c2){
+    requests.push({updateBorders:{range:rng(r1,c1,r2,c2),
+      top:B_MED, bottom:B_MED, left:B_MED, right:B_MED,
+      innerHorizontal:B_NONE, innerVertical:B_THIN
+    }});
+  }
+
+  // Récap A6:B9 et Infos D6:H9
+  outerWithCols(5,0,9,2);
+  outerWithCols(5,3,9,8);
+
+  // Sections complètes
+  [[rv.street,rv.streetTot],[rv.espace,rv.espaceTot],[rv.digital,rv.digitalTot]].forEach(function(s){
+    outerWithCols(s[0],0,s[1]+1,8);
+  });
+  outerWithCols(rv.radio,0,rv.radioData+10,8);
+
+  // ── Fusions D:E sur lignes totaux (R23, R37, R51)
+  [rv.streetTot, rv.espaceTot, rv.digitalTot].forEach(function(row){
+    mrg(row,3,row+1,5);
+  });
+
+  // ── Alignement droite sur les totaux et tarifs unitaires
+  [rv.streetTot, rv.espaceTot, rv.digitalTot].forEach(function(row){
+    fmt(row,3,row+1,6, BG_BLUE_TOT, FN, 'RIGHT');
+  });
+
+  // ── Paramètres d'impression : portrait, sans quadrillage, ajusté à la page
+  requests.push({updateSheetProperties:{
+    properties:{
+      sheetId: sheetId,
+      gridProperties:{hideGridlines:true},
+      tabColor:{red:0.435,green:0.659,blue:0.863}
+    },
+    fields:'gridProperties.hideGridlines,tabColor'
+  }});
+
+  // Marges et orientation portrait via spreadsheet properties
+  requests.push({updateSpreadsheetProperties:{
+    properties:{
+      title: null, // ne pas modifier le titre
+      locale:'fr_FR',
+      defaultFormat:{
+        padding:{top:2,right:2,bottom:2,left:2}
+      }
+    },
+    fields:'defaultFormat.padding'
+  }});
+
+  return fetch('https://sheets.googleapis.com/v4/spreadsheets/'+sid+':batchUpdate',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+budgetGToken,'Content-Type':'application/json'},
+    body:JSON.stringify({requests:requests})
+  }).then(function(r){return r.json();}).then(function(res){
+    if(res.error) console.error('Format error:',JSON.stringify(res.error));
+    return res;
+  });
 }
 </script>
 </body>
