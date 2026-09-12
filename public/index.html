@@ -556,7 +556,8 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
       <button onclick="showTab('rs',this)" style="padding:5px 14px;font-size:13px;border:none;background:transparent;cursor:pointer;color:var(--text-2);border-radius:6px;font-weight:500;transition:all .15s;margin-right:12px;border-right:2px solid var(--border);padding-right:16px">Plannings RS</button>
       <button class="active" onclick="showTab('kanban',this)">Tableau de bord</button>
       <button onclick="showTab('concerts',this)">Concerts</button>
-      <button onclick="showTab('taches',this)">Taches</button>
+      <button onclick="showTab('past',this)">Concerts passés</button>
+      <button id="btn-taches" onclick="showTab('taches',this)">Taches</button>
       <button id="btn-process" onclick="showTab('process',this);budgetConfigClick()">Process</button>
       <button id="btn-budgetconfig" onclick="showTab('budgetconfig',this)" style="display:none;opacity:0.5;font-size:11px">⚙ Budget</button>
     </nav>
@@ -576,7 +577,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
         <div class="dash-widget">
           <div class="dash-widget-head">
             <span class="dash-widget-title">Taches</span>
-            <button class="dash-widget-link" onclick="showTab('taches',document.querySelectorAll('.nav button')[3])">Tout voir &rsaquo;</button>
+            <button class="dash-widget-link" onclick="showTab('taches',document.getElementById('btn-taches'))">Tout voir &rsaquo;</button>
           </div>
           <div id="tk-widget-wrap"></div>
         </div>
@@ -615,9 +616,14 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
         <select id="cville" onchange="renderConcerts()"><option value="">Toutes les villes</option></select>
         <select id="cperiode" onchange="renderConcerts()"><option value="">Toutes les periodes</option></select>
         <select id="ccat" onchange="renderConcerts()"><option value="">Toutes les categories</option></select>
-        <button id="trash-toggle-btn" class="btn" style="margin-left:auto" onclick="toggleTrash()">🗑 Corbeille</button>
       </div>
       <div id="clist"></div>
+    </div>
+    <div id="tab-past" class="panel">
+      <div class="filters" style="margin-bottom:1rem">
+        <input type="search" id="pastsearch" placeholder="Rechercher un artiste..." oninput="renderPastConcerts()">
+      </div>
+      <div id="past-list"></div>
     </div>
     <div id="tab-budgetconfig" class="panel">
       <div class="card" style="max-width:900px;margin:0 auto">
@@ -735,7 +741,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
       <button class="reset-btn" onclick="resetFicheTasks()">&#8635; Reinit. taches</button>
       <button class="btn" onclick="openBudgetModal()" style="background:#e8f5ee;color:#1a7a4f;border:1px solid #b8e0ca;font-weight:600">📊 Budget Promo</button>
       <button class="btn btn-primary" onclick="closeFicheBtn()">Fermer</button>
-      <button class="btn btn-danger" onclick="deleteFicheConcert()">Supprimer</button>
+      <button class="btn btn-danger" onclick="deleteFicheConcert()">Déplacer vers Concerts passés</button>
     </div>
   </div>
 </div>
@@ -845,7 +851,7 @@ var VENTES=[
   {id:3,label:'Bon',cls:'ventes-3'},
   {id:4,label:'Complet',cls:'ventes-4'}
 ];
-var concerts=[],taskStates={},process=DEFAULT_PROCESS,nextId=26,showTrash=false;
+var concerts=[],taskStates={},process=DEFAULT_PROCESS,nextId=26;
 var tkCols=[],tkTasks=[],tkEditId=null,tkAddColId=null;
 var rsPosts=[],rsEditId=null,rsCurrentProj="pp",rsCurrentDate=null,rsCurrentMonth=new Date(),rsFmt="post",rsNetState={fb:false,insta:false,tiktok:false};
 var dragSrcId=null,saveTimer=null,currentFicheId=null;
@@ -1231,7 +1237,7 @@ function toggleFicheTask(cid,tid){
 }
 function deleteFicheConcert(){
   var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
-  if(!confirm('Retirer '+c.art+' ? (tu pourras le restaurer depuis la corbeille)'))return;
+  if(!confirm('Déplacer '+c.art+' vers "Concerts passés" ? Tu pourras le remettre en actif à tout moment.'))return;
   c.supprime=true;
   closeFicheBtn();scheduleSave('concerts');render();
 }
@@ -1250,16 +1256,10 @@ async function addConcert(){
   var f=document.getElementById('new-concert-form');if(f)f.style.display='none';
   var b=document.getElementById('btn-new-concert');if(b){b.textContent='+ Nouveau concert';b.classList.add('btn-primary');}
 }
-function deleteConcert(id){
-  var c=concerts.find(function(x){return x.id===id;});if(!c)return;
-  if(!confirm('Retirer ce concert ? (tu pourras le restaurer depuis la corbeille)'))return;
-  c.supprime=true;scheduleSave('concerts');render();
-}
 function restoreConcert(id){
   var c=concerts.find(function(x){return x.id===id;});if(!c)return;
-  delete c.supprime;scheduleSave('concerts');renderConcerts();
+  delete c.supprime;scheduleSave('concerts');render();
 }
-function toggleTrash(){showTrash=!showTrash;renderConcerts();}
 function toggleTask(cid,tid){
   var c=concerts.find(function(x){return x.id===cid;});
   var t=process.find(function(p){return p.id===tid;});
@@ -1454,35 +1454,16 @@ function renderConcerts(){
   var cv2=(document.getElementById('cville')||{value:''}).value;
   var cp2=(document.getElementById('cperiode')||{value:''}).value;
   var cc2=(document.getElementById('ccat')||{value:''}).value;
-  var trashCount=concerts.filter(function(c){return c.supprime;}).length;
-  var trashBtn=document.getElementById('trash-toggle-btn');
-  if(trashBtn)trashBtn.textContent=(showTrash?'← Retour aux concerts':'🗑 Corbeille')+(!showTrash&&trashCount?' ('+trashCount+')':'');
   var liste=concerts.filter(function(c){
-    if(!!c.supprime!==showTrash)return false;
+    if(c.supprime)return false;
     if(cs&&c.art.toLowerCase().indexOf(cs)<0)return false;
-    if(!showTrash&&cv2&&getVille(c.ville)!==cv2)return false;
-    if(!showTrash&&cp2&&(c.dc||'').indexOf(cp2)<0)return false;
-    if(!showTrash&&!matchesCategoryFilter(c,cc2))return false;
+    if(cv2&&getVille(c.ville)!==cv2)return false;
+    if(cp2&&(c.dc||'').indexOf(cp2)<0)return false;
+    if(!matchesCategoryFilter(c,cc2))return false;
     return true;
   });
-  if(!liste.length){el.innerHTML='<div class="empty-state">'+(showTrash?'Corbeille vide.':'Aucun concert.')+'</div>';return;}
+  if(!liste.length){el.innerHTML='<div class="empty-state">Aucun concert.</div>';return;}
   var today=new Date();today.setHours(0,0,0,0);
-
-  if(showTrash){
-    el.innerHTML='<div class="card crow-list-card" style="padding:0">'
-      +'<div style="padding:12px 20px;border-bottom:1px solid var(--border)">'
-      +'<h2 style="margin:0">'+liste.length+' concert'+(liste.length>1?'s':'')+' dans la corbeille</h2>'
-      +'</div>'
-      +liste.map(function(c){
-        var ds=c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
-        return '<div class="crow" style="display:flex;align-items:center;padding:0 16px;min-height:52px;justify-content:space-between">'
-          +'<div><div class="crow-name">'+esc(c.art)+cancelBadge(c)+'</div>'
-          +'<div style="font-size:11px;font-weight:500;color:var(--text-2);margin-top:2px">'+(c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div></div>'
-          +'<button class="btn" onclick="restoreConcert(\''+c.id+'\')">&#8635; Restaurer</button>'
-          +'</div>';
-      }).join('')+'</div>';
-    return;
-  }
 
   el.innerHTML='<div class="card crow-list-card" style="padding:0">'
     +'<div style="padding:12px 20px;border-bottom:1px solid var(--border)">'
@@ -1546,6 +1527,29 @@ function renderConcerts(){
       return '<div class="crow'+(notAnnounced?' not-announced':'')+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')" style="display:flex;align-items:stretch;padding:0;min-height:52px;"+((c.ventes||0)===4?"background:rgba(26,122,79,.06)":"")+">'
         +infoBloc+cM+cJ+cN+cB+statutBloc
         +'<span style="font-size:12px;color:#ccc;padding:0 8px;display:flex;align-items:center">&#8250;</span></div>';
+    }).join('')+'</div>';
+}
+function renderPastConcerts(){
+  var el=document.getElementById('past-list');
+  if(!el)return;
+  var ps=(document.getElementById('pastsearch')||{value:''}).value.toLowerCase();
+  var liste=concerts.filter(function(c){
+    if(!c.supprime)return false;
+    if(ps&&c.art.toLowerCase().indexOf(ps)<0)return false;
+    return true;
+  }).sort(function(a,b){return new Date(b.dc||0)-new Date(a.dc||0);});
+  if(!liste.length){el.innerHTML='<div class="empty-state">Aucun concert passé pour le moment.</div>';return;}
+  el.innerHTML='<div class="card crow-list-card" style="padding:0">'
+    +'<div style="padding:12px 20px;border-bottom:1px solid var(--border)">'
+    +'<h2 style="margin:0">'+liste.length+' concert'+(liste.length>1?'s':'')+' passé'+(liste.length>1?'s':'')+'</h2>'
+    +'</div>'
+    +liste.map(function(c){
+      var ds=c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
+      return '<div class="crow" style="display:flex;align-items:center;padding:0 16px;min-height:52px;justify-content:space-between">'
+        +'<div><div class="crow-name">'+esc(c.art)+cancelBadge(c)+'</div>'
+        +'<div style="font-size:11px;font-weight:500;color:var(--text-2);margin-top:2px">'+(c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div></div>'
+        +'<button class="btn" onclick="restoreConcert(\''+c.id+'\')">&#8635; Remettre en actif</button>'
+        +'</div>';
     }).join('')+'</div>';
 }
 function renderProcess(){
@@ -2605,7 +2609,7 @@ function renderBudgetConfig() {
   renderBcStyleEditor();
 }
 
-function render(){renderKanban();renderConcerts();renderProcess();renderTaches();renderTkWidget();renderRS();}
+function render(){renderKanban();renderConcerts();renderPastConcerts();renderProcess();renderTaches();renderTkWidget();renderRS();}
 init();
 loadBudgetConfig();
 </script>
