@@ -1008,6 +1008,23 @@ function showTab(id,btn){
   if(id==='budgetconfig'){ renderBcTemplateEditor(); renderBcStyleEditor(); renderBcSalleEditor(); }
 }
 function calcDate(c,t){var base=t.ref==='annonce'?c.da:c.dc;if(!base)return null;var d=new Date(base);d.setDate(d.getDate()+t.jours);return d;}
+// Echappement HTML : toute donnee saisie par un utilisateur (nom d'artiste, notes,
+// taches...) doit passer par esc() avant d'etre inseree dans une chaine HTML/attribut,
+// sinon elle peut injecter du code execute par le navigateur des autres utilisateurs.
+function esc(s){
+  if(s===null||s===undefined)return '';
+  return String(s).replace(/[&<>"']/g,function(ch){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+  });
+}
+// Pour les URL inserees dans un href/src : n'autorise que http(s) et les chemins
+// relatifs, pour bloquer les schemas dangereux comme javascript:.
+function escUrl(u){
+  u=(u||'').trim();
+  if(!u)return '';
+  if(/^(https?:)?\/\//i.test(u)||/^[.\/#]/.test(u))return esc(u);
+  return '';
+}
 function formatLieu(ville){
   if(!ville)return '';
   var parts=ville.split(' - ');
@@ -1137,7 +1154,7 @@ function renderFicheTasks(c){
     var clickable=!isBlocked;
     return '<div class="ftask'+(isDone?' done':isBlocked?' blocked':'')+'"'+(clickable?' onclick="toggleFicheTask(\''+c.id+'\','+t.id+')"':'')+'>'+
       '<div class="ftask-chk'+(isDone?' on':isBlocked?' blocked':'')+'">'+( isDone?'&#10003;':isBlocked?'&#8987;':'')+' </div>'+
-      '<div style="flex:1"><div class="ftask-name">'+t.nom+'</div>'+
+      '<div style="flex:1"><div class="ftask-name">'+esc(t.nom)+'</div>'+
       '<div style="display:flex;align-items:center;gap:6px;margin-top:3px">'+
       '<span class="pill '+cat.cls+'">'+cat.label+'</span>'+
       '<span class="ftask-date '+dateClass+'">'+dateStr+'</span></div></div>'+badge+'</div>';
@@ -1223,9 +1240,9 @@ function renderAnnonces(){
     var dayTxt=hasDate?da.toLocaleDateString('fr-FR',{day:'numeric'}):'?';
     var monTxt=hasDate?da.toLocaleDateString('fr-FR',{month:'short'}).toUpperCase():'--';
     var statusTxt=!hasDate?'Sans date':isLateA?'Retard':isToday2?"Auj.":diffDays===1?'Demain':'J-'+diffDays;
-    return '<div class="'+cls+'" onclick="openFiche(\''+c.id+'\')" title="'+c.art+'">'
+    return '<div class="'+cls+'" onclick="openFiche(\''+c.id+'\')" title="'+esc(c.art)+'">'
       +'<div><span class="ann-compact-day">'+dayTxt+'</span><span class="ann-compact-month"> '+monTxt+'</span></div>'
-      +'<div class="ann-compact-art">'+c.art+'</div>'
+      +'<div class="ann-compact-art">'+esc(c.art)+'</div>'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-top:3px">'
       +'<span class="ann-compact-status">'+statusTxt+'</span>'
       +'<button style="font-size:8px;padding:1px 5px;border-radius:3px;border:1px solid var(--border);background:var(--surface);color:var(--text-3);cursor:pointer;white-space:nowrap" onclick="event.stopPropagation();annonceDone(\''+c.id+'\')" title="Marquer comme annonce">&#10003;</button>'
@@ -1350,15 +1367,15 @@ function renderKanban(){
           return (function(){var d=calcDate(c,t);var isHl=!!taskStates['hl-'+c.id+'-'+t.id];
           return '<div class="titem'+(isHl?' highlighted':'')+'" onclick="event.stopPropagation();toggleHighlight(\''+c.id+'\','+t.id+')">'+
             '<div class="chk" onclick="event.stopPropagation();toggleTask(\''+c.id+'\','+t.id+')" style="cursor:pointer;flex-shrink:0;margin-top:2px"></div>'+
-            '<div style="flex:1;min-width:0"><div class="tname">'+t.nom+'</div>'+
+            '<div style="flex:1;min-width:0"><div class="tname">'+esc(t.nom)+'</div>'+
             '<span class="pill '+cat.cls+'">'+cat.label+'</span>'+
             '<div class="'+(isToday(d)?'ttoday':'tlate')+'">'+fmt(d)+'</div></div></div>';})()
         }).join('')+'</div>'
       :'<div class="ok-col"><span class="ok-badge">OK</span></div>';
     return '<div class="col" onclick="openFiche(\''+c.id+'\')">'+
       '<div class="col-head'+(hasLate?' late':'')+'">'+
-      '<div class="col-name'+(hasLate?' late':'')+'">'+c.art+'</div>'+
-      '<div class="col-sub'+(hasLate?' late':'')+'">'+( c.ville?formatLieu(c.ville)+' - ':'')+ds+'</div>'+
+      '<div class="col-name'+(hasLate?' late':'')+'">'+esc(c.art)+'</div>'+
+      '<div class="col-sub'+(hasLate?' late':'')+'">'+( c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div>'+
       ventesHtml(c,'event.stopPropagation();toggleVentes(event,\''+c.id+'\')') +
       '<div class="pbar"><div class="pfill" style="width:'+pct+'%"></div></div>'+
       '<div class="pbar-meta"><span>'+pct+'%</span>'+
@@ -1403,16 +1420,16 @@ function renderConcerts(){
       var med=c.medias||'';var jx=c.jeux||'';var bud=c.budget||'';var notes=c.notes||'';
 
       var medHtml=med
-        ?med.split(',').map(function(m){return '<div style="line-height:1.6;font-size:11px;color:var(--text-2)">'+m.trim()+'</div>';}).join('')
+        ?med.split(',').map(function(m){return '<div style="line-height:1.6;font-size:11px;color:var(--text-2)">'+esc(m.trim())+'</div>';}).join('')
         :'<div class="crow-cell-empty">—</div>';
       var jxHtml=jx
-        ?jx.split(',').map(function(j){return '<div style="line-height:1.6;font-size:11px;color:var(--text-2)">'+j.trim()+'</div>';}).join('')
+        ?jx.split(',').map(function(j){return '<div style="line-height:1.6;font-size:11px;color:var(--text-2)">'+esc(j.trim())+'</div>';}).join('')
         :'<div class="crow-cell-empty">—</div>';
       var notesHtml=notes
-        ?'<div style="line-height:1.5;font-size:11px;color:var(--text-2)">'+notes+'</div>'
+        ?'<div style="line-height:1.5;font-size:11px;color:var(--text-2)">'+esc(notes)+'</div>'
         :'<div class="crow-cell-empty">—</div>';
-      var budHtml=bud
-        ?'<a href="'+bud+'" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);text-decoration:none;white-space:nowrap;transition:all .15s" onmouseover="this.style.background=\'var(--bg)\';this.style.color=\'var(--text)\'" onmouseout="this.style.background=\'var(--surface)\';this.style.color=\'var(--text-2)\'">Ouvrir &#8599;</a>'
+      var budHtml=bud&&escUrl(bud)
+        ?'<a href="'+escUrl(bud)+'" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);text-decoration:none;white-space:nowrap;transition:all .15s" onmouseover="this.style.background=\'var(--bg)\';this.style.color=\'var(--text)\'" onmouseout="this.style.background=\'var(--surface)\';this.style.color=\'var(--text-2)\'">Ouvrir &#8599;</a>'
         :'<div class="crow-cell-empty">Ajouter un lien...</div>';
 
       var daStr='';
@@ -1424,8 +1441,8 @@ function renderConcerts(){
       }
 
       var infoBloc='<div style="width:220px;flex-shrink:0;padding:12px 16px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border-light)">'
-        +'<div class="crow-name">'+c.art+'</div>'
-        +'<div style="font-size:11px;font-weight:500;color:var(--text-2);margin-top:2px">'+(c.ville?formatLieu(c.ville)+' - ':'')+ds+'</div>'
+        +'<div class="crow-name">'+esc(c.art)+'</div>'
+        +'<div style="font-size:11px;font-weight:500;color:var(--text-2);margin-top:2px">'+(c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div>'
         +daStr+'</div>';
 
       var cellStyle='flex:1;padding:8px 12px;border-left:1px solid var(--border-light);display:flex;flex-direction:column;justify-content:center;cursor:pointer;transition:background .15s';
@@ -1462,7 +1479,7 @@ function renderProcess(){
   }
   function prereqSelect(t){
     var opts='<option value="">Aucun</option>';
-    process.filter(function(p){return p.id!==t.id;}).forEach(function(p){opts+='<option value="'+p.id+'"'+(t.prereq===p.id?' selected':'')+'>'+p.nom+'</option>';});
+    process.filter(function(p){return p.id!==t.id;}).forEach(function(p){opts+='<option value="'+p.id+'"'+(t.prereq===p.id?' selected':'')+'>'+esc(p.nom)+'</option>';});
     return '<select onchange="updTask('+t.id+',\'prereq\',this.value)">'+opts+'</select>';
   }
   function renderGroup(tasks,title,second){
@@ -1472,8 +1489,8 @@ function renderProcess(){
           ' ondragstart="dragStart(event,'+t.id+')" ondragover="dragOver(event)"'+
           ' ondrop="dragDrop(event,'+t.id+')" ondragleave="dragLeave(event)">'+
           '<span class="drag">&#8942;</span>'+
-          '<input type="text" value="'+t.nom+'" onchange="updTask('+t.id+',\'nom\',this.value)">'+
-          '<input type="number" value="'+t.jours+'" onchange="updTask('+t.id+',\'jours\',this.value)">'+
+          '<input type="text" value="'+esc(t.nom)+'" onchange="updTask('+t.id+',\'nom\',this.value)">'+
+          '<input type="number" value="'+esc(t.jours)+'" onchange="updTask('+t.id+',\'jours\',this.value)">'+
           '<select onchange="updTask('+t.id+',\'ref\',this.value)">'+
           '<option value="concert"'+(t.ref==='concert'?' selected':'')+'>J avant concert</option>'+
           '<option value="annonce"'+(t.ref==='annonce'?' selected':'')+'>J apres annonce</option>'+
@@ -1980,7 +1997,7 @@ function renderRS(){
 
     dayPosts.forEach(function(p){
       var t=RS_TYPES[p.type]||RS_TYPES.autre;
-      var lbl=(p.autoRef?'📢 ':(p.format==='story'?'📱 ':p.format==='tirage'?'🎲 ':'📄 '))+t.label+(p.concert?' · '+p.concert.substring(0,12):p.note?' · '+p.note.substring(0,15):'');
+      var lbl=(p.autoRef?'📢 ':(p.format==='story'?'📱 ':p.format==='tirage'?'🎲 ':'📄 '))+t.label+(p.concert?' · '+esc(p.concert.substring(0,12)):p.note?' · '+esc(p.note.substring(0,15)):'');
       chips+='<span class="rs-chip'+(p.ready?' ready':'')+(p.format==='story'?' story':'')+'">'+lbl+'</span>';
     });
 
@@ -2009,11 +2026,11 @@ function renderRS(){
           +'<div class="rs-post-row1">'
           +'<span class="rs-post-format '+fmtCls+'">'+fmtLbl+'</span>'
           +'<span class="rs-post-type '+t.cls+'">'+t.label+'</span>'
-          +(p.concert?'<span class="rs-post-concert">'+(isAuto?'📢 ':'')+p.concert+'</span>':'')
-          +(p.note&&!p.concert?'<span class="rs-post-note">'+p.note+'</span>':'')
+          +(p.concert?'<span class="rs-post-concert">'+(isAuto?'📢 ':'')+esc(p.concert)+'</span>':'')
+          +(p.note&&!p.concert?'<span class="rs-post-note">'+esc(p.note)+'</span>':'')
           +'</div>'
-          +(p.legend?'<div class="rs-post-legend">'+p.legend+'</div>':'')
-          +(p.link?'<div class="rs-post-link"><a href="'+p.link+'" target="_blank">'+p.link+'</a></div>':'')
+          +(p.legend?'<div class="rs-post-legend">'+esc(p.legend)+'</div>':'')
+          +(p.link&&escUrl(p.link)?'<div class="rs-post-link"><a href="'+escUrl(p.link)+'" target="_blank">'+esc(p.link)+'</a></div>':'')
           +'<div class="rs-post-row2">'
           +(p.fb?'<span class="rs-net-badge fb">FB</span>':'')
           +(p.insta?'<span class="rs-net-badge insta">Insta</span>':'')
@@ -2114,7 +2131,7 @@ function rsFillConcertSelect(sel, selectedVal){
   var seen={};
   var sorted=concerts.slice().sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
   sorted.forEach(function(c){
-    if(!seen[c.art]){seen[c.art]=1;html+='<option value="'+c.art+'">'+c.art+'</option>';}
+    if(!seen[c.art]){seen[c.art]=1;html+='<option value="'+esc(c.art)+'">'+esc(c.art)+'</option>';}
   });
   sel.innerHTML=html;
   sel.value=selectedVal||'';
