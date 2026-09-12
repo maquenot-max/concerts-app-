@@ -97,20 +97,21 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .ok-badge{font-size:10px;color:var(--green);background:var(--green-bg);padding:2px 8px;border-radius:20px;font-weight:500}
 
 /* ── PILLS ────────────────────────────────────────────── */
+/* Palette harmonisee : meme formule (fond tres clair / texte sature) pour
+   toutes les categories, teintes reparties uniformement pour rester
+   distinctes sans etre criardes. "General" reste neutre (gris). */
 .pill{font-size:9px;padding:1px 6px;border-radius:20px;font-weight:500;display:inline-block;margin-top:2px}
-.p-gen {background:#f0f0ee;color:#555555}
-.p-col {background:#eef5ff;color:#4a6fa5}
-.p-affp{background:#fff4ed;color:#a0622a}
-.p-sp  {background:#f3eeff;color:#7048a8}
-.p-press{background:#edfaf3;color:#2a7a52}
-.p-jx  {background:#fff0f0;color:#a84848}
-.p-rs  {background:#fef5e7;color:#a07030}
-.p-web {background:#e8f8ff;color:#2a7090}
-.p-bud {background:#f0fff4;color:#2d7a4f}
-.p-ph  {background:#fdf0ff;color:#8a3a9a}
-.p-prod{background:#fff8e8;color:#a06820}
-.p-aff {background:#fff4ed;color:#a0622a}
-.p-pr  {background:#fdf0ff;color:#8a3a9a}
+.p-gen  {background:#f0f0f0;color:#666666}
+.p-jx   {background:hsl(0,65%,95%);color:hsl(0,55%,32%)}
+.p-rs   {background:hsl(28,65%,95%);color:hsl(28,55%,32%)}
+.p-prod {background:hsl(42,65%,95%);color:hsl(42,55%,32%)}
+.p-bud  {background:hsl(145,65%,95%);color:hsl(145,55%,32%)}
+.p-press{background:hsl(170,65%,95%);color:hsl(170,55%,32%)}
+.p-affp {background:hsl(195,65%,95%);color:hsl(195,55%,32%)}
+.p-web  {background:hsl(215,65%,95%);color:hsl(215,55%,32%)}
+.p-col  {background:hsl(235,65%,95%);color:hsl(235,55%,32%)}
+.p-sp   {background:hsl(265,65%,95%);color:hsl(265,55%,32%)}
+.p-ph   {background:hsl(300,65%,95%);color:hsl(300,55%,32%)}
 
 /* ── CARD ─────────────────────────────────────────────── */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:1rem;box-shadow:var(--shadow)}

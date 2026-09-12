@@ -12,6 +12,12 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div id="load-error-overlay" style="display:none;position:fixed;inset:0;z-index:1000;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:2rem">
+  <div style="font-size:32px">⚠️</div>
+  <div style="font-size:16px;font-weight:700;max-width:420px">Impossible de charger les données</div>
+  <div style="font-size:13px;color:var(--text-2);max-width:420px;line-height:1.5">La connexion à la base de données a échoué. Pour éviter d'écraser des données existantes, le site ne s'ouvre pas tant que le chargement n'a pas réussi. Vérifie ta connexion internet et réessaie.</div>
+  <button class="btn btn-primary" onclick="init()">Réessayer</button>
+</div>
 <div id="app">
   <header>
     <h1 style="display:flex;align-items:center;gap:8px"><img src="favicon_io/favicon-32x32.png" style="width:20px;height:20px;border-radius:4px">Please Please Communication &mdash; Dashboard</h1>
@@ -208,7 +214,7 @@
       <button class="btn btn-primary" onclick="closeFicheBtn()">Fermer</button>
       <button class="btn btn-danger" id="fi-archive-btn" onclick="deleteFicheConcert()">Déplacer vers Concerts passés</button>
       <button class="btn" id="fi-restore-btn" onclick="restoreConcert(currentFicheId)" style="display:none">&#8635; Remettre en actif</button>
-      <button class="btn btn-danger" id="fi-perma-delete-btn" onclick="permanentlyDeleteConcert(currentFicheId)" style="display:none">&#10005; Supprimer definitivement</button>
+      <button class="dbtn" id="fi-perma-delete-btn" onclick="permanentlyDeleteConcert(currentFicheId)" style="display:none;margin-left:auto">Supprimer définitivement</button>
     </div>
   </div>
 </div>
@@ -300,25 +306,25 @@ var DEFAULT_PROCESS=[
   {id:3,nom:'Envoyer kit promo salle',cat:'gen',jours:0,ref:'annonce',prereq:null},
   {id:4,nom:'Ajouter date sur site web',cat:'gen',jours:0,ref:'annonce',prereq:null},
   {id:5,nom:'Contacter production',cat:'gen',jours:6,ref:'annonce',prereq:null},
-  {id:6,nom:'Creer visuel PP',cat:'aff',jours:0,ref:'annonce',prereq:null},
+  {id:6,nom:'Creer visuel PP',cat:'affp',jours:0,ref:'annonce',prereq:null},
   {id:7,nom:'Annoncer date sur RS',cat:'rs',jours:0,ref:'annonce',prereq:null},
   {id:8,nom:'Creer evenement FB',cat:'rs',jours:0,ref:'annonce',prereq:null},
   {id:9,nom:'Lancer sponso Vague 1',cat:'sp',jours:15,ref:'annonce',prereq:null},
-  {id:10,nom:'Commander / Livrer affiche',cat:'aff',jours:15,ref:'annonce',prereq:null},
-  {id:11,nom:'Imprimer / Livrer bandeaux',cat:'aff',jours:15,ref:'annonce',prereq:null},
+  {id:10,nom:'Commander / Livrer affiche',cat:'affp',jours:15,ref:'annonce',prereq:null},
+  {id:11,nom:'Imprimer / Livrer bandeaux',cat:'affp',jours:15,ref:'annonce',prereq:null},
   {id:12,nom:'Proposer Phoner / Interview',cat:'ph',jours:20,ref:'annonce',prereq:null},
-  {id:13,nom:'Gestion flyer multi-artiste',cat:'aff',jours:20,ref:'annonce',prereq:null},
-  {id:14,nom:'Gestion affichage protege',cat:'aff',jours:20,ref:'annonce',prereq:null},
+  {id:13,nom:'Gestion flyer multi-artiste',cat:'affp',jours:20,ref:'annonce',prereq:null},
+  {id:14,nom:'Gestion affichage protege',cat:'affp',jours:20,ref:'annonce',prereq:null},
   {id:15,nom:'Faire un point globale',cat:'gen',jours:-120,ref:'concert',prereq:null},
-  {id:16,nom:'Relancer pour affiche',cat:'aff',jours:-120,ref:'concert',prereq:null},
-  {id:17,nom:'Faire un flyer dedie',cat:'aff',jours:-120,ref:'concert',prereq:null},
+  {id:16,nom:'Relancer pour affiche',cat:'affp',jours:-120,ref:'concert',prereq:null},
+  {id:17,nom:'Faire un flyer dedie',cat:'affp',jours:-120,ref:'concert',prereq:null},
   {id:18,nom:'Relancer jeux concours',cat:'jx',jours:-120,ref:'concert',prereq:null},
   {id:19,nom:'Relancer sponso Vague 3 (2)',cat:'sp',jours:-90,ref:'concert',prereq:null},
   {id:20,nom:'Relancer Phoner / Interviews',cat:'ph',jours:-60,ref:'concert',prereq:null},
   {id:21,nom:'Relancer sponso Vague 3',cat:'sp',jours:-45,ref:'concert',prereq:null},
   {id:22,nom:'Faire un point globale',cat:'gen',jours:-30,ref:'concert',prereq:null},
-  {id:23,nom:'Compiler demande photographes',cat:'pr',jours:-15,ref:'concert',prereq:null},
-  {id:24,nom:'Repondre aux photographes',cat:'pr',jours:-7,ref:'concert',prereq:null},
+  {id:23,nom:'Compiler demande photographes',cat:'ph',jours:-15,ref:'concert',prereq:null},
+  {id:24,nom:'Repondre aux photographes',cat:'ph',jours:-7,ref:'concert',prereq:null},
   {id:25,nom:'Dernier check globale',cat:'gen',jours:-2,ref:'concert',prereq:null}
 ];
 var VENTES=[
@@ -341,12 +347,17 @@ function getSupabase(){
 }
 async function dbGet(key,fallback){
   var r=await fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.'+key+'&select=value',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+  if(!r.ok)throw new Error('Lecture Supabase echouee pour "'+key+'" (HTTP '+r.status+')');
   var rows=await r.json();
-  if(!rows||!rows.length)return fallback;
+  // Un tableau vide est un etat valide (cle jamais ecrite) ; toute autre forme
+  // de reponse (objet d'erreur, null...) signale un vrai probleme de lecture.
+  if(!Array.isArray(rows))throw new Error('Reponse Supabase inattendue pour "'+key+'"');
+  if(!rows.length)return fallback;
   try{return JSON.parse(rows[0].value);}catch(e){return fallback;}
 }
 async function dbSet(key,value){
-  await fetch(SUPABASE_URL+'/rest/v1/app_data',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:JSON.stringify(value)})});
+  var r=await fetch(SUPABASE_URL+'/rest/v1/app_data',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:JSON.stringify(value)})});
+  if(!r.ok)throw new Error('Ecriture Supabase echouee pour "'+key+'" (HTTP '+r.status+')');
 }
 
 // ── REALTIME : écouter les changements ────────────────────
@@ -458,6 +469,12 @@ function currentValueFor(key){
   return {concerts:concerts,taskstates:taskStates,process:process,tkcols:tkCols,tktasks:tkTasks,rsposts:rsPosts}[key];
 }
 function scheduleSave(){
+  if(!appDataLoaded){
+    // Garde-fou : si le chargement initial n'a jamais reussi, on ne doit
+    // jamais ecrire (ca ecraserait les vraies donnees par un etat vide/partiel).
+    console.error('Sauvegarde bloquee : les donnees initiales n\'ont pas ete chargees.');
+    return;
+  }
   var keys=arguments.length?Array.prototype.slice.call(arguments):ALL_SAVE_KEYS;
   keys.forEach(function(k){pendingSaveKeys[k]=true;});
   var el=document.getElementById('saving');el.classList.add('show');_lastSaveTs=Date.now();
@@ -501,7 +518,10 @@ window.addEventListener('beforeunload',function(e){
     return '';
   }
 });
+var appDataLoaded=false;
 async function init(){
+  document.getElementById('load-error-overlay').style.display='none';
+  document.getElementById('app').style.display='';
   try{
     var res=await Promise.all([dbGet('concerts',[]),dbGet('taskstates',{}),dbGet('process',null)]);
     concerts=res[0]||[];taskStates=res[1]||{};
@@ -509,26 +529,32 @@ async function init(){
     process=raw.map(function(t){return Object.assign({prereq:null,cat:t.cat||'gen'},t);});
     concerts=concerts.map(function(c){return Object.assign({medias:'',jeux:'',budget:'',notes:'',ventes:0},c);});
     nextId=process.length?Math.max.apply(null,process.map(function(t){return t.id;}))+1:26;
-  }catch(e){concerts=[];taskStates={};process=DEFAULT_PROCESS;}
-  rsPosts=(await dbGet('rsposts',[]))||[];
-  var tkRes=await Promise.all([dbGet('tkcols',[]),dbGet('tktasks',[])]);
-  tkCols=tkRes[0]||[];tkTasks=tkRes[1]||[];
-  // Assurer les 4 colonnes projets avec leurs noms corrects
-  var projDefs=[{id:'pp',nom:'Please Please'},{id:'gc',nom:'Golden Coast'},{id:'antdt',nom:'ANTDT'},{id:'sr',nom:'Saline Royale'}];
-  if(!tkCols.length){
-    tkCols=projDefs.slice();
-  } else {
-    // Mettre à jour les noms si les colonnes existent déjà avec de vieux noms
-    projDefs.forEach(function(p){
-      var existing=tkCols.find(function(c){return c.id===p.id;});
-      if(existing&&(existing.nom==='A faire'||existing.nom==='En cours'||existing.nom==='Termine'||existing.nom==='Nouvelle colonne')){
-        existing.nom=p.nom;
-      }
-      if(!existing){tkCols.push(p);}
-    });
+    rsPosts=(await dbGet('rsposts',[]))||[];
+    var tkRes=await Promise.all([dbGet('tkcols',[]),dbGet('tktasks',[])]);
+    tkCols=tkRes[0]||[];tkTasks=tkRes[1]||[];
+    // Assurer les 4 colonnes projets avec leurs noms corrects
+    var projDefs=[{id:'pp',nom:'Please Please'},{id:'gc',nom:'Golden Coast'},{id:'antdt',nom:'ANTDT'},{id:'sr',nom:'Saline Royale'}];
+    if(!tkCols.length){
+      tkCols=projDefs.slice();
+    } else {
+      // Mettre à jour les noms si les colonnes existent déjà avec de vieux noms
+      projDefs.forEach(function(p){
+        var existing=tkCols.find(function(c){return c.id===p.id;});
+        if(existing&&(existing.nom==='A faire'||existing.nom==='En cours'||existing.nom==='Termine'||existing.nom==='Nouvelle colonne')){
+          existing.nom=p.nom;
+        }
+        if(!existing){tkCols.push(p);}
+      });
+    }
+    appDataLoaded=true;
+    render();
+    initRealtime();
+  }catch(e){
+    console.error('Echec du chargement initial',e);
+    appDataLoaded=false;
+    document.getElementById('app').style.display='none';
+    document.getElementById('load-error-overlay').style.display='flex';
   }
-  render();
-  initRealtime();
 }
 function showTab(id,btn){
   document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('active');});
@@ -555,6 +581,16 @@ function escUrl(u){
   return '';
 }
 function cancelBadge(c){return c.annule?'<span class="cancel-badge">Annulé</span>':'';}
+// Resout le nom affiche d'un post RS a partir de concertId (source de verite,
+// suit un renommage) plutot que du texte fige p.concert (garde uniquement en
+// secours pour les posts crees avant l'ajout de concertId).
+function rsResolveConcertLabel(p){
+  if(p.concertId){
+    var c=concerts.find(function(x){return x.id===p.concertId;});
+    if(c)return c.art;
+  }
+  return p.concert||'';
+}
 // Remplace confirm() natif par une modale au style de l'appli. Usage :
 // if(!await customConfirm('...'))return;  (dans une fonction async)
 var _confirmModalResolve=null;
@@ -564,6 +600,9 @@ function setupConfirmModal(){
   document.getElementById('confirm-modal-ok').addEventListener('click',function(){resolveConfirmModal(true);});
   document.getElementById('confirm-modal-cancel').addEventListener('click',function(){resolveConfirmModal(false);});
   document.getElementById('confirm-modal').addEventListener('click',function(e){if(e.target===this)resolveConfirmModal(false);});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&document.getElementById('confirm-modal').classList.contains('open'))resolveConfirmModal(false);
+  });
 }
 function resolveConfirmModal(val){
   document.getElementById('confirm-modal').classList.remove('open');
@@ -881,7 +920,7 @@ function renderKanban(){
             var t=RS_TYPES[p.type]||RS_TYPES.autre;
             var fmtCls=p.format==='story'?'rs-fmt-story':p.format==='tirage'?'rs-fmt-tirage':'rs-fmt-post';
             var fmtLbl=p.format==='story'?'Story':p.format==='tirage'?'🎲':'Post';
-            var title=(p.concert||p.note||t.label).substring(0,18);
+            var title=(rsResolveConcertLabel(p)||p.note||t.label).substring(0,18);
             return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:600;white-space:nowrap'+(p.ready?';border-color:#b8e0ca;background:#eef7f2;color:#2d7a4f':'')+'">'
               +'<span class="rs-post-format '+fmtCls+'" style="padding:1px 5px;font-size:8px">'+fmtLbl+'</span>'
               +'<span style="color:var(--text-2)">'+title+'</span>'
@@ -1060,9 +1099,9 @@ function renderPastConcerts(){
       return '<div class="crow" onclick="openFiche(\''+c.id+'\')" style="display:flex;align-items:center;padding:0 16px;min-height:52px;justify-content:space-between;cursor:pointer">'
         +'<div><div class="crow-name">'+esc(c.art)+cancelBadge(c)+'</div>'
         +'<div style="font-size:11px;font-weight:500;color:var(--text-2);margin-top:2px">'+(c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div></div>'
-        +'<div style="display:flex;gap:8px;flex-shrink:0">'
+        +'<div style="display:flex;align-items:center;gap:20px;flex-shrink:0">'
         +'<button class="btn" onclick="event.stopPropagation();restoreConcert(\''+c.id+'\')">&#8635; Remettre en actif</button>'
-        +'<button class="btn btn-danger" onclick="event.stopPropagation();permanentlyDeleteConcert(\''+c.id+'\')">&#10005; Supprimer definitivement</button>'
+        +'<button class="dbtn" onclick="event.stopPropagation();permanentlyDeleteConcert(\''+c.id+'\')">Supprimer définitivement</button>'
         +'</div></div>';
     }).join('')+'</div>';
 }
@@ -1531,7 +1570,7 @@ function renderRS(){
       if(!existing){
         // Créer le post auto
         rsPosts.push({id:rsNewId(),proj:'pp',date:ds,type:'annonce',format:'post',
-          concert:c.art,note:'',legend:'',link:'',fb:false,insta:false,tiktok:false,
+          concert:c.art,concertId:c.id,note:'',legend:'',link:'',fb:false,insta:false,tiktok:false,
           status:'',ready:false,autoRef:c.id});
         scheduleSave('rsposts');
       } else {
@@ -1589,7 +1628,8 @@ function renderRS(){
 
     dayPosts.forEach(function(p){
       var t=RS_TYPES[p.type]||RS_TYPES.autre;
-      var lbl=(p.autoRef?'📢 ':(p.format==='story'?'📱 ':p.format==='tirage'?'🎲 ':'📄 '))+t.label+(p.concert?' · '+esc(p.concert.substring(0,12)):p.note?' · '+esc(p.note.substring(0,15)):'');
+      var pcLabel=rsResolveConcertLabel(p);
+      var lbl=(p.autoRef?'📢 ':(p.format==='story'?'📱 ':p.format==='tirage'?'🎲 ':'📄 '))+t.label+(pcLabel?' · '+esc(pcLabel.substring(0,12)):p.note?' · '+esc(p.note.substring(0,15)):'');
       chips+='<span class="rs-chip'+(p.ready?' ready':'')+(p.format==='story'?' story':'')+'">'+lbl+'</span>';
     });
 
@@ -1614,12 +1654,13 @@ function renderRS(){
         var fmtCls=p.format==='story'?'rs-fmt-story':p.format==='tirage'?'rs-fmt-tirage':'rs-fmt-post';
         var fmtLbl=p.format==='story'?'Story':p.format==='tirage'?'Tirage au sort':'Post';
         var isAuto=!!p.autoRef;
+        var pcLabel=rsResolveConcertLabel(p);
         daysHtml+='<div class="rs-post'+(p.status==='posted'?' ready':'')+(isAuto?' auto':'')+'">'
           +'<div class="rs-post-row1">'
           +'<span class="rs-post-format '+fmtCls+'">'+fmtLbl+'</span>'
           +'<span class="rs-post-type '+t.cls+'">'+t.label+'</span>'
-          +(p.concert?'<span class="rs-post-concert">'+(isAuto?'📢 ':'')+esc(p.concert)+'</span>':'')
-          +(p.note&&!p.concert?'<span class="rs-post-note">'+esc(p.note)+'</span>':'')
+          +(pcLabel?'<span class="rs-post-concert">'+(isAuto?'📢 ':'')+esc(pcLabel)+'</span>':'')
+          +(p.note&&!pcLabel?'<span class="rs-post-note">'+esc(p.note)+'</span>':'')
           +'</div>'
           +(p.legend?'<div class="rs-post-legend">'+esc(p.legend)+'</div>':'')
           +(p.link&&escUrl(p.link)?'<div class="rs-post-link"><a href="'+escUrl(p.link)+'" target="_blank">'+esc(p.link)+'</a></div>':'')
@@ -1707,10 +1748,10 @@ function rsSetupModal(){
 
 function rsFillConcertSelect(sel, selectedVal){
   var projs=[
-    {label:'● Please Please',val:'__pp__'},
-    {label:'● ANTDT',val:'__antdt__'},
-    {label:'● Golden Coast',val:'__gc__'},
-    {label:'● Saline Royale',val:'__sr__'}
+    {label:'● Please Please',val:'proj:pp'},
+    {label:'● ANTDT',val:'proj:antdt'},
+    {label:'● Golden Coast',val:'proj:gc'},
+    {label:'● Saline Royale',val:'proj:sr'}
   ];
   var html='<option value="">— Note libre —</option>';
   // Groupes projets
@@ -1719,11 +1760,14 @@ function rsFillConcertSelect(sel, selectedVal){
   });
   // Séparateur
   html+='<option disabled>────────────</option>';
-  // Concerts sans doublons, triés par date
-  var seen={};
+  // Concerts tries par date. On lie par ID (pas par nom) pour que le lien
+  // survive a un renommage, et on affiche la date pour distinguer deux
+  // concerts du meme artiste.
   var sorted=concerts.filter(function(c){return !c.supprime;}).sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
   sorted.forEach(function(c){
-    if(!seen[c.art]){seen[c.art]=1;html+='<option value="'+esc(c.art)+'">'+esc(c.art)+'</option>';}
+    var dateStr=c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
+    var label=c.art+(dateStr?' — '+dateStr:'');
+    html+='<option value="'+esc(c.id)+'">'+esc(label)+'</option>';
   });
   sel.innerHTML=html;
   sel.value=selectedVal||'';
@@ -1757,7 +1801,21 @@ function rsEditPost(id){
   rsFmt=p.format||'post';rsNetState={fb:!!p.fb,insta:!!p.insta,tiktok:!!p.tiktok,linkedin:!!p.linkedin};
   rsUpdateFmt();rsUpdateNets();
   var sel=document.getElementById('rs-concert');
-  rsFillConcertSelect(sel,p.concert||'');
+  // Retro-compatibilite : les posts crees avant concertId ne stockaient que le
+  // nom de l'artiste (p.concert). On tente de le faire correspondre a un
+  // concert existant pour "reparer" le lien des qu'on ouvre le post pour
+  // modification (il sera correctement lie par ID a la sauvegarde).
+  var preselect=p.concertId||'';
+  if(!preselect&&p.concert){
+    var projMap={'● Please Please':'proj:pp','● ANTDT':'proj:antdt','● Golden Coast':'proj:gc','● Saline Royale':'proj:sr'};
+    if(projMap[p.concert]){
+      preselect=projMap[p.concert];
+    } else {
+      var match=concerts.find(function(c){return c.art===p.concert;});
+      if(match)preselect=match.id;
+    }
+  }
+  rsFillConcertSelect(sel,preselect);
   document.getElementById('rs-modal').classList.add('open');
 }
 
@@ -1786,14 +1844,25 @@ function rsSavePost(){
   var legend=document.getElementById('rs-legend').value.trim();
   var link=document.getElementById('rs-link').value.trim();
   var type=document.getElementById('rs-type').value;
-  var concert=document.getElementById('rs-concert').value;
-  if(!note&&!concert)return;
+  var selVal=document.getElementById('rs-concert').value;
+  // Resout la selection en (concertId, libelle a afficher). Un concert reel
+  // est lie par ID (suit les renommages) ; un tag projet ("proj:pp"...) n'a
+  // pas d'ID, seul le libelle est conserve.
+  var concertId=null,concertLabel='';
+  if(selVal.indexOf('proj:')===0){
+    var projLabels={pp:'● Please Please',antdt:'● ANTDT',gc:'● Golden Coast',sr:'● Saline Royale'};
+    concertLabel=projLabels[selVal.slice(5)]||'';
+  } else if(selVal){
+    var cc=concerts.find(function(x){return x.id===selVal;});
+    if(cc){concertId=cc.id;concertLabel=cc.art;}
+  }
+  if(!note&&!concertLabel)return;
   if(rsEditId){
     var p=rsPosts.find(function(x){return x.id===rsEditId;});
-    if(p){p.note=note;p.legend=legend;p.link=link;p.type=type;p.concert=concert;p.format=rsFmt;p.fb=rsNetState.fb;p.insta=rsNetState.insta;p.tiktok=rsNetState.tiktok;p.linkedin=rsNetState.linkedin;}
+    if(p){p.note=note;p.legend=legend;p.link=link;p.type=type;p.concert=concertLabel;p.concertId=concertId;p.format=rsFmt;p.fb=rsNetState.fb;p.insta=rsNetState.insta;p.tiktok=rsNetState.tiktok;p.linkedin=rsNetState.linkedin;}
   } else {
     var autoRef=document.getElementById('rs-modal-save').dataset.autoref||null;
-    rsPosts.push({id:rsNewId(),proj:rsCurrentProj,date:rsCurrentDate,type:type,format:rsFmt,concert:concert,note:note,legend:legend,link:link,fb:rsNetState.fb,insta:rsNetState.insta,tiktok:rsNetState.tiktok,linkedin:rsNetState.linkedin,ready:false,autoRef:autoRef||undefined});
+    rsPosts.push({id:rsNewId(),proj:rsCurrentProj,date:rsCurrentDate,type:type,format:rsFmt,concert:concertLabel,concertId:concertId||(autoRef||undefined),note:note,legend:legend,link:link,fb:rsNetState.fb,insta:rsNetState.insta,tiktok:rsNetState.tiktok,linkedin:rsNetState.linkedin,ready:false,autoRef:autoRef||undefined});
     delete document.getElementById('rs-modal-save').dataset.autoref;
   }
   scheduleSave('rsposts');rsCloseModal();renderRS();
@@ -1815,7 +1884,7 @@ function rsEnrichAuto(dateStr,concertId,concertArt){
   rsFmt='post';rsNetState={fb:false,insta:false,tiktok:false,linkedin:false};
   rsUpdateFmt();rsUpdateNets();
   var sel=document.getElementById('rs-concert');
-  rsFillConcertSelect(sel,concertArt);
+  rsFillConcertSelect(sel,concertId);
   // Stocker la ref auto pour liaison
   document.getElementById('rs-modal-save').dataset.autoref=concertId;
   document.getElementById('rs-modal').classList.add('open');
