@@ -519,6 +519,8 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .rs-fmt-tirage{background:#f0fff0;color:#1a7a3a;border:1px solid #80d0a0}
 .rs-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .crow-list-card{overflow:hidden}
+.is-cancelled{opacity:.5}
+.cancel-badge{display:inline-block;font-size:9px;font-weight:700;color:#fff;background:var(--red);border-radius:10px;padding:1px 7px;margin-left:6px;text-transform:uppercase;letter-spacing:.03em;vertical-align:middle}
 
 /* ── RESPONSIVE (mobile/tablette) ─────────────────────── */
 @media (max-width:768px){
@@ -613,6 +615,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
         <select id="cville" onchange="renderConcerts()"><option value="">Toutes les villes</option></select>
         <select id="cperiode" onchange="renderConcerts()"><option value="">Toutes les periodes</option></select>
         <select id="ccat" onchange="renderConcerts()"><option value="">Toutes les categories</option></select>
+        <button id="trash-toggle-btn" class="btn" style="margin-left:auto" onclick="toggleTrash()">🗑 Corbeille</button>
       </div>
       <div id="clist"></div>
     </div>
@@ -708,6 +711,10 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
           <div style="height:8px"></div>
           <div class="fiche-fields">
             <div class="fiche-field" style="grid-column:1/-1"><label>Artiste</label><input type="text" id="fi-art" onchange="updateFicheField('art',this.value)"></div>
+            <div class="fiche-field" style="grid-column:1/-1;flex-direction:row;align-items:center;gap:8px;display:flex">
+              <input type="checkbox" id="fi-annule" onchange="updateFicheField('annule',this.checked)" style="width:auto;margin:0">
+              <label for="fi-annule" style="margin:0;cursor:pointer">Concert annulé</label>
+            </div>
             <div class="fiche-field" style="grid-column:1/-1"><label>Salle / Ville</label><input type="text" id="fi-ville" onchange="updateFicheField('ville',this.value)"></div>
             <div class="fiche-field"><label>Date du concert</label><input type="date" id="fi-dc" onchange="updateFicheField('dc',this.value)"></div>
             <div class="fiche-field"><label>Date d'annonce</label><input type="date" id="fi-da" onchange="updateFicheField('da',this.value)"></div>
@@ -838,7 +845,7 @@ var VENTES=[
   {id:3,label:'Bon',cls:'ventes-3'},
   {id:4,label:'Complet',cls:'ventes-4'}
 ];
-var concerts=[],taskStates={},process=DEFAULT_PROCESS,nextId=26;
+var concerts=[],taskStates={},process=DEFAULT_PROCESS,nextId=26,showTrash=false;
 var tkCols=[],tkTasks=[],tkEditId=null,tkAddColId=null;
 var rsPosts=[],rsEditId=null,rsCurrentProj="pp",rsCurrentDate=null,rsCurrentMonth=new Date(),rsFmt="post",rsNetState={fb:false,insta:false,tiktok:false};
 var dragSrcId=null,saveTimer=null,currentFicheId=null;
@@ -1064,6 +1071,7 @@ function escUrl(u){
   if(/^(https?:)?\/\//i.test(u)||/^[.\/#]/.test(u))return esc(u);
   return '';
 }
+function cancelBadge(c){return c.annule?'<span class="cancel-badge">Annulé</span>':'';}
 function formatLieu(ville){
   if(!ville)return '';
   var parts=ville.split(' - ');
@@ -1103,6 +1111,7 @@ function filtered(){
   var p=(document.getElementById('fperiode')||{value:''}).value;
   var cat=(document.getElementById('fcat')||{value:''}).value;
   return concerts.filter(function(c){
+    if(c.supprime)return false;
     if(s&&c.art.toLowerCase().indexOf(s)<0)return false;
     if(v&&getVille(c.ville)!==v)return false;
     if(window._vf!=null&&(c.ventes||0)!==window._vf)return false;
@@ -1141,6 +1150,7 @@ function openFiche(id){
   currentFicheId=id;
   document.getElementById('fiche-title').textContent=c.art||'Concert';
   document.getElementById('fi-art').value=c.art||'';
+  document.getElementById('fi-annule').checked=!!c.annule;
   document.getElementById('fi-ville').value=c.ville||'';
   document.getElementById('fi-dc').value=c.dc||'';
   document.getElementById('fi-da').value=c.da||'';
@@ -1221,8 +1231,8 @@ function toggleFicheTask(cid,tid){
 }
 function deleteFicheConcert(){
   var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
-  if(!confirm('Supprimer '+c.art+' ?'))return;
-  concerts=concerts.filter(function(x){return x.id!==currentFicheId;});
+  if(!confirm('Retirer '+c.art+' ? (tu pourras le restaurer depuis la corbeille)'))return;
+  c.supprime=true;
   closeFicheBtn();scheduleSave('concerts');render();
 }
 async function addConcert(){
@@ -1240,7 +1250,16 @@ async function addConcert(){
   var f=document.getElementById('new-concert-form');if(f)f.style.display='none';
   var b=document.getElementById('btn-new-concert');if(b){b.textContent='+ Nouveau concert';b.classList.add('btn-primary');}
 }
-function deleteConcert(id){if(!confirm('Supprimer ce concert ?'))return;concerts=concerts.filter(function(c){return c.id!==id;});scheduleSave('concerts');render();}
+function deleteConcert(id){
+  var c=concerts.find(function(x){return x.id===id;});if(!c)return;
+  if(!confirm('Retirer ce concert ? (tu pourras le restaurer depuis la corbeille)'))return;
+  c.supprime=true;scheduleSave('concerts');render();
+}
+function restoreConcert(id){
+  var c=concerts.find(function(x){return x.id===id;});if(!c)return;
+  delete c.supprime;scheduleSave('concerts');renderConcerts();
+}
+function toggleTrash(){showTrash=!showTrash;renderConcerts();}
 function toggleTask(cid,tid){
   var c=concerts.find(function(x){return x.id===cid;});
   var t=process.find(function(p){return p.id===tid;});
@@ -1263,6 +1282,7 @@ function renderAnnonces(){
   if(!wrap)return;
   var today=new Date();today.setHours(0,0,0,0);
   var pending=concerts.filter(function(c){
+    if(c.supprime)return false;
     if(taskStates['annonce-'+c.id])return false;
     if(!c.da)return true;
     var da=new Date(c.da);da.setHours(0,0,0,0);return da>=today;
@@ -1279,13 +1299,13 @@ function renderAnnonces(){
     var isLateA=da&&da<today;
     var diffDays=da?Math.round((da-today)/(1000*60*60*24)):null;
     var isToday2=diffDays===0;
-    var cls='ann-card-compact'+(isLateA?' ann-late':!hasDate?' ann-nodate':isToday2?' ann-today':'');
+    var cls='ann-card-compact'+(isLateA?' ann-late':!hasDate?' ann-nodate':isToday2?' ann-today':'')+(c.annule?' is-cancelled':'');
     var dayTxt=hasDate?da.toLocaleDateString('fr-FR',{day:'numeric'}):'?';
     var monTxt=hasDate?da.toLocaleDateString('fr-FR',{month:'short'}).toUpperCase():'--';
     var statusTxt=!hasDate?'Sans date':isLateA?'Retard':isToday2?"Auj.":diffDays===1?'Demain':'J-'+diffDays;
     return '<div class="'+cls+'" onclick="openFiche(\''+c.id+'\')" title="'+esc(c.art)+'">'
       +'<div><span class="ann-compact-day">'+dayTxt+'</span><span class="ann-compact-month"> '+monTxt+'</span></div>'
-      +'<div class="ann-compact-art">'+esc(c.art)+'</div>'
+      +'<div class="ann-compact-art">'+esc(c.art)+cancelBadge(c)+'</div>'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-top:3px">'
       +'<span class="ann-compact-status">'+statusTxt+'</span>'
       +'<button style="font-size:8px;padding:1px 5px;border-radius:3px;border:1px solid var(--border);background:var(--surface);color:var(--text-3);cursor:pointer;white-space:nowrap" onclick="event.stopPropagation();annonceDone(\''+c.id+'\')" title="Marquer comme annonce">&#10003;</button>'
@@ -1317,7 +1337,7 @@ function renderKanban(){
   // Bannière prochain concert — ligne fine indépendante
   var ncWrap=document.getElementById('next-concert-wrap');
   if(ncWrap){
-    var nextC=concerts.filter(function(c){return c.dc&&new Date(c.dc)>=today;}).sort(function(a,b){return new Date(a.dc)-new Date(b.dc);})[0];
+    var nextC=concerts.filter(function(c){return !c.supprime&&c.dc&&new Date(c.dc)>=today;}).sort(function(a,b){return new Date(a.dc)-new Date(b.dc);})[0];
     if(nextC){
       var ncDate=new Date(nextC.dc);ncDate.setHours(0,0,0,0);
       var ncDiff=Math.round((ncDate-today)/(1000*60*60*24));
@@ -1327,8 +1347,8 @@ function renderKanban(){
       ncWrap.innerHTML='<div class="next-concert-banner">'
         +'<span class="ncb-label">Prochain concert</span>'
         +'<div class="ncb-sep"></div>'
-        +'<span class="ncb-art">'+nextC.art+'</span>'
-        +(nextC.ville?'<div class="ncb-sep"></div><span class="ncb-info">'+formatLieu(nextC.ville)+'</span>':'')
+        +'<span class="ncb-art">'+esc(nextC.art)+cancelBadge(nextC)+'</span>'
+        +(nextC.ville?'<div class="ncb-sep"></div><span class="ncb-info">'+esc(formatLieu(nextC.ville))+'</span>':'')
         +'<div class="ncb-sep"></div>'
         +'<span class="ncb-info">'+ncFmt+'</span>'
         +'<span class="'+cntCls+'">'+cntTxt+'</span>'
@@ -1415,9 +1435,9 @@ function renderKanban(){
             '<div class="'+(isToday(d)?'ttoday':'tlate')+'">'+fmt(d)+'</div></div></div>';})()
         }).join('')+'</div>'
       :'<div class="ok-col"><span class="ok-badge">OK</span></div>';
-    return '<div class="col" onclick="openFiche(\''+c.id+'\')">'+
+    return '<div class="col'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')">'+
       '<div class="col-head'+(hasLate?' late':'')+'">'+
-      '<div class="col-name'+(hasLate?' late':'')+'">'+esc(c.art)+'</div>'+
+      '<div class="col-name'+(hasLate?' late':'')+'">'+esc(c.art)+cancelBadge(c)+'</div>'+
       '<div class="col-sub'+(hasLate?' late':'')+'">'+( c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div>'+
       ventesHtml(c,'event.stopPropagation();toggleVentes(event,\''+c.id+'\')') +
       '<div class="pbar"><div class="pfill" style="width:'+pct+'%"></div></div>'+
@@ -1434,15 +1454,35 @@ function renderConcerts(){
   var cv2=(document.getElementById('cville')||{value:''}).value;
   var cp2=(document.getElementById('cperiode')||{value:''}).value;
   var cc2=(document.getElementById('ccat')||{value:''}).value;
+  var trashCount=concerts.filter(function(c){return c.supprime;}).length;
+  var trashBtn=document.getElementById('trash-toggle-btn');
+  if(trashBtn)trashBtn.textContent=(showTrash?'← Retour aux concerts':'🗑 Corbeille')+(!showTrash&&trashCount?' ('+trashCount+')':'');
   var liste=concerts.filter(function(c){
+    if(!!c.supprime!==showTrash)return false;
     if(cs&&c.art.toLowerCase().indexOf(cs)<0)return false;
-    if(cv2&&getVille(c.ville)!==cv2)return false;
-    if(cp2&&(c.dc||'').indexOf(cp2)<0)return false;
-    if(!matchesCategoryFilter(c,cc2))return false;
+    if(!showTrash&&cv2&&getVille(c.ville)!==cv2)return false;
+    if(!showTrash&&cp2&&(c.dc||'').indexOf(cp2)<0)return false;
+    if(!showTrash&&!matchesCategoryFilter(c,cc2))return false;
     return true;
   });
-  if(!liste.length){el.innerHTML='<div class="empty-state">Aucun concert.</div>';return;}
+  if(!liste.length){el.innerHTML='<div class="empty-state">'+(showTrash?'Corbeille vide.':'Aucun concert.')+'</div>';return;}
   var today=new Date();today.setHours(0,0,0,0);
+
+  if(showTrash){
+    el.innerHTML='<div class="card crow-list-card" style="padding:0">'
+      +'<div style="padding:12px 20px;border-bottom:1px solid var(--border)">'
+      +'<h2 style="margin:0">'+liste.length+' concert'+(liste.length>1?'s':'')+' dans la corbeille</h2>'
+      +'</div>'
+      +liste.map(function(c){
+        var ds=c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
+        return '<div class="crow" style="display:flex;align-items:center;padding:0 16px;min-height:52px;justify-content:space-between">'
+          +'<div><div class="crow-name">'+esc(c.art)+cancelBadge(c)+'</div>'
+          +'<div style="font-size:11px;font-weight:500;color:var(--text-2);margin-top:2px">'+(c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div></div>'
+          +'<button class="btn" onclick="restoreConcert(\''+c.id+'\')">&#8635; Restaurer</button>'
+          +'</div>';
+      }).join('')+'</div>';
+    return;
+  }
 
   el.innerHTML='<div class="card crow-list-card" style="padding:0">'
     +'<div style="padding:12px 20px;border-bottom:1px solid var(--border)">'
@@ -1480,7 +1520,7 @@ function renderConcerts(){
       }
 
       var infoBloc='<div style="width:220px;flex-shrink:0;padding:12px 16px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border-light)">'
-        +'<div class="crow-name">'+esc(c.art)+'</div>'
+        +'<div class="crow-name">'+esc(c.art)+cancelBadge(c)+'</div>'
         +'<div style="font-size:11px;font-weight:500;color:var(--text-2);margin-top:2px">'+(c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div>'
         +daStr+'</div>';
 
@@ -1503,7 +1543,7 @@ function renderConcerts(){
         +'</div>'
         +'</div>';
 
-      return '<div class="crow'+(notAnnounced?' not-announced':'')+'" onclick="openFiche(\''+c.id+'\')" style="display:flex;align-items:stretch;padding:0;min-height:52px;"+((c.ventes||0)===4?"background:rgba(26,122,79,.06)":"")+">'
+      return '<div class="crow'+(notAnnounced?' not-announced':'')+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')" style="display:flex;align-items:stretch;padding:0;min-height:52px;"+((c.ventes||0)===4?"background:rgba(26,122,79,.06)":"")+">'
         +infoBloc+cM+cJ+cN+cB+statutBloc
         +'<span style="font-size:12px;color:#ccc;padding:0 8px;display:flex;align-items:center">&#8250;</span></div>';
     }).join('')+'</div>';
@@ -2163,7 +2203,7 @@ function rsFillConcertSelect(sel, selectedVal){
   html+='<option disabled>────────────</option>';
   // Concerts sans doublons, triés par date
   var seen={};
-  var sorted=concerts.slice().sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
+  var sorted=concerts.filter(function(c){return !c.supprime;}).sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
   sorted.forEach(function(c){
     if(!seen[c.art]){seen[c.art]=1;html+='<option value="'+esc(c.art)+'">'+esc(c.art)+'</option>';}
   });
