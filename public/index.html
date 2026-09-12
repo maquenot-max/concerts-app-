@@ -555,8 +555,8 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
     <nav class="nav" style="display:flex;gap:1px">
       <button onclick="showTab('rs',this)" style="padding:5px 14px;font-size:13px;border:none;background:transparent;cursor:pointer;color:var(--text-2);border-radius:6px;font-weight:500;transition:all .15s;margin-right:12px;border-right:2px solid var(--border);padding-right:16px">Plannings RS</button>
       <button class="active" onclick="showTab('kanban',this)">Tableau de bord</button>
-      <button onclick="showTab('concerts',this)">Concerts</button>
-      <button onclick="showTab('past',this)">Concerts passés</button>
+      <button id="btn-concerts" onclick="showTab('concerts',this)">Concerts</button>
+      <button id="btn-past" onclick="showTab('past',this)" style="display:none">Concerts passés</button>
       <button id="btn-taches" onclick="showTab('taches',this)">Taches</button>
       <button id="btn-process" onclick="showTab('process',this);budgetConfigClick()">Process</button>
       <button id="btn-budgetconfig" onclick="showTab('budgetconfig',this)" style="display:none;opacity:0.5;font-size:11px">⚙ Budget</button>
@@ -616,12 +616,14 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
         <select id="cville" onchange="renderConcerts()"><option value="">Toutes les villes</option></select>
         <select id="cperiode" onchange="renderConcerts()"><option value="">Toutes les periodes</option></select>
         <select id="ccat" onchange="renderConcerts()"><option value="">Toutes les categories</option></select>
+        <button class="btn" style="margin-left:auto" onclick="showTab('past',document.getElementById('btn-past'))">📁 Concerts passés</button>
       </div>
       <div id="clist"></div>
     </div>
     <div id="tab-past" class="panel">
       <div class="filters" style="margin-bottom:1rem">
         <input type="search" id="pastsearch" placeholder="Rechercher un artiste..." oninput="renderPastConcerts()">
+        <button class="btn" style="margin-left:auto" onclick="showTab('concerts',document.getElementById('btn-concerts'))">← Retour aux concerts</button>
       </div>
       <div id="past-list"></div>
     </div>
@@ -741,7 +743,9 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
       <button class="reset-btn" onclick="resetFicheTasks()">&#8635; Reinit. taches</button>
       <button class="btn" onclick="openBudgetModal()" style="background:#e8f5ee;color:#1a7a4f;border:1px solid #b8e0ca;font-weight:600">📊 Budget Promo</button>
       <button class="btn btn-primary" onclick="closeFicheBtn()">Fermer</button>
-      <button class="btn btn-danger" onclick="deleteFicheConcert()">Déplacer vers Concerts passés</button>
+      <button class="btn btn-danger" id="fi-archive-btn" onclick="deleteFicheConcert()">Déplacer vers Concerts passés</button>
+      <button class="btn" id="fi-restore-btn" onclick="restoreConcert(currentFicheId)" style="display:none">&#8635; Remettre en actif</button>
+      <button class="btn btn-danger" id="fi-perma-delete-btn" onclick="permanentlyDeleteConcert(currentFicheId)" style="display:none">&#10005; Supprimer definitivement</button>
     </div>
   </div>
 </div>
@@ -1166,6 +1170,9 @@ function openFiche(id){
   if(document.getElementById('fi-notes'))document.getElementById('fi-notes').value=c.notes||'';
   renderFicheTasks(c);
   updateSkipButtons();
+  document.getElementById('fi-archive-btn').style.display=c.supprime?'none':'';
+  document.getElementById('fi-restore-btn').style.display=c.supprime?'':'none';
+  document.getElementById('fi-perma-delete-btn').style.display=c.supprime?'':'none';
   document.getElementById('overlay').classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -1258,7 +1265,15 @@ async function addConcert(){
 }
 function restoreConcert(id){
   var c=concerts.find(function(x){return x.id===id;});if(!c)return;
-  delete c.supprime;scheduleSave('concerts');render();
+  delete c.supprime;scheduleSave('concerts');
+  if(currentFicheId===id)closeFicheBtn();else render();
+}
+function permanentlyDeleteConcert(id){
+  var c=concerts.find(function(x){return x.id===id;});if(!c)return;
+  if(!confirm('Supprimer definitivement '+c.art+' ? Cette action est irreversible, il ne sera plus possible de le retrouver.'))return;
+  concerts=concerts.filter(function(x){return x.id!==id;});
+  scheduleSave('concerts');
+  if(currentFicheId===id)closeFicheBtn();else render();
 }
 function toggleTask(cid,tid){
   var c=concerts.find(function(x){return x.id===cid;});
@@ -1545,11 +1560,13 @@ function renderPastConcerts(){
     +'</div>'
     +liste.map(function(c){
       var ds=c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
-      return '<div class="crow" style="display:flex;align-items:center;padding:0 16px;min-height:52px;justify-content:space-between">'
+      return '<div class="crow" onclick="openFiche(\''+c.id+'\')" style="display:flex;align-items:center;padding:0 16px;min-height:52px;justify-content:space-between;cursor:pointer">'
         +'<div><div class="crow-name">'+esc(c.art)+cancelBadge(c)+'</div>'
         +'<div style="font-size:11px;font-weight:500;color:var(--text-2);margin-top:2px">'+(c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div></div>'
-        +'<button class="btn" onclick="restoreConcert(\''+c.id+'\')">&#8635; Remettre en actif</button>'
-        +'</div>';
+        +'<div style="display:flex;gap:8px;flex-shrink:0">'
+        +'<button class="btn" onclick="event.stopPropagation();restoreConcert(\''+c.id+'\')">&#8635; Remettre en actif</button>'
+        +'<button class="btn btn-danger" onclick="event.stopPropagation();permanentlyDeleteConcert(\''+c.id+'\')">&#10005; Supprimer definitivement</button>'
+        +'</div></div>';
     }).join('')+'</div>';
 }
 function renderProcess(){
