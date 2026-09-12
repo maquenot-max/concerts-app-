@@ -319,10 +319,14 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .tk-prio-normal{background:#f0f0ee;color:#888;border:1px solid #e5e5e5}
 .tk-prio-low{background:#eef7f2;color:#2d7a4f;border:1px solid #b8e0ca}
 .tk-task-actions{display:flex;gap:4px;margin-top:6px}
-.tk-task-btn{font-size:10px;padding:2px 6px;border-radius:4px;border:1px solid var(--border);background:var(--surface);cursor:pointer;color:var(--text-3);transition:all .15s}
+.tk-task-btn{font-size:10px;padding:2px 6px;border-radius:4px;border:1px solid var(--border);background:var(--surface);cursor:pointer;color:var(--text-3);transition:all .15s;font-weight:500}
 .tk-task-btn:hover{background:var(--bg);color:var(--text)}
-.tk-task-btn.done-btn:hover{color:var(--green)}
-.tk-task-btn.del-btn:hover{color:var(--red);border-color:var(--red-border);background:var(--red-bg)}
+.tk-task-btn.done-btn{color:var(--green);background:var(--green-bg);border-color:var(--green-bg)}
+.tk-task-btn.done-btn:hover{background:var(--green);color:#fff;border-color:var(--green)}
+.tk-task-btn.del-btn{color:var(--red);border-color:var(--red-border);background:var(--red-bg)}
+.tk-task-btn.del-btn:hover{background:var(--red);color:#fff}
+.tk-task-btn.deleg-active{color:#2563eb;background:#eff6ff;border-color:#bfdbfe}
+.tk-task-btn.deleg-active:hover{background:#2563eb;color:#fff}
 .tk-add-task-btn{width:calc(100% - 16px);margin:0 8px 8px;padding:6px 8px;font-size:11px;color:var(--text-3);background:none;border:1px dashed var(--border);border-radius:var(--radius-sm);cursor:pointer;text-align:left;transition:all .15s}
 .tk-add-task-btn:hover{background:var(--bg);color:var(--text);border-color:#aaa}
 .tk-add-col-btn{background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius);min-width:200px;padding:12px;cursor:pointer;color:var(--text-3);font-size:12px;text-align:center;transition:all .15s;align-self:flex-start}
@@ -514,6 +518,32 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .rs-modal-fmt-btn.on.tirage{background:#f0fff0;color:#1a7a3a;border-color:#80d0a0}
 .rs-fmt-tirage{background:#f0fff0;color:#1a7a3a;border:1px solid #80d0a0}
 .rs-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.crow-list-card{overflow:hidden}
+
+/* ── RESPONSIVE (mobile/tablette) ─────────────────────── */
+@media (max-width:768px){
+  header{height:auto;min-height:52px;padding:8px 1rem;flex-wrap:wrap;gap:.5rem}
+  header h1{font-size:12px;flex:1 1 100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nav{flex:1 1 100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .nav button{flex-shrink:0}
+  main{padding:96px .75rem 1rem}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .dash-top{grid-template-columns:1fr}
+  .tk-widget-board{grid-template-columns:repeat(2,1fr)}
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .filters input{width:100%}
+  .crow-list-card{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .crow{width:max-content;min-width:100%}
+  .fiche{width:100vw}
+  .dash-mid-row{flex-direction:column}
+  #next-concert-wrap,#today-rs-wrap{flex:1 1 auto}
+  .next-concert-banner{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .process-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .process-header,.prow{min-width:700px}
+}
+@media (max-width:480px){
+  .grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -549,13 +579,13 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
           <div id="tk-widget-wrap"></div>
         </div>
       </div>
-      <div style="display:flex;gap:12px;margin-bottom:1.5rem;align-items:stretch">
+      <div class="dash-mid-row" style="display:flex;gap:12px;margin-bottom:1.5rem;align-items:stretch">
         <div id="next-concert-wrap" style="flex:1;min-width:0;display:flex"></div>
         <div id="today-rs-wrap" style="flex:2;min-width:0;display:flex"></div>
       </div>
       <div id="ventes-filter-wrap"></div>
       <div class="filters">
-        <input type="text" id="search" placeholder="Rechercher un artiste..." oninput="renderKanban()">
+        <input type="search" id="search" placeholder="Rechercher un artiste..." oninput="renderKanban()">
         <select id="fville" onchange="renderKanban()"><option value="">Toutes les villes</option></select>
         <select id="fperiode" onchange="renderKanban()"><option value="">Toutes les periodes</option></select>
         <select id="fcat" onchange="renderKanban()"><option value="">Toutes les categories</option></select>
@@ -579,8 +609,10 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
         </div>
       </div>
       <div class="filters" id="concerts-filters" style="margin-bottom:1rem">
-        <input type="text" id="csearch" placeholder="Rechercher un artiste..." oninput="renderConcerts()">
+        <input type="search" id="csearch" placeholder="Rechercher un artiste..." oninput="renderConcerts()">
         <select id="cville" onchange="renderConcerts()"><option value="">Toutes les villes</option></select>
+        <select id="cperiode" onchange="renderConcerts()"><option value="">Toutes les periodes</option></select>
+        <select id="ccat" onchange="renderConcerts()"><option value="">Toutes les categories</option></select>
       </div>
       <div id="clist"></div>
     </div>
@@ -640,10 +672,12 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
           <h2 style="margin:0">Taches types</h2>
           <button class="btn" onclick="addTask()">+ Tache</button>
         </div>
-        <div class="process-header">
-          <span></span><span>Tache</span><span>Jours</span><span>Reference</span><span>Categorie</span><span>Prerequis</span><span></span>
+        <div class="process-table-scroll">
+          <div class="process-header">
+            <span></span><span>Tache</span><span>Jours</span><span>Reference</span><span>Categorie</span><span>Prerequis</span><span></span>
+          </div>
+          <div id="plist"></div>
         </div>
-        <div id="plist"></div>
         <p style="font-size:12px;color:var(--text-3);margin-top:14px;padding-top:14px;border-top:1px solid var(--border-light)">
           Prerequis : la tache ne sera active que si la tache selectionnee est cochee.
         </p>
@@ -1068,30 +1102,34 @@ function filtered(){
     if(v&&getVille(c.ville)!==v)return false;
     if(window._vf!=null&&(c.ventes||0)!==window._vf)return false;
     if(p&&(c.dc||'').indexOf(p)<0)return false;
-    if(cat){
-      var sorted=sortedProcess(c);
-      var hascat=sorted.some(function(t){
-        var d=calcDate(c,t);
-        return t.cat===cat&&!taskStates[tk(c.id,t.id)]&&isUnlocked(c,t)&&(isLate(d)||isToday(d));
-      });
-      if(!hascat)return false;
-    }
+    if(!matchesCategoryFilter(c,cat))return false;
     return true;
   });
+}
+function fillFilterSelect(el,opts,emptyLabel){
+  if(!el)return;
+  var sel=el.value;
+  el.innerHTML='<option value="">'+emptyLabel+'</option>';
+  opts.forEach(function(o){el.innerHTML+='<option value="'+esc(o.value)+'"'+(o.value===sel?' selected':'')+'>'+esc(o.label)+'</option>';});
 }
 function updateFilters(){
   var villes={},periodes={};
   concerts.forEach(function(c){var v=getVille(c.ville);if(v)villes[v]=1;if(c.dc)periodes[c.dc.substring(0,4)]=1;});
-  var fv=document.getElementById('fville'),fp=document.getElementById('fperiode'),fc=document.getElementById('fcat');
-  var selV=fv.value,selP=fp.value,selC=fc?fc.value:'';
-  fv.innerHTML='<option value="">Toutes les villes</option>';
-  Object.keys(villes).sort().forEach(function(v){fv.innerHTML+='<option value="'+v+'"'+(v===selV?' selected':'')+'>'+v+'</option>';});
-  fp.innerHTML='<option value="">Toutes les periodes</option>';
-  Object.keys(periodes).sort().forEach(function(p){fp.innerHTML+='<option value="'+p+'"'+(p===selP?' selected':'')+'>'+p+'</option>';});
-  if(fc){
-    fc.innerHTML='<option value="">Toutes les categories</option>';
-    Object.keys(CATS).forEach(function(k){fc.innerHTML+='<option value="'+k+'"'+(k===selC?' selected':'')+'>'+CATS[k].label+'</option>';});
-  }
+  var villeOpts=Object.keys(villes).sort().map(function(v){return {value:v,label:v};});
+  var periodeOpts=Object.keys(periodes).sort().map(function(p){return {value:p,label:p};});
+  var catOpts=Object.keys(CATS).map(function(k){return {value:k,label:CATS[k].label};});
+  fillFilterSelect(document.getElementById('fville'),villeOpts,'Toutes les villes');
+  fillFilterSelect(document.getElementById('fperiode'),periodeOpts,'Toutes les periodes');
+  fillFilterSelect(document.getElementById('fcat'),catOpts,'Toutes les categories');
+  fillFilterSelect(document.getElementById('cperiode'),periodeOpts,'Toutes les periodes');
+  fillFilterSelect(document.getElementById('ccat'),catOpts,'Toutes les categories');
+}
+function matchesCategoryFilter(c,cat){
+  if(!cat)return true;
+  return sortedProcess(c).some(function(t){
+    var d=calcDate(c,t);
+    return t.cat===cat&&!taskStates[tk(c.id,t.id)]&&isUnlocked(c,t)&&(isLate(d)||isToday(d));
+  });
 }
 function openFiche(id){
   var c=concerts.find(function(x){return x.id===id;});if(!c)return;
@@ -1385,27 +1423,23 @@ function renderKanban(){
 }
 function renderConcerts(){
   var el=document.getElementById('clist');
-  // Peupler le select de villes
-  var cv=document.getElementById('cville');
-  if(cv){
-    var villes={};
-    concerts.forEach(function(c){var v=getVille(c.ville);if(v)villes[v]=1;});
-    var selV=cv.value;
-    cv.innerHTML='<option value="">Toutes les villes</option>';
-    Object.keys(villes).sort().forEach(function(v){cv.innerHTML+='<option value="'+v+'"'+(v===selV?' selected':'')+'>'+v+'</option>';});
-  }
+  updateFilters();
   // Filtrer
   var cs=(document.getElementById('csearch')||{value:''}).value.toLowerCase();
   var cv2=(document.getElementById('cville')||{value:''}).value;
+  var cp2=(document.getElementById('cperiode')||{value:''}).value;
+  var cc2=(document.getElementById('ccat')||{value:''}).value;
   var liste=concerts.filter(function(c){
     if(cs&&c.art.toLowerCase().indexOf(cs)<0)return false;
     if(cv2&&getVille(c.ville)!==cv2)return false;
+    if(cp2&&(c.dc||'').indexOf(cp2)<0)return false;
+    if(!matchesCategoryFilter(c,cc2))return false;
     return true;
   });
   if(!liste.length){el.innerHTML='<div class="empty-state">Aucun concert.</div>';return;}
   var today=new Date();today.setHours(0,0,0,0);
 
-  el.innerHTML='<div class="card" style="padding:0;overflow:hidden">'
+  el.innerHTML='<div class="card crow-list-card" style="padding:0">'
     +'<div style="padding:12px 20px;border-bottom:1px solid var(--border)">'
     +'<h2 style="margin:0">'+liste.length+' concert'+(liste.length>1?'s':'')+'</h2>'
     +'</div>'
@@ -1429,7 +1463,7 @@ function renderConcerts(){
         ?'<div style="line-height:1.5;font-size:11px;color:var(--text-2)">'+esc(notes)+'</div>'
         :'<div class="crow-cell-empty">—</div>';
       var budHtml=bud&&escUrl(bud)
-        ?'<a href="'+escUrl(bud)+'" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);text-decoration:none;white-space:nowrap;transition:all .15s" onmouseover="this.style.background=\'var(--bg)\';this.style.color=\'var(--text)\'" onmouseout="this.style.background=\'var(--surface)\';this.style.color=\'var(--text-2)\'">Ouvrir &#8599;</a>'
+        ?'<a href="'+escUrl(bud)+'" target="_blank" title="Ouvrir le lien budget dans un nouvel onglet" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);text-decoration:none;white-space:nowrap;transition:all .15s" onmouseover="this.style.background=\'var(--bg)\';this.style.color=\'var(--text)\'" onmouseout="this.style.background=\'var(--surface)\';this.style.color=\'var(--text-2)\'">Ouvrir &#8599;</a>'
         :'<div class="crow-cell-empty">Ajouter un lien...</div>';
 
       var daStr='';
@@ -1699,8 +1733,7 @@ function renderTaches(){
       var delBtn=document.createElement('button');delBtn.className='tk-task-btn del-btn';delBtn.innerHTML='&#x2715;';
       delBtn.addEventListener('click',function(){tkDelTask(t.id);});
       var delegBtn=document.createElement('button');
-      delegBtn.className='tk-task-btn';
-      delegBtn.style.color=t.delegue?'#2563eb':'';
+      delegBtn.className='tk-task-btn'+(t.delegue?' deleg-active':'');
       delegBtn.innerHTML=t.delegue?'&#9679; Delegue':'&#9675; Deleguer';
       delegBtn.addEventListener('click',function(){tkToggleDelegue(t.id);});
       actions.appendChild(doneBtn);actions.appendChild(editBtn);actions.appendChild(delBtn);actions.appendChild(delegBtn);
