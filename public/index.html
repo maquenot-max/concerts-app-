@@ -914,15 +914,64 @@ async function reloadFromRemote(changedKey){
 function showSyncBanner(msg,fadeOut){
   var el=document.getElementById('sync-banner');
   if(!el)return;
+  el.style.background='#2d7a4f';
   el.textContent=msg;
   el.classList.add('show');
   if(fadeOut){setTimeout(function(){el.classList.remove('show');},2000);}
 }
 
-function scheduleSave(){
-  var el=document.getElementById('saving');el.classList.add('show');_lastSaveTs=Date.now();clearTimeout(saveTimer);
-  saveTimer=setTimeout(async function(){await Promise.all([dbSet('concerts',concerts),dbSet('taskstates',taskStates),dbSet('process',process),dbSet('tkcols',tkCols),dbSet('tktasks',tkTasks),dbSet('rsposts',rsPosts)]);el.classList.remove('show');},1500);
+// ── SAUVEGARDE : uniquement les domaines modifies (evite d'ecraser
+// les autres domaines avec une copie locale potentiellement perimee) ──
+var ALL_SAVE_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts'];
+var pendingSaveKeys={};
+var saveRetryTimer=null;
+function currentValueFor(key){
+  return {concerts:concerts,taskstates:taskStates,process:process,tkcols:tkCols,tktasks:tkTasks,rsposts:rsPosts}[key];
 }
+function scheduleSave(){
+  var keys=arguments.length?Array.prototype.slice.call(arguments):ALL_SAVE_KEYS;
+  keys.forEach(function(k){pendingSaveKeys[k]=true;});
+  var el=document.getElementById('saving');el.classList.add('show');_lastSaveTs=Date.now();
+  clearTimeout(saveTimer);clearTimeout(saveRetryTimer);
+  saveTimer=setTimeout(flushSave,1500);
+}
+async function flushSave(){
+  var el=document.getElementById('saving');
+  var toSave=Object.keys(pendingSaveKeys);
+  if(!toSave.length){el.classList.remove('show');return;}
+  el.classList.add('show');
+  try{
+    await Promise.all(toSave.map(function(k){return dbSet(k,currentValueFor(k));}));
+    toSave.forEach(function(k){delete pendingSaveKeys[k];});
+    el.classList.remove('show');
+    hideSaveError();
+  }catch(e){
+    console.error('Echec de sauvegarde',e);
+    el.classList.remove('show');
+    showSaveError();
+    saveRetryTimer=setTimeout(flushSave,4000);
+  }
+}
+function showSaveError(){
+  var el=document.getElementById('sync-banner');
+  if(!el)return;
+  el.textContent='⚠ Echec de la sauvegarde - nouvelle tentative...';
+  el.style.background='#c0392b';
+  el.classList.add('show');
+}
+function hideSaveError(){
+  var el=document.getElementById('sync-banner');
+  if(!el)return;
+  el.style.background='#2d7a4f';
+  el.classList.remove('show');
+}
+window.addEventListener('beforeunload',function(e){
+  if(Object.keys(pendingSaveKeys).length){
+    e.preventDefault();
+    e.returnValue='';
+    return '';
+  }
+});
 async function init(){
   try{
     var res=await Promise.all([dbGet('concerts',[]),dbGet('taskstates',{}),dbGet('process',null)]);
@@ -1051,13 +1100,13 @@ function updateFicheField(field,val){
   c[field]=val;
   if(field==='art')document.getElementById('fiche-title').textContent=val||'Concert';
   concerts.sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
-  renderFicheTasks(c);scheduleSave();
+  renderFicheTasks(c);scheduleSave('concerts');
 }
 function resetFicheTasks(){
   var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
   if(!confirm('Reinitialiser toutes les taches de '+c.art+' ?'))return;
   process.forEach(function(t){delete taskStates[tk(c.id,t.id)];});
-  scheduleSave();renderFicheTasks(c);renderKanban();renderConcerts();
+  scheduleSave('taskstates');renderFicheTasks(c);renderKanban();renderConcerts();
 }
 function renderFicheTasks(c){
   var sorted=sortedProcess(c);
@@ -1107,14 +1156,14 @@ function toggleFicheTask(cid,tid){
   var c=concerts.find(function(x){return x.id===cid;});
   var t=process.find(function(p){return p.id===tid;});
   if(!c||!t||!isUnlocked(c,t))return;
-  var k=tk(cid,tid);taskStates[k]=!taskStates[k];scheduleSave();
+  var k=tk(cid,tid);taskStates[k]=!taskStates[k];scheduleSave('taskstates');
   if(c)renderFicheTasks(c);renderKanban();renderConcerts();
 }
 function deleteFicheConcert(){
   var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
   if(!confirm('Supprimer '+c.art+' ?'))return;
   concerts=concerts.filter(function(x){return x.id!==currentFicheId;});
-  closeFicheBtn();scheduleSave();render();
+  closeFicheBtn();scheduleSave('concerts');render();
 }
 async function addConcert(){
   var art=document.getElementById('f-art').value.trim();
@@ -1127,27 +1176,27 @@ async function addConcert(){
   concerts.sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
   document.getElementById('f-art').value='';document.getElementById('f-ville').value='';
   document.getElementById('f-dc').value='';document.getElementById('f-da').value='';
-  scheduleSave();render();btn.disabled=false;btn.textContent='Ajouter le concert';
+  scheduleSave('concerts');render();btn.disabled=false;btn.textContent='Ajouter le concert';
   var f=document.getElementById('new-concert-form');if(f)f.style.display='none';
   var b=document.getElementById('btn-new-concert');if(b){b.textContent='+ Nouveau concert';b.classList.add('btn-primary');}
 }
-function deleteConcert(id){if(!confirm('Supprimer ce concert ?'))return;concerts=concerts.filter(function(c){return c.id!==id;});scheduleSave();render();}
+function deleteConcert(id){if(!confirm('Supprimer ce concert ?'))return;concerts=concerts.filter(function(c){return c.id!==id;});scheduleSave('concerts');render();}
 function toggleTask(cid,tid){
   var c=concerts.find(function(x){return x.id===cid;});
   var t=process.find(function(p){return p.id===tid;});
   if(!c||!t||!isUnlocked(c,t))return;
-  var k=tk(cid,tid);taskStates[k]=!taskStates[k];scheduleSave();renderKanban();renderConcerts();
+  var k=tk(cid,tid);taskStates[k]=!taskStates[k];scheduleSave('taskstates');renderKanban();renderConcerts();
 }
 function annonceDone(cid){
   taskStates['annonce-'+cid]=true;
   // Marquer le post auto comme posté dans le planning RS
   var autoPost=rsPosts.find(function(p){return p.autoRef===cid&&p.proj==='pp';});
   if(autoPost&&autoPost.status!=='posted'){autoPost.status='posted';autoPost.ready=true;}
-  scheduleSave();renderAnnonces();renderConcerts();renderRS();
+  scheduleSave('taskstates','rsposts');renderAnnonces();renderConcerts();renderRS();
 }
 function annonceUndo(cid){
   delete taskStates['annonce-'+cid];
-  scheduleSave();renderAnnonces();renderConcerts();
+  scheduleSave('taskstates');renderAnnonces();renderConcerts();
 }
 function renderAnnonces(){
   var wrap=document.getElementById('ann-wrap-compact');
@@ -1185,18 +1234,18 @@ function renderAnnonces(){
   }).join('');
   wrap.innerHTML='<div class="ann-grid-compact">'+cards+'</div>';
 }
-function addTask(){process.push({id:nextId++,nom:'Nouvelle tache',cat:'gen',jours:-7,ref:'concert',prereq:null});scheduleSave();renderProcess();}
+function addTask(){process.push({id:nextId++,nom:'Nouvelle tache',cat:'gen',jours:-7,ref:'concert',prereq:null});scheduleSave('process');renderProcess();}
 function updTask(id,field,val){
   var t=process.find(function(p){return p.id===id;});
   if(t){
     if(field==='jours')t[field]=parseInt(val);
     else if(field==='prereq')t[field]=val?parseInt(val):null;
     else t[field]=val;
-    scheduleSave();
+    scheduleSave('process');
     if(field==='cat')renderProcess();
   }
 }
-function delTask(id){process=process.filter(function(p){return p.id!==id;});scheduleSave();renderProcess();}
+function delTask(id){process=process.filter(function(p){return p.id!==id;});scheduleSave('process');renderProcess();}
 function renderKanban(){
   renderAnnonces();
   var today=new Date();today.setHours(0,0,0,0);
@@ -1445,14 +1494,14 @@ function dragDrop(e,targetId){
   var src=process.findIndex(function(p){return p.id===dragSrcId;});
   var tgt=process.findIndex(function(p){return p.id===targetId;});
   var item=process.splice(src,1)[0];process.splice(tgt,0,item);
-  scheduleSave();renderProcess();
+  scheduleSave('process');renderProcess();
 }
 function toggleVentes(e,cid){
   e.stopPropagation();
   var c=concerts.find(function(x){return x.id===cid;});
   if(!c)return;
   c.ventes=((c.ventes||0)+1)%VENTES.length;
-  scheduleSave();renderConcerts();renderKanban();
+  scheduleSave('concerts');renderConcerts();renderKanban();
 }
 function ventesHtml(c,onclick){
   var v=VENTES[c.ventes||0];
@@ -1470,7 +1519,7 @@ function toggleFicheInfo(){
 function toggleSkipFromList(cid, cat){
   var key='skip-'+cid+'-'+cat;
   if(taskStates[key])delete taskStates[key];else taskStates[key]=true;
-  scheduleSave();
+  scheduleSave('taskstates');
   renderConcerts();
   // Si la fiche est ouverte pour ce concert, mettre à jour aussi
   if(currentFicheId===cid){
@@ -1483,7 +1532,7 @@ function toggleSkip(cat){
   if(!currentFicheId)return;
   var key='skip-'+currentFicheId+'-'+cat;
   if(taskStates[key])delete taskStates[key];else taskStates[key]=true;
-  scheduleSave();updateSkipButtons();
+  scheduleSave('taskstates');updateSkipButtons();
   var c=concerts.find(function(x){return x.id===currentFicheId;});
   if(c)renderFicheTasks(c);
 }
@@ -1498,7 +1547,7 @@ function updateSkipButtons(){
   if(bSp){bSp.classList.toggle('active',sp);if(iSp)iSp.textContent=sp?'●':'○';}
   if(bCol){bCol.classList.toggle('active',col);if(iCol)iCol.textContent=col?'●':'○';}
 }
-function toggleHighlight(cid,tid){var k="hl-"+cid+"-"+tid;if(taskStates[k])delete taskStates[k];else taskStates[k]=true;scheduleSave();renderKanban();renderTkWidget();}
+function toggleHighlight(cid,tid){var k="hl-"+cid+"-"+tid;if(taskStates[k])delete taskStates[k];else taskStates[k]=true;scheduleSave('taskstates');renderKanban();renderTkWidget();}
 function startCellEdit(e,cid,field){
   e.stopPropagation();
   var cell=e.currentTarget;
@@ -1516,7 +1565,7 @@ function startCellEdit(e,cid,field){
   cell.innerHTML='<div class="crow-cell-label">'+labels[field]+'</div>';
   cell.appendChild(inp);
   inp.focus();inp.select();
-  function save(){c[field]=inp.value.trim();scheduleSave();renderConcerts();}
+  function save(){c[field]=inp.value.trim();scheduleSave('concerts');renderConcerts();}
   inp.addEventListener('blur',save);
   inp.addEventListener('keydown',function(ev){
     if(ev.key==='Enter')inp.blur();
@@ -1591,7 +1640,7 @@ function renderTaches(){
       var toIdx=tkCols.findIndex(function(c){return c.id===col.id;});
       if(fromIdx<0||toIdx<0)return;
       var item=tkCols.splice(fromIdx,1)[0];tkCols.splice(toIdx,0,item);
-      scheduleSave();renderTaches();renderTkWidget();
+      scheduleSave('tkcols');renderTaches();renderTkWidget();
     });
     // Header
     var head=document.createElement('div');head.className='tk-col-head';
@@ -1611,7 +1660,7 @@ function renderTaches(){
       var fromId=e.dataTransfer.getData('tkid');if(!fromId)return;
       var fromTask=tkTasks.find(function(x){return x.id===fromId;});
       if(!fromTask||fromTask.colId===col.id)return;
-      fromTask.colId=col.id;scheduleSave();renderTaches();renderTkWidget();
+      fromTask.colId=col.id;scheduleSave('tktasks');renderTaches();renderTkWidget();
     });
     allTasks.forEach(function(t){
       var df=t.date?tkFmtDate(t.date):null;
@@ -1693,27 +1742,27 @@ function tkSaveTask(){
   } else {
     tkTasks.push({id:tkNewId(),colId:tkAddColId,nom:nom,date:date,prio:prio,done:false,delegue:false});
   }
-  scheduleSave();tkCloseModal();renderTaches();renderTkWidget();
+  scheduleSave('tktasks');tkCloseModal();renderTaches();renderTkWidget();
 }
 function tkCloseModal(){document.getElementById('tk-modal').classList.remove('open');}
 function tkToggleDelegue(id){
   var t=tkTasks.find(function(x){return x.id===id;});
   if(!t)return;
   t.delegue=!t.delegue;
-  scheduleSave();renderTaches();renderTkWidget();
+  scheduleSave('tktasks');renderTaches();renderTkWidget();
 }
 function tkToggleDone(id){
   var t=tkTasks.find(function(x){return x.id===id;});
-  if(t){t.done=!t.done;scheduleSave();renderTaches();renderTkWidget();}
+  if(t){t.done=!t.done;scheduleSave('tktasks');renderTaches();renderTkWidget();}
 }
 function tkDelTask(id){
   tkTasks=tkTasks.filter(function(x){return x.id!==id;});
-  scheduleSave();renderTaches();renderTkWidget();
+  scheduleSave('tktasks');renderTaches();renderTkWidget();
 }
 function tkAddCol(){}
 function tkRenameCol(id,nom){
   var col=tkCols.find(function(x){return x.id===id;});
-  if(col&&nom.trim()){col.nom=nom.trim();scheduleSave();}
+  if(col&&nom.trim()){col.nom=nom.trim();scheduleSave('tkcols');}
 }
 function tkDelCol(id){}
 
@@ -1875,13 +1924,13 @@ function renderRS(){
         rsPosts.push({id:rsNewId(),proj:'pp',date:ds,type:'annonce',format:'post',
           concert:c.art,note:'',legend:'',link:'',fb:false,insta:false,tiktok:false,
           status:'',ready:false,autoRef:c.id});
-        scheduleSave();
+        scheduleSave('rsposts');
       } else {
         // Mettre à jour la date si elle a changé
-        if(existing.date!==ds){existing.date=ds;scheduleSave();}
+        if(existing.date!==ds){existing.date=ds;scheduleSave('rsposts');}
         // Si l'annonce est cochée ET le post n'est pas encore "posté", le marquer posté
         if(taskStates['annonce-'+c.id]&&existing.status!=='posted'){
-          existing.status='posted';existing.ready=true;scheduleSave();
+          existing.status='posted';existing.ready=true;scheduleSave('rsposts');
         }
       }
     });
@@ -1892,7 +1941,7 @@ function renderRS(){
     });
     if(toRemove.length){
       toRemove.forEach(function(p){rsPosts=rsPosts.filter(function(x){return x.id!==p.id;});});
-      scheduleSave();
+      scheduleSave('rsposts');
     }
   }
 
@@ -2138,7 +2187,7 @@ function rsSavePost(){
     rsPosts.push({id:rsNewId(),proj:rsCurrentProj,date:rsCurrentDate,type:type,format:rsFmt,concert:concert,note:note,legend:legend,link:link,fb:rsNetState.fb,insta:rsNetState.insta,tiktok:rsNetState.tiktok,linkedin:rsNetState.linkedin,ready:false,autoRef:autoRef||undefined});
     delete document.getElementById('rs-modal-save').dataset.autoref;
   }
-  scheduleSave();rsCloseModal();renderRS();
+  scheduleSave('rsposts');rsCloseModal();renderRS();
   setTimeout(function(){
     var el=document.getElementById('rslist-'+rsCurrentDate);
     if(el)el.style.display='block';
@@ -2171,7 +2220,7 @@ function rsToggleReady(id){
   else if(p.status==='ready')p.status='posted';
   else p.status='';
   p.ready=p.status!=='';
-  scheduleSave();
+  scheduleSave('rsposts');
   var date=p.date;renderRS();
   setTimeout(function(){
     var el=document.getElementById('rslist-'+date);
@@ -2183,7 +2232,7 @@ function rsDelPost(id){
   var p=rsPosts.find(function(x){return x.id===id;});
   var date=p?p.date:null;
   rsPosts=rsPosts.filter(function(x){return x.id!==id;});
-  scheduleSave();renderRS();
+  scheduleSave('rsposts');renderRS();
   if(date)setTimeout(function(){
     var el=document.getElementById('rslist-'+date);
     if(el&&rsPosts.some(function(x){return x.date===date;}))el.style.display='block';
@@ -3053,7 +3102,7 @@ function budgetCreateSheet() {
     .then(function(){
       var url = 'https://docs.google.com/spreadsheets/d/'+sid+'/edit';
       c.budget = url;
-      scheduleSave();
+      scheduleSave('concerts');
       if (document.getElementById('fi-budget')) document.getElementById('fi-budget').value = url;
       renderConcerts();
       document.getElementById('budget-status-msg').innerHTML = '✅ Sheet créé ! <a href="'+url+'" target="_blank" style="color:#1a7a4f;font-weight:700">Ouvrir dans Google Sheets ↗</a>';

@@ -1,6 +1,2 @@
 [build]
   publish = "public"
-
-[[edge_functions]]
-  path = "/api"
-  function = "api"
