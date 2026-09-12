@@ -897,6 +897,19 @@ function initRealtime(){
   });
 }
 
+// Fusion par ID pour les tableaux partages (concerts, tktasks, rsposts) :
+// si on vient de sauvegarder recemment, on garde nos elements locaux tels
+// quels (pour ne pas ecraser une saisie en cours) et on ajoute seulement
+// les elements distants qu'on n'a pas encore ; sinon on prend tout le distant.
+function mergeArrayById(remote,local){
+  if(!remote)return local;
+  if(Date.now()-_lastSaveTs<10000){
+    var localIds={};local.forEach(function(x){localIds[x.id]=true;});
+    remote.forEach(function(x){if(!localIds[x.id])local.push(x);});
+    return local;
+  }
+  return remote;
+}
 async function reloadFromRemote(changedKey){
   showSyncBanner('Synchronisation...');
   try{
@@ -921,21 +934,13 @@ async function reloadFromRemote(changedKey){
       }
       else if(k==='concerts'){
         var remote=await dbGet('concerts',[]);
-        if(remote){
-          if(Date.now()-_lastSaveTs<10000){
-            // Fusion par ID : garder nos concerts locaux, ajouter les nouveaux distants
-            var localIds={};concerts.forEach(function(c){localIds[c.id]=true;});
-            remote.forEach(function(c){if(!localIds[c.id])concerts.push(c);});
-          } else {
-            concerts=remote;
-          }
-          concerts=concerts.map(function(c){return Object.assign({medias:'',jeux:'',budget:'',notes:'',ventes:0},c);});
-        }
+        concerts=mergeArrayById(remote,concerts);
+        concerts=concerts.map(function(c){return Object.assign({medias:'',jeux:'',budget:'',notes:'',ventes:0},c);});
       }
       else if(k==='process'){var raw=(await dbGet('process',null))||DEFAULT_PROCESS;process=raw.map(function(t){return Object.assign({prereq:null,cat:t.cat||'gen'},t);});}
       else if(k==='tkcols')tkCols=(await dbGet('tkcols',[]))||[];
-      else if(k==='tktasks')tkTasks=(await dbGet('tktasks',[]))||[];
-      else if(k==='rsposts')rsPosts=(await dbGet('rsposts',[]))||[];
+      else if(k==='tktasks')tkTasks=mergeArrayById(await dbGet('tktasks',[]),tkTasks);
+      else if(k==='rsposts')rsPosts=mergeArrayById(await dbGet('rsposts',[]),rsPosts);
     }
     render();
     showSyncBanner('À jour ✓',true);
