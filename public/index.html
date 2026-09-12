@@ -1662,14 +1662,10 @@ function renderTaches(){
   var board=document.createElement('div');
   board.className='tk-board';
   tkCols.forEach(function(col){
-    var colTasks=tkTasks.filter(function(t){return t.colId===col.id&&!t.done;}).sort(function(a,b){
+    var allTasks=tkTasks.filter(function(t){return t.colId===col.id&&!t.done;}).sort(function(a,b){
       if(!a.date&&!b.date)return 0;if(!a.date)return 1;if(!b.date)return -1;
       return new Date(a.date)-new Date(b.date);
     });
-    var doneTasks=tkTasks.filter(function(t){return t.colId===col.id&&t.done;}).sort(function(a,b){
-      return new Date(a.date||0)-new Date(b.date||0);
-    });
-    var allTasks=colTasks.concat(doneTasks);
     // Colonne
     var projNames={pp:'Please Please',gc:'Golden Coast',antdt:'ANTDT',sr:'Saline Royale'};
     var displayNom=projNames[col.id]||col.nom;
