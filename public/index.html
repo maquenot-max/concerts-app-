@@ -75,9 +75,14 @@
       <div id="ventes-filter-wrap"></div>
       <div class="filters">
         <input type="search" id="search" placeholder="Rechercher un artiste..." oninput="renderKanban()">
-        <select id="fville" onchange="renderKanban()"><option value="">Toutes les villes</option></select>
-        <select id="fperiode" onchange="renderKanban()"><option value="">Toutes les periodes</option></select>
-        <select id="fcat" onchange="renderKanban()" title="Affiche les concerts ayant une tache urgente ou en retard dans cette categorie"><option value="">Toutes les categories</option></select>
+        <div class="filters-popover">
+          <button class="btn" onclick="toggleFiltersPanel(event,'kfilters-panel')">Filtres<span class="filters-badge" id="kfilters-badge" style="display:none"></span></button>
+          <div class="filters-panel" id="kfilters-panel" style="display:none">
+            <select id="fville" onchange="renderKanban()"><option value="">Toutes les villes</option></select>
+            <select id="fperiode" onchange="renderKanban()"><option value="">Toutes les periodes</option></select>
+            <select id="fcat" onchange="renderKanban()" title="Affiche les concerts ayant une tache urgente ou en retard dans cette categorie"><option value="">Toutes les categories</option></select>
+          </div>
+        </div>
       </div>
       <div id="kanban-wrap"><div class="loading-full"><span class="spin" style="width:28px;height:28px;border-width:3px"></span><p>Chargement...</p></div></div>
     </div>
@@ -1208,6 +1213,7 @@ function renderKanban(){
     });
   }
   updateFilters();
+  updateFiltersBadge('kfilters-badge',['fville','fperiode','fcat']);
   var list=filtered();
   var wrap=document.getElementById('kanban-wrap');
   if(!list.length){wrap.innerHTML='<div class="empty-state">Aucun concert.</div>';return;}
