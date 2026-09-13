@@ -68,18 +68,13 @@
           <div id="tk-widget-wrap"></div>
         </div>
       </div>
-      <div class="dash-mid-row" style="display:flex;gap:12px;margin-bottom:1.5rem;align-items:stretch">
+      <div class="dash-mid-row" style="display:flex;gap:12px;align-items:stretch">
         <div id="next-concert-wrap" style="flex:1;min-width:0;display:flex"></div>
         <div id="today-rs-wrap" style="flex:2;min-width:0;display:flex"></div>
       </div>
-      <div id="ventes-filter-wrap"></div>
-      <div class="filters">
-        <input type="search" id="search" placeholder="Rechercher un artiste..." oninput="renderKanban()">
-        <select id="fville" onchange="renderKanban()"><option value="">Toutes les villes</option></select>
-        <select id="fperiode" onchange="renderKanban()"><option value="">Toutes les periodes</option></select>
-        <select id="fcat" onchange="renderKanban()" title="Affiche les concerts ayant une tache urgente ou en retard dans cette categorie"><option value="">Toutes les categories</option></select>
+      <div style="margin-top:1.5rem;padding:12px 16px;background:var(--green-bg);border:1px solid #cdeadb;border-radius:var(--radius-sm);font-size:12.5px;color:var(--green)">
+        Pour la liste complète des concerts, la recherche et les filtres : onglet <b style="color:var(--text);cursor:pointer" onclick="showTab('concerts',document.getElementById('btn-concerts'))">Concerts</b>.
       </div>
-      <div id="kanban-wrap"><div class="loading-full"><span class="spin" style="width:28px;height:28px;border-width:3px"></span><p>Chargement...</p></div></div>
     </div>
     <div id="tab-concerts" class="panel">
       <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
@@ -99,9 +94,14 @@
       </div>
       <div class="filters" id="concerts-filters" style="margin-bottom:1rem">
         <input type="search" id="csearch" placeholder="Rechercher un artiste..." oninput="renderConcerts()">
-        <select id="cville" onchange="renderConcerts()"><option value="">Toutes les villes</option></select>
-        <select id="cperiode" onchange="renderConcerts()"><option value="">Toutes les periodes</option></select>
-        <select id="ccat" onchange="renderConcerts()" title="Affiche les concerts ayant une tache urgente ou en retard dans cette categorie"><option value="">Toutes les categories</option></select>
+        <div class="filters-popover">
+          <button class="btn" onclick="toggleFiltersPanel(event,'cfilters-panel')">Filtres<span class="filters-badge" id="cfilters-badge" style="display:none"></span></button>
+          <div class="filters-panel" id="cfilters-panel" style="display:none">
+            <select id="cville" onchange="renderConcerts()"><option value="">Toutes les villes</option></select>
+            <select id="cperiode" onchange="renderConcerts()"><option value="">Toutes les periodes</option></select>
+            <select id="ccat" onchange="renderConcerts()" title="Affiche les concerts ayant une tache urgente ou en retard dans cette categorie"><option value="">Toutes les categories</option></select>
+          </div>
+        </div>
         <div class="view-toggle" style="margin-left:auto">
           <button id="cview-list" class="view-toggle-btn active" onclick="setConcertsView('list')">Liste</button>
           <button id="cview-salle" class="view-toggle-btn" onclick="setConcertsView('salle')">Par salle</button>
@@ -114,9 +114,14 @@
     <div id="tab-past" class="panel">
       <div class="filters" style="margin-bottom:1rem">
         <input type="search" id="pastsearch" placeholder="Rechercher un artiste..." oninput="renderPastConcerts()">
-        <select id="pastville" onchange="renderPastConcerts()"><option value="">Toutes les villes</option></select>
-        <select id="pastperiode" onchange="renderPastConcerts()"><option value="">Toutes les periodes</option></select>
-        <select id="pastcat" onchange="renderPastConcerts()" title="Affiche les concerts ayant une tache urgente ou en retard dans cette categorie"><option value="">Toutes les categories</option></select>
+        <div class="filters-popover">
+          <button class="btn" onclick="toggleFiltersPanel(event,'pfilters-panel')">Filtres<span class="filters-badge" id="pfilters-badge" style="display:none"></span></button>
+          <div class="filters-panel" id="pfilters-panel" style="display:none">
+            <select id="pastville" onchange="renderPastConcerts()"><option value="">Toutes les villes</option></select>
+            <select id="pastperiode" onchange="renderPastConcerts()"><option value="">Toutes les periodes</option></select>
+            <select id="pastcat" onchange="renderPastConcerts()" title="Affiche les concerts ayant une tache urgente ou en retard dans cette categorie"><option value="">Toutes les categories</option></select>
+          </div>
+        </div>
         <button class="btn" style="margin-left:auto" onclick="showTab('concerts',document.getElementById('btn-concerts'))">← Retour aux concerts</button>
       </div>
       <div id="past-list"></div>
@@ -779,21 +784,6 @@ function isSoon(d){if(!d)return false;var n=new Date();n.setHours(0,0,0,0);var s
 function tk(cid,tid){return cid+'-'+tid;}
 function isUnlocked(c,t){if(!t.prereq)return true;return !!taskStates[tk(c.id,t.prereq)];}
 function sortedProcess(c){return process.slice().sort(function(a,b){var da=calcDate(c,a),db=calcDate(c,b);if(!da&&!db)return 0;if(!da)return 1;if(!db)return-1;return da-db;});}
-function filtered(){
-  var s=(document.getElementById('search')||{value:''}).value.toLowerCase();
-  var v=(document.getElementById('fville')||{value:''}).value;
-  var p=(document.getElementById('fperiode')||{value:''}).value;
-  var cat=(document.getElementById('fcat')||{value:''}).value;
-  return concerts.filter(function(c){
-    if(c.supprime)return false;
-    if(s&&c.art.toLowerCase().indexOf(s)<0)return false;
-    if(v&&getVille(c.ville)!==v)return false;
-    if(window._vf!=null&&(c.ventes||0)!==window._vf)return false;
-    if(p&&(c.dc||'').indexOf(p)<0)return false;
-    if(!matchesCategoryFilter(c,cat))return false;
-    return true;
-  });
-}
 function fillFilterSelect(el,opts,emptyLabel){
   if(!el)return;
   var sel=el.value;
@@ -806,15 +796,32 @@ function updateFilters(){
   var villeOpts=Object.keys(villes).sort().map(function(v){return {value:v,label:v};});
   var periodeOpts=Object.keys(periodes).sort().map(function(p){return {value:p,label:p};});
   var catOpts=Object.keys(CATS).map(function(k){return {value:k,label:CATS[k].label};});
-  fillFilterSelect(document.getElementById('fville'),villeOpts,'Toutes les villes');
   fillFilterSelect(document.getElementById('cville'),villeOpts,'Toutes les villes');
-  fillFilterSelect(document.getElementById('fperiode'),periodeOpts,'Toutes les periodes');
-  fillFilterSelect(document.getElementById('fcat'),catOpts,'Toutes les categories');
   fillFilterSelect(document.getElementById('cperiode'),periodeOpts,'Toutes les periodes');
   fillFilterSelect(document.getElementById('ccat'),catOpts,'Toutes les categories');
   fillFilterSelect(document.getElementById('pastville'),villeOpts,'Toutes les villes');
   fillFilterSelect(document.getElementById('pastperiode'),periodeOpts,'Toutes les periodes');
   fillFilterSelect(document.getElementById('pastcat'),catOpts,'Toutes les categories');
+}
+function toggleFiltersPanel(e,panelId){
+  e.stopPropagation();
+  var panel=document.getElementById(panelId);
+  if(!panel)return;
+  var isOpen=panel.style.display==='flex';
+  document.querySelectorAll('.filters-panel').forEach(function(p){p.style.display='none';});
+  panel.style.display=isOpen?'none':'flex';
+}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.filters-popover')){
+    document.querySelectorAll('.filters-panel').forEach(function(p){p.style.display='none';});
+  }
+});
+function updateFiltersBadge(badgeId,selectIds){
+  var badge=document.getElementById(badgeId);
+  if(!badge)return;
+  var n=selectIds.filter(function(id){var el=document.getElementById(id);return el&&el.value;}).length;
+  badge.textContent=n;
+  badge.style.display=n?'inline-flex':'none';
 }
 function matchesCategoryFilter(c,cat){
   if(!cat)return true;
@@ -1159,63 +1166,6 @@ function renderKanban(){
       +cols
       +'</div>';
   }
-  // Filtre ventes (init une seule fois)
-  var vfWrap=document.getElementById('ventes-filter-wrap');
-  if(vfWrap&&!vfWrap.dataset.init){
-    vfWrap.dataset.init='1';
-    vfWrap.className='ventes-filter';
-    vfWrap.innerHTML='<span>Ventes :</span>';
-    VENTES.filter(function(v){return v.id>0;}).forEach(function(v){
-      var btn=document.createElement('button');
-      btn.className='vf-btn vf-'+v.id;btn.textContent=v.label;
-      btn.onclick=function(){
-        window._vf=window._vf===v.id?null:v.id;
-        document.querySelectorAll('.vf-btn').forEach(function(b){b.classList.remove('active');});
-        if(window._vf!=null)btn.classList.add('active');
-        renderKanban();
-      };
-      vfWrap.appendChild(btn);
-    });
-  }
-  updateFilters();
-  var list=filtered();
-  var wrap=document.getElementById('kanban-wrap');
-  if(!list.length){wrap.innerHTML='<div class="empty-state">Aucun concert.</div>';return;}
-  wrap.innerHTML='<div class="grid">'+list.map(function(c){
-    var sorted=sortedProcess(c);
-    var skipSpK=!!taskStates['skip-'+c.id+'-sp'];
-    var skipColK=!!taskStates['skip-'+c.id+'-col'];
-    if(skipSpK||skipColK){sorted=sorted.filter(function(t){
-      if(skipSpK&&t.cat==='sp')return false;
-      if(skipColK&&(t.cat==='col'||t.cat==='affp'))return false;
-      return true;
-    });}
-    var lateTasks=sorted.filter(function(t){var d=calcDate(c,t);return !taskStates[tk(c.id,t.id)]&&isUnlocked(c,t)&&(isLate(d)||isToday(d));});
-    var doneN=sorted.filter(function(t){return taskStates[tk(c.id,t.id)];}).length;
-    var pct=Math.round(doneN/sorted.length*100);
-    var ds=new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});
-    var hasLate=lateTasks.length>0;
-    var body=hasLate
-      ?'<div class="col-body">'+lateTasks.map(function(t){
-          var cat=CATS[t.cat]||{cls:'p-gen',label:'?'};
-          return (function(){var d=calcDate(c,t);var isHl=!!taskStates['hl-'+c.id+'-'+t.id];
-          return '<div class="titem'+(isHl?' highlighted':'')+'" onclick="event.stopPropagation();toggleHighlight(\''+c.id+'\','+t.id+')">'+
-            '<div class="chk" onclick="event.stopPropagation();toggleTask(\''+c.id+'\','+t.id+')" style="cursor:pointer;flex-shrink:0;margin-top:2px"></div>'+
-            '<div style="flex:1;min-width:0"><div class="tname">'+esc(t.nom)+'</div>'+
-            '<span class="pill '+cat.cls+'">'+cat.label+'</span>'+
-            '<div class="'+(isToday(d)?'ttoday':'tlate')+'">'+fmt(d)+'</div></div></div>';})()
-        }).join('')+'</div>'
-      :'<div class="ok-col"><span class="ok-badge">OK</span></div>';
-    return '<div class="col'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')">'+
-      '<div class="col-head'+(hasLate?' late':'')+'">'+
-      '<div class="col-name'+(hasLate?' late':'')+'">'+esc(c.art)+cancelBadge(c)+'</div>'+
-      '<div class="col-sub'+(hasLate?' late':'')+'">'+( c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div>'+
-      ventesHtml(c,'event.stopPropagation();toggleVentes(event,\''+c.id+'\')') +
-      '<div class="pbar"><div class="pfill" style="width:'+pct+'%"></div></div>'+
-      '<div class="pbar-meta"><span>'+pct+'%</span>'+
-      (hasLate?'<span class="red">'+lateTasks.length+'!</span>':'')+
-      '</div></div>'+body+'</div>';
-  }).join('')+'</div>';
 }
 var concertsViewMode='list';
 function setConcertsView(mode){
@@ -1228,6 +1178,7 @@ function setConcertsView(mode){
 function renderConcerts(){
   var el=document.getElementById('clist');
   updateFilters();
+  updateFiltersBadge('cfilters-badge',['cville','cperiode','ccat']);
   // Filtrer
   var cs=(document.getElementById('csearch')||{value:''}).value.toLowerCase();
   var cv2=(document.getElementById('cville')||{value:''}).value;
@@ -1260,17 +1211,11 @@ function renderConcerts(){
       var skipCol=!!taskStates['skip-'+c.id+'-col'];
       var med=c.medias||'';var jx=c.jeux||'';var bud=c.budget||'';var notes=c.notes||'';
 
-      var medHtml=med
-        ?med.split(',').map(function(m){return '<div style="line-height:1.6;font-size:11px;color:var(--text-2)">'+esc(m.trim())+'</div>';}).join('')
-        :'<div class="crow-cell-empty">—</div>';
-      var jxHtml=jx
-        ?jx.split(',').map(function(j){return '<div style="line-height:1.6;font-size:11px;color:var(--text-2)">'+esc(j.trim())+'</div>';}).join('')
-        :'<div class="crow-cell-empty">—</div>';
-      var notesHtml=notes
-        ?'<div style="line-height:1.5;font-size:11px;color:var(--text-2)">'+esc(notes)+'</div>'
-        :'<div class="crow-cell-empty">—</div>';
+      var medHtml=med?med.split(',').map(function(m){return '<div style="line-height:1.6;font-size:11px;color:var(--text-2)">'+esc(m.trim())+'</div>';}).join(''):'';
+      var jxHtml=jx?jx.split(',').map(function(j){return '<div style="line-height:1.6;font-size:11px;color:var(--text-2)">'+esc(j.trim())+'</div>';}).join(''):'';
+      var notesHtml=notes?'<div style="line-height:1.5;font-size:11px;color:var(--text-2)">'+esc(notes)+'</div>':'';
       var budHtml=bud&&escUrl(bud)
-        ?'<a href="'+escUrl(bud)+'" target="_blank" title="Ouvrir le lien budget dans un nouvel onglet" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);text-decoration:none;white-space:nowrap;transition:all .15s" onmouseover="this.style.background=\'var(--bg)\';this.style.color=\'var(--text)\'" onmouseout="this.style.background=\'var(--surface)\';this.style.color=\'var(--text-2)\'">Ouvrir &#8599;</a>'
+        ?'<a href="'+escUrl(bud)+'" target="_blank" title="Ouvrir le lien budget dans un nouvel onglet" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);text-decoration:none;font-size:13px;transition:all .15s" onmouseover="this.style.background=\'var(--bg)\';this.style.color=\'var(--text)\'" onmouseout="this.style.background=\'var(--surface)\';this.style.color=\'var(--text-2)\'">&#8599;</a>'
         :'<div class="crow-cell-empty">Ajouter un lien...</div>';
 
       var daStr='';
@@ -1288,21 +1233,20 @@ function renderConcerts(){
 
       var cellStyle='flex:1;padding:8px 12px;border-left:1px solid var(--border-light);display:flex;flex-direction:column;justify-content:center;cursor:pointer;transition:background .15s';
       var cM='<div style="'+cellStyle+'" onclick="startCellEdit(event,\''+c.id+'\',\'medias\')" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
-        +'<div class="crow-cell-label">Medias</div><div>'+medHtml+'</div></div>';
+        +(med?'<div class="crow-cell-label">Medias</div>':'')+'<div>'+medHtml+'</div></div>';
       var cJ='<div style="'+cellStyle+'" onclick="startCellEdit(event,\''+c.id+'\',\'jeux\')" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
-        +'<div class="crow-cell-label">Jeu concours</div><div>'+jxHtml+'</div></div>';
+        +(jx?'<div class="crow-cell-label">Jeu concours</div>':'')+'<div>'+jxHtml+'</div></div>';
       var cN='<div style="'+cellStyle+'" onclick="startCellEdit(event,\''+c.id+'\',\'notes\')" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
-        +'<div class="crow-cell-label">Notes</div><div>'+notesHtml+'</div></div>';
+        +(notes?'<div class="crow-cell-label">Notes</div>':'')+'<div>'+notesHtml+'</div></div>';
       var cB='<div style="width:140px;flex-shrink:0;padding:8px 12px;border-left:1px solid var(--border-light);display:flex;flex-direction:column;justify-content:center;cursor:pointer;transition:background .15s" onclick="startCellEdit(event,\''+c.id+'\',\'budget\')" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
         +'<div class="crow-cell-label">Budget</div><div style="margin-top:4px">'+budHtml+'</div></div>';
 
+      var skipBadges=(skipSp?'<button class="crow-skip-btn active" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'sp\')">&#9679; Sponso prod</button>':'')
+        +(skipCol?'<button class="crow-skip-btn active" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'col\')">&#9679; Pas d\'affiche</button>':'');
       var statutBloc='<div style="width:120px;flex-shrink:0;padding:8px 12px;border-left:1px solid var(--border-light);display:flex;flex-direction:column;gap:6px;justify-content:center">'
         +ventesHtml(c,'toggleVentes(event,\''+c.id+'\')')
         +(isAnnounced?'<button class="ann-undo" onclick="event.stopPropagation();annonceUndo(\''+c.id+'\')" style="font-size:11px;color:var(--text-3);text-align:left;background:none;border:none;cursor:pointer">&#8635; Annonce</button>':'')
-        +'<div style="display:flex;flex-direction:column;gap:3px;margin-top:4px">'
-        +'<button class="crow-skip-btn'+(skipSp?' active':'')+'" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'sp\')">'+(skipSp?'&#9679;':'&#9675;')+' Sponso prod</button>'
-        +'<button class="crow-skip-btn'+(skipCol?' active':'')+'" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'col\')">'+(skipCol?'&#9679;':'&#9675;')+' Pas d\'affiche</button>'
-        +'</div>'
+        +(skipBadges?'<div style="display:flex;flex-direction:column;gap:3px;margin-top:4px">'+skipBadges+'</div>':'')
         +'</div>';
 
       return '<div class="crow'+(notAnnounced?' not-announced':'')+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')" style="display:flex;align-items:stretch;padding:0;min-height:52px;"+((c.ventes||0)===4?"background:rgba(26,122,79,.06)":"")+">'
@@ -1394,6 +1338,7 @@ function renderConcertsCalendar(liste,el){
 function renderPastConcerts(){
   var el=document.getElementById('past-list');
   if(!el)return;
+  updateFiltersBadge('pfilters-badge',['pastville','pastperiode','pastcat']);
   var ps=(document.getElementById('pastsearch')||{value:''}).value.toLowerCase();
   var pv=(document.getElementById('pastville')||{value:''}).value;
   var pp=(document.getElementById('pastperiode')||{value:''}).value;
