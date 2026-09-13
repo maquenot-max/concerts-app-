@@ -336,7 +336,7 @@ var VENTES=[
 ];
 var concerts=[],taskStates={},process=DEFAULT_PROCESS,nextId=26;
 var tkCols=[],tkTasks=[],tkEditId=null,tkAddColId=null;
-var rsPosts=[],rsEditId=null,rsCurrentProj="pp",rsCurrentDate=null,rsCurrentMonth=new Date(),rsFmt="post",rsNetState={fb:false,insta:false,tiktok:false};
+var rsPosts=[],rsEditId=null,rsCurrentProj="pp",rsCurrentDate=null,rsFmt="post",rsNetState={fb:false,insta:false,tiktok:false};
 var dragSrcId=null,saveTimer=null,currentFicheId=null;
 
 // ── CLIENT SUPABASE ──────────────────────────────────────
@@ -365,6 +365,15 @@ var _rtChannel=null;
 var _lastSaveTs=0; // timestamp de notre dernière sauvegarde locale
 var _reloadPending=false;
 
+// Le modal Budget n'utilise pas de classe ".open" comme les autres (juste un
+// style.display bascule directement) : il faut donc le detecter a part pour
+// qu'une synchro en arriere-plan ne vienne pas perturber une saisie de budget.
+function isAnyModalOpen(){
+  if(document.querySelector('.tk-modal.open,.rs-modal.open,.overlay.open'))return true;
+  var budgetOverlay=document.getElementById('budget-overlay');
+  if(budgetOverlay&&budgetOverlay.style.display==='flex')return true;
+  return false;
+}
 function initRealtime(){
   if(_rtChannel)return;
   var sb=getSupabase();
@@ -373,9 +382,8 @@ function initRealtime(){
       // Ignorer nos propres sauvegardes (dans les 2s qui suivent notre save)
       if(Date.now()-_lastSaveTs<3000)return;
       // Ne pas recharger si l'utilisateur est en train d'interagir
-      var modalOpen=document.querySelector('.tk-modal.open,.rs-modal.open,.overlay.open');
       var inputFocused=document.activeElement&&['INPUT','TEXTAREA','SELECT'].indexOf(document.activeElement.tagName)>=0;
-      if(modalOpen||inputFocused){
+      if(isAnyModalOpen()||inputFocused){
         _reloadPending=true;
         showSyncBanner('En attente...');
         return;
@@ -391,10 +399,7 @@ function initRealtime(){
 
   // Recharger dès que l'utilisateur ferme une modale ou quitte un champ
   document.addEventListener('focusout',function(){
-    if(_reloadPending){
-      var modalOpen=document.querySelector('.tk-modal.open,.rs-modal.open,.overlay.open');
-      if(!modalOpen){_reloadPending=false;reloadFromRemote(null);}
-    }
+    if(_reloadPending&&!isAnyModalOpen()){_reloadPending=false;reloadFromRemote(null);}
   });
 }
 
@@ -881,11 +886,6 @@ function delTask(id){process=process.filter(function(p){return p.id!==id;});sche
 function renderKanban(){
   renderAnnonces();
   var today=new Date();today.setHours(0,0,0,0);
-  var late=0,done=0,avenir=0;
-  concerts.forEach(function(c){
-    if(new Date(c.dc)>=today)avenir++;
-    process.forEach(function(t){if(taskStates[tk(c.id,t.id)])done++;else if(isUnlocked(c,t)&&isLate(calcDate(c,t)))late++;});
-  });
   // Bannière prochain concert — ligne fine indépendante
   var ncWrap=document.getElementById('next-concert-wrap');
   if(ncWrap){
@@ -1293,14 +1293,6 @@ function renderTaches(){
       scheduleSave('tkcols');renderTaches();renderTkWidget();
     });
     // Header
-    var head=document.createElement('div');head.className='tk-col-head';
-    var inp=document.createElement('input');
-    inp.className='tk-col-name-input';inp.value=displayNom;inp.type='text';
-    inp.addEventListener('blur',function(){tkRenameCol(col.id,inp.value);});
-    inp.addEventListener('keydown',function(e){if(e.key==='Enter')inp.blur();});
-    var cnt=document.createElement('span');cnt.className='tk-col-count';cnt.textContent=allTasks.length;
-    
-    colEl.appendChild(head);
     // Tâches
     var tasksEl=document.createElement('div');tasksEl.className='tk-tasks';
     tasksEl.addEventListener('dragover',function(e){e.preventDefault();tasksEl.style.outline='2px dashed rgba(59,130,246,.3)';});
@@ -1408,12 +1400,6 @@ function tkDelTask(id){
   tkTasks=tkTasks.filter(function(x){return x.id!==id;});
   scheduleSave('tktasks');renderTaches();renderTkWidget();
 }
-function tkAddCol(){}
-function tkRenameCol(id,nom){
-  var col=tkCols.find(function(x){return x.id===id;});
-  if(col&&nom.trim()){col.nom=nom.trim();scheduleSave('tkcols');}
-}
-function tkDelCol(id){}
 
 function renderTkWidget(){
   var wrap=document.getElementById('tk-widget-wrap');
@@ -1442,6 +1428,7 @@ function renderTkWidget(){
   // Tâches épinglées concerts (dans PP)
   var pinnedConcertTasks=[];
   concerts.forEach(function(c){
+    if(c.supprime||c.annule)return;
     process.forEach(function(t){
       var hlKey='hl-'+c.id+'-'+t.id;
       if(taskStates[hlKey]&&!taskStates[c.id+'-'+t.id]){
@@ -1566,6 +1553,7 @@ function renderRS(){
   if(rsCurrentProj==='pp'){
     concerts.forEach(function(c){
       if(!c.da)return; // pas de date d'annonce = pas de post auto
+      if(c.supprime||c.annule)return; // concert archive ou annule : on arrete de le synchroniser (sans toucher au post deja existant)
       var ds=c.da.substring(0,10);
       var existing=rsPosts.find(function(p){return p.autoRef===c.id&&p.proj==='pp';});
       if(!existing){
@@ -1718,13 +1706,6 @@ function rsExtend(dir){
   renderRS();
 }
 
-function rsShowHidden(which){
-  var items=document.querySelectorAll('.rs-day');
-  items.forEach(function(el){el.style.display='';});
-  var btn=document.getElementById('rs-show-'+which);
-  if(btn)btn.style.display='none';
-}
-
 function rsToggleDay(dateStr){
   var el=document.getElementById('rslist-'+dateStr);
   if(!el)return;
@@ -1732,10 +1713,6 @@ function rsToggleDay(dateStr){
   el.style.display=open?'none':'block';
 }
 
-function rsNavMonth(dir){
-  rsCurrentMonth=new Date(rsCurrentMonth.getFullYear(),rsCurrentMonth.getMonth()+dir,1);
-  renderRS();
-}
 
 function rsSetProj(p){rsCurrentProj=p;rsWindowBefore=3;rsWindowAfter=15;renderRS();}
 
@@ -2355,7 +2332,7 @@ function arrondiCentaine(n) {
 }
 
 function getBudgetTemplate(montant, style, ville, skipAffichage, skipSp) {
-  var tplKey = montant < 2000 ? 'small' : montant <= 4000 ? 'standard' : 'large';
+  var tplKey = montant < 1500 ? 'small' : montant <= 4000 ? 'standard' : 'large';
   var base = JSON.parse(JSON.stringify(BUDGET_TEMPLATES[tplKey]));
 
   // ── Street
@@ -2366,7 +2343,7 @@ function getBudgetTemplate(montant, style, ville, skipAffichage, skipSp) {
   // ── Calcul sponso et DOOH selon tranche
   var sponsoTotal = 0, doohTotal = 0, doohProtege = 0;
 
-  if (montant < 2000) {
+  if (montant < 1500) {
     // Tout le reste en sponso 3 vagues
     sponsoTotal = resteApresAff;
   } else if (montant <= 4000) {
@@ -2691,19 +2668,25 @@ function budgetGoogleAuth() {
       budgetGToken = params.access_token;
       // Nettoyer l'URL
       history.replaceState(null,'',window.location.pathname);
-      // Ré-ouvrir le modal budget si on était en train d'en créer un
+      // Ré-ouvrir le modal budget si on était en train d'en créer un.
+      // On attend que le chargement initial des donnees soit reellement
+      // termine (au lieu d'un delai fixe) : sur un reseau lent, 500ms ne
+      // suffit pas toujours et openFiche() echouait silencieusement car
+      // "concerts" etait encore vide.
       if (sessionStorage.getItem('budget_oauth_pending')) {
         var concertId = sessionStorage.getItem('budget_oauth_concert');
         sessionStorage.removeItem('budget_oauth_pending');
         sessionStorage.removeItem('budget_oauth_concert');
-        setTimeout(function(){
+        var waitForDataThenReopen = function(){
+          if(!appDataLoaded){ setTimeout(waitForDataThenReopen, 200); return; }
           updateBudgetAuthUI();
           // Rouvrir la fiche concert puis le modal budget
           if (concertId) {
             openFiche(concertId);
             setTimeout(function(){ openBudgetModal(); }, 300);
           }
-        }, 500);
+        };
+        waitForDataThenReopen();
       }
     }
   }
@@ -2726,6 +2709,18 @@ function budgetCreateSheet() {
   var tpl = getBudgetTemplate(montant, budSelectedStyle, c&&c.ville||'', !!taskStates['skip-'+(c&&c.id||'')+'-col'], !!taskStates['skip-'+(c&&c.id||'')+'-sp']);
   var skipSp = !!taskStates['skip-'+c.id+'-sp'];
   var skipCol = !!taskStates['skip-'+c.id+'-col'];
+
+  // Chaque section du Google Sheet a une mise en page figee de 10 lignes max
+  // (formules de somme sur une plage fixe). Une section qui deborde serait
+  // silencieusement tronquee a la generation : on bloque plutot avec un
+  // message clair pour que ca ne parte jamais inapercu.
+  var sectionsATesters={'Street marketing':tpl.lines.street,'Achat d\'espaces':tpl.lines.espaces,'Digital':tpl.lines.digital,'Radio/TV/Presse':tpl.lines.radio};
+  var sectionEnTrop=Object.keys(sectionsATesters).find(function(k){return (sectionsATesters[k]||[]).length>10;});
+  if(sectionEnTrop){
+    alert('La section "'+sectionEnTrop+'" contient plus de 10 lignes ('+sectionsATesters[sectionEnTrop].length+'). Le modele de feuille ne peut en afficher que 10 par section : reduis le nombre de lignes dans la config Budget avant de creer le Sheet, sinon les lignes en trop seraient perdues.');
+    btn.disabled=false;btn.textContent='Créer le Google Sheet';
+    return;
+  }
 
   var dcDate = c.dc ? new Date(c.dc) : null;
   var dateStr = dcDate ? dcDate.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';

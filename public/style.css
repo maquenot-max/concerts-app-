@@ -48,13 +48,6 @@ header h1{font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--text)
 main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .panel{display:none}.panel.active{display:block}
 
-/* ── STATS ────────────────────────────────────────────── */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:2rem}
-.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow)}
-.stat-n{font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1}
-.stat-n.red{color:var(--red)}
-.stat-l{font-size:11px;color:var(--text-3);margin-top:4px;text-transform:uppercase;letter-spacing:.04em;font-weight:500}
-
 /* ── FILTERS ──────────────────────────────────────────── */
 .filters{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
 .filters input,.filters select{
@@ -286,12 +279,6 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 /* ── GESTIONNAIRE DE TACHES ──────────────────────────── */
 .tk-board{display:flex;gap:16px;align-items:flex-start;overflow-x:auto;padding-bottom:1rem}
 .tk-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);min-width:240px;width:240px;flex-shrink:0;box-shadow:var(--shadow)}
-.tk-col-head{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
-.tk-col-name-input{font-size:12px;font-weight:600;flex:1;outline:none;border:none;background:transparent;cursor:pointer;padding:0}
-.tk-col-name-input:focus{background:var(--bg);border-radius:4px;padding:2px 4px}
-.tk-col-count{font-size:10px;color:var(--text-3);background:var(--bg);border-radius:20px;padding:1px 7px}
-.tk-col-del{background:none;border:none;cursor:pointer;color:#ddd;font-size:14px;padding:2px 4px;border-radius:4px}
-.tk-col-del:hover{color:var(--red);background:var(--red-bg)}
 .tk-tasks{padding:8px;display:flex;flex-direction:column;gap:6px;min-height:40px}
 .tk-task{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;cursor:default;transition:box-shadow .15s}
 .tk-task:hover{box-shadow:var(--shadow-md)}
@@ -518,7 +505,6 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
   .nav{flex:1 1 100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .nav button{flex-shrink:0}
   main{padding:96px .75rem 1rem}
-  .stats{grid-template-columns:repeat(2,1fr)}
   .dash-top{grid-template-columns:1fr}
   .tk-widget-board{grid-template-columns:repeat(2,1fr)}
   .grid{grid-template-columns:repeat(2,1fr)}
