@@ -57,6 +57,10 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 }
 .filters input{width:200px}
 .filters input:focus,.filters select:focus{border-color:#aaa}
+.view-toggle{display:flex;gap:2px;background:var(--bg);border-radius:8px;padding:3px}
+.view-toggle-btn{padding:6px 12px;font-size:12px;border:none;background:transparent;color:var(--text-2);border-radius:6px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.view-toggle-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.view-toggle-btn:hover:not(.active){color:var(--text)}
 
 /* ── GRID KANBAN ──────────────────────────────────────── */
 .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
@@ -524,3 +528,13 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 
 .bud-style-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:11px;cursor:pointer;transition:all .15s;color:var(--text-2)}
 .bud-style-btn.active{background:#e8f5ee;border-color:#80d0a0;color:#1a7a4f;font-weight:700}
+
+/* ── IMPRESSION / EXPORT PDF D'UNE FICHE ─────────────────── */
+@media print{
+  body *{visibility:hidden}
+  .fiche,.fiche *{visibility:visible}
+  .fiche{position:absolute;left:0;top:0;width:100%;max-width:none;height:auto;box-shadow:none;overflow:visible}
+  .fiche-footer,.fiche-close{display:none!important}
+  #fiche-info-collapsible{max-height:none!important;opacity:1!important}
+  .fiche-body{overflow:visible}
+}

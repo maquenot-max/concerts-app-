@@ -18,6 +18,23 @@
   <div style="font-size:13px;color:var(--text-2);max-width:420px;line-height:1.5">La connexion à la base de données a échoué. Pour éviter d'écraser des données existantes, le site ne s'ouvre pas tant que le chargement n'a pas réussi. Vérifie ta connexion internet et réessaie.</div>
   <button class="btn btn-primary" onclick="init()">Réessayer</button>
 </div>
+<div id="tomorrow-reminder" style="display:none;position:fixed;bottom:16px;right:16px;z-index:150;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-md);padding:14px 16px;max-width:280px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+    <div style="font-size:13px;font-weight:600;line-height:1.4" id="tomorrow-reminder-text"></div>
+    <button onclick="document.getElementById('tomorrow-reminder').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:16px;line-height:1;padding:0">×</button>
+  </div>
+  <button class="btn" style="margin-top:10px;width:100%" onclick="document.getElementById('tomorrow-reminder').style.display='none';showTab('taches',document.getElementById('btn-taches'))">Voir les tâches</button>
+</div>
+<div id="archive-suggestion" style="display:none;position:fixed;bottom:16px;left:16px;z-index:150;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-md);padding:14px 16px;max-width:300px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+    <div style="font-size:13px;font-weight:600;line-height:1.4" id="archive-suggestion-text"></div>
+    <button onclick="dismissArchiveSuggestion()" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:16px;line-height:1;padding:0">×</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="btn" style="flex:1" onclick="dismissArchiveSuggestion()">Plus tard</button>
+    <button class="btn btn-primary" style="flex:1" onclick="archiveOldConcerts()">Archiver</button>
+  </div>
+</div>
 <div id="app">
   <header>
     <h1 style="display:flex;align-items:center;gap:8px"><img src="favicon_io/favicon-32x32.png" style="width:20px;height:20px;border-radius:4px">Please Please Communication &mdash; Dashboard</h1>
@@ -85,13 +102,21 @@
         <select id="cville" onchange="renderConcerts()"><option value="">Toutes les villes</option></select>
         <select id="cperiode" onchange="renderConcerts()"><option value="">Toutes les periodes</option></select>
         <select id="ccat" onchange="renderConcerts()" title="Affiche les concerts ayant une tache urgente ou en retard dans cette categorie"><option value="">Toutes les categories</option></select>
-        <button class="btn" style="margin-left:auto" onclick="showTab('past',document.getElementById('btn-past'))">📁 Concerts passés</button>
+        <div class="view-toggle" style="margin-left:auto">
+          <button id="cview-list" class="view-toggle-btn active" onclick="setConcertsView('list')">Liste</button>
+          <button id="cview-salle" class="view-toggle-btn" onclick="setConcertsView('salle')">Par salle</button>
+          <button id="cview-cal" class="view-toggle-btn" onclick="setConcertsView('calendar')">🗓 Calendrier</button>
+        </div>
+        <button class="btn" onclick="showTab('past',document.getElementById('btn-past'))">📁 Concerts passés</button>
       </div>
       <div id="clist"></div>
     </div>
     <div id="tab-past" class="panel">
       <div class="filters" style="margin-bottom:1rem">
         <input type="search" id="pastsearch" placeholder="Rechercher un artiste..." oninput="renderPastConcerts()">
+        <select id="pastville" onchange="renderPastConcerts()"><option value="">Toutes les villes</option></select>
+        <select id="pastperiode" onchange="renderPastConcerts()"><option value="">Toutes les periodes</option></select>
+        <select id="pastcat" onchange="renderPastConcerts()" title="Affiche les concerts ayant une tache urgente ou en retard dans cette categorie"><option value="">Toutes les categories</option></select>
         <button class="btn" style="margin-left:auto" onclick="showTab('concerts',document.getElementById('btn-concerts'))">← Retour aux concerts</button>
       </div>
       <div id="past-list"></div>
@@ -210,6 +235,7 @@
     </div>
     <div class="fiche-footer">
       <button class="reset-btn" onclick="resetFicheTasks()">&#8635; Reinit. taches</button>
+      <button class="btn" onclick="exportFichePdf()" title="Ouvre la boite de dialogue d'impression : choisir 'Enregistrer en PDF'">🖨️ Exporter en PDF</button>
       <button class="btn" onclick="openBudgetModal()" style="background:#e8f5ee;color:#1a7a4f;border:1px solid #b8e0ca;font-weight:600">📊 Budget Promo</button>
       <button class="btn btn-primary" onclick="closeFicheBtn()">Fermer</button>
       <button class="btn btn-danger" id="fi-archive-btn" onclick="deleteFicheConcert()">Déplacer vers Concerts passés</button>
@@ -229,6 +255,20 @@
         <option value="high">Haute</option>
         <option value="low">Basse</option>
       </select>
+    </div>
+    <div><label>Note (optionnel)</label><textarea id="tk-note" placeholder="ex: en attente du retour client..." style="width:100%;min-height:50px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;resize:vertical"></textarea></div>
+    <div>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="tk-recur-on" style="width:auto" onchange="document.getElementById('tk-recur-config').style.display=this.checked?'flex':'none'"> Tache recurrente</label>
+      <div id="tk-recur-config" style="display:none;gap:8px;margin-top:6px;align-items:center">
+        <span style="font-size:12px;color:var(--text-2)" id="tk-recur-prefix">Tous les</span>
+        <input type="number" id="tk-recur-n" min="1" value="1" style="width:60px">
+        <select id="tk-recur-unit" onchange="var m=this.value==='monthday';document.getElementById('tk-recur-prefix').textContent=m?'Le':'Tous les';document.getElementById('tk-recur-n').title=m?'Jour du mois (1-31)':'';">
+          <option value="days">jour(s)</option>
+          <option value="weeks">semaine(s)</option>
+          <option value="months">mois</option>
+          <option value="monthday">du mois (jour fixe)</option>
+        </select>
+      </div>
     </div>
     <div class="tk-modal-actions">
       <button class="btn" id="tk-modal-cancel">Annuler</button>
@@ -524,6 +564,45 @@ window.addEventListener('beforeunload',function(e){
   }
 });
 var appDataLoaded=false;
+// Rappel a l'ouverture : taches (Kanban manuel) dont l'echeance est demain.
+function checkTomorrowReminder(){
+  var tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+  var ts=tomorrow.getFullYear()+'-'+String(tomorrow.getMonth()+1).padStart(2,'0')+'-'+String(tomorrow.getDate()).padStart(2,'0');
+  var dueTomorrow=tkTasks.filter(function(t){return !t.done&&t.date===ts;});
+  if(!dueTomorrow.length)return;
+  var el=document.getElementById('tomorrow-reminder');
+  if(!el)return;
+  var noms=dueTomorrow.slice(0,3).map(function(t){return t.nom;}).join(', ')+(dueTomorrow.length>3?'…':'');
+  document.getElementById('tomorrow-reminder-text').textContent=(dueTomorrow.length===1?'1 tâche arrive à échéance demain : ':dueTomorrow.length+' tâches arrivent à échéance demain : ')+noms;
+  el.style.display='block';
+}
+// Suggestion (non intrusive, une fois par session) d'archiver les concerts
+// passes depuis plus d'une semaine vers "Concerts passes".
+function checkArchiveSuggestion(){
+  if(sessionStorage.getItem('archive_suggestion_dismissed'))return;
+  var oldConcerts=oldUnarchivedConcerts();
+  if(!oldConcerts.length)return;
+  var el=document.getElementById('archive-suggestion');
+  if(!el)return;
+  document.getElementById('archive-suggestion-text').textContent=oldConcerts.length===1
+    ?'1 concert est passé depuis plus d\'une semaine.'
+    :oldConcerts.length+' concerts sont passés depuis plus d\'une semaine.';
+  el.style.display='block';
+}
+function oldUnarchivedConcerts(){
+  var threshold=new Date();threshold.setHours(0,0,0,0);threshold.setDate(threshold.getDate()-7);
+  return concerts.filter(function(c){return !c.supprime&&c.dc&&new Date(c.dc)<threshold;});
+}
+function dismissArchiveSuggestion(){
+  sessionStorage.setItem('archive_suggestion_dismissed','1');
+  var el=document.getElementById('archive-suggestion');if(el)el.style.display='none';
+}
+function archiveOldConcerts(){
+  oldUnarchivedConcerts().forEach(function(c){c.supprime=true;});
+  scheduleSave('concerts');
+  dismissArchiveSuggestion();
+  render();
+}
 async function init(){
   document.getElementById('load-error-overlay').style.display='none';
   document.getElementById('app').style.display='';
@@ -554,6 +633,8 @@ async function init(){
     appDataLoaded=true;
     render();
     initRealtime();
+    checkTomorrowReminder();
+    checkArchiveSuggestion();
   }catch(e){
     console.error('Echec du chargement initial',e);
     appDataLoaded=false;
@@ -689,6 +770,9 @@ function updateFilters(){
   fillFilterSelect(document.getElementById('fcat'),catOpts,'Toutes les categories');
   fillFilterSelect(document.getElementById('cperiode'),periodeOpts,'Toutes les periodes');
   fillFilterSelect(document.getElementById('ccat'),catOpts,'Toutes les categories');
+  fillFilterSelect(document.getElementById('pastville'),villeOpts,'Toutes les villes');
+  fillFilterSelect(document.getElementById('pastperiode'),periodeOpts,'Toutes les periodes');
+  fillFilterSelect(document.getElementById('pastcat'),catOpts,'Toutes les categories');
 }
 function matchesCategoryFilter(c,cat){
   if(!cat)return true;
@@ -719,6 +803,7 @@ function openFiche(id){
   document.body.style.overflow='hidden';
 }
 function closeFiche(e){if(e.target===document.getElementById('overlay'))closeFicheBtn();}
+function exportFichePdf(){window.print();}
 function closeFicheBtn(){document.getElementById('overlay').classList.remove('open');document.body.style.overflow='';currentFicheId=null;render();}
 function updateFicheField(field,val){
   var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
@@ -998,6 +1083,14 @@ function renderKanban(){
       '</div></div>'+body+'</div>';
   }).join('')+'</div>';
 }
+var concertsViewMode='list';
+function setConcertsView(mode){
+  concertsViewMode=mode;
+  document.getElementById('cview-list').classList.toggle('active',mode==='list');
+  document.getElementById('cview-salle').classList.toggle('active',mode==='salle');
+  document.getElementById('cview-cal').classList.toggle('active',mode==='calendar');
+  renderConcerts();
+}
 function renderConcerts(){
   var el=document.getElementById('clist');
   updateFilters();
@@ -1015,6 +1108,8 @@ function renderConcerts(){
     return true;
   });
   if(!liste.length){el.innerHTML='<div class="empty-state">Aucun concert.</div>';return;}
+  if(concertsViewMode==='salle'){renderConcertsGrouped(liste,el);return;}
+  if(concertsViewMode==='calendar'){renderConcertsCalendar(liste,el);return;}
   var today=new Date();today.setHours(0,0,0,0);
 
   el.innerHTML='<div class="card crow-list-card" style="padding:0">'
@@ -1081,13 +1176,96 @@ function renderConcerts(){
         +'<span style="font-size:12px;color:#ccc;padding:0 8px;display:flex;align-items:center">&#8250;</span></div>';
     }).join('')+'</div>';
 }
+// Regroupe les concerts filtres par salle (utile pour voir d'un coup d'oeil
+// tout ce qui est prevu dans un meme lieu).
+function renderConcertsGrouped(liste,el){
+  var groups={};
+  liste.forEach(function(c){
+    var key=c.ville?formatLieu(c.ville):'Salle non renseignée';
+    if(!groups[key])groups[key]=[];
+    groups[key].push(c);
+  });
+  var keys=Object.keys(groups).sort();
+  el.innerHTML=keys.map(function(key){
+    var rows=groups[key].sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
+    return '<div class="card crow-list-card" style="padding:0;margin-bottom:1rem">'
+      +'<div style="padding:10px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">'
+      +'<h2 style="margin:0">'+esc(key)+'</h2>'
+      +'<span style="font-size:11px;color:var(--text-3)">'+rows.length+' concert'+(rows.length>1?'s':'')+'</span>'
+      +'</div>'
+      +rows.map(function(c){
+        var ds=c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
+        return '<div class="crow'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 20px;min-height:44px;cursor:pointer">'
+          +'<div style="min-width:0"><span class="crow-name">'+esc(c.art)+'</span>'+cancelBadge(c)+' <span style="font-size:11px;color:var(--text-3)">'+ds+'</span></div>'
+          +ventesHtml(c,'event.stopPropagation();toggleVentes(event,\''+c.id+'\')')
+          +'</div>';
+      }).join('')
+      +'</div>';
+  }).join('');
+}
+var calCurrentMonth=new Date();calCurrentMonth.setDate(1);
+function calPrevMonth(){calCurrentMonth.setMonth(calCurrentMonth.getMonth()-1);renderConcerts();}
+function calNextMonth(){calCurrentMonth.setMonth(calCurrentMonth.getMonth()+1);renderConcerts();}
+function calToday(){calCurrentMonth=new Date();calCurrentMonth.setDate(1);renderConcerts();}
+function renderConcertsCalendar(liste,el){
+  var y=calCurrentMonth.getFullYear(),m=calCurrentMonth.getMonth();
+  var byDay={};
+  liste.forEach(function(c){
+    if(!c.dc)return;
+    var d=new Date(c.dc);
+    if(d.getFullYear()!==y||d.getMonth()!==m)return;
+    var key=d.getDate();
+    if(!byDay[key])byDay[key]=[];
+    byDay[key].push(c);
+  });
+  var firstDow=(new Date(y,m,1).getDay()+6)%7;
+  var nbDays=new Date(y,m+1,0).getDate();
+  var todayD=new Date();todayD.setHours(0,0,0,0);
+  var monthLabel=calCurrentMonth.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  monthLabel=monthLabel.charAt(0).toUpperCase()+monthLabel.slice(1);
+  var cells='';
+  for(var i=0;i<firstDow;i++)cells+='<div style="background:var(--bg);border-radius:var(--radius-sm);min-height:90px"></div>';
+  for(var day=1;day<=nbDays;day++){
+    var evs=byDay[day]||[];
+    var isToday=todayD.getFullYear()===y&&todayD.getMonth()===m&&todayD.getDate()===day;
+    cells+='<div style="background:var(--surface);border:1px solid '+(isToday?'var(--accent)':'var(--border)')+';border-radius:var(--radius-sm);min-height:90px;padding:6px;display:flex;flex-direction:column;gap:3px">'
+      +'<div style="font-size:11px;font-weight:'+(isToday?'700':'500')+';color:'+(isToday?'var(--accent)':'var(--text-3)')+'">'+day+'</div>'
+      +evs.slice(0,3).map(function(c){
+        return '<div class="crow'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')" title="'+esc(c.art)+'" style="font-size:11px;padding:2px 5px;border-radius:4px;background:var(--bg);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(c.art)+cancelBadge(c)+'</div>';
+      }).join('')
+      +(evs.length>3?'<div style="font-size:10px;color:var(--text-3);padding:0 5px">+'+(evs.length-3)+' autre'+(evs.length-3>1?'s':'')+'</div>':'')
+      +'</div>';
+  }
+  var totalCells=firstDow+nbDays;
+  var trailing=(7-(totalCells%7))%7;
+  for(var j=0;j<trailing;j++)cells+='<div style="background:var(--bg);border-radius:var(--radius-sm);min-height:90px"></div>';
+  var jours=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  el.innerHTML='<div class="card" style="padding:16px">'
+    +'<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:14px">'
+    +'<button class="rs-nav-btn" onclick="calPrevMonth()">◀</button>'
+    +'<span class="rs-nav-month">'+monthLabel+'</span>'
+    +'<button class="rs-nav-btn" onclick="calNextMonth()">▶</button>'
+    +'<button class="btn" style="margin-left:8px" onclick="calToday()">Aujourd\'hui</button>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px">'
+    +jours.map(function(j){return '<div style="font-size:11px;font-weight:600;color:var(--text-3);text-align:center">'+j+'</div>';}).join('')
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">'+cells+'</div>'
+    +'</div>';
+}
 function renderPastConcerts(){
   var el=document.getElementById('past-list');
   if(!el)return;
   var ps=(document.getElementById('pastsearch')||{value:''}).value.toLowerCase();
+  var pv=(document.getElementById('pastville')||{value:''}).value;
+  var pp=(document.getElementById('pastperiode')||{value:''}).value;
+  var pc=(document.getElementById('pastcat')||{value:''}).value;
   var liste=concerts.filter(function(c){
     if(!c.supprime)return false;
     if(ps&&c.art.toLowerCase().indexOf(ps)<0)return false;
+    if(pv&&getVille(c.ville)!==pv)return false;
+    if(pp&&(c.dc||'').indexOf(pp)<0)return false;
+    if(!matchesCategoryFilter(c,pc))return false;
     return true;
   }).sort(function(a,b){return new Date(b.dc||0)-new Date(a.dc||0);});
   if(!liste.length){el.innerHTML='<div class="empty-state">Aucun concert passé pour le moment.</div>';return;}
@@ -1312,6 +1490,8 @@ function renderTaches(){
       taskEl.addEventListener('dragstart',function(e){e.dataTransfer.setData('tkid',t.id);taskEl.style.opacity='.4';e.stopPropagation();});
       taskEl.addEventListener('dragend',function(){taskEl.style.opacity='1';});
       var nameEl=document.createElement('div');nameEl.className='tk-task-name';nameEl.textContent=t.nom;
+      if(t.recur){var recurIcon=document.createElement('span');recurIcon.textContent=' \u{1F501}';recurIcon.title='Tache recurrente';nameEl.appendChild(recurIcon);}
+      if(t.note){var noteIcon=document.createElement('span');noteIcon.textContent=' \u{1F4DD}';noteIcon.title=t.note;nameEl.appendChild(noteIcon);}
       taskEl.appendChild(nameEl);
       if(df){var dateEl=document.createElement('div');dateEl.className='tk-task-date '+df.cls;dateEl.textContent=df.txt;taskEl.appendChild(dateEl);}
       var prioEl=document.createElement('span');prioEl.className='tk-task-prio '+pl.cls;prioEl.textContent=pl.txt;taskEl.appendChild(prioEl);
@@ -1351,12 +1531,22 @@ function tkSetupModal(){
   document.getElementById('tk-modal').addEventListener('click',function(e){if(e.target===this)tkCloseModal();});
   document.addEventListener('keydown',function(e){if(e.key==='Escape')tkCloseModal();});
 }
+function tkFillRecurUI(t){
+  var on=!!(t&&t.recur);
+  document.getElementById('tk-recur-on').checked=on;
+  document.getElementById('tk-recur-config').style.display=on?'flex':'none';
+  document.getElementById('tk-recur-n').value=on?t.recur.n:1;
+  document.getElementById('tk-recur-unit').value=on?t.recur.unit:'days';
+  document.getElementById('tk-recur-prefix').textContent=(on&&t.recur.unit==='monthday')?'Le':'Tous les';
+}
 function tkOpenModal(colId){
   tkEditId=null;tkAddColId=colId;
   document.getElementById('tk-modal-title').textContent='Nouvelle tache';
   document.getElementById('tk-nom').value='';
   document.getElementById('tk-date').value='';
   document.getElementById('tk-prio').value='normal';
+  document.getElementById('tk-note').value='';
+  tkFillRecurUI(null);
   document.getElementById('tk-modal-save').textContent='Ajouter';
   document.getElementById('tk-modal').classList.add('open');
   setTimeout(function(){document.getElementById('tk-nom').focus();},50);
@@ -1368,20 +1558,32 @@ function tkEditTask(id){
   document.getElementById('tk-nom').value=t.nom;
   document.getElementById('tk-date').value=t.date||'';
   document.getElementById('tk-prio').value=t.prio||'normal';
+  document.getElementById('tk-note').value=t.note||'';
+  tkFillRecurUI(t);
   document.getElementById('tk-modal-save').textContent='Enregistrer';
   document.getElementById('tk-modal').classList.add('open');
   setTimeout(function(){document.getElementById('tk-nom').focus();},50);
+}
+function tkReadRecurFromUI(){
+  if(!document.getElementById('tk-recur-on').checked)return null;
+  var n=parseInt(document.getElementById('tk-recur-n').value,10);
+  var unit=document.getElementById('tk-recur-unit').value;
+  if(!n||n<1)return null;
+  if(unit==='monthday')n=Math.min(31,Math.max(1,n));
+  return {unit:unit,n:n};
 }
 function tkSaveTask(){
   var nom=document.getElementById('tk-nom').value.trim();
   var date=document.getElementById('tk-date').value;
   var prio=document.getElementById('tk-prio').value;
+  var note=document.getElementById('tk-note').value.trim();
+  var recur=tkReadRecurFromUI();
   if(!nom)return;
   if(tkEditId){
     var t=tkTasks.find(function(x){return x.id===tkEditId;});
-    if(t){t.nom=nom;t.date=date;t.prio=prio;}
+    if(t){t.nom=nom;t.date=date;t.prio=prio;t.note=note;t.recur=recur;}
   } else {
-    tkTasks.push({id:tkNewId(),colId:tkAddColId,nom:nom,date:date,prio:prio,done:false,delegue:false});
+    tkTasks.push({id:tkNewId(),colId:tkAddColId,nom:nom,date:date,prio:prio,note:note,recur:recur,done:false,delegue:false});
   }
   scheduleSave('tktasks');tkCloseModal();renderTaches();renderTkWidget();
 }
@@ -1392,9 +1594,50 @@ function tkToggleDelegue(id){
   t.delegue=!t.delegue;
   scheduleSave('tktasks');renderTaches();renderTkWidget();
 }
+// Calcule la prochaine occurrence d'une tache recurrente a partir d'une date.
+function tkNextOccurrence(dateStr,recur){
+  var d=dateStr?new Date(dateStr):new Date();
+  if(recur.unit==='days')d.setDate(d.getDate()+recur.n);
+  else if(recur.unit==='weeks')d.setDate(d.getDate()+recur.n*7);
+  else if(recur.unit==='months'){
+    var targetDay=d.getDate();
+    d.setDate(1);d.setMonth(d.getMonth()+recur.n);
+    var lastDayM=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+    d.setDate(Math.min(targetDay,lastDayM));
+  }
+  else if(recur.unit==='monthday'){
+    d.setDate(1);d.setMonth(d.getMonth()+1);
+    var lastDay=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+    d.setDate(Math.min(recur.n,lastDay));
+  }
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+// Fait avancer silencieusement toute tache recurrente dont l'echeance est
+// passee, jusqu'a la prochaine occurrence future : elle ne reste jamais "en
+// retard" et ne se duplique jamais (une seule ligne, toujours a jour).
+function tkAdvanceRecurringTasks(){
+  var today=new Date();today.setHours(0,0,0,0);
+  var todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  var changed=false;
+  tkTasks.forEach(function(t){
+    if(!t.recur||!t.date)return;
+    var guard=0;
+    while(t.date<todayStr&&guard<1000){t.date=tkNextOccurrence(t.date,t.recur);changed=true;guard++;}
+  });
+  if(changed)scheduleSave('tktasks');
+}
 function tkToggleDone(id){
   var t=tkTasks.find(function(x){return x.id===id;});
-  if(t){t.done=!t.done;scheduleSave('tktasks');renderTaches();renderTkWidget();}
+  if(!t)return;
+  if(t.recur&&!t.done){
+    // Tache recurrente validee : on programme directement la prochaine
+    // occurrence au lieu de la marquer simplement terminee (elle ne doit
+    // jamais s'empiler ni disparaitre definitivement).
+    t.date=tkNextOccurrence(t.date,t.recur);
+  } else {
+    t.done=!t.done;
+  }
+  scheduleSave('tktasks');renderTaches();renderTkWidget();
 }
 function tkDelTask(id){
   tkTasks=tkTasks.filter(function(x){return x.id!==id;});
@@ -2170,7 +2413,7 @@ function renderBudgetConfig() {
   renderBcStyleEditor();
 }
 
-function render(){renderKanban();renderConcerts();renderPastConcerts();renderProcess();renderTaches();renderTkWidget();renderRS();}
+function render(){tkAdvanceRecurringTasks();renderKanban();renderConcerts();renderPastConcerts();renderProcess();renderTaches();renderTkWidget();renderRS();}
 init();
 loadBudgetConfig();
 </script>
