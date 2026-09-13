@@ -1358,14 +1358,18 @@ function renderConcertsCalendar(liste,el){
   var monthLabel=calCurrentMonth.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
   monthLabel=monthLabel.charAt(0).toUpperCase()+monthLabel.slice(1);
   var cells='';
-  for(var i=0;i<firstDow;i++)cells+='<div style="background:var(--bg);border-radius:var(--radius-sm);min-height:90px"></div>';
+  for(var i=0;i<firstDow;i++)cells+='<div style="background:var(--bg);border-radius:var(--radius-sm);min-height:110px"></div>';
   for(var day=1;day<=nbDays;day++){
     var evs=byDay[day]||[];
     var isToday=todayD.getFullYear()===y&&todayD.getMonth()===m&&todayD.getDate()===day;
-    cells+='<div style="background:var(--surface);border:1px solid '+(isToday?'var(--accent)':'var(--border)')+';border-radius:var(--radius-sm);min-height:90px;padding:6px;display:flex;flex-direction:column;gap:3px">'
+    cells+='<div style="background:var(--surface);border:1px solid '+(isToday?'var(--accent)':'var(--border)')+';border-radius:var(--radius-sm);min-height:110px;padding:6px;display:flex;flex-direction:column;gap:3px">'
       +'<div style="font-size:11px;font-weight:'+(isToday?'700':'500')+';color:'+(isToday?'var(--accent)':'var(--text-3)')+'">'+day+'</div>'
       +evs.slice(0,3).map(function(c){
-        return '<div class="crow'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')" title="'+esc(c.art)+'" style="font-size:11px;padding:2px 5px;border-radius:4px;background:var(--bg);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(c.art)+cancelBadge(c)+'</div>';
+        var lieu=formatLieu(c.ville);
+        return '<div class="crow'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')" title="'+esc(c.art)+(lieu?' - '+esc(lieu):'')+'" style="display:flex;flex-direction:column;align-items:flex-start;min-height:0;border-bottom:none;padding:2px 5px;border-radius:4px;background:var(--bg);cursor:pointer;overflow:hidden">'
+          +'<div style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(c.art)+cancelBadge(c)+'</div>'
+          +(lieu?'<div style="font-size:9px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(lieu)+'</div>':'')
+          +'</div>';
       }).join('')
       +(evs.length>3?'<div style="font-size:10px;color:var(--text-3);padding:0 5px">+'+(evs.length-3)+' autre'+(evs.length-3>1?'s':'')+'</div>':'')
       +'</div>';
