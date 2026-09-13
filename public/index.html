@@ -81,6 +81,9 @@
             <select id="fville" onchange="renderKanban()"><option value="">Toutes les villes</option></select>
             <select id="fperiode" onchange="renderKanban()"><option value="">Toutes les periodes</option></select>
             <select id="fcat" onchange="renderKanban()" title="Affiche les concerts ayant une tache urgente ou en retard dans cette categorie"><option value="">Toutes les categories</option></select>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding-top:2px;border-top:1px solid var(--border-light)">
+              <input type="checkbox" id="fhideok" onchange="renderKanban()" style="width:auto"> Cacher les concerts OK
+            </label>
           </div>
         </div>
       </div>
@@ -1238,10 +1241,16 @@ function renderKanban(){
   }
   updateFilters();
   updateFiltersBadge('kfilters-badge',['fville','fperiode','fcat']);
+  var hideOkEl=document.getElementById('fhideok');
+  var hideOk=!!(hideOkEl&&hideOkEl.checked);
+  if(hideOk){
+    var kBadge=document.getElementById('kfilters-badge');
+    if(kBadge){kBadge.textContent=(parseInt(kBadge.textContent,10)||0)+1;kBadge.style.display='inline-flex';}
+  }
   var list=filtered();
   var wrap=document.getElementById('kanban-wrap');
   if(!list.length){wrap.innerHTML='<div class="empty-state">Aucun concert.</div>';return;}
-  wrap.innerHTML='<div class="grid">'+list.map(function(c){
+  var cards=list.map(function(c){
     var sorted=sortedProcess(c);
     var skipSpK=!!taskStates['skip-'+c.id+'-sp'];
     var skipColK=!!taskStates['skip-'+c.id+'-col'];
@@ -1260,21 +1269,24 @@ function renderKanban(){
       ?'<div class="col-body">'+lateTasks.map(function(t){
           var cat=CATS[t.cat]||{cls:'p-gen',label:'?'};
           return (function(){var d=calcDate(c,t);var isHl=!!taskStates['hl-'+c.id+'-'+t.id];
-          return '<div class="titem'+(isHl?' highlighted':'')+'" onclick="event.stopPropagation();toggleHighlight(\''+c.id+'\','+t.id+')">'+
+          return '<div class="titem'+(isHl?' highlighted':'')+'" title="'+esc(cat.label)+'" onclick="event.stopPropagation();toggleHighlight(\''+c.id+'\','+t.id+')">'+
             '<div class="chk" onclick="event.stopPropagation();toggleTask(\''+c.id+'\','+t.id+')" style="cursor:pointer;flex-shrink:0;margin-top:2px"></div>'+
             '<div style="flex:1;min-width:0"><div class="tname">'+esc(t.nom)+'</div>'+
-            '<span class="pill '+cat.cls+'">'+cat.label+'</span>'+
             '<div class="'+(isToday(d)?'ttoday':'tlate')+'">'+fmt(d)+'</div></div></div>';})()
         }).join('')+'</div>'
       :'<div class="ok-col"><span class="ok-badge">OK</span></div>';
-    return '<div class="col'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')">'+
+    var cardHtml='<div class="col'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')">'+
       '<div class="col-head'+(hasLate?' late':'')+'">'+
       '<div class="col-name'+(hasLate?' late':'')+'">'+esc(c.art)+cancelBadge(c)+'</div>'+
       '<div class="col-sub'+(hasLate?' late':'')+'">'+( c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div>'+
       ventesHtml(c,'event.stopPropagation();toggleVentes(event,\''+c.id+'\')') +
       '<div class="pbar" title="'+pct+'% des taches realisees"><div class="pfill" style="width:'+pct+'%"></div></div>'+
       '</div>'+body+'</div>';
-  }).join('')+'</div>';
+    return {hasLate:hasLate,html:cardHtml};
+  });
+  var visibleCards=hideOk?cards.filter(function(x){return x.hasLate;}):cards;
+  if(!visibleCards.length){wrap.innerHTML='<div class="empty-state">'+(hideOk?'Aucun concert avec une tache en attente.':'Aucun concert.')+'</div>';return;}
+  wrap.innerHTML='<div class="grid">'+visibleCards.map(function(x){return x.html;}).join('')+'</div>';
 }
 var concertsViewMode='list';
 function setConcertsView(mode){
