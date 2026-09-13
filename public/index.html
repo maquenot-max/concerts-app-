@@ -679,6 +679,7 @@ function updateFilters(){
   var periodeOpts=Object.keys(periodes).sort().map(function(p){return {value:p,label:p};});
   var catOpts=Object.keys(CATS).map(function(k){return {value:k,label:CATS[k].label};});
   fillFilterSelect(document.getElementById('fville'),villeOpts,'Toutes les villes');
+  fillFilterSelect(document.getElementById('cville'),villeOpts,'Toutes les villes');
   fillFilterSelect(document.getElementById('fperiode'),periodeOpts,'Toutes les periodes');
   fillFilterSelect(document.getElementById('fcat'),catOpts,'Toutes les categories');
   fillFilterSelect(document.getElementById('cperiode'),periodeOpts,'Toutes les periodes');
