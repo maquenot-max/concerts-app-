@@ -90,7 +90,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .chk{width:12px;height:12px;border:1.5px solid #ccc;border-radius:3px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff}
 .chk.on{background:var(--text);border-color:var(--text)}
 .tname{font-size:11px;line-height:1.4;color:var(--text)}
-.tlate{font-size:10px;color:var(--red);margin-top:1px;font-weight:500}
+.tnew{display:inline-block;font-size:9px;font-weight:700;color:#a06010;background:#fdf3e0;padding:1px 7px;border-radius:20px;margin-top:3px}
 .ok-col{border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:10px 12px;background:var(--surface)}
 .ok-badge{font-size:10px;color:var(--green);background:var(--green-bg);padding:2px 8px;border-radius:20px;font-weight:500}
 
@@ -253,7 +253,6 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .saving{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--text);color:#fff;padding:7px 16px;border-radius:20px;font-size:12px;font-weight:500;opacity:0;transition:opacity .3s;z-index:200;box-shadow:var(--shadow-md)}
 .saving.show{opacity:1}
 .empty-state{color:var(--text-3);font-size:13px;padding:3rem 0;text-align:center}
-.ttoday{font-size:10px;color:var(--text-2);margin-top:1px;font-weight:500}
 .titem.highlighted{background:rgba(201,162,39,.1);border-left:3px solid rgba(201,162,39,.65);padding-left:9px}
 
 /* ── CELLULES INLINE EDITABLES ───────────────────────── */

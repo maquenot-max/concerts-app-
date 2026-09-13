@@ -1269,10 +1269,12 @@ function renderKanban(){
       ?'<div class="col-body">'+lateTasks.map(function(t){
           var cat=CATS[t.cat]||{cls:'p-gen',label:'?'};
           return (function(){var d=calcDate(c,t);var isHl=!!taskStates['hl-'+c.id+'-'+t.id];
+          var daysSinceDue=d?Math.floor((today-d)/86400000):0;
+          var isNewTask=daysSinceDue<3;
           return '<div class="titem'+(isHl?' highlighted':'')+'" title="'+esc(cat.label)+'" onclick="event.stopPropagation();toggleHighlight(\''+c.id+'\','+t.id+')">'+
             '<div class="chk" onclick="event.stopPropagation();toggleTask(\''+c.id+'\','+t.id+')" style="cursor:pointer;flex-shrink:0;margin-top:2px"></div>'+
             '<div style="flex:1;min-width:0"><div class="tname">'+esc(t.nom)+'</div>'+
-            '<div class="'+(isToday(d)?'ttoday':'tlate')+'">'+fmt(d)+'</div></div></div>';})()
+            (isNewTask?'<div class="tnew">Nouveau</div>':'')+'</div></div>';})()
         }).join('')+'</div>'
       :'<div class="ok-col"><span class="ok-badge">OK</span></div>';
     var cardHtml='<div class="col'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')">'+
