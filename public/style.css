@@ -529,12 +529,28 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .bud-style-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:11px;cursor:pointer;transition:all .15s;color:var(--text-2)}
 .bud-style-btn.active{background:#e8f5ee;border-color:#80d0a0;color:#1a7a4f;font-weight:700}
 
-/* ── IMPRESSION / EXPORT PDF D'UNE FICHE ─────────────────── */
+/* ── BILAN DE COMMUNICATION (EXPORT PDF CLIENT) ──────────── */
+#bilan-report{position:fixed;left:-9999px;top:0;width:210mm;background:#fff;color:#222;font-family:inherit;padding:20mm 16mm}
+.bilan-header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:20px}
+.bilan-header h1{font-size:20px;margin:0 0 4px}
+.bilan-header .bilan-sub{font-size:12px;color:#666}
+.bilan-header .bilan-date{font-size:11px;color:#888;text-align:right}
+.bilan-section{margin-bottom:22px}
+.bilan-section h2{font-size:13px;text-transform:uppercase;letter-spacing:.03em;color:#444;border-bottom:1px solid #ddd;padding-bottom:6px;margin:0 0 10px}
+.bilan-infos{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:13px}
+.bilan-infos div span{color:#888;display:block;font-size:11px;text-transform:uppercase;letter-spacing:.02em}
+.bilan-text{font-size:13px;line-height:1.5;white-space:pre-wrap}
+.bilan-empty{font-size:12px;color:#999;font-style:italic}
+.bilan-table{width:100%;border-collapse:collapse;font-size:12px}
+.bilan-table th{text-align:left;font-size:10px;text-transform:uppercase;color:#888;border-bottom:1px solid #ccc;padding:5px 6px}
+.bilan-table td{padding:5px 6px;border-bottom:1px solid #eee;vertical-align:top}
+.bilan-badge{display:inline-block;padding:1px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.bilan-badge.ok{background:#e8f5ee;color:#1a7a4f}
+.bilan-badge.warn{background:#fdf3e0;color:#a06a10}
+.bilan-badge.late{background:#fbe8e8;color:#b02a2a}
+.bilan-badge.muted{background:#f0f0f0;color:#888}
 @media print{
   body *{visibility:hidden}
-  .fiche,.fiche *{visibility:visible}
-  .fiche{position:absolute;left:0;top:0;width:100%;max-width:none;height:auto;box-shadow:none;overflow:visible}
-  .fiche-footer,.fiche-close{display:none!important}
-  #fiche-info-collapsible{max-height:none!important;opacity:1!important}
-  .fiche-body{overflow:visible}
+  #bilan-report,#bilan-report *{visibility:visible}
+  #bilan-report{position:absolute;left:0;top:0;width:100%;padding:14mm 16mm}
 }

@@ -235,7 +235,7 @@
     </div>
     <div class="fiche-footer">
       <button class="reset-btn" onclick="resetFicheTasks()">&#8635; Reinit. taches</button>
-      <button class="btn" onclick="exportFichePdf()" title="Ouvre la boite de dialogue d'impression : choisir 'Enregistrer en PDF'">🖨️ Exporter en PDF</button>
+      <button class="btn" onclick="exportBilanPdf(currentFicheId)" title="Genere un bilan de communication a envoyer au client">📄 Bilan de com (PDF)</button>
       <button class="btn" onclick="openBudgetModal()" style="background:#e8f5ee;color:#1a7a4f;border:1px solid #b8e0ca;font-weight:600">📊 Budget Promo</button>
       <button class="btn btn-primary" onclick="closeFicheBtn()">Fermer</button>
       <button class="btn btn-danger" id="fi-archive-btn" onclick="deleteFicheConcert()">Déplacer vers Concerts passés</button>
@@ -244,6 +244,7 @@
     </div>
   </div>
 </div>
+<div id="bilan-report"></div>
 <div class="tk-modal" id="tk-modal">
   <div class="tk-modal-box">
     <div class="tk-modal-title" id="tk-modal-title">Nouvelle tache</div>
@@ -803,8 +804,71 @@ function openFiche(id){
   document.body.style.overflow='hidden';
 }
 function closeFiche(e){if(e.target===document.getElementById('overlay'))closeFicheBtn();}
-function exportFichePdf(){window.print();}
 function closeFicheBtn(){document.getElementById('overlay').classList.remove('open');document.body.style.overflow='';currentFicheId=null;render();}
+function exportBilanPdf(id){
+  var c=concerts.find(function(x){return x.id===id;});
+  if(!c)return;
+  function fmtFull(d){return d?d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'-';}
+  var sorted=sortedProcess(c);
+  var skipSp=!!taskStates['skip-'+c.id+'-sp'];
+  var skipCol=!!taskStates['skip-'+c.id+'-col'];
+  if(skipSp||skipCol){sorted=sorted.filter(function(t){
+    if(skipSp&&t.cat==='sp')return false;
+    if(skipCol&&(t.cat==='col'||t.cat==='affp'))return false;
+    return true;
+  });}
+  var doneCount=sorted.filter(function(t){return !!taskStates[tk(c.id,t.id)];}).length;
+  var tasksRows=sorted.map(function(t){
+    var d=calcDate(c,t);var isDone=!!taskStates[tk(c.id,t.id)];var blocked=!isUnlocked(c,t);
+    var cat=CATS[t.cat]||{label:'?'};
+    var statusHtml;
+    if(isDone)statusHtml='<span class="bilan-badge ok">Fait</span>';
+    else if(blocked)statusHtml='<span class="bilan-badge muted">En attente</span>';
+    else if(!d)statusHtml='<span class="bilan-badge muted">Sans date</span>';
+    else if(isLate(d))statusHtml='<span class="bilan-badge late">En retard</span>';
+    else if(isSoon(d))statusHtml='<span class="bilan-badge warn">Cette semaine</span>';
+    else statusHtml='<span class="bilan-badge muted">A venir</span>';
+    return '<tr><td>'+esc(t.nom)+'</td><td>'+esc(cat.label)+'</td><td>'+(d?fmt(d):'-')+'</td><td>'+statusHtml+'</td></tr>';
+  }).join('');
+  var rsForConcert=rsPosts.filter(function(p){return p.concertId===c.id||p.autoRef===c.id;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+  var postedCount=rsForConcert.filter(function(p){return p.status==='posted';}).length;
+  function netLabel(p){
+    var nets=[];
+    if(p.fb)nets.push('Facebook');if(p.insta)nets.push('Instagram');if(p.tiktok)nets.push('TikTok');if(p.linkedin)nets.push('LinkedIn');
+    return nets.length?nets.join(', '):'-';
+  }
+  var rsRows=rsForConcert.map(function(p){
+    var t=RS_TYPES[p.type]||RS_TYPES.autre;
+    var statusHtml=p.status==='posted'?'<span class="bilan-badge ok">Poste</span>':p.status==='ready'?'<span class="bilan-badge warn">Pret</span>':'<span class="bilan-badge muted">A faire</span>';
+    return '<tr><td>'+fmt(new Date(p.date))+'</td><td>'+esc(t.label)+'</td><td>'+(p.format==='story'?'Story':'Post')+'</td><td>'+esc(netLabel(p))+'</td><td>'+statusHtml+'</td></tr>';
+  }).join('');
+  var ventes=VENTES[c.ventes||0];
+  var html='<div class="bilan-header"><div><h1>'+esc(c.art)+'</h1><div class="bilan-sub">'+esc(formatLieu(c.ville))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div><div class="bilan-date">Please Please Communication<br>Bilan genere le '+fmtFull(new Date())+'</div></div>';
+  html+='<div class="bilan-section"><h2>Informations generales</h2><div class="bilan-infos">'
+    +'<div><span>Salle</span>'+esc(formatLieu(c.ville)||'-')+'</div>'
+    +'<div><span>Date du concert</span>'+(c.dc?fmtFull(new Date(c.dc)):'-')+'</div>'
+    +'<div><span>Date d\'annonce</span>'+(c.da?fmtFull(new Date(c.da)):'-')+'</div>'
+    +'<div><span>Statut des ventes</span>'+esc(ventes.label)+'</div>'
+    +'<div style="grid-column:1/-1"><span>Budget previsionnel</span>'+(c.budget?esc(c.budget):'<span class="bilan-empty">Non renseigne</span>')+'</div>'
+    +'</div></div>';
+  if(c.medias||c.jeux){
+    html+='<div class="bilan-section"><h2>Medias &amp; partenariats</h2>';
+    if(c.medias)html+='<div class="bilan-text">'+esc(c.medias)+'</div>';
+    if(c.jeux)html+='<div class="bilan-text" style="margin-top:8px">'+esc(c.jeux)+'</div>';
+    html+='</div>';
+  }
+  if(c.notes){
+    html+='<div class="bilan-section"><h2>Notes</h2><div class="bilan-text">'+esc(c.notes)+'</div></div>';
+  }
+  html+='<div class="bilan-section"><h2>Plan de communication ('+doneCount+'/'+sorted.length+' realisees)</h2>';
+  html+=sorted.length?('<table class="bilan-table"><thead><tr><th>Tache</th><th>Categorie</th><th>Echeance</th><th>Statut</th></tr></thead><tbody>'+tasksRows+'</tbody></table>'):'<div class="bilan-empty">Aucune tache.</div>';
+  html+='</div>';
+  html+='<div class="bilan-section"><h2>Reseaux sociaux ('+postedCount+'/'+rsForConcert.length+' publies)</h2>';
+  html+=rsForConcert.length?('<table class="bilan-table"><thead><tr><th>Date</th><th>Type</th><th>Format</th><th>Reseaux</th><th>Statut</th></tr></thead><tbody>'+rsRows+'</tbody></table>'):'<div class="bilan-empty">Aucun post lie a ce concert.</div>';
+  html+='</div>';
+  document.getElementById('bilan-report').innerHTML=html;
+  window.print();
+}
 function updateFicheField(field,val){
   var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
   c[field]=val;
