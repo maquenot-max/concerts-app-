@@ -235,9 +235,8 @@
     </div>
     <div class="fiche-footer">
       <button class="reset-btn" onclick="resetFicheTasks()">&#8635; Reinit. taches</button>
-      <button class="btn" onclick="exportBilanPdf(currentFicheId)" title="Genere un bilan de communication a envoyer au client">📄 Bilan de com (PDF)</button>
+      <button class="btn" onclick="openCampaignWizard(currentFicheId)" title="Questionnaire guide pour generer le rapport de campagne">📄 Rapport de campagne (PDF)</button>
       <button class="btn" onclick="openBudgetModal()" style="background:#e8f5ee;color:#1a7a4f;border:1px solid #b8e0ca;font-weight:600">📊 Budget Promo</button>
-      <button class="btn btn-primary" onclick="closeFicheBtn()">Fermer</button>
       <button class="btn btn-danger" id="fi-archive-btn" onclick="deleteFicheConcert()">Déplacer vers Concerts passés</button>
       <button class="btn" id="fi-restore-btn" onclick="restoreConcert(currentFicheId)" style="display:none">&#8635; Remettre en actif</button>
       <button class="dbtn" id="fi-perma-delete-btn" onclick="permanentlyDeleteConcert(currentFicheId)" style="display:none;margin-left:auto">Supprimer définitivement</button>
@@ -284,6 +283,36 @@
     <div class="tk-modal-actions">
       <button class="btn" id="confirm-modal-cancel">Annuler</button>
       <button class="btn btn-danger" id="confirm-modal-ok">Confirmer</button>
+    </div>
+  </div>
+</div>
+<div class="tk-modal" id="media-link-modal">
+  <div class="tk-modal-box" style="width:380px">
+    <div class="tk-modal-title">Ajouter un lien</div>
+    <div><label>URL</label><input type="text" id="media-link-url" placeholder="https://..."></div>
+    <div><label>Légende (optionnel)</label><input type="text" id="media-link-caption" placeholder="ex: Article L'Union"></div>
+    <div class="tk-modal-actions">
+      <button class="btn" onclick="document.getElementById('media-link-modal').classList.remove('open')">Annuler</button>
+      <button class="btn btn-primary" onclick="wizardSaveLink()">Ajouter</button>
+    </div>
+  </div>
+</div>
+<div class="tk-modal" id="wizard-modal">
+  <div class="tk-modal-box" style="width:560px;max-width:90vw">
+    <div class="tk-modal-title" id="wizard-title">Rapport de campagne</div>
+    <div style="font-size:11px;color:var(--text-3);margin-bottom:12px;line-height:1.5" id="wizard-progress"></div>
+    <div class="media-grid" id="wizard-step-grid" style="margin-bottom:12px"></div>
+    <div class="media-add-row" style="margin-bottom:16px">
+      <input type="file" id="wizard-file-input" accept="image/*" style="display:none" onchange="wizardUploadFile(this)">
+      <button class="btn" onclick="document.getElementById('wizard-file-input').click()">📷 Ajouter une photo</button>
+      <button class="btn" onclick="wizardAddLinkPrompt()">🔗 Ajouter un lien</button>
+    </div>
+    <div class="tk-modal-actions" style="justify-content:space-between">
+      <button class="btn" id="wizard-prev-btn" onclick="wizardPrev()">← Précédent</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="closeCampaignWizard()">Fermer</button>
+        <button class="btn btn-primary" id="wizard-next-btn" onclick="wizardNext()">Suivant →</button>
+      </div>
     </div>
   </div>
 </div>
@@ -340,7 +369,7 @@
 <script>
 var SUPABASE_URL='https://vkehaerkbvfxlyjvrpzi.supabase.co';
 var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrZWhhZXJrYnZmeGx5anZycHppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTUyMTMsImV4cCI6MjA5MjY5MTIxM30.I5VTTUYXA0uKg6_WZ2XKIcXmnFvWR38Hkh4RVzgr9qg';
-var CATS={gen:{label:'General',cls:'p-gen'},prod:{label:'Production',cls:'p-prod'},col:{label:'Collage',cls:'p-col'},affp:{label:'Affichage protege',cls:'p-affp'},sp:{label:'Sponsoring',cls:'p-sp'},press:{label:'Presse',cls:'p-press'},jx:{label:'Jeu concours',cls:'p-jx'},rs:{label:'Reseaux sociaux',cls:'p-rs'},web:{label:'Web',cls:'p-web'},bud:{label:'Budget',cls:'p-bud'},ph:{label:'Photographes',cls:'p-ph'}};
+var CATS={gen:{label:'General',cls:'p-gen'},prod:{label:'Production',cls:'p-prod'},col:{label:'Collage',cls:'p-col'},affp:{label:'Affichage protege',cls:'p-affp'},sp:{label:'Sponsoring',cls:'p-sp'},press:{label:'Presse',cls:'p-press'},jx:{label:'Jeu concours',cls:'p-jx'},rs:{label:'Reseaux sociaux',cls:'p-rs'},web:{label:'Web',cls:'p-web'},bud:{label:'Budget',cls:'p-bud'},ph:{label:'Photographes',cls:'p-ph'},radio:{label:'Radio',cls:'p-radio'},newsletter:{label:'Newsletter',cls:'p-newsletter'}};
 var DEFAULT_PROCESS=[
   {id:1,nom:'Creer budget',cat:'gen',jours:5,ref:'annonce',prereq:null},
   {id:2,nom:'Creer kit promo salle',cat:'gen',jours:0,ref:'annonce',prereq:null},
@@ -376,6 +405,7 @@ var VENTES=[
   {id:4,label:'Complet',cls:'ventes-4'}
 ];
 var concerts=[],taskStates={},process=DEFAULT_PROCESS,nextId=26;
+var concertMedia=[];
 var tkCols=[],tkTasks=[],tkEditId=null,tkAddColId=null;
 var rsPosts=[],rsEditId=null,rsCurrentProj="pp",rsCurrentDate=null,rsFmt="post",rsNetState={fb:false,insta:false,tiktok:false};
 var dragSrcId=null,saveTimer=null,currentFicheId=null;
@@ -399,6 +429,14 @@ async function dbGet(key,fallback){
 async function dbSet(key,value){
   var r=await fetch(SUPABASE_URL+'/rest/v1/app_data',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:JSON.stringify(value)})});
   if(!r.ok)throw new Error('Ecriture Supabase echouee pour "'+key+'" (HTTP '+r.status+')');
+}
+async function storageUpload(path,file){
+  var r=await fetch(SUPABASE_URL+'/storage/v1/object/concert-media/'+path,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':file.type||'application/octet-stream'},body:file});
+  if(!r.ok)throw new Error('Upload echoue (HTTP '+r.status+')');
+  return SUPABASE_URL+'/storage/v1/object/public/concert-media/'+path;
+}
+async function storageDelete(path){
+  await fetch(SUPABASE_URL+'/storage/v1/object/concert-media/'+path,{method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
 }
 
 // ── REALTIME : écouter les changements ────────────────────
@@ -460,7 +498,7 @@ function mergeArrayById(remote,local){
 async function reloadFromRemote(changedKey){
   showSyncBanner('Synchronisation...');
   try{
-    var keys=changedKey?[changedKey]:['concerts','taskstates','process','tkcols','tktasks','rsposts'];
+    var keys=changedKey?[changedKey]:['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media'];
     for(var i=0;i<keys.length;i++){
       var k=keys[i];
       if(k==='taskstates'){
@@ -488,6 +526,7 @@ async function reloadFromRemote(changedKey){
       else if(k==='tkcols')tkCols=(await dbGet('tkcols',[]))||[];
       else if(k==='tktasks')tkTasks=mergeArrayById(await dbGet('tktasks',[]),tkTasks);
       else if(k==='rsposts')rsPosts=mergeArrayById(await dbGet('rsposts',[]),rsPosts);
+      else if(k==='concert_media')concertMedia=mergeArrayById(await dbGet('concert_media',[]),concertMedia);
     }
     render();
     showSyncBanner('À jour ✓',true);
@@ -508,11 +547,11 @@ function showSyncBanner(msg,fadeOut){
 
 // ── SAUVEGARDE : uniquement les domaines modifies (evite d'ecraser
 // les autres domaines avec une copie locale potentiellement perimee) ──
-var ALL_SAVE_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts'];
+var ALL_SAVE_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media'];
 var pendingSaveKeys={};
 var saveRetryTimer=null;
 function currentValueFor(key){
-  return {concerts:concerts,taskstates:taskStates,process:process,tkcols:tkCols,tktasks:tkTasks,rsposts:rsPosts}[key];
+  return {concerts:concerts,taskstates:taskStates,process:process,tkcols:tkCols,tktasks:tkTasks,rsposts:rsPosts,concert_media:concertMedia}[key];
 }
 function scheduleSave(){
   if(!appDataLoaded){
@@ -615,6 +654,7 @@ async function init(){
     concerts=concerts.map(function(c){return Object.assign({medias:'',jeux:'',budget:'',notes:'',ventes:0},c);});
     nextId=process.length?Math.max.apply(null,process.map(function(t){return t.id;}))+1:26;
     rsPosts=(await dbGet('rsposts',[]))||[];
+    concertMedia=(await dbGet('concert_media',[]))||[];
     var tkRes=await Promise.all([dbGet('tkcols',[]),dbGet('tktasks',[])]);
     tkCols=tkRes[0]||[];tkTasks=tkRes[1]||[];
     // Assurer les 4 colonnes projets avec leurs noms corrects
@@ -636,6 +676,7 @@ async function init(){
     initRealtime();
     checkTomorrowReminder();
     checkArchiveSuggestion();
+    sweepExpiredMedia();
   }catch(e){
     console.error('Echec du chargement initial',e);
     appDataLoaded=false;
@@ -805,7 +846,24 @@ function openFiche(id){
 }
 function closeFiche(e){if(e.target===document.getElementById('overlay'))closeFicheBtn();}
 function closeFicheBtn(){document.getElementById('overlay').classList.remove('open');document.body.style.overflow='';currentFicheId=null;render();}
-function exportBilanPdf(id){
+var REPORT_SECTIONS=[
+  {title:'Diffusion & Affichage',cats:['col','affp']},
+  {title:'Médias & Presse',cats:['press','radio']},
+  {title:'Réseaux sociaux',cats:['rs','jx']},
+  {title:'Sponsorisation',cats:['sp']},
+  {title:'Newsletters',cats:['newsletter']},
+  {title:'Agenda & Digital',cats:['web']},
+  {title:'Divers',cats:['gen']}
+];
+function reportMediaGridHtml(items){
+  return '<div class="rpt-grid">'+items.map(function(m){
+    if(m.type==='image'){
+      return '<div class="rpt-card"><img src="'+escUrl(m.url)+'">'+(m.caption?'<div class="rpt-caption">'+esc(m.caption)+'</div>':'')+'</div>';
+    }
+    return '<div class="rpt-card"><div class="rpt-card-link">🔗 '+esc(m.caption||m.url)+'</div></div>';
+  }).join('')+'</div>';
+}
+function exportCampaignReport(id){
   var c=concerts.find(function(x){return x.id===id;});
   if(!c)return;
   function fmtFull(d){return d?d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'-';}
@@ -843,7 +901,16 @@ function exportBilanPdf(id){
     return '<tr><td>'+fmt(new Date(p.date))+'</td><td>'+esc(t.label)+'</td><td>'+(p.format==='story'?'Story':'Post')+'</td><td>'+esc(netLabel(p))+'</td><td>'+statusHtml+'</td></tr>';
   }).join('');
   var ventes=VENTES[c.ventes||0];
-  var html='<div class="bilan-header"><div><h1>'+esc(c.art)+'</h1><div class="bilan-sub">'+esc(formatLieu(c.ville))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div><div class="bilan-date">Please Please Communication<br>Bilan genere le '+fmtFull(new Date())+'</div></div>';
+  var html='<div class="rpt-cover"><div class="rpt-brand">Please Please Communication</div><h1>'+esc(c.art)+'</h1><div class="rpt-cover-sub">'+esc(formatLieu(c.ville))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div>';
+  var mediaForConcert=concertMedia.filter(function(m){return m.concertId===c.id;});
+  REPORT_SECTIONS.forEach(function(sec){
+    var items=mediaForConcert.filter(function(m){return sec.cats.indexOf(m.cat)>=0;});
+    if(!items.length)return;
+    html+='<div class="rpt-divider"><h2>'+esc(sec.title)+'</h2></div>';
+    html+='<div class="rpt-section">'+reportMediaGridHtml(items)+'</div>';
+  });
+  html+='<div class="rpt-divider"><h2>Suivi & avancement</h2></div>';
+  html+='<div class="bilan-header" style="margin-top:24px"><div><h1>'+esc(c.art)+'</h1><div class="bilan-sub">'+esc(formatLieu(c.ville))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div><div class="bilan-date">Please Please Communication<br>Rapport genere le '+fmtFull(new Date())+'</div></div>';
   html+='<div class="bilan-section"><h2>Informations generales</h2><div class="bilan-infos">'
     +'<div><span>Salle</span>'+esc(formatLieu(c.ville)||'-')+'</div>'
     +'<div><span>Date du concert</span>'+(c.dc?fmtFull(new Date(c.dc)):'-')+'</div>'
@@ -963,7 +1030,10 @@ async function permanentlyDeleteConcert(id){
   var c=concerts.find(function(x){return x.id===id;});if(!c)return;
   if(!await customConfirm('Supprimer définitivement '+c.art+' ? Cette action est irréversible, il ne sera plus possible de le retrouver.','Supprimer définitivement'))return;
   concerts=concerts.filter(function(x){return x.id!==id;});
-  scheduleSave('concerts');
+  var orphanMedia=concertMedia.filter(function(m){return m.concertId===id;});
+  concertMedia=concertMedia.filter(function(m){return m.concertId!==id;});
+  scheduleSave('concerts','concert_media');
+  orphanMedia.forEach(function(m){if(m.type==='image'&&m.path)storageDelete(m.path);});
   if(currentFicheId===id)closeFicheBtn();else render();
 }
 function toggleTask(cid,tid){
@@ -1411,6 +1481,104 @@ function toggleFicheInfo(){
   var open=box.style.maxHeight&&box.style.maxHeight!=='0px';
   if(open){box.style.maxHeight='0';box.style.opacity='0';icon.style.transform='';}
   else{box.style.maxHeight='800px';box.style.opacity='1';icon.style.transform='rotate(90deg)';}
+}
+var MEDIA_RETENTION_DAYS=7;
+function mediaGenId(){return 'md'+Date.now()+Math.floor(Math.random()*999);}
+function mediaExpiryDate(){var d=new Date();d.setDate(d.getDate()+MEDIA_RETENTION_DAYS);return d.toISOString();}
+// Purge les medias temporaires (photos/liens du questionnaire) expires depuis
+// plus de MEDIA_RETENTION_DAYS jours. Execute a chaque ouverture de l'app par
+// l'un des utilisateurs : pas de cron serveur, mais l'app est ouverte plusieurs
+// fois par jour donc le nettoyage reste rapide en pratique.
+function sweepExpiredMedia(){
+  var now=Date.now();
+  var expired=concertMedia.filter(function(m){return m.expiresAt&&new Date(m.expiresAt).getTime()<now;});
+  if(!expired.length)return;
+  concertMedia=concertMedia.filter(function(m){return !(m.expiresAt&&new Date(m.expiresAt).getTime()<now);});
+  scheduleSave('concert_media');
+  expired.forEach(function(m){if(m.type==='image'&&m.path)storageDelete(m.path);});
+}
+var wizardConcertId=null,wizardStepIdx=0;
+function openCampaignWizard(id){
+  if(!id)return;
+  wizardConcertId=id;
+  wizardStepIdx=0;
+  document.getElementById('wizard-modal').classList.add('open');
+  renderWizardStep();
+}
+function closeCampaignWizard(){
+  document.getElementById('wizard-modal').classList.remove('open');
+}
+function renderWizardStep(){
+  var sec=REPORT_SECTIONS[wizardStepIdx];
+  document.getElementById('wizard-title').textContent=sec.title;
+  document.getElementById('wizard-progress').textContent='Étape '+(wizardStepIdx+1)+' / '+REPORT_SECTIONS.length+' — Ajoutez vos photos ou liens pour cette catégorie, ou passez si non concerné. Conservés '+MEDIA_RETENTION_DAYS+' jours puis supprimés automatiquement.';
+  var items=concertMedia.filter(function(m){return m.concertId===wizardConcertId&&sec.cats.indexOf(m.cat)>=0;});
+  var gridEl=document.getElementById('wizard-step-grid');
+  if(!items.length){gridEl.innerHTML='<div class="media-empty">Aucun contenu ajouté pour cette catégorie.</div>';}
+  else{
+    gridEl.innerHTML=items.map(function(m){
+      if(m.type==='image'){
+        return '<div class="media-card"><img src="'+escUrl(m.url)+'" onclick="window.open(\''+escUrl(m.url)+'\',\'_blank\')">'
+          +(m.caption?'<div class="media-caption">'+esc(m.caption)+'</div>':'')
+          +'<button class="media-del" onclick="event.stopPropagation();wizardDeleteItem(\''+m.id+'\')" title="Supprimer">&#10005;</button></div>';
+      }
+      return '<div class="media-card media-link" onclick="window.open(\''+escUrl(m.url)+'\',\'_blank\')">'
+        +'<div class="media-link-icon">🔗</div><div class="media-link-url">'+esc(m.caption||m.url)+'</div>'
+        +'<button class="media-del" onclick="event.stopPropagation();wizardDeleteItem(\''+m.id+'\')" title="Supprimer">&#10005;</button></div>';
+    }).join('');
+  }
+  document.getElementById('wizard-prev-btn').style.visibility=wizardStepIdx===0?'hidden':'visible';
+  document.getElementById('wizard-next-btn').textContent=(wizardStepIdx===REPORT_SECTIONS.length-1)?'Générer le PDF':'Suivant →';
+}
+function wizardPrev(){if(wizardStepIdx>0){wizardStepIdx--;renderWizardStep();}}
+function wizardNext(){
+  if(wizardStepIdx<REPORT_SECTIONS.length-1){wizardStepIdx++;renderWizardStep();}
+  else{closeCampaignWizard();exportCampaignReport(wizardConcertId);}
+}
+async function wizardUploadFile(input){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  var cat=REPORT_SECTIONS[wizardStepIdx].cats[0];
+  var ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+  var path=wizardConcertId+'/'+cat+'/'+Date.now()+'.'+ext;
+  input.disabled=true;
+  try{
+    var url=await storageUpload(path,file);
+    concertMedia.push({id:mediaGenId(),concertId:wizardConcertId,cat:cat,type:'image',url:url,path:path,caption:'',addedAt:new Date().toISOString(),expiresAt:mediaExpiryDate()});
+    scheduleSave('concert_media');
+    renderWizardStep();
+  }catch(e){
+    console.error(e);
+    alert('Échec de l\'envoi de la photo : '+e.message);
+  }
+  input.disabled=false;
+  input.value='';
+}
+function wizardAddLinkPrompt(){
+  document.getElementById('media-link-url').value='';
+  document.getElementById('media-link-caption').value='';
+  document.getElementById('media-link-modal').classList.add('open');
+}
+function wizardSaveLink(){
+  var url=document.getElementById('media-link-url').value.trim();
+  if(!url)return;
+  var caption=document.getElementById('media-link-caption').value.trim();
+  var cat=REPORT_SECTIONS[wizardStepIdx].cats[0];
+  concertMedia.push({id:mediaGenId(),concertId:wizardConcertId,cat:cat,type:'link',url:url,caption:caption,addedAt:new Date().toISOString(),expiresAt:mediaExpiryDate()});
+  scheduleSave('concert_media');
+  document.getElementById('media-link-modal').classList.remove('open');
+  renderWizardStep();
+}
+function wizardDeleteItem(id){
+  var m=concertMedia.find(function(x){return x.id===id;});
+  if(!m)return;
+  customConfirm('Supprimer ce média ?','Supprimer').then(function(ok){
+    if(!ok)return;
+    concertMedia=concertMedia.filter(function(x){return x.id!==id;});
+    scheduleSave('concert_media');
+    if(m.type==='image'&&m.path)storageDelete(m.path);
+    renderWizardStep();
+  });
 }
 function toggleSkipFromList(cid, cat){
   var key='skip-'+cid+'-'+cat;
@@ -2828,6 +2996,7 @@ function openBudgetModal() {
   if (!currentFicheId) return;
   var c = concerts.find(function(x){return x.id===currentFicheId;});
   if (!c) return;
+  if (c.budget) { window.open(c.budget, '_blank'); return; }
 
   // Remplir les infos fiche
   document.getElementById('bud-info-art').textContent = c.art || '—';

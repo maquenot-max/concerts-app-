@@ -109,6 +109,8 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .p-col  {background:hsl(235,65%,95%);color:hsl(235,55%,32%)}
 .p-sp   {background:hsl(265,65%,95%);color:hsl(265,55%,32%)}
 .p-ph   {background:hsl(300,65%,95%);color:hsl(300,55%,32%)}
+.p-radio{background:hsl(85,65%,93%);color:hsl(85,55%,28%)}
+.p-newsletter{background:hsl(330,65%,95%);color:hsl(330,55%,32%)}
 
 /* ── CARD ─────────────────────────────────────────────── */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:1rem;box-shadow:var(--shadow)}
@@ -372,6 +374,19 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .fiche-section-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;padding:4px 0}
 .fiche-section-toggle:hover .fiche-section-title{color:var(--text-2)}
 
+/* ── QUESTIONNAIRE RAPPORT DE CAMPAGNE (photos/liens temporaires) ── */
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:12px}
+.media-empty{font-size:12px;color:var(--text-3);font-style:italic;padding:8px 0;grid-column:1/-1}
+.media-card{position:relative;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;background:var(--surface);cursor:pointer}
+.media-card img{width:100%;height:90px;object-fit:cover;display:block}
+.media-caption{font-size:10px;color:var(--text-3);padding:4px 6px;line-height:1.3}
+.media-card.media-link{height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6px;gap:4px}
+.media-link-icon{font-size:20px}
+.media-link-url{font-size:10px;color:var(--text-2);word-break:break-all;line-height:1.3;max-height:40px;overflow:hidden}
+.media-del{position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:10px;cursor:pointer;line-height:18px;padding:0}
+.media-del:hover{background:rgba(200,40,40,.85)}
+.media-add-row{display:flex;gap:8px}
+
 /* ── TACHES DELEGUES ─────────────────────────────────── */
 .tk-task.delegue{background:rgba(59,130,246,.07);border-color:rgba(59,130,246,.3)}
 .tk-task.delegue .tk-task-name{color:#2563eb}
@@ -549,6 +564,19 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .bilan-badge.warn{background:#fdf3e0;color:#a06a10}
 .bilan-badge.late{background:#fbe8e8;color:#b02a2a}
 .bilan-badge.muted{background:#f0f0f0;color:#888}
+.rpt-cover{background:#dbeeff;padding:60px 30px;margin:-20mm -16mm 24px;text-align:center;break-after:page}
+.rpt-cover .rpt-brand{font-size:13px;font-weight:700;letter-spacing:.05em;color:#1a3d7c;text-transform:uppercase;margin-bottom:22px}
+.rpt-cover h1{font-size:34px;margin:0 0 10px;color:#0d2b5e}
+.rpt-cover .rpt-cover-sub{font-size:16px;color:#1a3d7c}
+.rpt-divider{break-before:page;padding:90px 20px 0;text-align:center}
+.rpt-divider h2{font-size:30px;color:#ff4b4b;text-transform:uppercase;letter-spacing:.02em;margin:0}
+.rpt-section{margin-top:24px}
+.rpt-section-title{font-size:16px;font-weight:700;color:#0d2b5e;margin:0 0 12px}
+.rpt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:10px}
+.rpt-card{border:1px solid #ddd;border-radius:6px;overflow:hidden;background:#fff;break-inside:avoid}
+.rpt-card img{width:100%;height:130px;object-fit:cover;display:block}
+.rpt-card-link{padding:14px 10px;text-align:center;font-size:11px;color:#1a3d7c;word-break:break-all;min-height:110px;display:flex;align-items:center;justify-content:center}
+.rpt-caption{font-size:10px;color:#666;padding:5px 8px;line-height:1.3}
 @media print{
   body *{visibility:hidden}
   #bilan-report,#bilan-report *{visibility:visible}
