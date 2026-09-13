@@ -68,13 +68,18 @@
           <div id="tk-widget-wrap"></div>
         </div>
       </div>
-      <div class="dash-mid-row" style="display:flex;gap:12px;align-items:stretch">
+      <div class="dash-mid-row" style="display:flex;gap:12px;margin-bottom:1.5rem;align-items:stretch">
         <div id="next-concert-wrap" style="flex:1;min-width:0;display:flex"></div>
         <div id="today-rs-wrap" style="flex:2;min-width:0;display:flex"></div>
       </div>
-      <div style="margin-top:1.5rem;padding:12px 16px;background:var(--green-bg);border:1px solid #cdeadb;border-radius:var(--radius-sm);font-size:12.5px;color:var(--green)">
-        Pour la liste complète des concerts, la recherche et les filtres : onglet <b style="color:var(--text);cursor:pointer" onclick="showTab('concerts',document.getElementById('btn-concerts'))">Concerts</b>.
+      <div id="ventes-filter-wrap"></div>
+      <div class="filters">
+        <input type="search" id="search" placeholder="Rechercher un artiste..." oninput="renderKanban()">
+        <select id="fville" onchange="renderKanban()"><option value="">Toutes les villes</option></select>
+        <select id="fperiode" onchange="renderKanban()"><option value="">Toutes les periodes</option></select>
+        <select id="fcat" onchange="renderKanban()" title="Affiche les concerts ayant une tache urgente ou en retard dans cette categorie"><option value="">Toutes les categories</option></select>
       </div>
+      <div id="kanban-wrap"><div class="loading-full"><span class="spin" style="width:28px;height:28px;border-width:3px"></span><p>Chargement...</p></div></div>
     </div>
     <div id="tab-concerts" class="panel">
       <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
@@ -790,13 +795,31 @@ function fillFilterSelect(el,opts,emptyLabel){
   el.innerHTML='<option value="">'+emptyLabel+'</option>';
   opts.forEach(function(o){el.innerHTML+='<option value="'+esc(o.value)+'"'+(o.value===sel?' selected':'')+'>'+esc(o.label)+'</option>';});
 }
+function filtered(){
+  var s=(document.getElementById('search')||{value:''}).value.toLowerCase();
+  var v=(document.getElementById('fville')||{value:''}).value;
+  var p=(document.getElementById('fperiode')||{value:''}).value;
+  var cat=(document.getElementById('fcat')||{value:''}).value;
+  return concerts.filter(function(c){
+    if(c.supprime)return false;
+    if(s&&c.art.toLowerCase().indexOf(s)<0)return false;
+    if(v&&getVille(c.ville)!==v)return false;
+    if(window._vf!=null&&(c.ventes||0)!==window._vf)return false;
+    if(p&&(c.dc||'').indexOf(p)<0)return false;
+    if(!matchesCategoryFilter(c,cat))return false;
+    return true;
+  });
+}
 function updateFilters(){
   var villes={},periodes={};
   concerts.forEach(function(c){var v=getVille(c.ville);if(v)villes[v]=1;if(c.dc)periodes[c.dc.substring(0,4)]=1;});
   var villeOpts=Object.keys(villes).sort().map(function(v){return {value:v,label:v};});
   var periodeOpts=Object.keys(periodes).sort().map(function(p){return {value:p,label:p};});
   var catOpts=Object.keys(CATS).map(function(k){return {value:k,label:CATS[k].label};});
+  fillFilterSelect(document.getElementById('fville'),villeOpts,'Toutes les villes');
   fillFilterSelect(document.getElementById('cville'),villeOpts,'Toutes les villes');
+  fillFilterSelect(document.getElementById('fperiode'),periodeOpts,'Toutes les periodes');
+  fillFilterSelect(document.getElementById('fcat'),catOpts,'Toutes les categories');
   fillFilterSelect(document.getElementById('cperiode'),periodeOpts,'Toutes les periodes');
   fillFilterSelect(document.getElementById('ccat'),catOpts,'Toutes les categories');
   fillFilterSelect(document.getElementById('pastville'),villeOpts,'Toutes les villes');
@@ -1166,6 +1189,63 @@ function renderKanban(){
       +cols
       +'</div>';
   }
+  // Filtre ventes (init une seule fois)
+  var vfWrap=document.getElementById('ventes-filter-wrap');
+  if(vfWrap&&!vfWrap.dataset.init){
+    vfWrap.dataset.init='1';
+    vfWrap.className='ventes-filter';
+    vfWrap.innerHTML='<span>Ventes :</span>';
+    VENTES.filter(function(v){return v.id>0;}).forEach(function(v){
+      var btn=document.createElement('button');
+      btn.className='vf-btn vf-'+v.id;btn.textContent=v.label;
+      btn.onclick=function(){
+        window._vf=window._vf===v.id?null:v.id;
+        document.querySelectorAll('.vf-btn').forEach(function(b){b.classList.remove('active');});
+        if(window._vf!=null)btn.classList.add('active');
+        renderKanban();
+      };
+      vfWrap.appendChild(btn);
+    });
+  }
+  updateFilters();
+  var list=filtered();
+  var wrap=document.getElementById('kanban-wrap');
+  if(!list.length){wrap.innerHTML='<div class="empty-state">Aucun concert.</div>';return;}
+  wrap.innerHTML='<div class="grid">'+list.map(function(c){
+    var sorted=sortedProcess(c);
+    var skipSpK=!!taskStates['skip-'+c.id+'-sp'];
+    var skipColK=!!taskStates['skip-'+c.id+'-col'];
+    if(skipSpK||skipColK){sorted=sorted.filter(function(t){
+      if(skipSpK&&t.cat==='sp')return false;
+      if(skipColK&&(t.cat==='col'||t.cat==='affp'))return false;
+      return true;
+    });}
+    var lateTasks=sorted.filter(function(t){var d=calcDate(c,t);return !taskStates[tk(c.id,t.id)]&&isUnlocked(c,t)&&(isLate(d)||isToday(d));});
+    var doneN=sorted.filter(function(t){return taskStates[tk(c.id,t.id)];}).length;
+    var pct=Math.round(doneN/sorted.length*100);
+    var ds=new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});
+    var hasLate=lateTasks.length>0;
+    var body=hasLate
+      ?'<div class="col-body">'+lateTasks.map(function(t){
+          var cat=CATS[t.cat]||{cls:'p-gen',label:'?'};
+          return (function(){var d=calcDate(c,t);var isHl=!!taskStates['hl-'+c.id+'-'+t.id];
+          return '<div class="titem'+(isHl?' highlighted':'')+'" onclick="event.stopPropagation();toggleHighlight(\''+c.id+'\','+t.id+')">'+
+            '<div class="chk" onclick="event.stopPropagation();toggleTask(\''+c.id+'\','+t.id+')" style="cursor:pointer;flex-shrink:0;margin-top:2px"></div>'+
+            '<div style="flex:1;min-width:0"><div class="tname">'+esc(t.nom)+'</div>'+
+            '<span class="pill '+cat.cls+'">'+cat.label+'</span>'+
+            '<div class="'+(isToday(d)?'ttoday':'tlate')+'">'+fmt(d)+'</div></div></div>';})()
+        }).join('')+'</div>'
+      :'<div class="ok-col"><span class="ok-badge">OK</span></div>';
+    return '<div class="col'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')">'+
+      '<div class="col-head'+(hasLate?' late':'')+'">'+
+      '<div class="col-name'+(hasLate?' late':'')+'">'+esc(c.art)+cancelBadge(c)+'</div>'+
+      '<div class="col-sub'+(hasLate?' late':'')+'">'+( c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div>'+
+      ventesHtml(c,'event.stopPropagation();toggleVentes(event,\''+c.id+'\')') +
+      '<div class="pbar"><div class="pfill" style="width:'+pct+'%"></div></div>'+
+      '<div class="pbar-meta"><span>'+pct+'%</span>'+
+      (hasLate?'<span class="red">'+lateTasks.length+'!</span>':'')+
+      '</div></div>'+body+'</div>';
+  }).join('')+'</div>';
 }
 var concertsViewMode='list';
 function setConcertsView(mode){
