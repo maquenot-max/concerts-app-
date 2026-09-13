@@ -247,7 +247,10 @@
       </div>
       <div class="section-sep"></div>
       <div class="fiche-section">
-        <div class="fiche-section-title">Plan de communication</div>
+        <div class="fiche-section-title" style="display:flex;justify-content:space-between;align-items:center">
+          <span>Plan de communication</span>
+          <button class="dash-widget-link" onclick="openCustomTaskModal(currentFicheId)">+ Ajouter une tache</button>
+        </div>
         <div class="fiche-tasks" id="fiche-tasks"></div>
       </div>
     </div>
@@ -330,6 +333,33 @@
       <div style="display:flex;gap:8px">
         <button class="btn" onclick="closeCampaignWizard()">Fermer</button>
         <button class="btn btn-primary" id="wizard-next-btn" onclick="wizardNext()">Suivant →</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="tk-modal" id="custom-task-modal">
+  <div class="tk-modal-box">
+    <div class="tk-modal-title" id="custom-task-modal-title">Ajouter une tache</div>
+    <div><label>Titre</label><input type="text" id="ct-nom" placeholder="ex: Relance partenaire local..."></div>
+    <div><label>Date</label><input type="date" id="ct-date"></div>
+    <div><label>Categorie</label>
+      <select id="ct-cat"></select>
+    </div>
+    <div class="tk-modal-actions">
+      <button class="btn" onclick="document.getElementById('custom-task-modal').classList.remove('open')">Annuler</button>
+      <button class="btn btn-primary" onclick="saveCustomTask()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+<div class="tk-modal" id="date-override-modal">
+  <div class="tk-modal-box" style="width:340px">
+    <div class="tk-modal-title">Decaler l'echeance</div>
+    <div><label>Nouvelle date pour ce concert</label><input type="date" id="do-date"></div>
+    <div class="tk-modal-actions" style="justify-content:space-between">
+      <button class="btn" onclick="clearDateOverride()">↺ Date par defaut</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="document.getElementById('date-override-modal').classList.remove('open')">Annuler</button>
+        <button class="btn btn-primary" onclick="saveDateOverride()">Enregistrer</button>
       </div>
     </div>
   </div>
@@ -424,6 +454,7 @@ var VENTES=[
 ];
 var concerts=[],taskStates={},process=DEFAULT_PROCESS,nextId=26;
 var concertMedia=[];
+var customTasks=[];
 var tkCols=[],tkTasks=[],tkEditId=null,tkAddColId=null;
 var rsPosts=[],rsEditId=null,rsCurrentProj="pp",rsCurrentDate=null,rsFmt="post",rsNetState={fb:false,insta:false,tiktok:false};
 var dragSrcId=null,saveTimer=null,currentFicheId=null;
@@ -516,7 +547,7 @@ function mergeArrayById(remote,local){
 async function reloadFromRemote(changedKey){
   showSyncBanner('Synchronisation...');
   try{
-    var keys=changedKey?[changedKey]:['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media'];
+    var keys=changedKey?[changedKey]:['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media','concert_tasks'];
     for(var i=0;i<keys.length;i++){
       var k=keys[i];
       if(k==='taskstates'){
@@ -545,6 +576,7 @@ async function reloadFromRemote(changedKey){
       else if(k==='tktasks')tkTasks=mergeArrayById(await dbGet('tktasks',[]),tkTasks);
       else if(k==='rsposts')rsPosts=mergeArrayById(await dbGet('rsposts',[]),rsPosts);
       else if(k==='concert_media')concertMedia=mergeArrayById(await dbGet('concert_media',[]),concertMedia);
+      else if(k==='concert_tasks')customTasks=mergeArrayById(await dbGet('concert_tasks',[]),customTasks);
     }
     render();
     showSyncBanner('À jour ✓',true);
@@ -565,11 +597,11 @@ function showSyncBanner(msg,fadeOut){
 
 // ── SAUVEGARDE : uniquement les domaines modifies (evite d'ecraser
 // les autres domaines avec une copie locale potentiellement perimee) ──
-var ALL_SAVE_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media'];
+var ALL_SAVE_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media','concert_tasks'];
 var pendingSaveKeys={};
 var saveRetryTimer=null;
 function currentValueFor(key){
-  return {concerts:concerts,taskstates:taskStates,process:process,tkcols:tkCols,tktasks:tkTasks,rsposts:rsPosts,concert_media:concertMedia}[key];
+  return {concerts:concerts,taskstates:taskStates,process:process,tkcols:tkCols,tktasks:tkTasks,rsposts:rsPosts,concert_media:concertMedia,concert_tasks:customTasks}[key];
 }
 function scheduleSave(){
   if(!appDataLoaded){
@@ -673,6 +705,7 @@ async function init(){
     nextId=process.length?Math.max.apply(null,process.map(function(t){return t.id;}))+1:26;
     rsPosts=(await dbGet('rsposts',[]))||[];
     concertMedia=(await dbGet('concert_media',[]))||[];
+    customTasks=(await dbGet('concert_tasks',[]))||[];
     var tkRes=await Promise.all([dbGet('tkcols',[]),dbGet('tktasks',[])]);
     tkCols=tkRes[0]||[];tkTasks=tkRes[1]||[];
     // Assurer les 4 colonnes projets avec leurs noms corrects
@@ -708,7 +741,12 @@ function showTab(id,btn){
   btn.classList.add('active');document.getElementById('tab-'+id).classList.add('active');
   if(id==='budgetconfig'){ renderBcTemplateEditor(); renderBcStyleEditor(); renderBcSalleEditor(); }
 }
-function calcDate(c,t){var base=t.ref==='annonce'?c.da:c.dc;if(!base)return null;var d=new Date(base);d.setDate(d.getDate()+t.jours);return d;}
+function calcDate(c,t){
+  if(t.isCustom)return t.date?new Date(t.date):null;
+  var override=taskStates['datemod-'+c.id+'-'+t.id];
+  if(override)return new Date(override);
+  var base=t.ref==='annonce'?c.da:c.dc;if(!base)return null;var d=new Date(base);d.setDate(d.getDate()+t.jours);return d;
+}
 // Echappement HTML : toute donnee saisie par un utilisateur (nom d'artiste, notes,
 // taches...) doit passer par esc() avant d'etre inseree dans une chaine HTML/attribut,
 // sinon elle peut injecter du code execute par le navigateur des autres utilisateurs.
@@ -795,9 +833,13 @@ function isLate(d){if(!d)return false;var n=new Date();n.setHours(0,0,0,0);retur
 function isToday(d){if(!d)return false;var n=new Date();n.setHours(0,0,0,0);var e=new Date(n);e.setDate(e.getDate()+1);return d>=n&&d<e;}
 function isSoon(d){if(!d)return false;var n=new Date();n.setHours(0,0,0,0);var s=new Date(n);s.setDate(s.getDate()+7);return d>=n&&d<=s;}
 function tk(cid,tid){return cid+'-'+tid;}
+function tidLit(t){return t.isCustom?("'"+t.id+"'"):t.id;}
 function isUnlocked(c,t){if(!t.prereq)return true;return !!taskStates[tk(c.id,t.prereq)];}
 function isNA(c,t){return !!taskStates['na-'+c.id+'-'+t.id];}
-function sortedProcess(c){return process.slice().sort(function(a,b){var da=calcDate(c,a),db=calcDate(c,b);if(!da&&!db)return 0;if(!da)return 1;if(!db)return-1;return da-db;});}
+function sortedProcess(c){
+  var custom=customTasks.filter(function(t){return t.concertId===c.id;});
+  return process.concat(custom).sort(function(a,b){var da=calcDate(c,a),db=calcDate(c,b);if(!da&&!db)return 0;if(!da)return 1;if(!db)return-1;return da-db;});
+}
 function fillFilterSelect(el,opts,emptyLabel){
   if(!el)return;
   var sel=el.value;
@@ -986,8 +1028,75 @@ function updateFicheField(field,val){
 async function resetFicheTasks(){
   var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
   if(!await customConfirm('Réinitialiser toutes les tâches de '+c.art+' ?'))return;
-  process.forEach(function(t){delete taskStates[tk(c.id,t.id)];delete taskStates['na-'+c.id+'-'+t.id];});
+  process.forEach(function(t){delete taskStates[tk(c.id,t.id)];delete taskStates['na-'+c.id+'-'+t.id];delete taskStates['datemod-'+c.id+'-'+t.id];});
   scheduleSave('taskstates');renderFicheTasks(c);renderKanban();renderConcerts();
+}
+var customTaskEditCid=null,customTaskEditId=null;
+function customTaskGenId(){return 'ct'+Date.now()+Math.floor(Math.random()*999);}
+function openCustomTaskModal(cid,tid){
+  if(!cid)return;
+  customTaskEditCid=cid;
+  customTaskEditId=tid||null;
+  var catSel=document.getElementById('ct-cat');
+  catSel.innerHTML=Object.keys(CATS).map(function(k){return '<option value="'+k+'">'+esc(CATS[k].label)+'</option>';}).join('');
+  var t=tid?customTasks.find(function(x){return x.id===tid;}):null;
+  document.getElementById('custom-task-modal-title').textContent=tid?'Modifier la tache':'Ajouter une tache';
+  document.getElementById('ct-nom').value=t?t.nom:'';
+  document.getElementById('ct-date').value=t?(t.date||''):'';
+  catSel.value=t?t.cat:'gen';
+  document.getElementById('custom-task-modal').classList.add('open');
+}
+function saveCustomTask(){
+  var nom=document.getElementById('ct-nom').value.trim();
+  if(!nom)return;
+  var date=document.getElementById('ct-date').value;
+  var cat=document.getElementById('ct-cat').value;
+  if(customTaskEditId){
+    var t=customTasks.find(function(x){return x.id===customTaskEditId;});
+    if(t){t.nom=nom;t.date=date;t.cat=cat;}
+  } else {
+    customTasks.push({id:customTaskGenId(),concertId:customTaskEditCid,nom:nom,date:date,cat:cat,isCustom:true,prereq:null});
+  }
+  scheduleSave('concert_tasks');
+  document.getElementById('custom-task-modal').classList.remove('open');
+  var c=concerts.find(function(x){return x.id===customTaskEditCid;});
+  if(c)renderFicheTasks(c);
+  renderKanban();renderConcerts();
+}
+function deleteCustomTask(cid,tid){
+  customConfirm('Supprimer cette tache ?','Supprimer').then(function(ok){
+    if(!ok)return;
+    customTasks=customTasks.filter(function(x){return x.id!==tid;});
+    delete taskStates[tk(cid,tid)];
+    scheduleSave('concert_tasks','taskstates');
+    var c=concerts.find(function(x){return x.id===cid;});
+    if(c)renderFicheTasks(c);
+    renderKanban();renderConcerts();
+  });
+}
+var dateOverrideCid=null,dateOverrideTid=null;
+function openDateOverrideModal(cid,tid){
+  dateOverrideCid=cid;dateOverrideTid=tid;
+  document.getElementById('do-date').value=taskStates['datemod-'+cid+'-'+tid]||'';
+  document.getElementById('date-override-modal').classList.add('open');
+}
+function saveDateOverride(){
+  var val=document.getElementById('do-date').value;
+  if(!val)return;
+  taskStates['datemod-'+dateOverrideCid+'-'+dateOverrideTid]=val;
+  scheduleSave('taskstates');
+  document.getElementById('date-override-modal').classList.remove('open');
+  var c=concerts.find(function(x){return x.id===dateOverrideCid;});
+  if(c)renderFicheTasks(c);
+  renderKanban();renderConcerts();
+}
+function clearDateOverride(){
+  delete taskStates['datemod-'+dateOverrideCid+'-'+dateOverrideTid];
+  scheduleSave('taskstates');
+  document.getElementById('date-override-modal').classList.remove('open');
+  var c=concerts.find(function(x){return x.id===dateOverrideCid;});
+  if(c)renderFicheTasks(c);
+  renderKanban();renderConcerts();
 }
 function renderFicheTasks(c){
   var sorted=sortedProcess(c);
@@ -1011,20 +1120,31 @@ function renderFicheTasks(c){
     var d=calcDate(c,t);var isDone=!!taskStates[tk(c.id,t.id)];
     var cat=CATS[t.cat]||{cls:'p-gen',label:'?'};
     var dateStr='',dateClass='',badge='';
-    if(isBlocked){var pt=process.find(function(p){return p.id===t.prereq;});dateStr='En attente de : '+(pt?pt.nom:'?');dateClass='blocked';badge='<span class="status-badge badge-blocked">En attente</span>';}
+    var isOverridden=!t.isCustom&&!!taskStates['datemod-'+c.id+'-'+t.id];
+    if(isBlocked){var pt=findTaskById(t.prereq);dateStr='En attente de : '+(pt?pt.nom:'?');dateClass='blocked';badge='<span class="status-badge badge-blocked">En attente</span>';}
     else if(isDone){dateStr='Fait';dateClass='done-date';badge='<span class="status-badge badge-done">Fait</span>';}
     else if(!d){dateStr='Date manquante';dateClass='future';}
     else if(isLate(d)){dateStr='En retard - '+fmt(d);dateClass='late';badge='<span class="status-badge badge-late">En retard</span>';}
     else if(isSoon(d)){dateStr='Bientot - '+fmt(d);dateClass='soon';badge='<span class="status-badge badge-soon">Cette semaine</span>';}
     else{dateStr=fmt(d);dateClass='future';}
+    if(isOverridden&&!isDone&&!isBlocked)dateStr+=' (modifiee)';
     var clickable=!isBlocked;
-    var naBtn=(!isBlocked&&!isDone)?'<button class="ftask-na-btn" title="Marquer inutile pour ce concert" onclick="event.stopPropagation();toggleTaskNA(\''+c.id+'\','+t.id+')">Inutile</button>':'';
-    return '<div class="ftask'+(isDone?' done':isBlocked?' blocked':'')+'"'+(clickable?' onclick="toggleFicheTask(\''+c.id+'\','+t.id+')"':'')+'>'+
+    var actions='';
+    if(!isBlocked&&!isDone){
+      if(t.isCustom){
+        actions='<button class="ftask-na-btn" onclick="event.stopPropagation();openCustomTaskModal(\''+c.id+'\','+tidLit(t)+')">Modifier</button>'
+          +'<button class="ftask-na-btn" onclick="event.stopPropagation();deleteCustomTask(\''+c.id+'\','+tidLit(t)+')">Supprimer</button>';
+      } else {
+        actions='<button class="ftask-na-btn" title="Decaler l\'echeance pour ce concert" onclick="event.stopPropagation();openDateOverrideModal(\''+c.id+'\','+tidLit(t)+')">Decaler</button>'
+          +'<button class="ftask-na-btn" title="Marquer inutile pour ce concert" onclick="event.stopPropagation();toggleTaskNA(\''+c.id+'\','+tidLit(t)+')">Inutile</button>';
+      }
+    }
+    return '<div class="ftask'+(isDone?' done':isBlocked?' blocked':'')+'"'+(clickable?' onclick="toggleFicheTask(\''+c.id+'\','+tidLit(t)+')"':'')+'>'+
       '<div class="ftask-chk'+(isDone?' on':isBlocked?' blocked':'')+'">'+( isDone?'&#10003;':isBlocked?'&#8987;':'')+' </div>'+
-      '<div style="flex:1"><div class="ftask-name">'+esc(t.nom)+'</div>'+
+      '<div style="flex:1"><div class="ftask-name">'+esc(t.nom)+(t.isCustom?' <span style="font-size:9px;color:var(--text-3);font-weight:400">(manuelle)</span>':'')+'</div>'+
       '<div style="display:flex;align-items:center;gap:6px;margin-top:3px">'+
       '<span class="pill '+cat.cls+'">'+cat.label+'</span>'+
-      '<span class="ftask-date '+dateClass+'">'+dateStr+'</span></div></div>'+naBtn+badge+'</div>';
+      '<span class="ftask-date '+dateClass+'">'+dateStr+'</span></div></div>'+actions+badge+'</div>';
   }
   function naTaskHtml(t){
     var cat=CATS[t.cat]||{cls:'p-gen',label:'?'};
@@ -1034,7 +1154,7 @@ function renderFicheTasks(c){
       '<div style="display:flex;align-items:center;gap:6px;margin-top:3px">'+
       '<span class="pill '+cat.cls+'">'+cat.label+'</span>'+
       '<span class="ftask-date">Marquee inutile</span></div></div>'+
-      '<button class="ftask-na-btn always" onclick="event.stopPropagation();toggleTaskNA(\''+c.id+'\','+t.id+')">&#8635; Reactiver</button></div>';
+      '<button class="ftask-na-btn always" onclick="event.stopPropagation();toggleTaskNA(\''+c.id+'\','+tidLit(t)+')">&#8635; Reactiver</button></div>';
   }
   var html='';
   if(late.length)html+='<div class="group-title" style="color:var(--red)">En retard ('+late.length+')</div>'+late.map(function(t){return taskHtml(t,false);}).join('');
@@ -1055,9 +1175,10 @@ function toggleTaskNA(cid,tid){
   scheduleSave('taskstates');
   renderFicheTasks(c);renderKanban();renderConcerts();
 }
+function findTaskById(tid){return process.find(function(p){return p.id===tid;})||customTasks.find(function(p){return p.id===tid;});}
 function toggleFicheTask(cid,tid){
   var c=concerts.find(function(x){return x.id===cid;});
-  var t=process.find(function(p){return p.id===tid;});
+  var t=findTaskById(tid);
   if(!c||!t||!isUnlocked(c,t))return;
   var k=tk(cid,tid);taskStates[k]=!taskStates[k];scheduleSave('taskstates');
   if(c)renderFicheTasks(c);renderKanban();renderConcerts();
@@ -1094,13 +1215,14 @@ async function permanentlyDeleteConcert(id){
   concerts=concerts.filter(function(x){return x.id!==id;});
   var orphanMedia=concertMedia.filter(function(m){return m.concertId===id;});
   concertMedia=concertMedia.filter(function(m){return m.concertId!==id;});
-  scheduleSave('concerts','concert_media');
+  customTasks=customTasks.filter(function(t){return t.concertId!==id;});
+  scheduleSave('concerts','concert_media','concert_tasks');
   orphanMedia.forEach(function(m){if(m.type==='image'&&m.path)storageDelete(m.path);});
   if(currentFicheId===id)closeFicheBtn();else render();
 }
 function toggleTask(cid,tid){
   var c=concerts.find(function(x){return x.id===cid;});
-  var t=process.find(function(p){return p.id===tid;});
+  var t=findTaskById(tid);
   if(!c||!t||!isUnlocked(c,t))return;
   var k=tk(cid,tid);taskStates[k]=!taskStates[k];scheduleSave('taskstates');renderKanban();renderConcerts();
 }
@@ -1271,8 +1393,8 @@ function renderKanban(){
           return (function(){var d=calcDate(c,t);var isHl=!!taskStates['hl-'+c.id+'-'+t.id];
           var daysSinceDue=d?Math.floor((today-d)/86400000):0;
           var isNewTask=daysSinceDue<3;
-          return '<div class="titem'+(isHl?' highlighted':'')+'" title="'+esc(cat.label)+'" onclick="event.stopPropagation();toggleHighlight(\''+c.id+'\','+t.id+')">'+
-            '<div class="chk" onclick="event.stopPropagation();toggleTask(\''+c.id+'\','+t.id+')" style="cursor:pointer;flex-shrink:0;margin-top:2px"></div>'+
+          return '<div class="titem'+(isHl?' highlighted':'')+'" title="'+esc(cat.label)+'" onclick="event.stopPropagation();toggleHighlight(\''+c.id+'\','+tidLit(t)+')">'+
+            '<div class="chk" onclick="event.stopPropagation();toggleTask(\''+c.id+'\','+tidLit(t)+')" style="cursor:pointer;flex-shrink:0;margin-top:2px"></div>'+
             '<div style="flex:1;min-width:0"><div class="tname">'+esc(t.nom)+'</div>'+
             (isNewTask?'<div class="tnew">Nouveau</div>':'')+'</div></div>';})()
         }).join('')+'</div>'
