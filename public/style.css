@@ -82,9 +82,6 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .pbar{height:2px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden}
 .pfill{height:100%;border-radius:2px;background:var(--text)}
 .col-head.late .pfill{background:var(--text)}
-.pbar-meta{display:flex;justify-content:space-between;margin-top:4px}
-.pbar-meta span{font-size:10px;color:var(--text-3)}
-.pbar-meta span.red{color:var(--red);font-weight:600}
 .col-body{border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);background:var(--surface);overflow:hidden}
 .col-head.late+.col-body{border-color:var(--border)}
 .titem{padding:7px 12px;border-bottom:1px solid var(--border-light);display:flex;align-items:flex-start;gap:6px;cursor:pointer}
@@ -101,20 +98,21 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 /* Palette harmonisee : meme formule (fond tres clair / texte sature) pour
    toutes les categories, teintes reparties uniformement pour rester
    distinctes sans etre criardes. "General" reste neutre (gris). */
-.pill{font-size:9px;padding:1px 6px;border-radius:20px;font-weight:500;display:inline-block;margin-top:2px}
-.p-gen  {background:#f0f0f0;color:#666666}
-.p-jx   {background:hsl(0,65%,95%);color:hsl(0,55%,32%)}
-.p-rs   {background:hsl(28,65%,95%);color:hsl(28,55%,32%)}
-.p-prod {background:hsl(42,65%,95%);color:hsl(42,55%,32%)}
-.p-bud  {background:hsl(145,65%,95%);color:hsl(145,55%,32%)}
-.p-press{background:hsl(170,65%,95%);color:hsl(170,55%,32%)}
-.p-affp {background:hsl(195,65%,95%);color:hsl(195,55%,32%)}
-.p-web  {background:hsl(215,65%,95%);color:hsl(215,55%,32%)}
-.p-col  {background:hsl(235,65%,95%);color:hsl(235,55%,32%)}
-.p-sp   {background:hsl(265,65%,95%);color:hsl(265,55%,32%)}
-.p-ph   {background:hsl(300,65%,95%);color:hsl(300,55%,32%)}
-.p-radio{background:hsl(85,65%,93%);color:hsl(85,55%,28%)}
-.p-newsletter{background:hsl(330,65%,95%);color:hsl(330,55%,32%)}
+.pill{font-size:9px;padding:1px 7px 1px 15px;border-radius:20px;font-weight:500;display:inline-block;margin-top:2px;position:relative;background:transparent;color:var(--text-2)}
+.pill::before{content:'';position:absolute;left:5px;top:50%;transform:translateY(-50%);width:5px;height:5px;border-radius:50%}
+.p-gen::before  {background:#999}
+.p-jx::before   {background:hsl(0,55%,32%)}
+.p-rs::before   {background:hsl(28,55%,32%)}
+.p-prod::before {background:hsl(42,55%,32%)}
+.p-bud::before  {background:hsl(145,55%,32%)}
+.p-press::before{background:hsl(170,55%,32%)}
+.p-affp::before {background:hsl(195,55%,32%)}
+.p-web::before  {background:hsl(215,55%,32%)}
+.p-col::before  {background:hsl(235,55%,32%)}
+.p-sp::before   {background:hsl(265,55%,32%)}
+.p-ph::before   {background:hsl(300,55%,32%)}
+.p-radio::before{background:hsl(85,55%,28%)}
+.p-newsletter::before{background:hsl(330,55%,32%)}
 
 /* ── CARD ─────────────────────────────────────────────── */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:1rem;box-shadow:var(--shadow)}
@@ -188,6 +186,11 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .ftask.done{opacity:.35}
 .ftask.done .ftask-name{text-decoration:line-through}
 .ftask.blocked{opacity:.45;cursor:default}
+.ftask.na{opacity:.5;cursor:default}
+.ftask-na-btn{opacity:0;flex-shrink:0;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text-3);cursor:pointer;transition:opacity .15s,all .15s;margin-top:2px}
+.ftask:hover .ftask-na-btn{opacity:1}
+.ftask-na-btn:hover{border-color:#bbb;color:var(--text-2)}
+.ftask-na-btn.always{opacity:1}
 .ftask-chk{width:16px;height:16px;border:1.5px solid #ddd;border-radius:4px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;transition:all .15s}
 .ftask-chk.on{background:var(--text);border-color:var(--text)}
 .ftask-chk.blocked{border-style:dashed}
@@ -272,19 +275,14 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .crow-da-pending{font-size:10px;color:#b07800;font-weight:600;margin-top:2px}
 
 /* ── STATUT VENTES ────────────────────────────────────── */
-.ventes-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap;user-select:none}
-.ventes-badge:hover{opacity:.8}
-.ventes-0{background:#f5f5f3;color:#aaa;border-color:#e5e5e5}
-.ventes-1{background:#fff0f0;color:#c0392b;border-color:#f5c6c2}
-.ventes-2{background:#fff8ec;color:#a06010;border-color:#f0d090}
-.ventes-3{background:#eef7f2;color:#2d7a4f;border-color:#b8e0ca}
-.ventes-4{background:#1a7a4f;color:#fff;border-color:#155c3a}
-.ventes-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.ventes-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;padding:2px 4px;border-radius:20px;cursor:pointer;border:none;background:transparent;transition:opacity .15s;white-space:nowrap;user-select:none;color:var(--text-2)}
+.ventes-badge:hover{opacity:.7}
+.ventes-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .ventes-0 .ventes-dot{background:#ccc}
-.ventes-1 .ventes-dot{background:#e24b4a}
-.ventes-2 .ventes-dot{background:#c47c00}
+.ventes-1 .ventes-dot{background:#c0392b}
+.ventes-2 .ventes-dot{background:#a06010}
 .ventes-3 .ventes-dot{background:#2d7a4f}
-.ventes-4 .ventes-dot{background:rgba(255,255,255,.7)}
+.ventes-4 .ventes-dot{background:#0d5c37}
 
 /* ── GESTIONNAIRE DE TACHES ──────────────────────────── */
 .tk-board{display:flex;gap:16px;align-items:flex-start;overflow-x:auto;padding-bottom:1rem}
@@ -305,6 +303,8 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .tk-prio-normal{background:#f0f0ee;color:#888;border:1px solid #e5e5e5}
 .tk-prio-low{background:#eef7f2;color:#2d7a4f;border:1px solid #b8e0ca}
 .tk-task-actions{display:flex;gap:4px;margin-top:6px}
+.tk-task-actions .tk-task-btn:not(.done-btn){opacity:0;transition:opacity .15s,all .15s}
+.tk-task:hover .tk-task-actions .tk-task-btn:not(.done-btn){opacity:1}
 .tk-task-btn{font-size:10px;padding:2px 6px;border-radius:4px;border:1px solid var(--border);background:var(--surface);cursor:pointer;color:var(--text-3);transition:all .15s;font-weight:500}
 .tk-task-btn:hover{background:var(--bg);color:var(--text)}
 .tk-task-btn.done-btn{color:var(--green);background:var(--green-bg);border-color:var(--green-bg)}
