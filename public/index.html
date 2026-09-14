@@ -40,6 +40,26 @@
     <button class="btn btn-primary" style="flex:1" onclick="archiveOldConcerts()">Archiver</button>
   </div>
 </div>
+<div id="auth-screen" style="display:none">
+  <div class="auth-box">
+    <div class="auth-brand"><img src="favicon_io/favicon-32x32.png" alt="">Please Please Communication</div>
+    <h1 class="auth-title" id="auth-title">Connexion</h1>
+    <form id="auth-form" onsubmit="return authSubmit(event)">
+      <label>E-mail<input type="email" id="auth-email" autocomplete="username" required></label>
+      <label>Mot de passe<input type="password" id="auth-password" autocomplete="current-password" required></label>
+      <div class="auth-error" id="auth-error" style="display:none"></div>
+      <button class="btn btn-primary" type="submit" id="auth-submit" style="width:100%">Se connecter</button>
+      <button class="auth-link" type="button" onclick="authForgot()">Mot de passe oublié ?</button>
+    </form>
+    <form id="auth-recover-form" onsubmit="return authSetNewPassword(event)" style="display:none">
+      <p class="auth-help">Choisis un nouveau mot de passe (8 caractères minimum).</p>
+      <label>Nouveau mot de passe<input type="password" id="auth-new-password" autocomplete="new-password" required minlength="8"></label>
+      <div class="auth-error" id="auth-recover-error" style="display:none"></div>
+      <button class="btn btn-primary" type="submit" style="width:100%">Enregistrer</button>
+    </form>
+    <p class="auth-foot">Accès réservé à l'équipe. Pour obtenir un compte, demande à un administrateur.</p>
+  </div>
+</div>
 <div id="app">
   <header>
     <h1 style="display:flex;align-items:center;gap:8px"><img src="favicon_io/favicon-32x32.png" style="width:20px;height:20px;border-radius:4px" alt=""><span class="h1-text">Please Please Communication &mdash; Dashboard</span></h1>
@@ -54,6 +74,15 @@
       <button id="btn-process" data-tab="process" onclick="showTab('process',this);budgetConfigClick()">Process</button>
       <button id="btn-budgetconfig" data-tab="budgetconfig" onclick="showTab('budgetconfig',this)" style="display:none;opacity:0.5;font-size:12px"><svg class="ico" aria-hidden="true"><use href="#i-settings"></use></svg> Budget</button>
     </nav>
+    <div class="filters-popover" id="user-menu-wrap" style="display:none">
+      <button class="hdr-btn" id="user-btn" onclick="toggleFiltersPanel(event,'user-menu')" title="Mon compte"><svg class="ico" aria-hidden="true"><use href="#i-user"></use></svg></button>
+      <div class="filters-panel fiche-menu" id="user-menu" style="display:none">
+        <div class="menu-head" id="user-menu-head"></div>
+        <button class="menu-item" id="user-menu-team" onclick="closeUserMenu();showTab('team')" style="display:none">Équipe</button>
+        <button class="menu-item" onclick="closeUserMenu();openAccountModal()">Changer mon mot de passe</button>
+        <button class="menu-item danger" onclick="closeUserMenu();authSignOut()">Se déconnecter</button>
+      </div>
+    </div>
   </header>
   <main>
     <div id="tab-rs" class="panel">
@@ -214,6 +243,15 @@
     <div id="tab-taches" class="panel">
       <div id="taches-board-wrap"></div>
     </div>
+    <div id="tab-team" class="panel">
+      <div class="card" style="max-width:860px;margin:0 auto">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+          <div><h2 style="margin:0 0 4px">Équipe</h2><div style="font-size:12px;color:var(--text-3);line-height:1.5">Les personnes autorisées à utiliser l'application. Un administrateur peut ajouter ou retirer un membre et réinitialiser un mot de passe.</div></div>
+          <button class="btn btn-primary" onclick="openTeamAddModal()">+ Ajouter un membre</button>
+        </div>
+        <div id="team-list"></div>
+      </div>
+    </div>
   </main>
 </div>
 <div class="overlay" id="overlay" onclick="closeFiche(event)">
@@ -313,6 +351,32 @@
     <input type="text" id="cmdk-input" placeholder="Rechercher un artiste, une salle, un onglet…" autocomplete="off" spellcheck="false">
     <div class="cmdk-list" id="cmdk-list"></div>
     <div class="cmdk-foot"><span><kbd>↑</kbd><kbd>↓</kbd> naviguer</span><span><kbd>↵</kbd> ouvrir</span><span><kbd>Échap</kbd> fermer</span><span><kbd>?</kbd> raccourcis</span></div>
+  </div>
+</div>
+<div class="tk-modal" id="account-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="tk-modal-box" style="width:380px">
+    <div class="tk-modal-title">Changer mon mot de passe</div>
+    <div><label>Nouveau mot de passe</label><input type="password" id="acc-pwd" autocomplete="new-password" minlength="8"></div>
+    <div><label>Confirmer</label><input type="password" id="acc-pwd2" autocomplete="new-password"></div>
+    <div class="tk-modal-actions"><button class="btn" onclick="document.getElementById('account-modal').classList.remove('open')">Annuler</button><button class="btn btn-primary" onclick="saveAccountPassword()">Enregistrer</button></div>
+  </div>
+</div>
+<div class="tk-modal" id="team-add-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="tk-modal-box">
+    <div class="tk-modal-title">Ajouter un membre</div>
+    <div><label>E-mail</label><input type="email" id="ta-email" placeholder="prenom@exemple.fr"></div>
+    <div><label>Prénom</label><input type="text" id="ta-name" placeholder="ex: Julie"></div>
+    <div><label>Rôle</label><select id="ta-role"><option value="member">Membre</option><option value="admin">Administrateur</option></select></div>
+    <p style="font-size:12px;color:var(--text-3);margin:0;line-height:1.5">Un mot de passe provisoire sera généré : transmets-le à la personne, elle pourra le changer depuis son menu.</p>
+    <div class="tk-modal-actions"><button class="btn" onclick="document.getElementById('team-add-modal').classList.remove('open')">Annuler</button><button class="btn btn-primary" id="ta-submit" onclick="teamAdd()">Créer le compte</button></div>
+  </div>
+</div>
+<div class="tk-modal" id="team-pwd-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="tk-modal-box" style="width:400px">
+    <div class="tk-modal-title" id="tp-title">Compte créé</div>
+    <div style="font-size:13px;color:var(--text-2);line-height:1.5">Mot de passe provisoire pour <b id="tp-email"></b> — il n'est affiché qu'une seule fois :</div>
+    <div class="pwd-box" id="tp-pwd"></div>
+    <div class="tk-modal-actions"><button class="btn" onclick="copyTempPassword()">Copier</button><button class="btn btn-primary" onclick="document.getElementById('team-pwd-modal').classList.remove('open')">Fermer</button></div>
   </div>
 </div>
 <div class="tk-modal" id="help-modal" onclick="if(event.target===this)closeHelp()">
@@ -514,8 +578,206 @@ function getSupabase(){
   if(!_supabase)_supabase=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
   return _supabase;
 }
+
+// ── AUTHENTIFICATION (Supabase Auth, e-mail + mot de passe) ──────────────
+// La page ne s'affiche qu'avec une session valide. Chaque requete envoie le
+// jeton de l'utilisateur ; les regles de la base (RLS) n'acceptent que les
+// membres de l'equipe (table team_members). Les operations d'administration
+// (creer un compte, reinitialiser un mot de passe...) passent par la fonction
+// serveur team-admin, reservee aux administrateurs.
+var currentUser=null,currentMember=null,_appStarted=false,_unauthorized=false;
+var TEAM_FN_URL=SUPABASE_URL+'/functions/v1/team-admin';
+function authScreen(show){
+  var a=document.getElementById('auth-screen'),app=document.getElementById('app');
+  if(a)a.style.display=show?'flex':'none';
+  if(app)app.style.display=show?'none':'';
+}
+async function authHeaders(){
+  var token=SUPABASE_KEY;
+  try{var r=await getSupabase().auth.getSession();if(r.data.session)token=r.data.session.access_token;}catch(e){}
+  return {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+token};
+}
+function handleUnauthorized(){
+  if(_unauthorized)return;_unauthorized=true;
+  showToast('Session expirée, reconnecte-toi.');
+  getSupabase().auth.signOut().then(function(){location.reload();},function(){location.reload();});
+}
+function authError(id,msg){var el=document.getElementById(id);if(!el)return;el.textContent=msg||'';el.style.display=msg?'block':'none';}
+function isRecoveryUrl(){return location.hash.indexOf('type=recovery')>=0;}
+async function startApp(){
+  var sb=getSupabase();
+  sb.auth.onAuthStateChange(function(event,session){
+    if(event==='PASSWORD_RECOVERY'){authScreen(true);showRecoverForm();return;}
+    if(event==='SIGNED_OUT'){if(_appStarted)location.reload();else authScreen(true);return;}
+    if(event==='SIGNED_IN'&&session&&!_appStarted&&!isRecoveryUrl())enterApp(session);
+  });
+  var r=await sb.auth.getSession();
+  if(isRecoveryUrl()){authScreen(true);showRecoverForm();return;}
+  if(r.data.session)enterApp(r.data.session);else authScreen(true);
+}
+async function enterApp(session){
+  if(_appStarted)return;_appStarted=true;
+  currentUser=session.user;
+  var status=await loadCurrentMember();
+  if(status==='denied'){
+    _appStarted=false;authScreen(true);
+    authError('auth-error','Ce compte n\'est pas autorisé à utiliser l\'application. Demande à un administrateur de t\'ajouter à l\'équipe.');
+    getSupabase().auth.signOut();
+    return;
+  }
+  if(status==='error'){
+    _appStarted=false;authScreen(true);
+    authError('auth-error','Impossible de vérifier ton accès (connexion réseau ?). Réessaie.');
+    return;
+  }
+  authScreen(false);
+  init();
+  loadBudgetConfig();
+}
+async function loadCurrentMember(){
+  var email=(currentUser&&currentUser.email||'').toLowerCase();
+  try{
+    var r=await fetch(SUPABASE_URL+'/rest/v1/team_members?email=eq.'+encodeURIComponent(email)+'&select=email,name,role',{headers:await authHeaders()});
+    if(!r.ok){currentMember=null;renderUserMenu();return 'error';}
+    var rows=await r.json();
+    currentMember=rows[0]||null;
+  }catch(e){currentMember=null;renderUserMenu();return 'error';}
+  renderUserMenu();
+  return currentMember?'ok':'denied';
+}
+function renderUserMenu(){
+  var wrap=document.getElementById('user-menu-wrap');if(!wrap)return;
+  wrap.style.display=currentUser?'':'none';
+  var name=(currentMember&&currentMember.name)||(currentUser&&currentUser.user_metadata&&currentUser.user_metadata.name)||'';
+  var email=currentUser?currentUser.email:'';
+  var head=document.getElementById('user-menu-head');
+  if(head)head.innerHTML='<div class="menu-head-name">'+esc(name||email)+'</div>'+(name?'<div class="menu-head-sub">'+esc(email)+'</div>':'')+(currentMember?'<div class="menu-head-sub">'+(currentMember.role==='admin'?'Administrateur':'Membre')+'</div>':'');
+  var btn=document.getElementById('user-btn');if(btn)btn.title=name||email;
+  var team=document.getElementById('user-menu-team');if(team)team.style.display=(currentMember&&currentMember.role==='admin')?'':'none';
+}
+function closeUserMenu(){var m=document.getElementById('user-menu');if(m)m.style.display='none';}
+async function authSubmit(e){
+  e.preventDefault();
+  var email=document.getElementById('auth-email').value.trim(),pwd=document.getElementById('auth-password').value;
+  var btn=document.getElementById('auth-submit');btn.disabled=true;btn.textContent='Connexion…';authError('auth-error','');
+  try{
+    var r=await getSupabase().auth.signInWithPassword({email:email,password:pwd});
+    if(r.error)authError('auth-error',/invalid/i.test(r.error.message)?'E-mail ou mot de passe incorrect.':r.error.message);
+    // succes : onAuthStateChange (SIGNED_IN) lance l'application
+  }catch(err){authError('auth-error','Connexion impossible : '+(err.message||err));}
+  btn.disabled=false;btn.textContent='Se connecter';
+  return false;
+}
+async function authForgot(){
+  var email=document.getElementById('auth-email').value.trim();
+  if(!email){authError('auth-error','Indique ton e-mail, puis clique à nouveau sur « Mot de passe oublié ».');return;}
+  authError('auth-error','');
+  try{await getSupabase().auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});}catch(e){}
+  showToast('Si ce compte existe, un e-mail de réinitialisation vient d\'être envoyé.',6000);
+}
+function showRecoverForm(){
+  document.getElementById('auth-form').style.display='none';
+  document.getElementById('auth-recover-form').style.display='';
+  document.getElementById('auth-title').textContent='Nouveau mot de passe';
+}
+async function authSetNewPassword(e){
+  e.preventDefault();
+  var pwd=document.getElementById('auth-new-password').value;
+  authError('auth-recover-error','');
+  var r=await getSupabase().auth.updateUser({password:pwd});
+  if(r.error){authError('auth-recover-error',r.error.message);return false;}
+  history.replaceState(null,'',location.pathname);
+  document.getElementById('auth-recover-form').style.display='none';
+  document.getElementById('auth-form').style.display='';
+  document.getElementById('auth-title').textContent='Connexion';
+  showToast('Mot de passe enregistré.');
+  var s=await getSupabase().auth.getSession();
+  if(s.data.session)enterApp(s.data.session);
+  return false;
+}
+function authSignOut(){getSupabase().auth.signOut().then(function(){location.reload();},function(){location.reload();});}
+// Mon compte : changer son propre mot de passe
+function openAccountModal(){document.getElementById('acc-pwd').value='';document.getElementById('acc-pwd2').value='';document.getElementById('account-modal').classList.add('open');setTimeout(function(){document.getElementById('acc-pwd').focus();},50);}
+async function saveAccountPassword(){
+  var p1=document.getElementById('acc-pwd').value,p2=document.getElementById('acc-pwd2').value;
+  if(p1.length<8){showToast('8 caractères minimum.');return;}
+  if(p1!==p2){showToast('Les deux mots de passe ne correspondent pas.');return;}
+  var r=await getSupabase().auth.updateUser({password:p1});
+  if(r.error){showToast('Échec : '+r.error.message,6000);return;}
+  document.getElementById('account-modal').classList.remove('open');
+  showToast('Mot de passe modifié.');
+}
+// ── EQUIPE (administrateurs) : via la fonction serveur team-admin ──
+async function teamCall(action,payload){
+  var body=Object.assign({action:action},payload||{});
+  var r=await fetch(TEAM_FN_URL,{method:'POST',headers:Object.assign(await authHeaders(),{'Content-Type':'application/json'}),body:JSON.stringify(body)});
+  var data=null;try{data=await r.json();}catch(e){}
+  if(!r.ok||(data&&data.error))throw new Error((data&&data.error)||('HTTP '+r.status));
+  return data;
+}
+async function renderTeam(){
+  var el=document.getElementById('team-list');if(!el)return;
+  if(!currentMember||currentMember.role!=='admin'){el.innerHTML='<div class="empty-state">Réservé aux administrateurs.</div>';return;}
+  el.innerHTML='<div class="empty-state">Chargement…</div>';
+  try{
+    var d=await teamCall('list');
+    var me=(currentUser.email||'').toLowerCase();
+    if(!d.members.length){el.innerHTML='<div class="empty-state">Aucun membre.</div>';return;}
+    el.innerHTML='<table class="team-table"><thead><tr><th>Membre</th><th>Rôle</th><th>Dernière connexion</th><th></th></tr></thead><tbody>'+d.members.map(function(m){
+      var isMe=m.email===me;
+      var last=m.last_sign_in_at?new Date(m.last_sign_in_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'Jamais';
+      return '<tr>'
+        +'<td><div class="team-name">'+esc(m.name||'—')+(isMe?' <span class="team-me">(toi)</span>':'')+'</div><div class="team-email">'+esc(m.email)+'</div></td>'
+        +'<td><span class="team-role'+(m.role==='admin'?' admin':'')+'">'+(m.role==='admin'?'Administrateur':'Membre')+'</span></td>'
+        +'<td class="team-last">'+last+'</td>'
+        +'<td class="team-actions">'
+          +'<button class="tk-task-btn" title="Réinitialiser le mot de passe" onclick="teamReset(\''+esc(m.email)+'\')">'+icon('rotate')+'</button>'
+          +(isMe?'':'<button class="tk-task-btn" title="'+(m.role==='admin'?'Passer membre':'Passer administrateur')+'" onclick="teamRole(\''+esc(m.email)+'\',\''+(m.role==='admin'?'member':'admin')+'\')">'+icon('user')+'</button>')
+          +(isMe?'':'<button class="tk-task-btn del-btn" title="Retirer l\'accès" onclick="teamRemove(\''+esc(m.email)+'\')">'+icon('x')+'</button>')
+        +'</td></tr>';
+    }).join('')+'</tbody></table>';
+  }catch(e){el.innerHTML='<div class="empty-state">Impossible de charger l\'équipe : '+esc(e.message)+'</div>';}
+}
+function openTeamAddModal(){document.getElementById('ta-email').value='';document.getElementById('ta-name').value='';document.getElementById('ta-role').value='member';document.getElementById('team-add-modal').classList.add('open');setTimeout(function(){document.getElementById('ta-email').focus();},50);}
+async function teamAdd(){
+  var email=document.getElementById('ta-email').value.trim().toLowerCase(),name=document.getElementById('ta-name').value.trim(),role=document.getElementById('ta-role').value;
+  if(!email){showToast('E-mail requis.');return;}
+  var btn=document.getElementById('ta-submit');btn.disabled=true;
+  try{
+    var d=await teamCall('add',{email:email,name:name,role:role});
+    document.getElementById('team-add-modal').classList.remove('open');
+    showTempPassword(email,d.tempPassword,'Compte créé');
+    renderTeam();
+  }catch(e){showToast('Échec : '+e.message,6000);}
+  btn.disabled=false;
+}
+async function teamReset(email){
+  if(!await customConfirm('Générer un nouveau mot de passe provisoire pour '+email+' ? L\'ancien ne fonctionnera plus.','Réinitialiser'))return;
+  try{var d=await teamCall('reset',{email:email});showTempPassword(email,d.tempPassword,'Mot de passe réinitialisé');}
+  catch(e){showToast('Échec : '+e.message,6000);}
+}
+async function teamRole(email,role){
+  try{await teamCall('role',{email:email,role:role});renderTeam();}
+  catch(e){showToast('Échec : '+e.message,6000);}
+}
+async function teamRemove(email){
+  if(!await customConfirm('Retirer l\'accès de '+email+' ? Son compte sera supprimé.','Retirer'))return;
+  try{await teamCall('remove',{email:email});renderTeam();showToast('Accès retiré.');}
+  catch(e){showToast('Échec : '+e.message,6000);}
+}
+function showTempPassword(email,pwd,title){
+  document.getElementById('tp-title').textContent=title;
+  document.getElementById('tp-email').textContent=email;
+  document.getElementById('tp-pwd').textContent=pwd||'';
+  document.getElementById('team-pwd-modal').classList.add('open');
+}
+function copyTempPassword(){
+  var t=document.getElementById('tp-pwd').textContent;
+  try{navigator.clipboard.writeText(t).then(function(){showToast('Copié.');},function(){showToast('Sélectionne et copie le mot de passe.');});}catch(e){showToast('Sélectionne et copie le mot de passe.');}
+}
 async function dbGet(key,fallback){
-  var r=await fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.'+key+'&select=value',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+  var r=await fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.'+key+'&select=value',{headers:await authHeaders()});
+  if(r.status===401)handleUnauthorized();
   if(!r.ok)throw new Error('Lecture Supabase echouee pour "'+key+'" (HTTP '+r.status+')');
   var rows=await r.json();
   // Un tableau vide est un etat valide (cle jamais ecrite) ; toute autre forme
@@ -525,16 +787,17 @@ async function dbGet(key,fallback){
   try{return JSON.parse(rows[0].value);}catch(e){return fallback;}
 }
 async function dbSet(key,value){
-  var r=await fetch(SUPABASE_URL+'/rest/v1/app_data',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:key,value:JSON.stringify(value)})});
+  var r=await fetch(SUPABASE_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign(await authHeaders(),{'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({key:key,value:JSON.stringify(value)})});
+  if(r.status===401)handleUnauthorized();
   if(!r.ok)throw new Error('Ecriture Supabase echouee pour "'+key+'" (HTTP '+r.status+')');
 }
 async function storageUpload(path,file){
-  var r=await fetch(SUPABASE_URL+'/storage/v1/object/concert-media/'+path,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':file.type||'application/octet-stream'},body:file});
+  var r=await fetch(SUPABASE_URL+'/storage/v1/object/concert-media/'+path,{method:'POST',headers:Object.assign(await authHeaders(),{'Content-Type':file.type||'application/octet-stream'}),body:file});
   if(!r.ok)throw new Error('Upload echoue (HTTP '+r.status+')');
   return SUPABASE_URL+'/storage/v1/object/public/concert-media/'+path;
 }
 async function storageDelete(path){
-  await fetch(SUPABASE_URL+'/storage/v1/object/concert-media/'+path,{method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+  await fetch(SUPABASE_URL+'/storage/v1/object/concert-media/'+path,{method:'DELETE',headers:await authHeaders()});
 }
 
 // ── REALTIME : écouter les changements ────────────────────
@@ -755,6 +1018,13 @@ async function init(){
   document.getElementById('app').style.display='';
   try{
     var res=await Promise.all([dbGet('concerts',[]),dbGet('taskstates',{}),dbGet('process',null)]);
+    // Garde-fou : une base qui repond "rien" sur les trois cles principales
+    // signifie presque toujours un acces refuse (regles RLS) et non une base
+    // vide. On refuse de demarrer plutot que de risquer d'ecraser les vraies
+    // donnees avec un etat vide.
+    if(!(res[0]&&res[0].length)&&!(res[1]&&Object.keys(res[1]).length)&&!res[2]){
+      throw new Error('Aucune donnée reçue : accès refusé ou base vide.');
+    }
     concerts=res[0]||[];taskStates=res[1]||{};
     var raw=res[2]||DEFAULT_PROCESS;
     process=raw.map(function(t){return Object.assign({prereq:null,cat:t.cat||'gen'},t);});
@@ -802,6 +1072,7 @@ function showTab(id,btn){
   if(btn)btn.classList.add('active');panel.classList.add('active');
   currentTab=id;
   if(id==='budgetconfig'){ renderBcTemplateEditor(); renderBcStyleEditor(); renderBcSalleEditor(); }
+  if(id==='team')renderTeam();
   pushRoute(id,null);
   window.scrollTo(0,0);
 }
@@ -809,7 +1080,7 @@ function showTab(id,btn){
 // Permet de rafraichir sans revenir au Tableau de bord, d'envoyer le lien
 // d'une fiche, et d'utiliser le bouton retour du navigateur (il ferme la
 // fiche, puis revient a l'onglet precedent).
-var TAB_IDS=['rs','kanban','concerts','past','taches','process','budgetconfig'];
+var TAB_IDS=['rs','kanban','concerts','past','taches','process','budgetconfig','team'];
 var _routing=false; // vrai pendant applyRoute() : on ne re-pousse pas l'URL
 function routeHash(tab,ficheId){return '#'+tab+(ficheId?'/'+ficheId:'');}
 function pushRoute(tab,ficheId,replace){
@@ -2986,17 +3257,15 @@ async function loadBudgetConfig() {
   } catch(e) { console.warn('Budget config non chargé:', e); }
 }
 
-function supaGet(key) {
-  return fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.'+key+'&select=value',{
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
-  }).then(function(r){return r.json();}).then(function(d){
-    return d&&d[0] ? JSON.parse(d[0].value) : null;
-  });
+async function supaGet(key) {
+  var r = await fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.'+key+'&select=value',{ headers: await authHeaders() });
+  var d = await r.json();
+  return d&&d[0] ? JSON.parse(d[0].value) : null;
 }
-function supaSet(key, value) {
+async function supaSet(key, value) {
   return fetch(SUPABASE_URL+'/rest/v1/app_data',{
     method:'POST',
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+    headers:Object.assign(await authHeaders(),{'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'}),
     body:JSON.stringify({key:key, value:JSON.stringify(value)})
   });
 }
@@ -3107,8 +3376,7 @@ function toggleFicheWide(){
 // Onglet demande dans l'URL (la fiche attendra le chargement des donnees)
 if(!location.hash)pushRoute('kanban',null,true);
 applyRoute();
-init();
-loadBudgetConfig();
+startApp();
 </script>
 <!-- ── MODAL BUDGET PROMO ───────────────────────────────── -->
 <div id="budget-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center">
@@ -3598,7 +3866,7 @@ function budgetGoogleAuth() {
 // Récupérer le token OAuth au chargement si on revient d'une auth Google
 (function(){
   var hash = window.location.hash;
-  if (hash && hash.indexOf('access_token') >= 0) {
+  if (hash && hash.indexOf('access_token') >= 0 && hash.indexOf('refresh_token') < 0 && hash.indexOf('type=recovery') < 0) {
     var params = {};
     hash.substring(1).split('&').forEach(function(p){ var kv=p.split('='); params[kv[0]]=decodeURIComponent(kv[1]||''); });
     if (params.access_token) {
