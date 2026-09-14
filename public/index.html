@@ -123,11 +123,11 @@
             <select id="fville" onchange="renderKanban()"><option value="">Toutes les villes</option></select>
             <select id="fperiode" onchange="renderKanban()"><option value="">Toutes les périodes</option></select>
             <select id="fcat" onchange="renderKanban()" title="Affiche les concerts ayant une tâche urgente ou en retard dans cette catégorie"><option value="">Toutes les catégories</option></select>
-            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding-top:2px;border-top:1px solid var(--border-light)">
-              <input type="checkbox" id="fhideok" onchange="renderKanban()" style="width:auto"> Cacher les concerts OK
-            </label>
           </div>
         </div>
+        <label class="hideok-toggle" title="N'afficher que les concerts ayant une tâche en attente">
+          <input type="checkbox" id="fhideok" onchange="renderKanban()"> Cacher les concerts OK
+        </label>
       </div>
       <div id="kanban-wrap"><div class="grid" aria-hidden="true"><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-line w40"></div><div class="skel skel-block"></div></div><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-line w40"></div><div class="skel skel-block"></div></div><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-line w40"></div><div class="skel skel-block"></div></div><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-line w40"></div><div class="skel skel-block"></div></div><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-line w40"></div><div class="skel skel-block"></div></div><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-line w40"></div><div class="skel skel-block"></div></div></div></div>
     </div>
@@ -1997,10 +1997,6 @@ function renderKanban(){
   updateFiltersBadge('kfilters-badge',['fville','fperiode','fcat']);
   var hideOkEl=document.getElementById('fhideok');
   var hideOk=!!(hideOkEl&&hideOkEl.checked);
-  if(hideOk){
-    var kBadge=document.getElementById('kfilters-badge');
-    if(kBadge){kBadge.textContent=(parseInt(kBadge.textContent,10)||0)+1;kBadge.style.display='inline-flex';}
-  }
   var list=filtered();
   var wrap=document.getElementById('kanban-wrap');
   if(!list.length){wrap.innerHTML=emptyConcertsHtml(kanbanFiltersActive(),'resetKanbanFilters()');return;}

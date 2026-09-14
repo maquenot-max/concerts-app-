@@ -72,6 +72,12 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .filters-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;margin-left:6px;border-radius:20px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:700}
 .filters-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:20;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow-md);padding:10px;display:flex;flex-direction:column;gap:8px;min-width:200px}
 .filters-panel select{width:100%}
+/* Bascule "Cacher les concerts OK" : directement dans la barre de filtres
+   (plutot que dans le panneau Filtres) pour un acces en un clic. */
+.hideok-toggle{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text-2);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;user-select:none;white-space:nowrap}
+.hideok-toggle:hover{background:var(--bg)}
+.hideok-toggle input{width:auto;margin:0}
+.hideok-toggle:has(input:checked){background:var(--accent-soft);border-color:transparent;color:var(--text)}
 /* Menu d'actions (fiche) : meme popover, aligne a droite, items en liste */
 .fiche-menu{left:auto;right:0;min-width:240px;gap:0;padding:6px}
 .menu-item{display:block;width:100%;text-align:left;background:none;border:none;padding:8px 10px;font-size:13px;color:var(--text);cursor:pointer;border-radius:var(--radius-sm);font-family:inherit;white-space:nowrap}
