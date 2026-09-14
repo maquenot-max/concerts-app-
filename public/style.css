@@ -32,7 +32,7 @@
   --shadow:none;
   --shadow-md:0 4px 16px rgba(20,23,31,.10);
 }
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+body{font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums}
 
 /* ── HEADER FIXE ──────────────────────────────────────── */
 header{
@@ -552,6 +552,20 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .cmdk-empty{padding:20px;text-align:center;color:var(--text-3);font-size:13px}
 .cmdk-foot{display:flex;gap:14px;padding:8px 14px;border-top:1px solid var(--border-light);font-size:11px;color:var(--text-3)}
 .cmdk-foot span{display:inline-flex;align-items:center;gap:4px}
+
+/* ── TYPOGRAPHIE ──────────────────────────────────────── */
+/* Geist pour toute l'interface (chiffres alignes). Les noms d'artistes en
+   Bricolage Grotesque semi-condensee, en capitales : une tete d'affiche. */
+.artist,.col-name,.crow-name,.fiche-header h2,.ann-compact-art,.ncb-art,.cal-art,.rpt-cover h1,.bilan-header h1{font-family:'Bricolage Grotesque','Geist',-apple-system,BlinkMacSystemFont,sans-serif;font-stretch:88%;font-weight:700;letter-spacing:.005em;text-transform:uppercase}
+.col-name{font-size:14px}
+.crow-name{font-size:14px}
+.fiche-header h2{font-size:20px}
+.ann-compact-art{font-size:13px}
+.ncb-art{font-size:14px}
+.cal-art{font-size:12px !important}
+.cmdk-title.artist{font-size:14px}
+.rpt-cover h1{font-size:40px}
+.cancel-badge{font-family:'Geist',-apple-system,BlinkMacSystemFont,sans-serif;font-stretch:100%;letter-spacing:.03em}
 
 /* ── ACCESSIBILITE : zones de clic elargies + focus clavier ── */
 /* Les cases a cocher font 16px visuellement mais acceptent le clic 6px autour. */

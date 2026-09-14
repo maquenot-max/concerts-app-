@@ -9,6 +9,9 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,500..800&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -1080,7 +1083,7 @@ function exportCampaignReport(id){
     return '<tr><td>'+fmt(new Date(p.date))+'</td><td>'+esc(t.label)+'</td><td>'+(p.format==='story'?'Story':'Post')+'</td><td>'+esc(netLabel(p))+'</td><td>'+statusHtml+'</td></tr>';
   }).join('');
   var ventes=VENTES[c.ventes||0];
-  var html='<div class="rpt-cover"><div class="rpt-brand">Please Please Communication</div><h1>'+esc(c.art)+'</h1><div class="rpt-cover-sub">'+esc(formatLieu(c.ville))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div>';
+  var html='<div class="rpt-cover"><div class="rpt-brand">Please Please Communication</div><h1 class="artist">'+esc(c.art)+'</h1><div class="rpt-cover-sub">'+esc(formatLieu(c.ville))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div>';
   var mediaForConcert=concertMedia.filter(function(m){return m.concertId===c.id;});
   REPORT_SECTIONS.forEach(function(sec){
     var items=mediaForConcert.filter(function(m){return sec.cats.indexOf(m.cat)>=0;});
@@ -1089,7 +1092,7 @@ function exportCampaignReport(id){
     html+='<div class="rpt-section">'+reportMediaGridHtml(items)+'</div>';
   });
   html+='<div class="rpt-divider"><h2>Suivi & avancement</h2></div>';
-  html+='<div class="bilan-header" style="margin-top:24px"><div><h1>'+esc(c.art)+'</h1><div class="bilan-sub">'+esc(formatLieu(c.ville))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div><div class="bilan-date">Please Please Communication<br>Rapport généré le '+fmtFull(new Date())+'</div></div>';
+  html+='<div class="bilan-header" style="margin-top:24px"><div><h1 class="artist">'+esc(c.art)+'</h1><div class="bilan-sub">'+esc(formatLieu(c.ville))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div><div class="bilan-date">Please Please Communication<br>Rapport généré le '+fmtFull(new Date())+'</div></div>';
   html+='<div class="bilan-section"><h2>Informations générales</h2><div class="bilan-infos">'
     +'<div><span>Salle</span>'+esc(formatLieu(c.ville)||'-')+'</div>'
     +'<div><span>Date du concert</span>'+(c.dc?fmtFull(new Date(c.dc)):'-')+'</div>'
@@ -1657,7 +1660,7 @@ function renderConcertsCalendar(liste,el){
       +evs.slice(0,3).map(function(c){
         var lieu=formatLieu(c.ville);
         return '<div class="crow'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')" title="'+esc(c.art)+(lieu?' - '+esc(lieu):'')+'" style="display:flex;flex-direction:column;align-items:flex-start;min-height:0;border-bottom:none;padding:2px 5px;border-radius:4px;background:var(--bg);cursor:pointer;overflow:hidden">'
-          +'<div style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(c.art)+cancelBadge(c)+'</div>'
+          +'<div class="cal-art" style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(c.art)+cancelBadge(c)+'</div>'
           +(lieu?'<div style="font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(lieu)+'</div>':'')
           +'</div>';
       }).join('')
@@ -2986,7 +2989,7 @@ function cmdkRender(q){
   var html='',lastType='';
   items.forEach(function(it,i){
     if(it.type!==lastType){html+='<div class="cmdk-group">'+(it.type==='concert'?(nq?'Concerts':'Prochains concerts'):'Onglets')+'</div>';lastType=it.type;}
-    html+='<div class="cmdk-item'+(i===cmdkIdx?' sel':'')+'" data-i="'+i+'" onmousemove="cmdkHover('+i+')" onclick="cmdkPick('+i+')"><div class="cmdk-title">'+esc(it.title)+'</div><div class="cmdk-sub">'+esc(it.sub)+'</div></div>';
+    html+='<div class="cmdk-item'+(i===cmdkIdx?' sel':'')+'" data-i="'+i+'" onmousemove="cmdkHover('+i+')" onclick="cmdkPick('+i+')"><div class="cmdk-title'+(it.type==='concert'?' artist':'')+'">'+esc(it.title)+'</div><div class="cmdk-sub">'+esc(it.sub)+'</div></div>';
   });
   el.innerHTML=html;
 }
