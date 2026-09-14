@@ -427,6 +427,7 @@
 <div class="toast-stack">
   <div class="saving" id="saving">Sauvegarde...</div>
   <div class="saving" id="sync-banner" style="background:#2d7a4f"></div>
+  <div class="saving toast-warn" id="app-toast"></div>
 </div>
 <script>
 var SUPABASE_URL='https://vkehaerkbvfxlyjvrpzi.supabase.co';
@@ -599,6 +600,15 @@ async function reloadFromRemote(changedKey){
   }
 }
 
+// Notification transitoire dans le style de l'appli (remplace alert()).
+// Duree proportionnelle a la longueur du message (2,5 s a 10 s).
+function showToast(msg,ms){
+  var el=document.getElementById('app-toast');
+  if(!el){window.alert(msg);return;}
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(el._t);
+  el._t=setTimeout(function(){el.classList.remove('show');},ms||Math.min(10000,Math.max(2500,msg.length*45)));
+}
 function showSyncBanner(msg,fadeOut){
   var el=document.getElementById('sync-banner');
   if(!el)return;
@@ -1281,7 +1291,7 @@ async function addConcert(){
   var ville=document.getElementById('f-ville').value.trim();
   var dc=document.getElementById('f-dc').value;
   var da=document.getElementById('f-da').value;
-  if(!art||!dc){alert('Artiste et date de concert obligatoires.');return;}
+  if(!art||!dc){showToast('Artiste et date de concert obligatoires.');return;}
   var btn=document.getElementById('add-btn');btn.disabled=true;btn.textContent='Ajout...';
   concerts.push({id:Date.now().toString(),art:art,ville:ville,dc:dc,da:da,medias:'',jeux:'',budget:'',notes:'',ventes:0});
   concerts.sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
@@ -1834,7 +1844,7 @@ async function wizardUploadFile(input){
     renderWizardStep();
   }catch(e){
     console.error(e);
-    alert('Échec de l\'envoi de la photo : '+e.message);
+    showToast('Échec de l\'envoi de la photo : '+e.message);
   }
   input.disabled=false;
   input.value='';
@@ -1990,7 +2000,7 @@ function renderTaches(){
     // Header
     // Tâches
     var tasksEl=document.createElement('div');tasksEl.className='tk-tasks';
-    tasksEl.addEventListener('dragover',function(e){e.preventDefault();tasksEl.style.outline='2px dashed rgba(59,130,246,.3)';});
+    tasksEl.addEventListener('dragover',function(e){e.preventDefault();tasksEl.style.outline='2px dashed rgba(0,0,0,.2)';});
     tasksEl.addEventListener('dragleave',function(){tasksEl.style.outline='';});
     tasksEl.addEventListener('drop',function(e){
       e.preventDefault();tasksEl.style.outline='';
@@ -2370,9 +2380,9 @@ function renderRS(){
     // Styles
     var headerStyle='';var numStyle='';var nameStyle='';
     if(isToday){
-      headerStyle='background:rgba(59,130,246,.08);border-left:4px solid #3b82f6;padding-left:13px;';
-      numStyle='color:#2563eb;font-size:16px;font-weight:800;';
-      nameStyle='color:#2563eb;font-weight:700;';
+      headerStyle='background:var(--bg);border-left:4px solid var(--text);padding-left:13px;';
+      numStyle='color:var(--text);font-size:16px;font-weight:800;';
+      nameStyle='color:var(--text);font-weight:700;';
     } else if(isPast){
       var hasUnposted=dayPosts.some(function(p){return p.status!=='posted';});
       headerStyle=hasUnposted?'opacity:.7;border-left:2px solid #f0a030;':'opacity:.38;';
@@ -2395,7 +2405,7 @@ function renderRS(){
       +'<div class="rs-day-header'+(isWE&&!isToday?' weekend':'')+'" id="rsday-'+dateStr+'" style="'+headerStyle+'" onclick="'+rowClick+'">'
       +'<span style="display:inline-flex;flex-direction:column;align-items:center;min-width:36px;line-height:1">'
       +'<span class="rs-day-num" style="'+numStyle+'line-height:1;">'+dayNum+'</span>'
-      +'<span style="font-size:11px;color:'+(isToday?'#2563eb':(isPast?'#ccc':'var(--text-3)'))+';text-transform:uppercase;font-weight:700;letter-spacing:.03em;margin-top:1px;">'+monthName+'</span>'
+      +'<span style="font-size:11px;color:'+(isToday?'var(--text)':(isPast?'#ccc':'var(--text-3)'))+';text-transform:uppercase;font-weight:700;letter-spacing:.03em;margin-top:1px;">'+monthName+'</span>'
       +'</span>'
       +'<span style="font-size:11px;min-width:36px;'+nameStyle+(isPast&&!isToday?'color:#ccc;':'')+(isWE&&!isToday&&!isPast?'color:var(--text-3);':'')+'">'+dayName+'</span>'
       +'<div class="rs-chips">'+chips+'</div>'
@@ -3480,7 +3490,7 @@ function budgetSaveClientId() {
 }
 
 function budgetGoogleAuth() {
-  if (!BUDGET_CLIENT_ID) { alert('Configure d\'abord ton Client ID Google.'); return; }
+  if (!BUDGET_CLIENT_ID) { showToast('Configure d\'abord ton Client ID Google.'); return; }
   var redirect = window.location.origin === 'http://localhost:8080' 
     ? 'http://localhost:8080/index.html'
     : 'https://dashboardppcomm.netlify.app';
@@ -3533,9 +3543,9 @@ function budgetGoogleAuth() {
 // ── CRÉATION DU GOOGLE SHEET ──────────────────────────────
 
 function budgetCreateSheet() {
-  if (!budgetGToken) { alert('Connecte-toi à Google d\'abord.'); return; }
+  if (!budgetGToken) { showToast('Connecte-toi à Google d\'abord.'); return; }
   var montant = parseFloat(document.getElementById('bud-montant').value);
-  if (!montant || !budSelectedStyle) { alert('Remplis le budget et le style musical.'); return; }
+  if (!montant || !budSelectedStyle) { showToast('Remplis le budget et le style musical.'); return; }
 
   var c = concerts.find(function(x){return x.id===currentFicheId;});
   if (!c) return;
@@ -3555,7 +3565,7 @@ function budgetCreateSheet() {
   var sectionsATesters={'Street marketing':tpl.lines.street,'Achat d\'espaces':tpl.lines.espaces,'Digital':tpl.lines.digital,'Radio/TV/Presse':tpl.lines.radio};
   var sectionEnTrop=Object.keys(sectionsATesters).find(function(k){return (sectionsATesters[k]||[]).length>10;});
   if(sectionEnTrop){
-    alert('La section "'+sectionEnTrop+'" contient plus de 10 lignes ('+sectionsATesters[sectionEnTrop].length+'). Le modele de feuille ne peut en afficher que 10 par section : reduis le nombre de lignes dans la config Budget avant de creer le Sheet, sinon les lignes en trop seraient perdues.');
+    showToast('La section "'+sectionEnTrop+'" contient plus de 10 lignes ('+sectionsATesters[sectionEnTrop].length+'). Le modele de feuille ne peut en afficher que 10 par section : reduis le nombre de lignes dans la config Budget avant de creer le Sheet, sinon les lignes en trop seraient perdues.');
     btn.disabled=false;btn.textContent='Créer le Google Sheet';
     return;
   }
