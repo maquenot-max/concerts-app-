@@ -3795,7 +3795,7 @@ function budUpdatePreview() {
     rows.forEach(function(r){
       var price = r.total ? r.total+'€' : (r.qte && r.pu ? (r.qte*r.pu).toFixed(0)+'€' : '—');
       html += '<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border-light)">'
-        +'<span style="color:var(--text-2)">'+r.nom+'</span>'
+        +'<span style="color:var(--text-2)">'+esc(r.nom)+'</span>'
         +'<span style="font-weight:600;color:var(--text);min-width:40px;text-align:right">'+price+'</span></div>';
     });
   });
