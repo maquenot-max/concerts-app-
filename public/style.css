@@ -159,8 +159,6 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .crow-late{font-size:11px;color:var(--red);background:var(--red-bg);padding:2px 8px;border-radius:20px;font-weight:600;white-space:nowrap;flex-shrink:0;border:1px solid var(--red-border)}
 .crow-ok{font-size:11px;color:var(--green);background:var(--green-bg);padding:2px 8px;border-radius:20px;font-weight:500;white-space:nowrap;flex-shrink:0}
 .crow-announced{font-size:11px;color:var(--green);background:var(--green-bg);padding:2px 8px;border-radius:20px;font-weight:500;white-space:nowrap;flex-shrink:0}
-.ann-undo{background:none;border:none;cursor:pointer;color:var(--text-3);font-size:13px;padding:2px 5px;border-radius:4px;flex-shrink:0}
-.ann-undo:hover{color:var(--text);background:var(--bg)}
 
 /* ── PROCESS ──────────────────────────────────────────── */
 .prow{display:grid;grid-template-columns:16px 1fr 58px 110px 110px 160px 28px;gap:6px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border-light)}
@@ -543,9 +541,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .cancel-badge{display:inline-block;font-size:11px;font-weight:700;color:var(--text-2);background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1px 7px;margin-left:6px;text-transform:uppercase;letter-spacing:.03em;vertical-align:middle}
 
 /* ── RECHERCHE GLOBALE (⌘K) ───────────────────────────── */
-.cmdk-hint{display:inline-flex;align-items:center;gap:8px;padding:5px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text-3);font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
-.cmdk-hint:hover{color:var(--text);border-color:var(--border-strong);background:var(--surface)}
-.cmdk-hint kbd,.cmdk-foot kbd{font-family:inherit;font-size:10px;padding:1px 5px;border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;background:var(--surface);color:var(--text-3);line-height:1.4}
+.cmdk-foot kbd{font-family:inherit;font-size:10px;padding:1px 5px;border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;background:var(--surface);color:var(--text-3);line-height:1.4}
 .cmdk-box{width:560px;max-width:92vw;background:var(--surface);border-radius:var(--radius);box-shadow:0 20px 60px rgba(0,0,0,.18);overflow:hidden;margin-top:-20vh}
 #cmdk-input{width:100%;padding:16px 18px;border:none;border-bottom:1px solid var(--border);font-size:15px;outline:none;font-family:inherit;background:var(--surface);color:var(--text)}
 #cmdk-input:focus-visible{box-shadow:none;border-color:var(--border) !important}
@@ -610,10 +606,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
   *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
 }
 
-/* ── BOUTON D'EN-TETE (densite) ───────────────────────── */
+/* ── BOUTON D'EN-TETE (menu utilisateur) ──────────────── */
 .hdr-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text-3);cursor:pointer;flex-shrink:0;transition:all .15s}
 .hdr-btn:hover{color:var(--text);background:var(--surface);border-color:var(--border-strong)}
-.hdr-btn.on{color:var(--accent);background:var(--accent-soft);border-color:var(--accent-soft)}
 .hdr-btn .ico{width:15px;height:15px}
 
 /* ── SQUELETTES DE CHARGEMENT ─────────────────────────── */
@@ -622,25 +617,6 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .skel-card{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);padding:12px;display:flex;flex-direction:column;gap:8px}
 .skel-line{height:10px}.skel-line.w40{width:40%}.skel-line.w60{width:60%}.skel-line.w80{width:80%}
 .skel-block{height:34px;margin-top:6px}
-
-/* ── DENSITE COMPACTE ─────────────────────────────────── */
-body[data-density="compact"] .grid{gap:8px;grid-template-columns:repeat(7,1fr)}
-body[data-density="compact"] .col-head{padding:7px 10px}
-body[data-density="compact"] .titem{padding:5px 10px}
-body[data-density="compact"] .ok-col{padding:6px 10px}
-body[data-density="compact"] .crow{min-height:40px}
-body[data-density="compact"] .crow>div{padding-top:5px !important;padding-bottom:5px !important}
-body[data-density="compact"] .ftask{padding:6px 0}
-body[data-density="compact"] .ftask:hover{padding:6px 1.5rem}
-body[data-density="compact"] .fiche-body{padding:1rem 1.5rem}
-body[data-density="compact"] .tk-task{padding:6px 4px}
-body[data-density="compact"] .dash-widget-head{padding:7px 14px}
-body[data-density="compact"] .ann-grid-compact{padding:8px;gap:6px}
-body[data-density="compact"] .ann-card-compact{padding:6px 8px}
-body[data-density="compact"] .tk-widget-task{padding:3px 2px}
-body[data-density="compact"] .rs-day-header{padding:4px 16px}
-body[data-density="compact"] .card{padding:1rem 1.25rem}
-body[data-density="compact"] .dash-top{margin-bottom:1.25rem}
 
 /* ── CONNEXION ────────────────────────────────────────── */
 #auth-screen{position:fixed;inset:0;z-index:900;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:1rem}
@@ -687,8 +663,7 @@ body[data-density="compact"] .dash-top{margin-bottom:1.25rem}
   main{padding:72px .75rem 1rem}
   /* Sur mobile la barre de filtres tient sur 2-3 lignes : on ne la colle pas */
   .filters{position:static;padding:0}
-  .cmdk-hint-text,.cmdk-hint kbd,.cmdk-foot{display:none}
-  .cmdk-hint{padding:6px 8px}
+  .cmdk-foot{display:none}
   .cmdk-box{margin-top:-30vh}
   .next-concert-banner{scrollbar-width:none}
   .next-concert-banner::-webkit-scrollbar{display:none}
@@ -706,9 +681,8 @@ body[data-density="compact"] .dash-top{margin-bottom:1.25rem}
   .process-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .process-header,.prow{min-width:700px}
 }
-@media (max-width:768px){body[data-density="compact"] .grid{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:480px){
-  .grid,body[data-density="compact"] .grid{grid-template-columns:1fr}
+  .grid{grid-template-columns:1fr}
 }
 
 .bud-style-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer;transition:all .15s;color:var(--text-2)}

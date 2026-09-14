@@ -70,22 +70,20 @@
 <div id="app">
   <header>
     <h1 style="display:flex;align-items:center;gap:8px"><img src="favicon_io/favicon-32x32.png" style="width:20px;height:20px;border-radius:4px" alt=""><span class="h1-text">Please Please Communication &mdash; Dashboard</span></h1>
-    <button class="cmdk-hint" onclick="openCmdK()" title="Rechercher un concert ou un onglet (⌘K ou /)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="cmdk-hint-text">Rechercher</span><kbd>⌘K</kbd></button>
-    <button class="hdr-btn" id="density-btn" onclick="toggleDensity()" title="Densité d'affichage"><svg class="ico" aria-hidden="true"><use href="#i-rows"></use></svg></button>
     <nav class="nav" style="display:flex;gap:1px">
       <button data-tab="rs" onclick="showTab('rs',this)" style="padding:5px 14px;font-size:13px;border:none;background:transparent;cursor:pointer;color:var(--text-2);border-radius:6px;font-weight:500;transition:all .15s;margin-right:12px;border-right:2px solid var(--border);padding-right:16px">Plannings RS</button>
       <button class="active" data-tab="kanban" onclick="showTab('kanban',this)">Tableau de bord</button>
       <button id="btn-concerts" data-tab="concerts" onclick="showTab('concerts',this)">Concerts</button>
       <button id="btn-past" data-tab="past" onclick="showTab('past',this)" style="display:none">Concerts passés</button>
       <button id="btn-taches" data-tab="taches" onclick="showTab('taches',this)">Tâches</button>
-      <button id="btn-process" data-tab="process" onclick="showTab('process',this);budgetConfigClick()">Process</button>
-      <button id="btn-budgetconfig" data-tab="budgetconfig" onclick="showTab('budgetconfig',this)" style="display:none;opacity:0.5;font-size:12px"><svg class="ico" aria-hidden="true"><use href="#i-settings"></use></svg> Budget</button>
     </nav>
     <div class="filters-popover" id="user-menu-wrap" style="display:none">
       <button class="hdr-btn" id="user-btn" onclick="toggleFiltersPanel(event,'user-menu')" title="Mon compte"><svg class="ico" aria-hidden="true"><use href="#i-user"></use></svg></button>
       <div class="filters-panel fiche-menu" id="user-menu" style="display:none">
         <div class="menu-head" id="user-menu-head"></div>
         <button class="menu-item" id="user-menu-team" onclick="closeUserMenu();showTab('team')" style="display:none">Équipe</button>
+        <button class="menu-item" id="user-menu-process" onclick="closeUserMenu();showTab('process')" style="display:none">Process</button>
+        <button class="menu-item" id="user-menu-budget" onclick="closeUserMenu();showTab('budgetconfig')" style="display:none">Budget</button>
         <button class="menu-item" onclick="closeUserMenu();openBackupModal()">Sauvegarde</button>
         <button class="menu-item" onclick="closeUserMenu();openAccountModal()">Mon compte</button>
         <button class="menu-item danger" onclick="closeUserMenu();authSignOut()">Se déconnecter</button>
@@ -297,8 +295,8 @@
               <label for="fi-annule" style="margin:0;cursor:pointer">Concert annulé</label>
             </div>
             <div class="fiche-field" style="grid-column:1/-1"><label>Salle / Ville</label><input type="text" id="fi-ville" onchange="updateFicheField('ville',this.value)"></div>
-            <div class="fiche-field"><label>Date du concert</label><input type="date" id="fi-dc" onchange="updateFicheField('dc',this.value)"></div>
-            <div class="fiche-field"><label>Date d'annonce</label><input type="date" id="fi-da" onchange="updateFicheField('da',this.value)"></div>
+            <div class="fiche-field"><label style="display:flex;align-items:center;gap:5px"><svg class="ico" aria-hidden="true" style="width:12px;height:12px;color:var(--text-3)"><use href="#i-calendar"></use></svg>Date du concert</label><input type="date" id="fi-dc" onchange="updateFicheField('dc',this.value)"></div>
+            <div class="fiche-field"><label style="display:flex;align-items:center;gap:5px"><svg class="ico" aria-hidden="true" style="width:12px;height:12px;color:var(--text-3)"><use href="#i-calendar"></use></svg>Date d'annonce<button type="button" id="fi-da-undo" onclick="event.preventDefault();ficheAnnonceUndo()" title="Marquer comme non annoncée (remet la carte dans les annonces à venir)" style="display:none;background:none;border:none;padding:0;margin-left:2px;cursor:pointer;color:var(--text-3)"><svg class="ico" aria-hidden="true" style="width:12px;height:12px"><use href="#i-rotate"></use></svg></button></label><input type="date" id="fi-da" onchange="updateFicheField('da',this.value)"></div>
             <div class="fiche-field" style="grid-column:1/-1"><label>Média / Photographes</label><input type="text" id="fi-medias" onchange="updateFicheField('medias',this.value)" placeholder="ex: Bien Public, L union..."></div>
             <div class="fiche-field"><label>Jeu concours</label><input type="text" id="fi-jeux" onchange="updateFicheField('jeux',this.value)" placeholder="ex: L union 5x2..."></div>
             <div class="fiche-field"><label>Lien budget</label><input type="text" id="fi-budget" onchange="updateFicheField('budget',this.value)" placeholder="https://..."></div>
@@ -423,7 +421,7 @@
     <div class="help-grid">
       <span class="help-keys"><kbd>⌘K</kbd></span><span>Rechercher un concert ou un onglet (Ctrl+K sur Windows)</span>
       <span class="help-keys"><kbd>/</kbd></span><span>Idem, hors d'un champ de saisie</span>
-      <span class="help-keys"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd><kbd>5</kbd></span><span>Plannings RS · Tableau de bord · Concerts · Tâches · Process</span>
+      <span class="help-keys"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></span><span>Plannings RS · Tableau de bord · Concerts · Tâches</span>
       <span class="help-keys"><kbd>N</kbd></span><span>Nouveau concert</span>
       <span class="help-keys"><kbd>Échap</kbd></span><span>Fermer la fiche, le menu ou la fenêtre ouverte</span>
       <span class="help-keys"><kbd>?</kbd></span><span>Afficher cette aide</span>
@@ -597,19 +595,6 @@ var tkCols=[],tkTasks=[],tkEditId=null,tkAddColId=null;
 var rsPosts=[],rsEditId=null,rsCurrentProj="pp",rsCurrentDate=null,rsFmt="post",rsNetState={fb:false,insta:false,tiktok:false};
 var dragSrcId=null,saveTimer=null,currentFicheId=null;
 
-// ── DENSITE D'AFFICHAGE : Compact / Confortable, memorisee par appareil ──
-function applyDensity(v){
-  document.body.dataset.density=v;
-  var b=document.getElementById('density-btn');
-  if(b){b.classList.toggle('on',v==='compact');b.title=v==='compact'?'Densité : compact — cliquer pour confortable':'Densité : confortable — cliquer pour compact';}
-}
-function toggleDensity(){
-  var v=document.body.dataset.density==='compact'?'comfortable':'compact';
-  applyDensity(v);
-  try{localStorage.setItem('pp_density',v);}catch(e){}
-}
-(function(){var v='comfortable';try{v=localStorage.getItem('pp_density')||v;}catch(e){}applyDensity(v);})();
-
 // ── CLIENT SUPABASE ──────────────────────────────────────
 var _supabase=null;
 function getSupabase(){
@@ -698,7 +683,10 @@ function renderUserMenu(){
   var head=document.getElementById('user-menu-head');
   if(head)head.innerHTML='<div class="menu-head-name">'+esc(name||email)+'</div>'+(name?'<div class="menu-head-sub">'+esc(email)+'</div>':'')+(currentMember?'<div class="menu-head-sub">'+(currentMember.role==='admin'?'Administrateur':'Membre')+'</div>':'');
   var btn=document.getElementById('user-btn');if(btn)btn.title=name||email;
-  var team=document.getElementById('user-menu-team');if(team)team.style.display=(currentMember&&currentMember.role==='admin')?'':'none';
+  var isAdmin=!!(currentMember&&currentMember.role==='admin');
+  ['user-menu-team','user-menu-process','user-menu-budget'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.style.display=isAdmin?'':'none';
+  });
 }
 function closeUserMenu(){var m=document.getElementById('user-menu');if(m)m.style.display='none';}
 async function authSubmit(e){
@@ -1521,6 +1509,7 @@ function openFiche(id){
   document.getElementById('fi-ville').value=c.ville||'';
   document.getElementById('fi-dc').value=c.dc||'';
   document.getElementById('fi-da').value=c.da||'';
+  updateFicheAnnonceUndoBtn();
   if(document.getElementById('fi-medias'))document.getElementById('fi-medias').value=c.medias||'';
   if(document.getElementById('fi-jeux'))document.getElementById('fi-jeux').value=c.jeux||'';
   if(document.getElementById('fi-budget'))document.getElementById('fi-budget').value=c.budget||'';
@@ -1870,6 +1859,16 @@ function annonceUndo(cid){
   delete taskStates['annonce-'+cid];
   scheduleSave('taskstates');renderAnnonces();renderConcerts();
 }
+// Bouton "remettre l'annonce" de la fiche (a cote de la date d'annonce, dans Informations)
+function updateFicheAnnonceUndoBtn(){
+  var b=document.getElementById('fi-da-undo');if(!b)return;
+  b.style.display=(currentFicheId&&taskStates['annonce-'+currentFicheId])?'':'none';
+}
+function ficheAnnonceUndo(){
+  if(!currentFicheId)return;
+  annonceUndo(currentFicheId);
+  updateFicheAnnonceUndoBtn();
+}
 function renderAnnonces(){
   var wrap=document.getElementById('ann-wrap-compact');
   if(!wrap)return;
@@ -2127,7 +2126,6 @@ function renderConcerts(){
         +(skipCol?'<button class="crow-skip-btn active" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'col\')">'+icon('circle-check')+' Pas d\'affiche</button>':'');
       var statutBloc='<div style="width:120px;flex-shrink:0;padding:8px 12px;display:flex;flex-direction:column;gap:6px;justify-content:center">'
         +ventesHtml(c,'toggleVentes(event,\''+c.id+'\')')
-        +(isAnnounced?'<button class="ann-undo" onclick="event.stopPropagation();annonceUndo(\''+c.id+'\')" style="font-size:12px;color:var(--text-3);text-align:left;background:none;border:none;cursor:pointer">'+icon('rotate')+' Annonce</button>':'')
         +(skipBadges?'<div style="display:flex;flex-direction:column;gap:3px;margin-top:4px">'+skipBadges+'</div>':'')
         +'</div>';
 
@@ -3212,18 +3210,6 @@ function rsDelPost(id){
 }
 // ── BUDGET CONFIG TOOL ──────────────────────────────────────────────────────
 
-var _bcClickCount = 0, _bcClickTimer = null;
-function budgetConfigClick() {
-  _bcClickCount++;
-  clearTimeout(_bcClickTimer);
-  _bcClickTimer = setTimeout(function(){ _bcClickCount = 0; }, 800);
-  if (_bcClickCount >= 5) {
-    _bcClickCount = 0;
-    var btn = document.getElementById('btn-budgetconfig');
-    if (btn) { btn.style.display = ''; }
-  }
-}
-
 var _bcCurrentTpl = 'small';
 var _bcCurrentStyle = 'rap';
 
@@ -3551,7 +3537,7 @@ function cmdkPick(i){var it=cmdkItems[i];if(!it)return;closeCmdK();it.action();}
     var bo=document.getElementById('budget-overlay');if(bo&&bo.style.display==='flex')return;
     if(e.key==='/'){e.preventDefault();openCmdK();return;}
     if(e.key==='?'){e.preventDefault();openHelp();return;}
-    var tabKeys={'1':'rs','2':'kanban','3':'concerts','4':'taches','5':'process'};
+    var tabKeys={'1':'rs','2':'kanban','3':'concerts','4':'taches'};
     if(tabKeys[e.key]){e.preventDefault();afterFicheClosed(function(){showTab(tabKeys[e.key]);});return;}
     if(e.key==='n'||e.key==='N'){
       e.preventDefault();
