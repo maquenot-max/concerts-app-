@@ -273,13 +273,13 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .spin{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--text-3);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 /* Notifications transitoires (sauvegarde, synchro, messages) : empilees en
-   haut au centre, sous l'en-tete, pour ne jamais recouvrir un bouton en bas
-   d'ecran sur mobile. */
-.toast-stack{position:fixed;top:62px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:200;pointer-events:none;max-width:calc(100vw - 2rem)}
-.saving{display:none;background:var(--text);color:#fff;padding:7px 16px;border-radius:20px;font-size:12px;font-weight:500;box-shadow:var(--shadow-md);text-align:center;line-height:1.4}
+   bas a droite. Le conteneur laisse passer les clics (pointer-events:none),
+   donc meme si une tuile chevauche un bouton, elle ne genera jamais un clic. */
+.toast-stack{position:fixed;bottom:1.25rem;right:1.25rem;display:flex;flex-direction:column;align-items:flex-end;gap:6px;z-index:200;pointer-events:none;max-width:calc(100vw - 2rem)}
+.saving{display:none;background:var(--text);color:#fff;padding:7px 16px;border-radius:20px;font-size:12px;font-weight:500;box-shadow:var(--shadow-md);text-align:center;line-height:1.4;max-width:100%}
 .saving.show{display:block;animation:toastIn .2s ease}
 .toast-warn{background:var(--amber)}
-@keyframes toastIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.saving.show{animation:none}}
 .empty-state{color:var(--text-3);font-size:13px;padding:3rem 0;text-align:center;line-height:1.6}
 .empty-state .btn{margin-top:10px}

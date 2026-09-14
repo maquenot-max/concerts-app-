@@ -87,7 +87,7 @@
         <div class="menu-head" id="user-menu-head"></div>
         <button class="menu-item" id="user-menu-team" onclick="closeUserMenu();showTab('team')" style="display:none">Équipe</button>
         <button class="menu-item" onclick="closeUserMenu();openBackupModal()">Sauvegarde</button>
-        <button class="menu-item" onclick="closeUserMenu();openAccountModal()">Mon compte · mot de passe, double authentification</button>
+        <button class="menu-item" onclick="closeUserMenu();openAccountModal()">Mon compte</button>
         <button class="menu-item danger" onclick="closeUserMenu();authSignOut()">Se déconnecter</button>
       </div>
     </div>
@@ -675,6 +675,7 @@ async function enterApp(session){
     return;
   }
   authScreen(false);
+  loadTeamNames();
   init();
   loadBudgetConfig();
 }
@@ -901,6 +902,7 @@ async function renderTeam(){
   el.innerHTML='<div class="empty-state">Chargement…</div>';
   try{
     var d=await teamCall('list');
+    loadTeamNames(); // reflete tout de suite un ajout/retrait recent dans les notifications
     var me=(currentUser.email||'').toLowerCase();
     if(!d.members.length){el.innerHTML='<div class="empty-state">Aucun membre.</div>';return;}
     el.innerHTML='<table class="team-table"><thead><tr><th>Membre</th><th>Rôle</th><th>2FA</th><th>Dernière connexion</th><th></th></tr></thead><tbody>'+d.members.map(function(m){
@@ -1008,14 +1010,15 @@ function initRealtime(){
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'app_data'},function(payload){
       // Ignorer nos propres sauvegardes (dans les 2s qui suivent notre save)
       if(Date.now()-_lastSaveTs<3000)return;
+      var who=payload.new&&payload.new.updated_by;
       // Ne pas recharger si l'utilisateur est en train d'interagir
       var inputFocused=document.activeElement&&['INPUT','TEXTAREA','SELECT'].indexOf(document.activeElement.tagName)>=0;
       if(isAnyModalOpen()||inputFocused){
         _reloadPending=true;
-        showSyncBanner('En attente...');
+        showSyncBanner(who?('Modifications de '+teamDisplayName(who)+' en attente...'):'En attente...');
         return;
       }
-      reloadFromRemote(payload.new.key);
+      reloadFromRemote(payload.new.key,who);
     })
     .subscribe(function(status){
       if(status==='SUBSCRIBED'){
@@ -1027,6 +1030,24 @@ function initRealtime(){
   document.addEventListener('focusout',function(){
     if(_reloadPending&&!isAnyModalOpen()){_reloadPending=false;reloadFromRemote(null);}
   });
+}
+// Cache email -> prenom, pour afficher qui a fait une modification dans les
+// notifications de synchro. Charge au demarrage (accessible a tout membre
+// connecte via team_members_select), rafraichi quand la page Equipe est ouverte.
+var teamNames={};
+async function loadTeamNames(){
+  try{
+    var r=await fetch(SUPABASE_URL+'/rest/v1/team_members?select=email,name',{headers:await authHeaders()});
+    if(!r.ok)return;
+    var rows=await r.json();
+    var map={};
+    rows.forEach(function(m){map[m.email.toLowerCase()]=m.name||m.email;});
+    teamNames=map;
+  }catch(e){}
+}
+function teamDisplayName(email){
+  if(!email)return null;
+  return teamNames[email.toLowerCase()]||email;
 }
 
 // Fusion par ID pour les tableaux partages (concerts, tktasks, rsposts) :
@@ -1042,8 +1063,9 @@ function mergeArrayById(remote,local){
   }
   return remote;
 }
-async function reloadFromRemote(changedKey){
-  showSyncBanner('Synchronisation...');
+async function reloadFromRemote(changedKey,updatedBy){
+  var who=teamDisplayName(updatedBy);
+  showSyncBanner(who?('Mise à jour de '+who+'...'):'Synchronisation...');
   try{
     var keys=changedKey?[changedKey]:['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media','concert_tasks'];
     for(var i=0;i<keys.length;i++){
@@ -1077,7 +1099,7 @@ async function reloadFromRemote(changedKey){
       else if(k==='concert_tasks')customTasks=mergeArrayById(await dbGet('concert_tasks',[]),customTasks);
     }
     render();
-    showSyncBanner('À jour ✓',true);
+    showSyncBanner(who?('Mis à jour par '+who):'À jour ✓',true);
   }catch(e){
     showSyncBanner('Erreur sync');
     console.error('Realtime reload error',e);
