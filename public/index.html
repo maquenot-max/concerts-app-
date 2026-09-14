@@ -57,6 +57,13 @@
       <div class="auth-error" id="auth-recover-error" style="display:none"></div>
       <button class="btn btn-primary" type="submit" style="width:100%">Enregistrer</button>
     </form>
+    <form id="auth-mfa-form" onsubmit="return authSubmitMfa(event)" style="display:none">
+      <p class="auth-help">Ouvre ton application d'authentification et saisis le code à 6 chiffres.</p>
+      <label>Code de vérification<input type="text" id="auth-mfa-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></label>
+      <div class="auth-error" id="auth-mfa-error" style="display:none"></div>
+      <button class="btn btn-primary" type="submit" id="auth-mfa-submit" style="width:100%">Valider</button>
+      <button class="auth-link" type="button" onclick="authSignOut()">Utiliser un autre compte</button>
+    </form>
     <p class="auth-foot">Accès réservé à l'équipe. Pour obtenir un compte, demande à un administrateur.</p>
   </div>
 </div>
@@ -356,10 +363,16 @@
 </div>
 <div class="tk-modal" id="account-modal" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="tk-modal-box" style="width:380px">
-    <div class="tk-modal-title">Changer mon mot de passe</div>
+    <div class="tk-modal-title">Mon compte</div>
     <div><label>Nouveau mot de passe</label><input type="password" id="acc-pwd" autocomplete="new-password" minlength="8"></div>
     <div><label>Confirmer</label><input type="password" id="acc-pwd2" autocomplete="new-password"></div>
-    <div class="tk-modal-actions"><button class="btn" onclick="document.getElementById('account-modal').classList.remove('open')">Annuler</button><button class="btn btn-primary" onclick="saveAccountPassword()">Enregistrer</button></div>
+    <div class="tk-modal-actions" style="margin-top:0"><button class="btn btn-primary" onclick="saveAccountPassword()">Enregistrer le mot de passe</button></div>
+    <div style="border-top:1px solid var(--border-light);padding-top:12px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">Double authentification</div>
+      <div id="acc-mfa-status" style="font-size:12px;color:var(--text-2);line-height:1.5;margin-bottom:8px">…</div>
+      <button class="btn" id="acc-mfa-btn" onclick="mfaToggle()">Activer</button>
+    </div>
+    <div class="tk-modal-actions"><button class="btn" onclick="document.getElementById('account-modal').classList.remove('open')">Fermer</button></div>
   </div>
 </div>
 <div class="tk-modal" id="backup-modal" onclick="if(event.target===this)this.classList.remove('open')">
@@ -373,6 +386,17 @@
       <button class="btn btn-danger" onclick="document.getElementById('backup-file').click()">Restaurer depuis un fichier…</button>
     </div>
     <div class="tk-modal-actions"><button class="btn" onclick="document.getElementById('backup-modal').classList.remove('open')">Fermer</button></div>
+  </div>
+</div>
+<div class="tk-modal" id="mfa-enroll-modal" onclick="if(event.target===this)mfaCancelEnrollment()">
+  <div class="tk-modal-box" style="width:420px">
+    <div class="tk-modal-title">Activer la double authentification</div>
+    <div style="font-size:13px;color:var(--text-2);line-height:1.5">1. Installe une application d'authentification si besoin (Google Authenticator, Microsoft Authenticator, Authy, 1Password…).<br>2. Scanne ce code, ou saisis la clé manuellement.<br>3. Entre le code à 6 chiffres affiché pour confirmer.</div>
+    <div style="display:flex;justify-content:center"><img id="mfa-qr" alt="QR code" style="width:180px;height:180px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff"></div>
+    <div class="pwd-box" id="mfa-secret" style="font-size:13px;letter-spacing:.06em"></div>
+    <div><label>Code à 6 chiffres</label><input type="text" id="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></div>
+    <div class="auth-error" id="mfa-enroll-error" style="display:none"></div>
+    <div class="tk-modal-actions"><button class="btn" onclick="mfaCancelEnrollment()">Annuler</button><button class="btn btn-primary" onclick="mfaVerifyEnrollment()">Confirmer</button></div>
   </div>
 </div>
 <div class="tk-modal" id="team-add-modal" onclick="if(event.target===this)this.classList.remove('open')">
@@ -632,6 +656,12 @@ async function startApp(){
 async function enterApp(session){
   if(_appStarted)return;_appStarted=true;
   currentUser=session.user;
+  // Double authentification : si un facteur est actif sur le compte, la
+  // session doit atteindre le niveau 2 (code a 6 chiffres) avant d'entrer.
+  try{
+    var aal=await getSupabase().auth.mfa.getAuthenticatorAssuranceLevel();
+    if(aal.data&&aal.data.nextLevel==='aal2'&&aal.data.currentLevel!=='aal2'){_appStarted=false;authScreen(true);showMfaForm();return;}
+  }catch(e){}
   var status=await loadCurrentMember();
   if(status==='denied'){
     _appStarted=false;authScreen(true);
@@ -710,8 +740,98 @@ async function authSetNewPassword(e){
   return false;
 }
 function authSignOut(){getSupabase().auth.signOut().then(function(){location.reload();},function(){location.reload();});}
+// ── DOUBLE AUTHENTIFICATION (TOTP via Supabase MFA) ──
+function showMfaForm(){
+  document.getElementById('auth-form').style.display='none';
+  document.getElementById('auth-recover-form').style.display='none';
+  document.getElementById('auth-mfa-form').style.display='';
+  document.getElementById('auth-title').textContent='Vérification';
+  setTimeout(function(){document.getElementById('auth-mfa-code').focus();},50);
+}
+async function mfaVerifiedFactor(){
+  var f=await getSupabase().auth.mfa.listFactors();
+  if(f.error)throw f.error;
+  return ((f.data&&f.data.totp)||[]).filter(function(x){return x.status==='verified';})[0]||null;
+}
+async function authSubmitMfa(e){
+  e.preventDefault();
+  var code=document.getElementById('auth-mfa-code').value.trim();
+  var btn=document.getElementById('auth-mfa-submit');btn.disabled=true;authError('auth-mfa-error','');
+  try{
+    var sb=getSupabase();
+    var totp=await mfaVerifiedFactor();
+    if(!totp){authError('auth-mfa-error','Aucun facteur actif sur ce compte.');btn.disabled=false;return false;}
+    var ch=await sb.auth.mfa.challenge({factorId:totp.id});
+    if(ch.error)throw ch.error;
+    var v=await sb.auth.mfa.verify({factorId:totp.id,challengeId:ch.data.id,code:code});
+    if(v.error){authError('auth-mfa-error','Code incorrect ou expiré. Réessaie avec le code actuel.');btn.disabled=false;return false;}
+    document.getElementById('auth-mfa-form').style.display='none';
+    document.getElementById('auth-form').style.display='';
+    document.getElementById('auth-title').textContent='Connexion';
+    var s=await sb.auth.getSession();
+    if(s.data.session)enterApp(s.data.session);
+  }catch(err){authError('auth-mfa-error','Vérification impossible : '+(err.message||err));}
+  btn.disabled=false;
+  return false;
+}
+var _mfaFactorId=null;
+async function mfaRefreshStatus(){
+  var st=document.getElementById('acc-mfa-status'),btn=document.getElementById('acc-mfa-btn');
+  if(!st||!btn)return;
+  try{
+    var totp=await mfaVerifiedFactor();
+    if(totp){st.textContent='Activée : un code de ton application d\'authentification est demandé à chaque connexion.';btn.textContent='Désactiver';btn.dataset.on='1';}
+    else{st.textContent='Désactivée. Recommandé : ton compte reste protégé même si ton mot de passe fuit.';btn.textContent='Activer';btn.dataset.on='';}
+  }catch(e){st.textContent='État indisponible : '+(e.message||e);}
+}
+async function mfaToggle(){
+  var btn=document.getElementById('acc-mfa-btn');var sb=getSupabase();
+  if(btn.dataset.on){
+    if(!await customConfirm('Désactiver la double authentification ? Ton compte ne sera plus protégé que par le mot de passe.','Désactiver'))return;
+    try{
+      var f=await sb.auth.mfa.listFactors();
+      var all=(f.data&&f.data.all)||[];
+      for(var i=0;i<all.length;i++){var u=await sb.auth.mfa.unenroll({factorId:all[i].id});if(u.error)throw u.error;}
+      showToast('Double authentification désactivée.');
+    }catch(e){showToast('Échec : '+(e.message||e),6000);}
+    mfaRefreshStatus();return;
+  }
+  try{
+    // Nettoyer d'eventuels facteurs non confirmes, puis creer le nouveau
+    var f2=await sb.auth.mfa.listFactors();
+    var pend=((f2.data&&f2.data.all)||[]).filter(function(x){return x.status!=='verified';});
+    for(var j=0;j<pend.length;j++){try{await sb.auth.mfa.unenroll({factorId:pend[j].id});}catch(e){}}
+    var r=await sb.auth.mfa.enroll({factorType:'totp',friendlyName:'Dashboard PP Comm'});
+    if(r.error)throw r.error;
+    _mfaFactorId=r.data.id;
+    document.getElementById('mfa-qr').src=r.data.totp.qr_code;
+    document.getElementById('mfa-secret').textContent=r.data.totp.secret;
+    document.getElementById('mfa-code').value='';authError('mfa-enroll-error','');
+    document.getElementById('mfa-enroll-modal').classList.add('open');
+    setTimeout(function(){document.getElementById('mfa-code').focus();},50);
+  }catch(e){showToast('Échec : '+(e.message||e),6000);}
+}
+async function mfaCancelEnrollment(){
+  if(_mfaFactorId){try{await getSupabase().auth.mfa.unenroll({factorId:_mfaFactorId});}catch(e){}_mfaFactorId=null;}
+  document.getElementById('mfa-enroll-modal').classList.remove('open');
+}
+async function mfaVerifyEnrollment(){
+  var code=document.getElementById('mfa-code').value.trim();
+  if(!/^\d{6}$/.test(code)){authError('mfa-enroll-error','Entre le code à 6 chiffres affiché par l\'application.');return;}
+  var sb=getSupabase();
+  try{
+    var ch=await sb.auth.mfa.challenge({factorId:_mfaFactorId});
+    if(ch.error)throw ch.error;
+    var v=await sb.auth.mfa.verify({factorId:_mfaFactorId,challengeId:ch.data.id,code:code});
+    if(v.error){authError('mfa-enroll-error','Code incorrect. Vérifie l\'heure de ton téléphone et réessaie avec le code actuel.');return;}
+    _mfaFactorId=null;
+    document.getElementById('mfa-enroll-modal').classList.remove('open');
+    showToast('Double authentification activée.');
+    mfaRefreshStatus();
+  }catch(e){authError('mfa-enroll-error',e.message||String(e));}
+}
 // Mon compte : changer son propre mot de passe
-function openAccountModal(){document.getElementById('acc-pwd').value='';document.getElementById('acc-pwd2').value='';document.getElementById('account-modal').classList.add('open');setTimeout(function(){document.getElementById('acc-pwd').focus();},50);}
+function openAccountModal(){document.getElementById('acc-pwd').value='';document.getElementById('acc-pwd2').value='';document.getElementById('account-modal').classList.add('open');mfaRefreshStatus();}
 async function saveAccountPassword(){
   var p1=document.getElementById('acc-pwd').value,p2=document.getElementById('acc-pwd2').value;
   if(p1.length<8){showToast('8 caractères minimum.');return;}
@@ -783,15 +903,17 @@ async function renderTeam(){
     var d=await teamCall('list');
     var me=(currentUser.email||'').toLowerCase();
     if(!d.members.length){el.innerHTML='<div class="empty-state">Aucun membre.</div>';return;}
-    el.innerHTML='<table class="team-table"><thead><tr><th>Membre</th><th>Rôle</th><th>Dernière connexion</th><th></th></tr></thead><tbody>'+d.members.map(function(m){
+    el.innerHTML='<table class="team-table"><thead><tr><th>Membre</th><th>Rôle</th><th>2FA</th><th>Dernière connexion</th><th></th></tr></thead><tbody>'+d.members.map(function(m){
       var isMe=m.email===me;
       var last=m.last_sign_in_at?new Date(m.last_sign_in_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'Jamais';
       return '<tr>'
         +'<td><div class="team-name">'+esc(m.name||'—')+(isMe?' <span class="team-me">(toi)</span>':'')+'</div><div class="team-email">'+esc(m.email)+'</div></td>'
         +'<td><span class="team-role'+(m.role==='admin'?' admin':'')+'">'+(m.role==='admin'?'Administrateur':'Membre')+'</span></td>'
+        +'<td class="team-last">'+(m.mfa?'Activée':'—')+'</td>'
         +'<td class="team-last">'+last+'</td>'
         +'<td class="team-actions">'
           +'<button class="tk-task-btn" title="Réinitialiser le mot de passe" onclick="teamReset(\''+esc(m.email)+'\')">'+icon('rotate')+'</button>'
+          +(m.mfa&&!isMe?'<button class="tk-task-btn" title="Désactiver sa double authentification (téléphone perdu)" onclick="teamMfaReset(\''+esc(m.email)+'\')">'+icon('ban')+'</button>':'')
           +(isMe?'':'<button class="tk-task-btn" title="'+(m.role==='admin'?'Passer membre':'Passer administrateur')+'" onclick="teamRole(\''+esc(m.email)+'\',\''+(m.role==='admin'?'member':'admin')+'\')">'+icon('user')+'</button>')
           +(isMe?'':'<button class="tk-task-btn del-btn" title="Retirer l\'accès" onclick="teamRemove(\''+esc(m.email)+'\')">'+icon('x')+'</button>')
         +'</td></tr>';
@@ -814,6 +936,11 @@ async function teamAdd(){
 async function teamReset(email){
   if(!await customConfirm('Générer un nouveau mot de passe provisoire pour '+email+' ? L\'ancien ne fonctionnera plus.','Réinitialiser'))return;
   try{var d=await teamCall('reset',{email:email});showTempPassword(email,d.tempPassword,'Mot de passe réinitialisé');}
+  catch(e){showToast('Échec : '+e.message,6000);}
+}
+async function teamMfaReset(email){
+  if(!await customConfirm('Désactiver la double authentification de '+email+' ? À utiliser si la personne a perdu son téléphone ; elle pourra la réactiver ensuite.','Désactiver'))return;
+  try{await teamCall('mfa_reset',{email:email});renderTeam();showToast('Double authentification désactivée pour '+email+'.');}
   catch(e){showToast('Échec : '+e.message,6000);}
 }
 async function teamRole(email,role){
