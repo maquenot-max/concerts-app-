@@ -38,14 +38,15 @@
 <div id="app">
   <header>
     <h1 style="display:flex;align-items:center;gap:8px"><img src="favicon_io/favicon-32x32.png" style="width:20px;height:20px;border-radius:4px" alt=""><span class="h1-text">Please Please Communication &mdash; Dashboard</span></h1>
+    <button class="cmdk-hint" onclick="openCmdK()" title="Rechercher un concert ou un onglet (⌘K ou /)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="cmdk-hint-text">Rechercher</span><kbd>⌘K</kbd></button>
     <nav class="nav" style="display:flex;gap:1px">
-      <button onclick="showTab('rs',this)" style="padding:5px 14px;font-size:13px;border:none;background:transparent;cursor:pointer;color:var(--text-2);border-radius:6px;font-weight:500;transition:all .15s;margin-right:12px;border-right:2px solid var(--border);padding-right:16px">Plannings RS</button>
-      <button class="active" onclick="showTab('kanban',this)">Tableau de bord</button>
-      <button id="btn-concerts" onclick="showTab('concerts',this)">Concerts</button>
-      <button id="btn-past" onclick="showTab('past',this)" style="display:none">Concerts passés</button>
-      <button id="btn-taches" onclick="showTab('taches',this)">Tâches</button>
-      <button id="btn-process" onclick="showTab('process',this);budgetConfigClick()">Process</button>
-      <button id="btn-budgetconfig" onclick="showTab('budgetconfig',this)" style="display:none;opacity:0.5;font-size:12px">⚙ Budget</button>
+      <button data-tab="rs" onclick="showTab('rs',this)" style="padding:5px 14px;font-size:13px;border:none;background:transparent;cursor:pointer;color:var(--text-2);border-radius:6px;font-weight:500;transition:all .15s;margin-right:12px;border-right:2px solid var(--border);padding-right:16px">Plannings RS</button>
+      <button class="active" data-tab="kanban" onclick="showTab('kanban',this)">Tableau de bord</button>
+      <button id="btn-concerts" data-tab="concerts" onclick="showTab('concerts',this)">Concerts</button>
+      <button id="btn-past" data-tab="past" onclick="showTab('past',this)" style="display:none">Concerts passés</button>
+      <button id="btn-taches" data-tab="taches" onclick="showTab('taches',this)">Tâches</button>
+      <button id="btn-process" data-tab="process" onclick="showTab('process',this);budgetConfigClick()">Process</button>
+      <button id="btn-budgetconfig" data-tab="budgetconfig" onclick="showTab('budgetconfig',this)" style="display:none;opacity:0.5;font-size:12px">⚙ Budget</button>
     </nav>
   </header>
   <main>
@@ -298,6 +299,13 @@
       <button class="btn" id="tk-modal-cancel">Annuler</button>
       <button class="btn btn-primary" id="tk-modal-save">Ajouter</button>
     </div>
+  </div>
+</div>
+<div class="tk-modal" id="cmdk-modal" onclick="if(event.target===this)closeCmdK()">
+  <div class="cmdk-box" role="dialog" aria-label="Recherche">
+    <input type="text" id="cmdk-input" placeholder="Rechercher un artiste, une salle, un onglet…" autocomplete="off" spellcheck="false">
+    <div class="cmdk-list" id="cmdk-list"></div>
+    <div class="cmdk-foot"><span><kbd>↑</kbd><kbd>↓</kbd> naviguer</span><span><kbd>↵</kbd> ouvrir</span><span><kbd>Échap</kbd> fermer</span></div>
   </div>
 </div>
 <div class="tk-modal" id="confirm-modal">
@@ -729,6 +737,7 @@ async function init(){
     }
     appDataLoaded=true;
     render();
+    applyRoute();
     initRealtime();
     checkTomorrowReminder();
     checkArchiveSuggestion();
@@ -740,12 +749,59 @@ async function init(){
     document.getElementById('load-error-overlay').style.display='flex';
   }
 }
+var currentTab='kanban';
 function showTab(id,btn){
+  var panel=document.getElementById('tab-'+id);if(!panel)return;
+  btn=btn||document.querySelector('.nav button[data-tab="'+id+'"]');
   document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('active');});
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
-  btn.classList.add('active');document.getElementById('tab-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');panel.classList.add('active');
+  currentTab=id;
   if(id==='budgetconfig'){ renderBcTemplateEditor(); renderBcStyleEditor(); renderBcSalleEditor(); }
+  pushRoute(id,null);
+  window.scrollTo(0,0);
 }
+// ── NAVIGATION PAR URL : #onglet ou #onglet/idConcert ────────────────
+// Permet de rafraichir sans revenir au Tableau de bord, d'envoyer le lien
+// d'une fiche, et d'utiliser le bouton retour du navigateur (il ferme la
+// fiche, puis revient a l'onglet precedent).
+var TAB_IDS=['rs','kanban','concerts','past','taches','process','budgetconfig'];
+var _routing=false; // vrai pendant applyRoute() : on ne re-pousse pas l'URL
+function routeHash(tab,ficheId){return '#'+tab+(ficheId?'/'+ficheId:'');}
+function pushRoute(tab,ficheId,replace){
+  if(_routing)return;
+  var hsh=routeHash(tab,ficheId);
+  if(location.hash===hsh)return;
+  var st={tab:tab,fiche:ficheId||null};
+  if(replace)history.replaceState(st,'',hsh);else history.pushState(st,'',hsh);
+}
+function parseRoute(){
+  var hsh=(location.hash||'').replace(/^#\/?/,'');
+  if(!hsh||hsh.indexOf('access_token')>=0)return null; // retour OAuth Google : pas une route
+  var parts=hsh.split('/');
+  if(TAB_IDS.indexOf(parts[0])<0)return null;
+  return {tab:parts[0],fiche:parts[1]||null};
+}
+function applyRoute(){
+  var r=parseRoute();
+  if(!r)return;
+  _routing=true;
+  try{
+    if(r.tab!==currentTab||!document.getElementById('tab-'+r.tab).classList.contains('active'))showTab(r.tab);
+    if(r.fiche){if(appDataLoaded&&currentFicheId!==r.fiche)openFiche(r.fiche);}
+    else if(currentFicheId)closeFicheBtn();
+  }finally{_routing=false;}
+}
+window.addEventListener('popstate',applyRoute);
+// Echap : ferme le menu ⋯ ou la fiche (les modales gerent deja leur Echap)
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Escape')return;
+  if(document.querySelector('.tk-modal.open,.rs-modal.open'))return;
+  var bo=document.getElementById('budget-overlay');if(bo&&bo.style.display==='flex')return;
+  var fm=document.getElementById('fiche-menu');
+  if(fm&&fm.style.display!=='none'){fm.style.display='none';return;}
+  if(document.getElementById('overlay').classList.contains('open'))closeFicheBtn();
+});
 function calcDate(c,t){
   if(t.isCustom)return t.date?new Date(t.date):null;
   var override=taskStates['datemod-'+c.id+'-'+t.id];
@@ -930,10 +986,19 @@ function openFiche(id){
   document.getElementById('fi-perma-delete-btn').style.display=c.supprime?'':'none';
   document.getElementById('overlay').classList.add('open');
   document.body.style.overflow='hidden';
+  pushRoute(currentTab,id);
 }
 function closeFiche(e){if(e.target===document.getElementById('overlay'))closeFicheBtn();}
 function closeFicheMenu(){var m=document.getElementById('fiche-menu');if(m)m.style.display='none';}
-function closeFicheBtn(){closeFicheMenu();document.getElementById('overlay').classList.remove('open');document.body.style.overflow='';currentFicheId=null;render();}
+function closeFicheBtn(){
+  closeFicheMenu();document.getElementById('overlay').classList.remove('open');document.body.style.overflow='';currentFicheId=null;render();
+  if(!_routing){
+    // Fiche ouverte par un clic (entree d'historique a nous) : on revient en
+    // arriere ; fiche ouverte par un lien direct : on remplace simplement l'URL.
+    if(history.state&&history.state.fiche)history.back();
+    else pushRoute(currentTab,null,true);
+  }
+}
 // Groupes repliables de la fiche (Terminées / Inutiles) : repliés par défaut
 // pour que les tâches actives restent visibles, état conservé tant qu'on
 // reste sur la même fiche.
@@ -2873,6 +2938,76 @@ function renderBudgetConfig() {
 }
 
 function render(){tkAdvanceRecurringTasks();renderKanban();renderConcerts();renderPastConcerts();renderProcess();renderTaches();renderTkWidget();renderRS();}
+// ── RECHERCHE GLOBALE (⌘K / Ctrl+K / "/") ──────────────────────────
+var cmdkItems=[],cmdkIdx=0;
+var CMDK_TABS=[{id:'kanban',label:'Tableau de bord'},{id:'concerts',label:'Concerts'},{id:'past',label:'Concerts passés'},{id:'taches',label:'Tâches'},{id:'rs',label:'Plannings RS'},{id:'process',label:'Process'}];
+function cmdkNorm(s){return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function openCmdK(){
+  var inp=document.getElementById('cmdk-input');inp.value='';cmdkRender('');
+  document.getElementById('cmdk-modal').classList.add('open');
+  setTimeout(function(){inp.focus();},30);
+}
+function closeCmdK(){document.getElementById('cmdk-modal').classList.remove('open');}
+function cmdkRender(q){
+  var nq=cmdkNorm(q).trim();
+  var today=new Date();today.setHours(0,0,0,0);
+  var list=concerts.filter(function(c){
+    if(!nq)return !c.supprime&&c.dc&&new Date(c.dc)>=today; // sans requete : les prochains concerts
+    return cmdkNorm(c.art).indexOf(nq)>=0||cmdkNorm(formatLieu(c.ville)).indexOf(nq)>=0;
+  }).sort(function(a,b){
+    // actifs d'abord (date croissante), puis passes (plus recents d'abord)
+    if(!!a.supprime!==!!b.supprime)return a.supprime?1:-1;
+    var da=new Date(a.dc||0),db=new Date(b.dc||0);
+    return a.supprime?db-da:da-db;
+  });
+  var items=[];
+  list.slice(0,8).forEach(function(c){
+    var ds=c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
+    items.push({type:'concert',title:c.art,sub:(c.ville?formatLieu(c.ville)+' · ':'')+ds+(c.supprime?' · passé':''),action:function(){openFiche(c.id);}});
+  });
+  CMDK_TABS.forEach(function(t){
+    if(nq&&cmdkNorm(t.label).indexOf(nq)<0)return;
+    items.push({type:'tab',title:t.label,sub:'Aller à l\'onglet',action:function(){showTab(t.id);}});
+  });
+  cmdkItems=items;cmdkIdx=0;
+  var el=document.getElementById('cmdk-list');
+  if(!items.length){el.innerHTML='<div class="cmdk-empty">Aucun résultat</div>';return;}
+  var html='',lastType='';
+  items.forEach(function(it,i){
+    if(it.type!==lastType){html+='<div class="cmdk-group">'+(it.type==='concert'?(nq?'Concerts':'Prochains concerts'):'Onglets')+'</div>';lastType=it.type;}
+    html+='<div class="cmdk-item'+(i===cmdkIdx?' sel':'')+'" data-i="'+i+'" onmousemove="cmdkHover('+i+')" onclick="cmdkPick('+i+')"><div class="cmdk-title">'+esc(it.title)+'</div><div class="cmdk-sub">'+esc(it.sub)+'</div></div>';
+  });
+  el.innerHTML=html;
+}
+function cmdkPaint(){
+  document.querySelectorAll('#cmdk-list .cmdk-item').forEach(function(d){d.classList.toggle('sel',parseInt(d.dataset.i,10)===cmdkIdx);});
+  var sel=document.querySelector('#cmdk-list .cmdk-item.sel');if(sel&&sel.scrollIntoView)sel.scrollIntoView({block:'nearest'});
+}
+function cmdkHover(i){if(i===cmdkIdx)return;cmdkIdx=i;cmdkPaint();}
+function cmdkPick(i){var it=cmdkItems[i];if(!it)return;closeCmdK();it.action();}
+(function setupCmdK(){
+  var inp=document.getElementById('cmdk-input');
+  inp.addEventListener('input',function(){cmdkRender(inp.value);});
+  inp.addEventListener('keydown',function(e){
+    if(e.key==='ArrowDown'){e.preventDefault();if(cmdkItems.length){cmdkIdx=(cmdkIdx+1)%cmdkItems.length;cmdkPaint();}}
+    else if(e.key==='ArrowUp'){e.preventDefault();if(cmdkItems.length){cmdkIdx=(cmdkIdx-1+cmdkItems.length)%cmdkItems.length;cmdkPaint();}}
+    else if(e.key==='Enter'){e.preventDefault();cmdkPick(cmdkIdx);}
+    else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeCmdK();}
+  });
+  document.addEventListener('keydown',function(e){
+    var isMod=e.metaKey||e.ctrlKey;
+    if(isMod&&(e.key==='k'||e.key==='K')){e.preventDefault();if(document.getElementById('cmdk-modal').classList.contains('open'))closeCmdK();else openCmdK();return;}
+    if(e.key==='/'&&!isMod&&!e.altKey){
+      var t=document.activeElement,tag=t&&t.tagName;
+      if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable))return;
+      if(document.querySelector('.tk-modal.open,.rs-modal.open'))return;
+      e.preventDefault();openCmdK();
+    }
+  });
+})();
+// Onglet demande dans l'URL (la fiche attendra le chargement des donnees)
+if(!location.hash)pushRoute('kanban',null,true);
+applyRoute();
 init();
 loadBudgetConfig();
 </script>
