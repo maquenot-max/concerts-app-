@@ -257,8 +257,14 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .loading-full p{font-size:13px;font-weight:500}
 .spin{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:#888;border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.saving{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--text);color:#fff;padding:7px 16px;border-radius:20px;font-size:12px;font-weight:500;opacity:0;transition:opacity .3s;z-index:200;box-shadow:var(--shadow-md)}
-.saving.show{opacity:1}
+/* Notifications transitoires (sauvegarde, synchro, messages) : empilees en
+   haut au centre, sous l'en-tete, pour ne jamais recouvrir un bouton en bas
+   d'ecran sur mobile. */
+.toast-stack{position:fixed;top:62px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:200;pointer-events:none;max-width:calc(100vw - 2rem)}
+.saving{display:none;background:var(--text);color:#fff;padding:7px 16px;border-radius:20px;font-size:12px;font-weight:500;box-shadow:var(--shadow-md);text-align:center;line-height:1.4}
+.saving.show{display:block;animation:toastIn .2s ease}
+@keyframes toastIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.saving.show{animation:none}}
 .empty-state{color:var(--text-3);font-size:13px;padding:3rem 0;text-align:center}
 .titem.highlighted{background:rgba(201,162,39,.1);border-left:3px solid rgba(201,162,39,.65);padding-left:9px}
 
@@ -531,11 +537,19 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 
 /* ── RESPONSIVE (mobile/tablette) ─────────────────────── */
 @media (max-width:768px){
-  header{height:auto;min-height:52px;padding:8px 1rem;flex-wrap:wrap;gap:.5rem}
-  header h1{font-size:12px;flex:1 1 100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .nav{flex:1 1 100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* En-tete sur une seule ligne de 52px : logo seul + onglets qui defilent
+     sans barre de defilement visible. */
+  header{padding:0 .75rem;gap:.75rem}
+  header h1{flex:0 0 auto}
+  .h1-text{display:none}
+  .nav{flex:1;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .nav::-webkit-scrollbar{display:none}
   .nav button{flex-shrink:0}
-  main{padding:96px .75rem 1rem}
+  main{padding:72px .75rem 1rem}
+  /* Sur mobile la barre de filtres tient sur 2-3 lignes : on ne la colle pas */
+  .filters{position:static;padding:0}
+  .next-concert-banner{scrollbar-width:none}
+  .next-concert-banner::-webkit-scrollbar{display:none}
   .dash-top{grid-template-columns:1fr}
   .tk-widget-board{grid-template-columns:repeat(2,1fr)}
   .grid{grid-template-columns:repeat(2,1fr)}

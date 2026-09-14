@@ -37,7 +37,7 @@
 </div>
 <div id="app">
   <header>
-    <h1 style="display:flex;align-items:center;gap:8px"><img src="favicon_io/favicon-32x32.png" style="width:20px;height:20px;border-radius:4px">Please Please Communication &mdash; Dashboard</h1>
+    <h1 style="display:flex;align-items:center;gap:8px"><img src="favicon_io/favicon-32x32.png" style="width:20px;height:20px;border-radius:4px" alt=""><span class="h1-text">Please Please Communication &mdash; Dashboard</span></h1>
     <nav class="nav" style="display:flex;gap:1px">
       <button onclick="showTab('rs',this)" style="padding:5px 14px;font-size:13px;border:none;background:transparent;cursor:pointer;color:var(--text-2);border-radius:6px;font-weight:500;transition:all .15s;margin-right:12px;border-right:2px solid var(--border);padding-right:16px">Plannings RS</button>
       <button class="active" onclick="showTab('kanban',this)">Tableau de bord</button>
@@ -415,8 +415,11 @@
     </div>
   </div>
 </div>
-<div class="saving" id="saving">Sauvegarde...</div>
-<div class="saving" id="sync-banner" style="bottom:3.5rem;background:#2d7a4f"></div>
+<!-- Notifications transitoires, empilées en haut au centre sous l'en-tête -->
+<div class="toast-stack">
+  <div class="saving" id="saving">Sauvegarde...</div>
+  <div class="saving" id="sync-banner" style="background:#2d7a4f"></div>
+</div>
 <script>
 var SUPABASE_URL='https://vkehaerkbvfxlyjvrpzi.supabase.co';
 var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrZWhhZXJrYnZmeGx5anZycHppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTUyMTMsImV4cCI6MjA5MjY5MTIxM30.I5VTTUYXA0uKg6_WZ2XKIcXmnFvWR38Hkh4RVzgr9qg';
@@ -524,7 +527,6 @@ function initRealtime(){
     .subscribe(function(status){
       if(status==='SUBSCRIBED'){
         console.log('Realtime connecté');
-        showSyncBanner('Connecté',true);
       }
     });
 
