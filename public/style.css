@@ -190,6 +190,10 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .fiche-header h2{font-size:17px;font-weight:700;letter-spacing:-.02em;flex:1}
 .fiche-close{background:none;border:none;cursor:pointer;color:var(--text-3);font-size:18px;padding:5px;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .fiche-close:hover{background:var(--bg);color:var(--text)}
+.fiche.wide{width:820px}
+.help-grid{display:grid;grid-template-columns:auto 1fr;gap:10px 14px;align-items:center;font-size:13px;color:var(--text-2)}
+.help-keys{display:inline-flex;gap:4px}
+.help-grid kbd{font-family:inherit;font-size:12px;padding:2px 7px;border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;background:var(--bg);color:var(--text);line-height:1.4;white-space:nowrap}
 .fiche-body{padding:1.5rem;flex:1}
 .fiche-section{margin-bottom:1.5rem}
 .fiche-section-title{font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px}
@@ -662,7 +666,8 @@ body[data-density="compact"] .dash-top{margin-bottom:1.25rem}
   .filters input{width:100%}
   .crow-list-card{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .crow{width:max-content;min-width:100%}
-  .fiche{width:100vw}
+  .fiche,.fiche.wide{width:100vw}
+  .fiche-expand{display:none}
   .dash-mid-row{flex-direction:column}
   #next-concert-wrap,#today-rs-wrap{flex:1 1 auto}
   .next-concert-banner{overflow-x:auto;-webkit-overflow-scrolling:touch}

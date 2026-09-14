@@ -220,6 +220,7 @@
   <div class="fiche" id="fiche">
     <div class="fiche-header">
       <h2 id="fiche-title">Concert</h2>
+      <button class="fiche-close fiche-expand" id="fiche-expand-btn" onclick="toggleFicheWide()" title="Agrandir la fiche"><svg class="ico" aria-hidden="true"><use href="#i-maximize"></use></svg></button>
       <div class="filters-popover">
         <button class="fiche-close" onclick="toggleFiltersPanel(event,'fiche-menu')" title="Plus d'actions"><svg class="ico" aria-hidden="true"><use href="#i-more"></use></svg></button>
         <div class="filters-panel fiche-menu" id="fiche-menu" style="display:none">
@@ -311,7 +312,21 @@
   <div class="cmdk-box" role="dialog" aria-label="Recherche">
     <input type="text" id="cmdk-input" placeholder="Rechercher un artiste, une salle, un onglet…" autocomplete="off" spellcheck="false">
     <div class="cmdk-list" id="cmdk-list"></div>
-    <div class="cmdk-foot"><span><kbd>↑</kbd><kbd>↓</kbd> naviguer</span><span><kbd>↵</kbd> ouvrir</span><span><kbd>Échap</kbd> fermer</span></div>
+    <div class="cmdk-foot"><span><kbd>↑</kbd><kbd>↓</kbd> naviguer</span><span><kbd>↵</kbd> ouvrir</span><span><kbd>Échap</kbd> fermer</span><span><kbd>?</kbd> raccourcis</span></div>
+  </div>
+</div>
+<div class="tk-modal" id="help-modal" onclick="if(event.target===this)closeHelp()">
+  <div class="tk-modal-box" style="width:460px">
+    <div class="tk-modal-title">Raccourcis clavier</div>
+    <div class="help-grid">
+      <span class="help-keys"><kbd>⌘K</kbd></span><span>Rechercher un concert ou un onglet (Ctrl+K sur Windows)</span>
+      <span class="help-keys"><kbd>/</kbd></span><span>Idem, hors d'un champ de saisie</span>
+      <span class="help-keys"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd><kbd>5</kbd></span><span>Plannings RS · Tableau de bord · Concerts · Tâches · Process</span>
+      <span class="help-keys"><kbd>N</kbd></span><span>Nouveau concert</span>
+      <span class="help-keys"><kbd>Échap</kbd></span><span>Fermer la fiche, le menu ou la fenêtre ouverte</span>
+      <span class="help-keys"><kbd>?</kbd></span><span>Afficher cette aide</span>
+    </div>
+    <div class="tk-modal-actions"><button class="btn" onclick="closeHelp()">Fermer</button></div>
   </div>
 </div>
 <div class="tk-modal" id="confirm-modal">
@@ -825,6 +840,7 @@ window.addEventListener('popstate',applyRoute);
 // Echap : ferme le menu ⋯ ou la fiche (les modales gerent deja leur Echap)
 document.addEventListener('keydown',function(e){
   if(e.key!=='Escape')return;
+  var hm=document.getElementById('help-modal');if(hm&&hm.classList.contains('open')){closeHelp();return;}
   if(document.querySelector('.tk-modal.open,.rs-modal.open'))return;
   var bo=document.getElementById('budget-overlay');if(bo&&bo.style.display==='flex')return;
   var fm=document.getElementById('fiche-menu');
@@ -3050,14 +3066,44 @@ function cmdkPick(i){var it=cmdkItems[i];if(!it)return;closeCmdK();it.action();}
   document.addEventListener('keydown',function(e){
     var isMod=e.metaKey||e.ctrlKey;
     if(isMod&&(e.key==='k'||e.key==='K')){e.preventDefault();if(document.getElementById('cmdk-modal').classList.contains('open'))closeCmdK();else openCmdK();return;}
-    if(e.key==='/'&&!isMod&&!e.altKey){
-      var t=document.activeElement,tag=t&&t.tagName;
-      if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable))return;
-      if(document.querySelector('.tk-modal.open,.rs-modal.open'))return;
-      e.preventDefault();openCmdK();
+    if(isMod||e.altKey)return;
+    var t=document.activeElement,tag=t&&t.tagName;
+    if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable))return;
+    if(document.querySelector('.tk-modal.open,.rs-modal.open'))return;
+    var bo=document.getElementById('budget-overlay');if(bo&&bo.style.display==='flex')return;
+    if(e.key==='/'){e.preventDefault();openCmdK();return;}
+    if(e.key==='?'){e.preventDefault();openHelp();return;}
+    var tabKeys={'1':'rs','2':'kanban','3':'concerts','4':'taches','5':'process'};
+    if(tabKeys[e.key]){e.preventDefault();afterFicheClosed(function(){showTab(tabKeys[e.key]);});return;}
+    if(e.key==='n'||e.key==='N'){
+      e.preventDefault();
+      afterFicheClosed(function(){
+        showTab('concerts');
+        var f=document.getElementById('new-concert-form');
+        if(f&&f.style.display==='none')toggleNewConcert();
+        setTimeout(function(){var a=document.getElementById('f-art');if(a)a.focus();},50);
+      });
     }
   });
 })();
+// La fermeture de la fiche revient en arriere dans l'historique (asynchrone) :
+// on attend ce retour avant d'enchainer une navigation programmee.
+function afterFicheClosed(fn){if(currentFicheId){closeFicheBtn();setTimeout(fn,80);}else fn();}
+function openHelp(){document.getElementById('help-modal').classList.add('open');}
+function closeHelp(){document.getElementById('help-modal').classList.remove('open');}
+// ── FICHE AGRANDISSABLE (500 -> 820 px), memorisee par appareil ──
+function applyFicheWide(w){
+  var f=document.getElementById('fiche');if(!f)return;
+  f.classList.toggle('wide',!!w);
+  var b=document.getElementById('fiche-expand-btn');
+  if(b){b.innerHTML=icon(w?'minimize':'maximize');b.title=w?'Réduire la fiche':'Agrandir la fiche';}
+}
+function toggleFicheWide(){
+  var w=!document.getElementById('fiche').classList.contains('wide');
+  applyFicheWide(w);
+  try{localStorage.setItem('pp_fiche_wide',w?'1':'');}catch(e){}
+}
+(function(){var w='';try{w=localStorage.getItem('pp_fiche_wide')||'';}catch(e){}applyFicheWide(!!w);})();
 // Onglet demande dans l'URL (la fiche attendra le chargement des donnees)
 if(!location.hash)pushRoute('kanban',null,true);
 applyRoute();
