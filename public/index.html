@@ -2015,10 +2015,11 @@ function renderKanban(){
     });}
     sorted=sorted.filter(function(t){return !isNA(c,t);});
     var lateTasks=sorted.filter(function(t){var d=calcDate(c,t);return !taskStates[tk(c.id,t.id)]&&isUnlocked(c,t)&&(isLate(d)||isToday(d));});
-    var doneN=sorted.filter(function(t){return taskStates[tk(c.id,t.id)];}).length;
-    var pct=sorted.length?Math.round(doneN/sorted.length*100):0;
     var ds=new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});
     var hasLate=lateTasks.length>0;
+    // Concert OK (pas de tache en attente) : la carte s'arrete a l'en-tete, sans
+    // mention "OK" - c'est l'absence de tache en dessous qui signale l'etat,
+    // par contraste avec les cartes qui ont une liste sous leur en-tete.
     var body=hasLate
       ?'<div class="col-body">'+lateTasks.map(function(t){
           var cat=CATS[t.cat]||{cls:'p-gen',label:'?'};
@@ -2030,13 +2031,12 @@ function renderKanban(){
             '<div style="flex:1;min-width:0"><div class="tname">'+esc(t.nom)+'</div>'+
             (isNewTask?'<div class="tnew">Nouveau</div>':'')+'</div></div>';})()
         }).join('')+'</div>'
-      :'<div class="ok-col"><span class="ok-badge">OK</span></div>';
+      :'';
     var cardHtml='<div class="col'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')">'+
-      '<div class="col-head'+(hasLate?' late':'')+'">'+
+      '<div class="col-head'+(hasLate?' late':' only')+'">'+
       '<div class="col-name'+(hasLate?' late':'')+'">'+esc(c.art)+cancelBadge(c)+'</div>'+
       '<div class="col-sub'+(hasLate?' late':'')+'">'+( c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div>'+
       ventesHtml(c,'event.stopPropagation();toggleVentes(event,\''+c.id+'\')') +
-      '<div class="pbar'+(pct>=100?' full':'')+'" title="'+pct+'% des tâches réalisées"><div class="pfill" style="width:'+pct+'%"></div></div>'+
       '</div>'+body+'</div>';
     return {hasLate:hasLate,html:cardHtml};
   });
