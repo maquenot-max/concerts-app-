@@ -79,6 +79,7 @@
       <div class="filters-panel fiche-menu" id="user-menu" style="display:none">
         <div class="menu-head" id="user-menu-head"></div>
         <button class="menu-item" id="user-menu-team" onclick="closeUserMenu();showTab('team')" style="display:none">Équipe</button>
+        <button class="menu-item" onclick="closeUserMenu();openBackupModal()">Sauvegarde</button>
         <button class="menu-item" onclick="closeUserMenu();openAccountModal()">Changer mon mot de passe</button>
         <button class="menu-item danger" onclick="closeUserMenu();authSignOut()">Se déconnecter</button>
       </div>
@@ -359,6 +360,19 @@
     <div><label>Nouveau mot de passe</label><input type="password" id="acc-pwd" autocomplete="new-password" minlength="8"></div>
     <div><label>Confirmer</label><input type="password" id="acc-pwd2" autocomplete="new-password"></div>
     <div class="tk-modal-actions"><button class="btn" onclick="document.getElementById('account-modal').classList.remove('open')">Annuler</button><button class="btn btn-primary" onclick="saveAccountPassword()">Enregistrer</button></div>
+  </div>
+</div>
+<div class="tk-modal" id="backup-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="tk-modal-box" style="width:460px">
+    <div class="tk-modal-title">Sauvegarde</div>
+    <div style="font-size:13px;color:var(--text-2);line-height:1.5">Télécharge une copie complète des données (concerts, tâches, plannings, réglages) dans un fichier que tu gardes où tu veux. À faire régulièrement : sur l'offre gratuite Supabase, c'est la seule sauvegarde.</div>
+    <button class="btn btn-primary" onclick="backupExport()">Télécharger une sauvegarde</button>
+    <div id="backup-restore-wrap" style="display:none;border-top:1px solid var(--border-light);padding-top:12px">
+      <div style="font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:8px"><b style="color:var(--text)">Restaurer</b> remplace toutes les données actuelles par celles d'un fichier de sauvegarde. Une copie de l'état actuel est téléchargée juste avant, par sécurité.</div>
+      <input type="file" id="backup-file" accept="application/json,.json" style="display:none" onchange="backupRestore(this)">
+      <button class="btn btn-danger" onclick="document.getElementById('backup-file').click()">Restaurer depuis un fichier…</button>
+    </div>
+    <div class="tk-modal-actions"><button class="btn" onclick="document.getElementById('backup-modal').classList.remove('open')">Fermer</button></div>
   </div>
 </div>
 <div class="tk-modal" id="team-add-modal" onclick="if(event.target===this)this.classList.remove('open')">
@@ -706,6 +720,52 @@ async function saveAccountPassword(){
   if(r.error){showToast('Échec : '+r.error.message,6000);return;}
   document.getElementById('account-modal').classList.remove('open');
   showToast('Mot de passe modifié.');
+}
+// ── SAUVEGARDE : export (tous) / restauration (administrateurs) de toutes les cles ──
+var BACKUP_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','budget_templates','style_adjustments','regles_salles','concert_media','concert_tasks'];
+function openBackupModal(){
+  var w=document.getElementById('backup-restore-wrap');
+  if(w)w.style.display=(currentMember&&currentMember.role==='admin')?'':'none';
+  document.getElementById('backup-modal').classList.add('open');
+}
+async function backupFetchAll(){
+  var r=await fetch(SUPABASE_URL+'/rest/v1/app_data?select=key,value',{headers:await authHeaders()});
+  if(!r.ok)throw new Error('Lecture impossible (HTTP '+r.status+')');
+  var rows=await r.json(),data={};
+  rows.forEach(function(x){try{data[x.key]=JSON.parse(x.value);}catch(e){}});
+  if(!Object.keys(data).length)throw new Error('Aucune donnée reçue');
+  return data;
+}
+function backupDownload(data,label){
+  var d=new Date();
+  var stamp=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'_'+String(d.getHours()).padStart(2,'0')+'h'+String(d.getMinutes()).padStart(2,'0');
+  var payload={app:'ppcomm-dashboard',version:1,exportedAt:d.toISOString(),exportedBy:currentUser?currentUser.email:'',data:data};
+  var blob=new Blob([JSON.stringify(payload,null,1)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sauvegarde-ppcomm-'+(label||'')+stamp+'.json';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1500);
+}
+async function backupExport(){
+  try{var data=await backupFetchAll();backupDownload(data,'');showToast('Sauvegarde téléchargée ('+Object.keys(data).length+' jeux de données).');}
+  catch(e){showToast('Échec : '+e.message,6000);}
+}
+async function backupRestore(input){
+  var file=input.files&&input.files[0];input.value='';if(!file)return;
+  if(!currentMember||currentMember.role!=='admin'){showToast('Réservé aux administrateurs.');return;}
+  var payload;
+  try{payload=JSON.parse(await file.text());}catch(e){showToast('Fichier illisible : ce n\'est pas une sauvegarde valide.',6000);return;}
+  if(!payload||payload.app!=='ppcomm-dashboard'||!payload.data||typeof payload.data!=='object'){showToast('Ce fichier n\'est pas une sauvegarde de l\'application.',6000);return;}
+  var keys=Object.keys(payload.data).filter(function(k){return BACKUP_KEYS.indexOf(k)>=0;});
+  if(!keys.length){showToast('La sauvegarde ne contient aucune donnée reconnue.',6000);return;}
+  var when=payload.exportedAt?new Date(payload.exportedAt).toLocaleString('fr-FR'):'date inconnue';
+  var nb=Array.isArray(payload.data.concerts)?payload.data.concerts.length:0;
+  if(!await customConfirm('Remplacer toutes les données actuelles par la sauvegarde du '+when+' ('+nb+' concerts, '+keys.length+' jeux de données) ? Une copie de l\'état actuel sera d\'abord téléchargée.','Restaurer'))return;
+  try{
+    var current=await backupFetchAll();backupDownload(current,'avant-restauration-');
+    for(var i=0;i<keys.length;i++)await dbSet(keys[i],payload.data[keys[i]]);
+    showToast('Restauration terminée, rechargement…');
+    setTimeout(function(){location.reload();},1200);
+  }catch(e){showToast('Échec de la restauration : '+e.message,8000);}
 }
 // ── EQUIPE (administrateurs) : via la fonction serveur team-admin ──
 async function teamCall(action,payload){
