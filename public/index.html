@@ -44,6 +44,7 @@
   <header>
     <h1 style="display:flex;align-items:center;gap:8px"><img src="favicon_io/favicon-32x32.png" style="width:20px;height:20px;border-radius:4px" alt=""><span class="h1-text">Please Please Communication &mdash; Dashboard</span></h1>
     <button class="cmdk-hint" onclick="openCmdK()" title="Rechercher un concert ou un onglet (⌘K ou /)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="cmdk-hint-text">Rechercher</span><kbd>⌘K</kbd></button>
+    <button class="hdr-btn" id="density-btn" onclick="toggleDensity()" title="Densité d'affichage"><svg class="ico" aria-hidden="true"><use href="#i-rows"></use></svg></button>
     <nav class="nav" style="display:flex;gap:1px">
       <button data-tab="rs" onclick="showTab('rs',this)" style="padding:5px 14px;font-size:13px;border:none;background:transparent;cursor:pointer;color:var(--text-2);border-radius:6px;font-weight:500;transition:all .15s;margin-right:12px;border-right:2px solid var(--border);padding-right:16px">Plannings RS</button>
       <button class="active" data-tab="kanban" onclick="showTab('kanban',this)">Tableau de bord</button>
@@ -64,14 +65,14 @@
           <div class="dash-widget-head">
             <span class="dash-widget-title"><span class="ann-dot" style="flex-shrink:0"></span>Annonces à venir</span>
           </div>
-          <div id="ann-wrap-compact"></div>
+          <div id="ann-wrap-compact"><div class="ann-grid-compact" aria-hidden="true"><div class="skel" style="height:58px"></div><div class="skel" style="height:58px"></div><div class="skel" style="height:58px"></div></div></div>
         </div>
         <div class="dash-widget">
           <div class="dash-widget-head">
             <span class="dash-widget-title">Taches</span>
             <button class="dash-widget-link" onclick="showTab('taches',document.getElementById('btn-taches'))">Tout voir <svg class="ico" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
           </div>
-          <div id="tk-widget-wrap"></div>
+          <div id="tk-widget-wrap"><div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px" aria-hidden="true"><div class="skel skel-line w40"></div><div class="skel skel-line w80"></div><div class="skel skel-line w60"></div></div></div>
         </div>
       </div>
       <div class="dash-mid-row" style="display:flex;gap:12px;margin-bottom:1.5rem;align-items:stretch">
@@ -93,7 +94,7 @@
           </div>
         </div>
       </div>
-      <div id="kanban-wrap"><div class="loading-full"><span class="spin" style="width:28px;height:28px;border-width:3px"></span><p>Chargement...</p></div></div>
+      <div id="kanban-wrap"><div class="grid" aria-hidden="true"><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-line w40"></div><div class="skel skel-block"></div></div><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-line w40"></div><div class="skel skel-block"></div></div><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-line w40"></div><div class="skel skel-block"></div></div><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-line w40"></div><div class="skel skel-block"></div></div><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-line w40"></div><div class="skel skel-block"></div></div><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-line w40"></div><div class="skel skel-block"></div></div></div></div>
     </div>
     <div id="tab-concerts" class="panel">
       <div class="filters" id="concerts-filters">
@@ -478,6 +479,19 @@ var customTasks=[];
 var tkCols=[],tkTasks=[],tkEditId=null,tkAddColId=null;
 var rsPosts=[],rsEditId=null,rsCurrentProj="pp",rsCurrentDate=null,rsFmt="post",rsNetState={fb:false,insta:false,tiktok:false};
 var dragSrcId=null,saveTimer=null,currentFicheId=null;
+
+// ── DENSITE D'AFFICHAGE : Compact / Confortable, memorisee par appareil ──
+function applyDensity(v){
+  document.body.dataset.density=v;
+  var b=document.getElementById('density-btn');
+  if(b){b.classList.toggle('on',v==='compact');b.title=v==='compact'?'Densité : compact — cliquer pour confortable':'Densité : confortable — cliquer pour compact';}
+}
+function toggleDensity(){
+  var v=document.body.dataset.density==='compact'?'comfortable':'compact';
+  applyDensity(v);
+  try{localStorage.setItem('pp_density',v);}catch(e){}
+}
+(function(){var v='comfortable';try{v=localStorage.getItem('pp_density')||v;}catch(e){}applyDensity(v);})();
 
 // ── CLIENT SUPABASE ──────────────────────────────────────
 var _supabase=null;
@@ -955,6 +969,25 @@ function updateFilters(){
   fillFilterSelect(document.getElementById('pastperiode'),periodeOpts,'Toutes les périodes');
   fillFilterSelect(document.getElementById('pastcat'),catOpts,'Toutes les catégories');
 }
+// Etats vides : proposer l'action utile (retirer les filtres, ou creer un concert)
+function emptyConcertsHtml(filtersActive,resetCall){
+  if(filtersActive)return '<div class="empty-state">Aucun concert ne correspond à ces filtres.<br><button class="btn" onclick="'+resetCall+'">Retirer les filtres</button></div>';
+  return '<div class="empty-state">Aucun concert pour le moment.<br><button class="btn btn-primary" onclick="showTab(\'concerts\');var f=document.getElementById(\'new-concert-form\');if(f&&f.style.display===\'none\')toggleNewConcert();">+ Nouveau concert</button></div>';
+}
+function kanbanFiltersActive(){
+  var s=document.getElementById('search'),v=document.getElementById('fville'),p=document.getElementById('fperiode'),c=document.getElementById('fcat');
+  return !!((s&&s.value)||(v&&v.value)||(p&&p.value)||(c&&c.value)||window._vf!=null);
+}
+function resetKanbanFilters(){
+  ['search','fville','fperiode','fcat'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  var hk=document.getElementById('fhideok');if(hk)hk.checked=false;
+  window._vf=null;document.querySelectorAll('.vf-btn').forEach(function(b){b.classList.remove('active');});
+  renderKanban();
+}
+function resetConcertsFilters(){
+  ['csearch','cville','cperiode','ccat'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  renderConcerts();
+}
 function toggleFiltersPanel(e,panelId){
   e.stopPropagation();
   var panel=document.getElementById(panelId);
@@ -1268,7 +1301,7 @@ function renderFicheTasks(c){
   if(blocked.length)html+='<div class="group-title second" style="color:var(--text-3)">En attente de prérequis ('+blocked.length+')</div>'+blocked.map(function(t){return taskHtml(t,true);}).join('');
   if(done.length)html+=ficheGroupHtml('done','Terminées',done.length,'var(--green)',done.map(function(t){return taskHtml(t,false);}).join(''));
   if(naTasks.length)html+=ficheGroupHtml('na','Inutiles',naTasks.length,'var(--text-3)',naTasks.map(naTaskHtml).join(''));
-  if(!html)html='<div style="color:var(--text-3);font-size:13px;padding:1rem 0">Aucune tâche.</div>';
+  if(!html)html='<div class="empty-state" style="padding:1.5rem 0">Aucune tâche pour ce concert.<br><button class="btn" onclick="openCustomTaskModal(currentFicheId)">+ Ajouter une tâche</button></div>';
   el.innerHTML=html;
 }
 function toggleTaskNA(cid,tid){
@@ -1475,7 +1508,7 @@ function renderKanban(){
   }
   var list=filtered();
   var wrap=document.getElementById('kanban-wrap');
-  if(!list.length){wrap.innerHTML='<div class="empty-state">Aucun concert.</div>';return;}
+  if(!list.length){wrap.innerHTML=emptyConcertsHtml(kanbanFiltersActive(),'resetKanbanFilters()');return;}
   var cards=list.map(function(c){
     var sorted=sortedProcess(c);
     var skipSpK=!!taskStates['skip-'+c.id+'-sp'];
@@ -1513,7 +1546,7 @@ function renderKanban(){
     return {hasLate:hasLate,html:cardHtml};
   });
   var visibleCards=hideOk?cards.filter(function(x){return x.hasLate;}):cards;
-  if(!visibleCards.length){wrap.innerHTML='<div class="empty-state">'+(hideOk?'Aucun concert avec une tâche en attente.':'Aucun concert.')+'</div>';return;}
+  if(!visibleCards.length){wrap.innerHTML=hideOk?'<div class="empty-state">Tout est à jour : aucun concert avec une tâche en attente.<br><button class="btn" onclick="document.getElementById(\'fhideok\').checked=false;renderKanban()">Afficher tous les concerts</button></div>':emptyConcertsHtml(kanbanFiltersActive(),'resetKanbanFilters()');return;}
   wrap.innerHTML='<div class="grid">'+visibleCards.map(function(x){return x.html;}).join('')+'</div>';
 }
 var concertsViewMode='list';
@@ -1541,7 +1574,7 @@ function renderConcerts(){
     if(!matchesCategoryFilter(c,cc2))return false;
     return true;
   });
-  if(!liste.length){el.innerHTML='<div class="empty-state">Aucun concert.</div>';return;}
+  if(!liste.length){el.innerHTML=emptyConcertsHtml(!!(cs||cv2||cp2||cc2),'resetConcertsFilters()');return;}
   if(concertsViewMode==='salle'){renderConcertsGrouped(liste,el);return;}
   if(concertsViewMode==='calendar'){renderConcertsCalendar(liste,el);return;}
   var today=new Date();today.setHours(0,0,0,0);
@@ -2259,7 +2292,7 @@ function renderTkWidget(){
     colEl.appendChild(title);
 
     if(!allTasks.length){
-      var emp=document.createElement('div');emp.className='tk-widget-empty-col';emp.textContent='—';colEl.appendChild(emp);
+      var emp=document.createElement('div');emp.className='tk-widget-empty-col';emp.textContent='Rien d\'urgent';colEl.appendChild(emp);
     } else {
       allTasks.forEach(function(t){
         var row=document.createElement('div');row.className='tk-widget-task'+(t.delegue?' delegue':'');
