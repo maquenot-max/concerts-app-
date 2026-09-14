@@ -590,6 +590,20 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid 
 input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;border-color:var(--accent) !important;box-shadow:0 0 0 3px var(--accent-ring)}
 .crow input:focus-visible{box-shadow:none}
 
+/* ── MOUVEMENT : discret (120-220 ms), coupe si "reduire les animations" ── */
+.overlay.open .fiche{animation:ficheIn .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes ficheIn{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+.filters-panel{animation:popIn .12s ease}
+.tk-modal.open .tk-modal-box,.tk-modal.open .cmdk-box,.rs-modal.open .rs-modal-box,#budget-box{animation:popIn .16s ease}
+@keyframes popIn{from{opacity:0;transform:translateY(-4px) scale(.99)}to{opacity:1;transform:none}}
+.chk,.ftask-chk,.tk-chk,.tk-widget-chk{transition:background .15s,border-color .15s}
+.ftask-chk.on .ico,.chk.on .ico{animation:tick .18s ease}
+@keyframes tick{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+.ann-card-compact,.tk-widget-task,.titem,.ftask,.menu-item,.cmdk-item{transition:background .15s}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+}
+
 /* ── RESPONSIVE (mobile/tablette) ─────────────────────── */
 @media (max-width:768px){
   /* En-tete sur une seule ligne de 52px : logo seul + onglets qui defilent
