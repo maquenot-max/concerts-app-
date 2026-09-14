@@ -15,8 +15,10 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<!-- Icones (Lucide, licence ISC) : un seul sprite, utilise via icon(nom) en JS ou <use> en HTML -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><symbol id="i-calendar" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol><symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol><symbol id="i-settings" viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></symbol><symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol><symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></symbol><symbol id="i-megaphone" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></symbol><symbol id="i-smartphone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></symbol><symbol id="i-dice" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M16 8h.01M8 8h.01M8 16h.01M16 16h.01M12 12h.01"/></symbol><symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M10 9H8M16 13H8M16 17H8"/></symbol><symbol id="i-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></symbol><symbol id="i-note" viewBox="0 0 24 24"><path d="M16 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V9Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol><symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol><symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol><symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol><symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol><symbol id="i-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></symbol><symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/></symbol><symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></symbol><symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></symbol><symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></symbol><symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7M12 19V5"/></symbol><symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14m7-7-7 7-7-7"/></symbol><symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol><symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14M5 2h14M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></symbol><symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9M13 17V5M8 17v-3"/></symbol><symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></symbol><symbol id="i-maximize" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></symbol><symbol id="i-minimize" viewBox="0 0 24 24"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></symbol><symbol id="i-rows" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M21 9H3M21 15H3"/></symbol><symbol id="i-keyboard" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></symbol><symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></symbol><symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol></svg>
 <div id="load-error-overlay" style="display:none;position:fixed;inset:0;z-index:1000;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:2rem">
-  <div style="font-size:32px">⚠️</div>
+  <div style="font-size:36px;color:var(--amber)"><svg class="ico" aria-hidden="true"><use href="#i-alert"></use></svg></div>
   <div style="font-size:16px;font-weight:700;max-width:420px">Impossible de charger les données</div>
   <div style="font-size:13px;color:var(--text-2);max-width:420px;line-height:1.5">La connexion à la base de données a échoué. Pour éviter d'écraser des données existantes, le site ne s'ouvre pas tant que le chargement n'a pas réussi. Vérifie ta connexion internet et réessaie.</div>
   <button class="btn btn-primary" onclick="init()">Réessayer</button>
@@ -49,7 +51,7 @@
       <button id="btn-past" data-tab="past" onclick="showTab('past',this)" style="display:none">Concerts passés</button>
       <button id="btn-taches" data-tab="taches" onclick="showTab('taches',this)">Tâches</button>
       <button id="btn-process" data-tab="process" onclick="showTab('process',this);budgetConfigClick()">Process</button>
-      <button id="btn-budgetconfig" data-tab="budgetconfig" onclick="showTab('budgetconfig',this)" style="display:none;opacity:0.5;font-size:12px">⚙ Budget</button>
+      <button id="btn-budgetconfig" data-tab="budgetconfig" onclick="showTab('budgetconfig',this)" style="display:none;opacity:0.5;font-size:12px"><svg class="ico" aria-hidden="true"><use href="#i-settings"></use></svg> Budget</button>
     </nav>
   </header>
   <main>
@@ -67,7 +69,7 @@
         <div class="dash-widget">
           <div class="dash-widget-head">
             <span class="dash-widget-title">Taches</span>
-            <button class="dash-widget-link" onclick="showTab('taches',document.getElementById('btn-taches'))">Tout voir &rsaquo;</button>
+            <button class="dash-widget-link" onclick="showTab('taches',document.getElementById('btn-taches'))">Tout voir <svg class="ico" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
           </div>
           <div id="tk-widget-wrap"></div>
         </div>
@@ -107,9 +109,9 @@
         <div class="view-toggle" style="margin-left:auto">
           <button id="cview-list" class="view-toggle-btn active" onclick="setConcertsView('list')">Liste</button>
           <button id="cview-salle" class="view-toggle-btn" onclick="setConcertsView('salle')">Par salle</button>
-          <button id="cview-cal" class="view-toggle-btn" onclick="setConcertsView('calendar')">🗓 Calendrier</button>
+          <button id="cview-cal" class="view-toggle-btn" onclick="setConcertsView('calendar')"><svg class="ico" aria-hidden="true"><use href="#i-calendar"></use></svg> Calendrier</button>
         </div>
-        <button class="btn" onclick="showTab('past',document.getElementById('btn-past'))">📁 Concerts passés</button>
+        <button class="btn" onclick="showTab('past',document.getElementById('btn-past'))"><svg class="ico" aria-hidden="true"><use href="#i-folder"></use></svg> Concerts passés</button>
         <button class="btn btn-primary" onclick="toggleNewConcert()" id="btn-new-concert">+ Nouveau concert</button>
       </div>
       <div id="new-concert-form" style="display:none">
@@ -137,16 +139,16 @@
             <select id="pastcat" onchange="renderPastConcerts()" title="Affiche les concerts ayant une tâche urgente ou en retard dans cette catégorie"><option value="">Toutes les catégories</option></select>
           </div>
         </div>
-        <button class="btn" style="margin-left:auto" onclick="showTab('concerts',document.getElementById('btn-concerts'))">← Retour aux concerts</button>
+        <button class="btn" style="margin-left:auto" onclick="showTab('concerts',document.getElementById('btn-concerts'))"><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"></use></svg> Retour aux concerts</button>
       </div>
       <div id="past-list"></div>
     </div>
     <div id="tab-budgetconfig" class="panel">
       <div class="card" style="max-width:900px;margin:0 auto">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-          <h2 style="margin:0">⚙ Configuration Budget Promo</h2>
+          <h2 style="margin:0">Configuration Budget Promo</h2>
           <span style="font-size:12px;color:var(--text-3);background:var(--bg);padding:3px 10px;border-radius:20px;border:1px solid var(--border)">Sauvegardé sur Supabase</span>
-          <button class="btn btn-primary" style="margin-left:auto" onclick="saveBudgetConfig()">💾 Sauvegarder</button>
+          <button class="btn btn-primary" style="margin-left:auto" onclick="saveBudgetConfig()">Sauvegarder</button>
         </div>
 
         <!-- Onglets internes -->
@@ -171,10 +173,10 @@
         <div id="bc-styles" style="display:none">
           <p style="font-size:12px;color:var(--text-3);margin-bottom:16px">Configure les opérations Radio / TV / Presse et les ajustements digitaux pour chaque style musical.</p>
           <div style="display:flex;gap:8px;margin-bottom:16px">
-            <button class="bc-style-btn active" onclick="showBcStyle('rap',this)" style="padding:6px 14px;border-radius:6px;border:2px solid #2d7a4f;background:#e8f5ee;color:#2d7a4f;font-size:12px;font-weight:700;cursor:pointer">🎤 Rap</button>
-            <button class="bc-style-btn" onclick="showBcStyle('pop',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">🎵 Pop</button>
-            <button class="bc-style-btn" onclick="showBcStyle('variete',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">🎶 Variété</button>
-            <button class="bc-style-btn" onclick="showBcStyle('autre',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">🎵 Autre</button>
+            <button class="bc-style-btn active" onclick="showBcStyle('rap',this)" style="padding:6px 14px;border-radius:6px;border:2px solid #2d7a4f;background:#e8f5ee;color:#2d7a4f;font-size:12px;font-weight:700;cursor:pointer">Rap</button>
+            <button class="bc-style-btn" onclick="showBcStyle('pop',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Pop</button>
+            <button class="bc-style-btn" onclick="showBcStyle('variete',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Variété</button>
+            <button class="bc-style-btn" onclick="showBcStyle('autre',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Autre</button>
           </div>
           <div id="bc-style-editor"></div>
         </div>
@@ -183,9 +185,9 @@
         <div id="bc-salles" style="display:none">
           <p style="font-size:12px;color:var(--text-3);margin-bottom:16px">Configure les lignes spécifiques par salle / ville. Les OP media radio peuvent être ajustés ici.</p>
           <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-            <button class="bc-salle-btn active" onclick="showBcSalle('zenith',this)" style="padding:6px 14px;border-radius:6px;border:2px solid #2d7a4f;background:#e8f5ee;color:#2d7a4f;font-size:12px;font-weight:700;cursor:pointer">🏟 Zénith Dijon</button>
-            <button class="bc-salle-btn" onclick="showBcSalle('reims',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">🏟 Reims Arena</button>
-            <button class="bc-salle-btn" onclick="showBcSalle('default',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">📍 Autres salles</button>
+            <button class="bc-salle-btn active" onclick="showBcSalle('zenith',this)" style="padding:6px 14px;border-radius:6px;border:2px solid #2d7a4f;background:#e8f5ee;color:#2d7a4f;font-size:12px;font-weight:700;cursor:pointer">Zénith Dijon</button>
+            <button class="bc-salle-btn" onclick="showBcSalle('reims',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Reims Arena</button>
+            <button class="bc-salle-btn" onclick="showBcSalle('default',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Autres salles</button>
           </div>
           <div id="bc-salle-editor"></div>
         </div>
@@ -218,24 +220,24 @@
     <div class="fiche-header">
       <h2 id="fiche-title">Concert</h2>
       <div class="filters-popover">
-        <button class="fiche-close" onclick="toggleFiltersPanel(event,'fiche-menu')" title="Plus d'actions">&#8943;</button>
+        <button class="fiche-close" onclick="toggleFiltersPanel(event,'fiche-menu')" title="Plus d'actions"><svg class="ico" aria-hidden="true"><use href="#i-more"></use></svg></button>
         <div class="filters-panel fiche-menu" id="fiche-menu" style="display:none">
-          <button class="menu-item" onclick="closeFicheMenu();resetFicheTasks()">&#8635; Réinitialiser les tâches</button>
+          <button class="menu-item" onclick="closeFicheMenu();resetFicheTasks()"><svg class="ico" aria-hidden="true"><use href="#i-rotate"></use></svg> Réinitialiser les tâches</button>
           <button class="menu-item" id="fi-archive-btn" onclick="closeFicheMenu();deleteFicheConcert()">Déplacer vers Concerts passés</button>
-          <button class="menu-item" id="fi-restore-btn" onclick="closeFicheMenu();restoreConcert(currentFicheId)" style="display:none">&#8635; Remettre en actif</button>
+          <button class="menu-item" id="fi-restore-btn" onclick="closeFicheMenu();restoreConcert(currentFicheId)" style="display:none"><svg class="ico" aria-hidden="true"><use href="#i-rotate"></use></svg> Remettre en actif</button>
           <button class="menu-item danger" id="fi-perma-delete-btn" onclick="closeFicheMenu();permanentlyDeleteConcert(currentFicheId)" style="display:none">Supprimer définitivement</button>
         </div>
       </div>
-      <button class="fiche-close" onclick="closeFicheBtn()" title="Fermer">&#x2715;</button>
+      <button class="fiche-close" onclick="closeFicheBtn()" title="Fermer"><svg class="ico" aria-hidden="true"><use href="#i-x"></use></svg></button>
     </div>
     <div class="fiche-skip-bar">
-      <button class="fiche-skip-btn" id="skip-sp-btn" onclick="toggleSkip('sp')"><span id="skip-sp-icon">○</span> Sponso gérée par la prod</button>
-      <button class="fiche-skip-btn" id="skip-col-btn" onclick="toggleSkip('col')"><span id="skip-col-icon">○</span> Pas d'affiche dispo</button>
+      <button class="fiche-skip-btn" id="skip-sp-btn" onclick="toggleSkip('sp')"><span id="skip-sp-icon" style="display:inline-flex"><svg class="ico" aria-hidden="true"><use href="#i-circle"></use></svg></span> Sponso gérée par la prod</button>
+      <button class="fiche-skip-btn" id="skip-col-btn" onclick="toggleSkip('col')"><span id="skip-col-icon" style="display:inline-flex"><svg class="ico" aria-hidden="true"><use href="#i-circle"></use></svg></span> Pas d'affiche dispo</button>
     </div>
     <div class="fiche-body">
       <div class="fiche-section" style="margin-bottom:8px">
         <div class="fiche-section-toggle" onclick="toggleFicheInfo()">
-          <span id="fiche-toggle-icon" style="font-size:11px;color:var(--text-3);display:inline-block;transition:transform .2s">&#9658;</span>
+          <span id="fiche-toggle-icon" style="font-size:12px;color:var(--text-3);display:inline-flex;transition:transform .2s"><svg class="ico" aria-hidden="true"><use href="#i-chevron-right"></use></svg></span>
           <div class="fiche-section-title" style="margin-bottom:0">Informations</div>
         </div>
         <div id="fiche-info-collapsible" style="overflow:hidden;max-height:0;opacity:0;transition:max-height .3s ease,opacity .2s ease">
@@ -339,14 +341,14 @@
     <div class="media-grid" id="wizard-step-grid" style="margin-bottom:12px"></div>
     <div class="media-add-row" style="margin-bottom:16px">
       <input type="file" id="wizard-file-input" accept="image/*" style="display:none" onchange="wizardUploadFile(this)">
-      <button class="btn" onclick="document.getElementById('wizard-file-input').click()">📷 Ajouter une photo</button>
-      <button class="btn" onclick="wizardAddLinkPrompt()">🔗 Ajouter un lien</button>
+      <button class="btn" onclick="document.getElementById('wizard-file-input').click()"><svg class="ico" aria-hidden="true"><use href="#i-camera"></use></svg> Ajouter une photo</button>
+      <button class="btn" onclick="wizardAddLinkPrompt()"><svg class="ico" aria-hidden="true"><use href="#i-link"></use></svg> Ajouter un lien</button>
     </div>
     <div class="tk-modal-actions" style="justify-content:space-between">
-      <button class="btn" id="wizard-prev-btn" onclick="wizardPrev()">← Précédent</button>
+      <button class="btn" id="wizard-prev-btn" onclick="wizardPrev()"><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"></use></svg> Précédent</button>
       <div style="display:flex;gap:8px">
         <button class="btn" onclick="closeCampaignWizard()">Fermer</button>
-        <button class="btn btn-primary" id="wizard-next-btn" onclick="wizardNext()">Suivant →</button>
+        <button class="btn btn-primary" id="wizard-next-btn" onclick="wizardNext()">Suivant <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"></use></svg></button>
       </div>
     </div>
   </div>
@@ -370,7 +372,7 @@
     <div class="tk-modal-title">Décaler l'échéance</div>
     <div><label>Nouvelle date pour ce concert</label><input type="date" id="do-date"></div>
     <div class="tk-modal-actions" style="justify-content:space-between">
-      <button class="btn" onclick="clearDateOverride()">↺ Date par défaut</button>
+      <button class="btn" onclick="clearDateOverride()"><svg class="ico" aria-hidden="true"><use href="#i-rotate"></use></svg> Date par défaut</button>
       <div style="display:flex;gap:8px">
         <button class="btn" onclick="document.getElementById('date-override-modal').classList.remove('open')">Annuler</button>
         <button class="btn btn-primary" onclick="saveDateOverride()">Enregistrer</button>
@@ -838,6 +840,8 @@ function escUrl(u){
   if(/^(https?:)?\/\//i.test(u)||/^[.\/#]/.test(u))return esc(u);
   return '';
 }
+// Icone du sprite Lucide (couleur du texte, taille 1em)
+function icon(name,extra){return '<svg class="ico'+(extra?' '+extra:'')+'" aria-hidden="true"><use href="#i-'+name+'"></use></svg>';}
 function cancelBadge(c){return c.annule?'<span class="cancel-badge">Annulé</span>':'';}
 // Resout le nom affiche d'un post RS a partir de concertId (source de verite,
 // suit un renommage) plutot que du texte fige p.concert (garde uniquement en
@@ -1024,7 +1028,7 @@ function toggleFicheGroup(key){
 function ficheGroupHtml(key,label,count,color,itemsHtml){
   var open=!!ficheGroupsOpen[key];
   return '<div class="group-title second fg-toggle" style="color:'+color+'" onclick="toggleFicheGroup(\''+key+'\')">'
-    +'<span class="fg-chev'+(open?' open':'')+'">&#9656;</span>'+label+' ('+count+')</div>'
+    +'<span class="fg-chev'+(open?' open':'')+'">'+icon('chevron-right')+'</span>'+label+' ('+count+')</div>'
     +'<div style="display:'+(open?'':'none')+'">'+itemsHtml+'</div>';
 }
 var REPORT_SECTIONS=[
@@ -1041,7 +1045,7 @@ function reportMediaGridHtml(items){
     if(m.type==='image'){
       return '<div class="rpt-card"><img src="'+escUrl(m.url)+'">'+(m.caption?'<div class="rpt-caption">'+esc(m.caption)+'</div>':'')+'</div>';
     }
-    return '<div class="rpt-card"><div class="rpt-card-link">🔗 '+esc(m.caption||m.url)+'</div></div>';
+    return '<div class="rpt-card"><div class="rpt-card-link">'+icon('link')+' '+esc(m.caption||m.url)+'</div></div>';
   }).join('')+'</div>';
 }
 function exportCampaignReport(id){
@@ -1240,7 +1244,7 @@ function renderFicheTasks(c){
       }
     }
     return '<div class="ftask'+(isDone?' done':isBlocked?' blocked':'')+'"'+(clickable?' onclick="toggleFicheTask(\''+c.id+'\','+tidLit(t)+')"':'')+'>'+
-      '<div class="ftask-chk'+(isDone?' on':isBlocked?' blocked':'')+'">'+( isDone?'&#10003;':isBlocked?'&#8987;':'')+' </div>'+
+      '<div class="ftask-chk'+(isDone?' on':isBlocked?' blocked':'')+'">'+(isDone?icon('check'):isBlocked?icon('hourglass'):'')+'</div>'+
       '<div style="flex:1"><div class="ftask-name">'+esc(t.nom)+(t.isCustom?' <span style="font-size:11px;color:var(--text-3);font-weight:400">(manuelle)</span>':'')+'</div>'+
       '<div style="display:flex;align-items:center;gap:6px;margin-top:3px">'+
       '<span class="pill '+cat.cls+'">'+cat.label+'</span>'+
@@ -1249,12 +1253,12 @@ function renderFicheTasks(c){
   function naTaskHtml(t){
     var cat=CATS[t.cat]||{cls:'p-gen',label:'?'};
     return '<div class="ftask na">'+
-      '<div class="ftask-chk blocked">&#8709;</div>'+
+      '<div class="ftask-chk blocked">'+icon('ban')+'</div>'+
       '<div style="flex:1"><div class="ftask-name">'+esc(t.nom)+'</div>'+
       '<div style="display:flex;align-items:center;gap:6px;margin-top:3px">'+
       '<span class="pill '+cat.cls+'">'+cat.label+'</span>'+
       '<span class="ftask-date">Marquée inutile</span></div></div>'+
-      '<button class="ftask-na-btn always" onclick="event.stopPropagation();toggleTaskNA(\''+c.id+'\','+tidLit(t)+')">&#8635; Réactiver</button></div>';
+      '<button class="ftask-na-btn always" onclick="event.stopPropagation();toggleTaskNA(\''+c.id+'\','+tidLit(t)+')">'+icon('rotate')+' Réactiver</button></div>';
   }
   var html='';
   if(late.length)html+='<div class="group-title" style="color:var(--red)">En retard ('+late.length+')</div>'+late.map(function(t){return taskHtml(t,false);}).join('');
@@ -1368,7 +1372,7 @@ function renderAnnonces(){
       +'<div class="ann-compact-art">'+esc(c.art)+cancelBadge(c)+'</div>'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-top:3px">'
       +'<span class="ann-compact-status">'+statusTxt+'</span>'
-      +'<button style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text-3);cursor:pointer;white-space:nowrap" onclick="event.stopPropagation();annonceDone(\''+c.id+'\')" title="Marquer comme annoncé">&#10003;</button>'
+      +'<button style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text-3);cursor:pointer;white-space:nowrap" onclick="event.stopPropagation();annonceDone(\''+c.id+'\')" title="Marquer comme annoncé">'+icon('check')+'</button>'
       +'</div>'
       +'</div>';
   }).join('');
@@ -1423,14 +1427,14 @@ function renderKanban(){
         ? posts.map(function(p){
             var t=RS_TYPES[p.type]||RS_TYPES.autre;
             var fmtCls=p.format==='story'?'rs-fmt-story':p.format==='tirage'?'rs-fmt-tirage':'rs-fmt-post';
-            var fmtLbl=p.format==='story'?'Story':p.format==='tirage'?'🎲':'Post';
+            var fmtLbl=p.format==='story'?'Story':p.format==='tirage'?icon('dice'):'Post';
             var title=(rsResolveConcertLabel(p)||p.note||t.label).substring(0,18);
             return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600;white-space:nowrap'+(p.ready?';border-color:#b8e0ca;background:#eef7f2;color:#2d7a4f':'')+'">'
               +'<span class="rs-post-format '+fmtCls+'" style="padding:1px 5px;font-size:11px">'+fmtLbl+'</span>'
               +'<span style="color:var(--text-2)">'+title+'</span>'
               +'</span>';
           }).join('')
-        : '<span style="font-size:11px;color:#ccc;font-style:italic">Rien de prévu</span>';
+        : '<span style="font-size:11px;color:var(--border-strong);font-style:italic">Rien de prévu</span>';
       return '<div style="display:flex;align-items:center;gap:8px;padding:0 14px;border-right:1px solid var(--border-light);flex-shrink:0">'
         +'<span class="ncb-label" style="flex-shrink:0">'+proj.label+'</span>'
         +'<div class="ncb-sep" style="flex-shrink:0"></div>'
@@ -1561,7 +1565,7 @@ function renderConcerts(){
       var notesHtml=notes?'<div style="line-height:1.5;font-size:12px;color:var(--text-2)">'+esc(notes)+'</div>':'';
       var hasBud=!!(bud&&escUrl(bud));
       var budHtml=hasBud
-        ?'<a href="'+escUrl(bud)+'" target="_blank" title="Ouvrir le lien budget dans un nouvel onglet" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);text-decoration:none;font-size:13px;transition:all .15s" onmouseover="this.style.background=\'var(--bg)\';this.style.color=\'var(--text)\'" onmouseout="this.style.background=\'var(--surface)\';this.style.color=\'var(--text-2)\'">&#8599;</a>'
+        ?'<a href="'+escUrl(bud)+'" target="_blank" title="Ouvrir le lien budget dans un nouvel onglet" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);text-decoration:none;font-size:13px;transition:all .15s" onmouseover="this.style.background=\'var(--bg)\';this.style.color=\'var(--text)\'" onmouseout="this.style.background=\'var(--surface)\';this.style.color=\'var(--text-2)\'">'+icon('arrow-up-right')+'</a>'
         :'';
 
       var daStr='';
@@ -1590,17 +1594,17 @@ function renderConcerts(){
       var cN=cell('notes','Notes',!!notes,notesHtml);
       var cB=cell('budget','Budget',hasBud,'<div style="margin-top:4px">'+budHtml+'</div>',';flex:0 0 110px');
 
-      var skipBadges=(skipSp?'<button class="crow-skip-btn active" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'sp\')">&#9679; Sponso prod</button>':'')
-        +(skipCol?'<button class="crow-skip-btn active" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'col\')">&#9679; Pas d\'affiche</button>':'');
+      var skipBadges=(skipSp?'<button class="crow-skip-btn active" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'sp\')">'+icon('circle-check')+' Sponso prod</button>':'')
+        +(skipCol?'<button class="crow-skip-btn active" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'col\')">'+icon('circle-check')+' Pas d\'affiche</button>':'');
       var statutBloc='<div style="width:120px;flex-shrink:0;padding:8px 12px;display:flex;flex-direction:column;gap:6px;justify-content:center">'
         +ventesHtml(c,'toggleVentes(event,\''+c.id+'\')')
-        +(isAnnounced?'<button class="ann-undo" onclick="event.stopPropagation();annonceUndo(\''+c.id+'\')" style="font-size:12px;color:var(--text-3);text-align:left;background:none;border:none;cursor:pointer">&#8635; Annonce</button>':'')
+        +(isAnnounced?'<button class="ann-undo" onclick="event.stopPropagation();annonceUndo(\''+c.id+'\')" style="font-size:12px;color:var(--text-3);text-align:left;background:none;border:none;cursor:pointer">'+icon('rotate')+' Annonce</button>':'')
         +(skipBadges?'<div style="display:flex;flex-direction:column;gap:3px;margin-top:4px">'+skipBadges+'</div>':'')
         +'</div>';
 
       return '<div class="crow'+(notAnnounced?' not-announced':'')+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')" style="display:flex;align-items:stretch;padding:0;min-height:52px;"+((c.ventes||0)===4?"background:rgba(26,122,79,.06)":"")+">'
         +infoBloc+cM+cJ+cN+cB+statutBloc
-        +'<span style="font-size:12px;color:#ccc;padding:0 8px;display:flex;align-items:center">&#8250;</span></div>';
+        +'<span style="font-size:14px;color:var(--border-strong);padding:0 8px;display:flex;align-items:center">'+icon('chevron-right')+'</span></div>';
     }).join('')+'</div>';
 }
 // Regroupe les concerts filtres par salle (utile pour voir d'un coup d'oeil
@@ -1673,9 +1677,9 @@ function renderConcertsCalendar(liste,el){
   var jours=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
   el.innerHTML='<div class="card" style="padding:16px">'
     +'<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:14px">'
-    +'<button class="rs-nav-btn" onclick="calPrevMonth()">◀</button>'
+    +'<button class="rs-nav-btn" onclick="calPrevMonth()" title="Mois précédent">'+icon('chevron-left')+'</button>'
     +'<span class="rs-nav-month">'+monthLabel+'</span>'
-    +'<button class="rs-nav-btn" onclick="calNextMonth()">▶</button>'
+    +'<button class="rs-nav-btn" onclick="calNextMonth()" title="Mois suivant">'+icon('chevron-right')+'</button>'
     +'<button class="btn" style="margin-left:8px" onclick="calToday()">Aujourd\'hui</button>'
     +'</div>'
     +'<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px">'
@@ -1711,7 +1715,7 @@ function renderPastConcerts(){
         +'<div><div class="crow-name">'+esc(c.art)+cancelBadge(c)+'</div>'
         +'<div style="font-size:12px;font-weight:500;color:var(--text-2);margin-top:2px">'+(c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div></div>'
         +'<div style="display:flex;align-items:center;gap:20px;flex-shrink:0">'
-        +'<button class="btn" onclick="event.stopPropagation();restoreConcert(\''+c.id+'\')">&#8635; Remettre en actif</button>'
+        +'<button class="btn" onclick="event.stopPropagation();restoreConcert(\''+c.id+'\')"><svg class="ico" aria-hidden="true"><use href="#i-rotate"></use></svg> Remettre en actif</button>'
         +'<button class="dbtn" onclick="event.stopPropagation();permanentlyDeleteConcert(\''+c.id+'\')">Supprimer définitivement</button>'
         +'</div></div>';
     }).join('')+'</div>';
@@ -1735,7 +1739,7 @@ function renderProcess(){
         return '<div class="prow" draggable="true" data-id="'+t.id+'"'+
           ' ondragstart="dragStart(event,'+t.id+')" ondragover="dragOver(event)"'+
           ' ondrop="dragDrop(event,'+t.id+')" ondragleave="dragLeave(event)">'+
-          '<span class="drag">&#8942;</span>'+
+          '<span class="drag">'+icon('grip')+'</span>'+
           '<input type="text" value="'+esc(t.nom)+'" onchange="updTask('+t.id+',\'nom\',this.value)">'+
           '<input type="number" value="'+esc(t.jours)+'" onchange="updTask('+t.id+',\'jours\',this.value)">'+
           '<select onchange="updTask('+t.id+',\'ref\',this.value)">'+
@@ -1743,7 +1747,7 @@ function renderProcess(){
           '<option value="annonce"'+(t.ref==='annonce'?' selected':'')+'>J après annonce</option>'+
           '</select>'+
           catSelect(t)+prereqSelect(t)+
-          '<button class="dbtn" onclick="delTask('+t.id+')">x</button></div>';
+          '<button class="dbtn" title="Supprimer" onclick="delTask('+t.id+')">'+icon('x')+'</button></div>';
       }).join('');
   }
   document.getElementById('plist').innerHTML=
@@ -1818,15 +1822,15 @@ function renderWizardStep(){
       if(m.type==='image'){
         return '<div class="media-card"><img src="'+escUrl(m.url)+'" onclick="window.open(\''+escUrl(m.url)+'\',\'_blank\')">'
           +(m.caption?'<div class="media-caption">'+esc(m.caption)+'</div>':'')
-          +'<button class="media-del" onclick="event.stopPropagation();wizardDeleteItem(\''+m.id+'\')" title="Supprimer">&#10005;</button></div>';
+          +'<button class="media-del" onclick="event.stopPropagation();wizardDeleteItem(\''+m.id+'\')" title="Supprimer">'+icon('x')+'</button></div>';
       }
       return '<div class="media-card media-link" onclick="window.open(\''+escUrl(m.url)+'\',\'_blank\')">'
-        +'<div class="media-link-icon">🔗</div><div class="media-link-url">'+esc(m.caption||m.url)+'</div>'
-        +'<button class="media-del" onclick="event.stopPropagation();wizardDeleteItem(\''+m.id+'\')" title="Supprimer">&#10005;</button></div>';
+        +'<div class="media-link-icon">'+icon('link')+'</div><div class="media-link-url">'+esc(m.caption||m.url)+'</div>'
+        +'<button class="media-del" onclick="event.stopPropagation();wizardDeleteItem(\''+m.id+'\')" title="Supprimer">'+icon('x')+'</button></div>';
     }).join('');
   }
   document.getElementById('wizard-prev-btn').style.visibility=wizardStepIdx===0?'hidden':'visible';
-  document.getElementById('wizard-next-btn').textContent=(wizardStepIdx===REPORT_SECTIONS.length-1)?'Générer le PDF':'Suivant →';
+  document.getElementById('wizard-next-btn').innerHTML=(wizardStepIdx===REPORT_SECTIONS.length-1)?'Générer le PDF':'Suivant '+icon('arrow-right');
 }
 function wizardPrev(){if(wizardStepIdx>0){wizardStepIdx--;renderWizardStep();}}
 function wizardNext(){
@@ -1906,8 +1910,8 @@ function updateSkipButtons(){
   var bCol=document.getElementById('skip-col-btn');
   var iSp=document.getElementById('skip-sp-icon');
   var iCol=document.getElementById('skip-col-icon');
-  if(bSp){bSp.classList.toggle('active',sp);if(iSp)iSp.textContent=sp?'●':'○';}
-  if(bCol){bCol.classList.toggle('active',col);if(iCol)iCol.textContent=col?'●':'○';}
+  if(bSp){bSp.classList.toggle('active',sp);if(iSp)iSp.innerHTML=icon(sp?'circle-check':'circle');}
+  if(bCol){bCol.classList.toggle('active',col);if(iCol)iCol.innerHTML=icon(col?'circle-check':'circle');}
 }
 function toggleHighlight(cid,tid){var k="hl-"+cid+"-"+tid;if(taskStates[k])delete taskStates[k];else taskStates[k]=true;scheduleSave('taskstates');renderKanban();renderTkWidget();}
 function startCellEdit(e,cid,field){
@@ -2025,8 +2029,9 @@ function renderTaches(){
       chk.addEventListener('click',function(e){e.stopPropagation();tkToggleDone(t.id);});
       var body=document.createElement('div');body.className='tk-task-body';
       var nameEl=document.createElement('div');nameEl.className='tk-task-name';nameEl.textContent=t.nom;
-      if(t.recur){var recurIcon=document.createElement('span');recurIcon.textContent=' \u{1F501}';recurIcon.title='Tâche récurrente';nameEl.appendChild(recurIcon);}
-      if(t.note){var noteIcon=document.createElement('span');noteIcon.textContent=' \u{1F4DD}';noteIcon.title=t.note;nameEl.appendChild(noteIcon);}
+      if(t.delegue)nameEl.insertAdjacentHTML('afterbegin',icon('user','ico-muted')+' ');
+      if(t.recur){var recurIcon=document.createElement('span');recurIcon.innerHTML=' '+icon('repeat','ico-muted');recurIcon.title='Tâche récurrente';nameEl.appendChild(recurIcon);}
+      if(t.note){var noteIcon=document.createElement('span');noteIcon.innerHTML=' '+icon('note','ico-muted');noteIcon.title=t.note;nameEl.appendChild(noteIcon);}
       body.appendChild(nameEl);
       // Ligne meta : date + priorite (seulement si Haute/Basse : "Normale" est
       // la valeur par defaut, l'afficher n'apporte rien) + actions au survol.
@@ -2034,13 +2039,13 @@ function renderTaches(){
       if(df){var dateEl=document.createElement('span');dateEl.className='tk-task-date '+df.cls;dateEl.textContent=df.txt;meta.appendChild(dateEl);}
       if(t.prio==='high'||t.prio==='low'){var pl=tkPrioLabel(t.prio);var prioEl=document.createElement('span');prioEl.className='tk-task-prio '+pl.cls;prioEl.textContent=pl.txt;meta.appendChild(prioEl);}
       var actions=document.createElement('div');actions.className='tk-task-actions';
-      var editBtn=document.createElement('button');editBtn.className='tk-task-btn';editBtn.innerHTML='&#9998;';editBtn.title='Modifier';
+      var editBtn=document.createElement('button');editBtn.className='tk-task-btn';editBtn.innerHTML=icon('pencil');editBtn.title='Modifier';
       editBtn.addEventListener('click',function(e){e.stopPropagation();tkEditTask(t.id);});
       var delegBtn=document.createElement('button');
       delegBtn.className='tk-task-btn'+(t.delegue?' deleg-active':'');
-      delegBtn.innerHTML=t.delegue?'&#9679;':'&#9675;';delegBtn.title=t.delegue?'Délégué (cliquer pour reprendre)':'Déléguer';
+      delegBtn.innerHTML=icon('user');delegBtn.title=t.delegue?'Délégué (cliquer pour reprendre)':'Déléguer';
       delegBtn.addEventListener('click',function(e){e.stopPropagation();tkToggleDelegue(t.id);});
-      var delBtn=document.createElement('button');delBtn.className='tk-task-btn del-btn';delBtn.innerHTML='&#x2715;';delBtn.title='Supprimer';
+      var delBtn=document.createElement('button');delBtn.className='tk-task-btn del-btn';delBtn.innerHTML=icon('x');delBtn.title='Supprimer';
       delBtn.addEventListener('click',function(e){e.stopPropagation();tkDelTask(t.id);});
       actions.appendChild(editBtn);actions.appendChild(delegBtn);actions.appendChild(delBtn);
       meta.appendChild(actions);
@@ -2271,6 +2276,7 @@ function renderTkWidget(){
         var dot=document.createElement('div');dot.className='tk-widget-dot '+(t.prio||'normal');
         var name=document.createElement('div');name.className='tk-widget-task-name';
         name.textContent=t.nom;name.title=t.nom;
+        if(t.delegue)name.insertAdjacentHTML('afterbegin',icon('user','ico-muted')+' ');
         if(t.isPinned){name.style.fontStyle='italic';name.style.fontSize='11px';}
         row.appendChild(chk);row.appendChild(dot);row.appendChild(name);
         if(!t.isPinned){row.addEventListener('click',function(){tkEditTask(t.id);});}
@@ -2399,7 +2405,7 @@ function renderRS(){
     dayPosts.forEach(function(p){
       var t=RS_TYPES[p.type]||RS_TYPES.autre;
       var pcLabel=rsResolveConcertLabel(p);
-      var lbl=(p.autoRef?'📢 ':(p.format==='story'?'📱 ':p.format==='tirage'?'🎲 ':'📄 '))+t.label+(pcLabel?' · '+esc(pcLabel.substring(0,12)):p.note?' · '+esc(p.note.substring(0,15)):'');
+      var lbl=(p.autoRef?icon('megaphone'):(p.format==='story'?icon('smartphone'):p.format==='tirage'?icon('dice'):icon('file')))+' '+t.label+(pcLabel?' · '+esc(pcLabel.substring(0,12)):p.note?' · '+esc(p.note.substring(0,15)):'');
       chips+='<span class="rs-chip'+(p.ready?' ready':'')+(p.format==='story'?' story':'')+'">'+lbl+'</span>';
     });
 
@@ -2411,7 +2417,7 @@ function renderRS(){
       +'<span class="rs-day-num" style="'+numStyle+'line-height:1;">'+dayNum+'</span>'
       +'<span style="font-size:11px;color:'+(isToday?'var(--accent)':(isPast?'var(--border-strong)':'var(--text-3)'))+';text-transform:uppercase;font-weight:700;letter-spacing:.03em;margin-top:1px;">'+monthName+'</span>'
       +'</span>'
-      +'<span style="font-size:11px;min-width:36px;'+nameStyle+(isPast&&!isToday?'color:#ccc;':'')+(isWE&&!isToday&&!isPast?'color:var(--text-3);':'')+'">'+dayName+'</span>'
+      +'<span style="font-size:11px;min-width:36px;'+nameStyle+(isPast&&!isToday?'color:var(--border-strong);':'')+(isWE&&!isToday&&!isPast?'color:var(--text-3);':'')+'">'+dayName+'</span>'
       +'<div class="rs-chips">'+chips+'</div>'
       +'<button class="rs-add-day-btn" onclick="event.stopPropagation();rsOpenModal(\''+dateStr+'\')">+ Ajouter</button>'
       +'</div>'
@@ -2429,7 +2435,7 @@ function renderRS(){
           +'<div class="rs-post-row1">'
           +'<span class="rs-post-format '+fmtCls+'">'+fmtLbl+'</span>'
           +'<span class="rs-post-type '+t.cls+'">'+t.label+'</span>'
-          +(pcLabel?'<span class="rs-post-concert">'+(isAuto?'📢 ':'')+esc(pcLabel)+'</span>':'')
+          +(pcLabel?'<span class="rs-post-concert">'+(isAuto?icon('megaphone')+' ':'')+esc(pcLabel)+'</span>':'')
           +(p.note&&!pcLabel?'<span class="rs-post-note">'+esc(p.note)+'</span>':'')
           +'</div>'
           +(p.legend?'<div class="rs-post-legend">'+esc(p.legend)+'</div>':'')
@@ -2439,10 +2445,10 @@ function renderRS(){
           +(p.insta?'<span class="rs-net-badge insta">Insta</span>':'')
           +(p.tiktok?'<span class="rs-net-badge tiktok">TikTok</span>':'')
           +(p.linkedin?'<span class="rs-net-badge linkedin">LinkedIn</span>':'')
-          +'<button class="rs-ready-btn'+(p.status==='posted'?' on posted':p.status==='ready'?' on':'')+'" onclick="rsToggleReady(\''+p.id+'\')">'          +(p.status==='posted'?'✈ Posté':p.status==='ready'?'✓ Prêt':'○ Prêt')+'</button>'
+          +'<button class="rs-ready-btn'+(p.status==='posted'?' on posted':p.status==='ready'?' on':'')+'" onclick="rsToggleReady(\''+p.id+'\')">'          +(p.status==='posted'?icon('send')+' Posté':p.status==='ready'?icon('check')+' Prêt':icon('circle')+' Prêt')+'</button>'
           +'<div class="rs-post-btns">'
-          +'<button class="rs-post-btn" onclick="rsEditPost(\''+p.id+'\')">✎</button>'
-          +(isAuto?'':'<button class="rs-post-btn del" onclick="rsDelPost(\''+p.id+'\')">✕</button>')
+          +'<button class="rs-post-btn" onclick="rsEditPost(\''+p.id+'\')" title="Modifier">'+icon('pencil')+'</button>'
+          +(isAuto?'':'<button class="rs-post-btn del" onclick="rsDelPost(\''+p.id+'\')" title="Supprimer">'+icon('x')+'</button>')
           +'</div></div></div>';
       })
       daysHtml+='</div>';
@@ -2461,10 +2467,10 @@ function renderRS(){
   var _nextLbl=_nextM.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
   _nextLbl=_nextLbl.charAt(0).toUpperCase()+_nextLbl.slice(1);
   var topHtml='<div style="padding:8px 16px;border-bottom:1px solid var(--border-light);background:var(--bg)">'
-    +'<button onclick="rsExtend(\'before\')" style="font-size:12px;color:var(--text-3);background:none;border:1px solid var(--border);padding:4px 14px;border-radius:20px;cursor:pointer">↑ '+_prevLbl+'</button>'
+    +'<button onclick="rsExtend(\'before\')" style="font-size:12px;color:var(--text-3);background:none;border:1px solid var(--border);padding:4px 14px;border-radius:20px;cursor:pointer">'+icon('arrow-up')+' '+_prevLbl+'</button>'
     +'</div>';
   var botHtml='<div style="padding:8px 16px;border-top:1px solid var(--border-light);background:var(--bg)">'
-    +'<button onclick="rsExtend(\'after\')" style="font-size:12px;color:var(--text-3);background:none;border:1px solid var(--border);padding:4px 14px;border-radius:20px;cursor:pointer">↓ '+_nextLbl+'</button>'
+    +'<button onclick="rsExtend(\'after\')" style="font-size:12px;color:var(--text-3);background:none;border:1px solid var(--border);padding:4px 14px;border-radius:20px;cursor:pointer">'+icon('arrow-down')+' '+_nextLbl+'</button>'
     +'</div>';
 
   wrap.innerHTML=tabsHtml+'<div class="rs-card">'+topHtml+daysHtml+botHtml+'</div>';
@@ -2913,9 +2919,9 @@ async function saveBudgetConfig() {
     await supaSet('budget_templates', BUDGET_TEMPLATES);
     await supaSet('style_adjustments', STYLE_ADJUSTMENTS);
     await supaSet('regles_salles', REGLES_SALLES);
-    if (btn) { btn.textContent='✅ Sauvegardé !'; setTimeout(function(){ btn.textContent='💾 Sauvegarder'; btn.disabled=false; }, 2000); }
+    if (btn) { btn.textContent='Sauvegardé ✓'; setTimeout(function(){ btn.textContent='Sauvegarder'; btn.disabled=false; }, 2000); }
   } catch(e) {
-    if (btn) { btn.textContent='❌ Erreur'; btn.disabled=false; }
+    if (btn) { btn.textContent='Erreur'; btn.disabled=false; }
     console.error(e);
   }
 }
@@ -3031,10 +3037,10 @@ loadBudgetConfig();
     <!-- Header -->
     <div style="padding:18px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
       <div>
-        <div style="font-size:15px;font-weight:700;color:var(--text)">📊 Créer le budget promo</div>
+        <div style="font-size:15px;font-weight:700;color:var(--text)"><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg> Créer le budget promo</div>
         <div id="budget-subtitle" style="font-size:12px;color:var(--text-3);margin-top:2px"></div>
       </div>
-      <button onclick="closeBudgetModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-3)">✕</button>
+      <button onclick="closeBudgetModal()" class="fiche-close" title="Fermer"><svg class="ico" aria-hidden="true"><use href="#i-x"></use></svg></button>
     </div>
     <!-- Connexion Google -->
     <div id="budget-auth-section" style="padding:16px 24px;border-bottom:1px solid var(--border-light)">
@@ -3063,9 +3069,9 @@ loadBudgetConfig();
       <div style="background:var(--bg);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text-2)">
         <div style="font-weight:700;color:var(--text);margin-bottom:6px;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Infos depuis la fiche</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
-          <div>🎤 <span id="bud-info-art" style="font-weight:600;color:var(--text)"></span></div>
-          <div>📍 <span id="bud-info-ville"></span></div>
-          <div>📅 <span id="bud-info-date"></span></div>
+          <div><svg class="ico" aria-hidden="true"><use href="#i-mic"></use></svg> <span id="bud-info-art" style="font-weight:600;color:var(--text)"></span></div>
+          <div><svg class="ico" aria-hidden="true"><use href="#i-map-pin"></use></svg> <span id="bud-info-ville"></span></div>
+          <div><svg class="ico" aria-hidden="true"><use href="#i-calendar"></use></svg> <span id="bud-info-date"></span></div>
           <div id="bud-info-flags" style="display:flex;gap:4px;flex-wrap:wrap"></div>
         </div>
       </div>
@@ -3081,10 +3087,10 @@ loadBudgetConfig();
       <div style="margin-bottom:14px">
         <label style="font-size:12px;font-weight:700;color:var(--text);display:block;margin-bottom:6px">Style musical</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap" id="bud-style-btns">
-          <button class="bud-style-btn" data-style="rap" onclick="budSelectStyle(this)">🎤 Rap / Hip-hop</button>
-          <button class="bud-style-btn" data-style="pop" onclick="budSelectStyle(this)">🎵 Pop</button>
-          <button class="bud-style-btn" data-style="variete" onclick="budSelectStyle(this)">🎶 Variété</button>
-          <button class="bud-style-btn" data-style="autre" onclick="budSelectStyle(this)">🎵 Autre</button>
+          <button class="bud-style-btn" data-style="rap" onclick="budSelectStyle(this)">Rap / Hip-hop</button>
+          <button class="bud-style-btn" data-style="pop" onclick="budSelectStyle(this)">Pop</button>
+          <button class="bud-style-btn" data-style="variete" onclick="budSelectStyle(this)">Variété</button>
+          <button class="bud-style-btn" data-style="autre" onclick="budSelectStyle(this)">Autre</button>
         </div>
       </div>
       <!-- Aperçu template -->
@@ -3627,14 +3633,14 @@ function budgetCreateSheet() {
       scheduleSave('concerts');
       if (document.getElementById('fi-budget')) document.getElementById('fi-budget').value = url;
       renderConcerts();
-      document.getElementById('budget-status-msg').innerHTML = '✅ Sheet créé ! <a href="'+url+'" target="_blank" style="color:#1a7a4f;font-weight:700">Ouvrir dans Google Sheets ↗</a>';
+      document.getElementById('budget-status-msg').innerHTML = 'Sheet créé ✓ <a href="'+url+'" target="_blank" style="color:var(--accent);font-weight:700">Ouvrir dans Google Sheets '+icon('arrow-up-right')+'</a>';
       btn.textContent = 'Créer le Google Sheet';
       btn.disabled = false;
     });
   })
   .catch(function(err){
     console.error('ERREUR CATCH:', err);
-    document.getElementById('budget-status-msg').textContent = '❌ Erreur : ' + (err.message||err);
+    document.getElementById('budget-status-msg').textContent = 'Erreur : ' + (err.message||err);
     btn.textContent = 'Créer le Google Sheet';
     btn.disabled = false;
   });

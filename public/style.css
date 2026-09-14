@@ -169,7 +169,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .prow input[type=text]{width:100%}
 .prow input[type=number]{width:58px}
 .prow select{padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;width:100%;background:var(--surface);outline:none}
-.drag{color:var(--border-strong);cursor:grab;font-size:13px;user-select:none}
+.drag{color:var(--border-strong);cursor:grab;font-size:13px;user-select:none;display:inline-flex;align-items:center}
 .drag:active{cursor:grabbing}
 .process-header{display:grid;grid-template-columns:16px 1fr 58px 110px 110px 160px 28px;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:2px}
 .process-header span{font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
@@ -552,6 +552,21 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .cmdk-empty{padding:20px;text-align:center;color:var(--text-3);font-size:13px}
 .cmdk-foot{display:flex;gap:14px;padding:8px 14px;border-top:1px solid var(--border-light);font-size:11px;color:var(--text-3)}
 .cmdk-foot span{display:inline-flex;align-items:center;gap:4px}
+
+/* ── ICONES (sprite Lucide) ───────────────────────────── */
+.ico{width:1em;height:1em;display:inline-block;vertical-align:-.15em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.ico-muted{color:var(--text-3)}
+.btn .ico,.menu-item .ico{width:14px;height:14px;vertical-align:-2px;margin-right:2px}
+.fiche-close .ico{width:16px;height:16px}
+.ftask-chk .ico,.chk .ico{width:11px;height:11px;stroke-width:3}
+.fg-chev .ico,#fiche-toggle-icon .ico{width:12px;height:12px}
+.media-link-icon .ico{width:22px;height:22px;color:var(--text-3)}
+.rs-chip .ico,.rs-post-concert .ico{width:12px;height:12px;vertical-align:-2px}
+.rs-post-format .ico{width:11px;height:11px;vertical-align:-1px}
+.drag .ico{width:14px;height:14px}
+.dbtn .ico,.rs-post-btn .ico,.tk-task-btn .ico{width:13px;height:13px;vertical-align:-2px}
+.fiche-skip-btn .ico{width:12px;height:12px}
+.fiche-skip-btn.active .ico{color:var(--accent-ink)}
 
 /* ── TYPOGRAPHIE ──────────────────────────────────────── */
 /* Geist pour toute l'interface (chiffres alignes). Les noms d'artistes en
