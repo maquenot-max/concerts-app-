@@ -43,9 +43,9 @@
       <button class="active" onclick="showTab('kanban',this)">Tableau de bord</button>
       <button id="btn-concerts" onclick="showTab('concerts',this)">Concerts</button>
       <button id="btn-past" onclick="showTab('past',this)" style="display:none">Concerts passés</button>
-      <button id="btn-taches" onclick="showTab('taches',this)">Taches</button>
+      <button id="btn-taches" onclick="showTab('taches',this)">Tâches</button>
       <button id="btn-process" onclick="showTab('process',this);budgetConfigClick()">Process</button>
-      <button id="btn-budgetconfig" onclick="showTab('budgetconfig',this)" style="display:none;opacity:0.5;font-size:11px">⚙ Budget</button>
+      <button id="btn-budgetconfig" onclick="showTab('budgetconfig',this)" style="display:none;opacity:0.5;font-size:12px">⚙ Budget</button>
     </nav>
   </header>
   <main>
@@ -56,7 +56,7 @@
       <div class="dash-top">
         <div class="dash-widget" id="ann-widget">
           <div class="dash-widget-head">
-            <span class="dash-widget-title"><span class="ann-dot" style="flex-shrink:0"></span>Annonces a venir</span>
+            <span class="dash-widget-title"><span class="ann-dot" style="flex-shrink:0"></span>Annonces à venir</span>
           </div>
           <div id="ann-wrap-compact"></div>
         </div>
@@ -79,8 +79,8 @@
           <button class="btn" onclick="toggleFiltersPanel(event,'kfilters-panel')">Filtres<span class="filters-badge" id="kfilters-badge" style="display:none"></span></button>
           <div class="filters-panel" id="kfilters-panel" style="display:none">
             <select id="fville" onchange="renderKanban()"><option value="">Toutes les villes</option></select>
-            <select id="fperiode" onchange="renderKanban()"><option value="">Toutes les periodes</option></select>
-            <select id="fcat" onchange="renderKanban()" title="Affiche les concerts ayant une tache urgente ou en retard dans cette categorie"><option value="">Toutes les categories</option></select>
+            <select id="fperiode" onchange="renderKanban()"><option value="">Toutes les périodes</option></select>
+            <select id="fcat" onchange="renderKanban()" title="Affiche les concerts ayant une tâche urgente ou en retard dans cette catégorie"><option value="">Toutes les catégories</option></select>
             <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding-top:2px;border-top:1px solid var(--border-light)">
               <input type="checkbox" id="fhideok" onchange="renderKanban()" style="width:auto"> Cacher les concerts OK
             </label>
@@ -111,8 +111,8 @@
           <button class="btn" onclick="toggleFiltersPanel(event,'cfilters-panel')">Filtres<span class="filters-badge" id="cfilters-badge" style="display:none"></span></button>
           <div class="filters-panel" id="cfilters-panel" style="display:none">
             <select id="cville" onchange="renderConcerts()"><option value="">Toutes les villes</option></select>
-            <select id="cperiode" onchange="renderConcerts()"><option value="">Toutes les periodes</option></select>
-            <select id="ccat" onchange="renderConcerts()" title="Affiche les concerts ayant une tache urgente ou en retard dans cette categorie"><option value="">Toutes les categories</option></select>
+            <select id="cperiode" onchange="renderConcerts()"><option value="">Toutes les périodes</option></select>
+            <select id="ccat" onchange="renderConcerts()" title="Affiche les concerts ayant une tâche urgente ou en retard dans cette catégorie"><option value="">Toutes les catégories</option></select>
           </div>
         </div>
         <div class="view-toggle" style="margin-left:auto">
@@ -131,8 +131,8 @@
           <button class="btn" onclick="toggleFiltersPanel(event,'pfilters-panel')">Filtres<span class="filters-badge" id="pfilters-badge" style="display:none"></span></button>
           <div class="filters-panel" id="pfilters-panel" style="display:none">
             <select id="pastville" onchange="renderPastConcerts()"><option value="">Toutes les villes</option></select>
-            <select id="pastperiode" onchange="renderPastConcerts()"><option value="">Toutes les periodes</option></select>
-            <select id="pastcat" onchange="renderPastConcerts()" title="Affiche les concerts ayant une tache urgente ou en retard dans cette categorie"><option value="">Toutes les categories</option></select>
+            <select id="pastperiode" onchange="renderPastConcerts()"><option value="">Toutes les périodes</option></select>
+            <select id="pastcat" onchange="renderPastConcerts()" title="Affiche les concerts ayant une tâche urgente ou en retard dans cette catégorie"><option value="">Toutes les catégories</option></select>
           </div>
         </div>
         <button class="btn" style="margin-left:auto" onclick="showTab('concerts',document.getElementById('btn-concerts'))">← Retour aux concerts</button>
@@ -143,7 +143,7 @@
       <div class="card" style="max-width:900px;margin:0 auto">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
           <h2 style="margin:0">⚙ Configuration Budget Promo</h2>
-          <span style="font-size:11px;color:var(--text-3);background:var(--bg);padding:3px 10px;border-radius:20px;border:1px solid var(--border)">Sauvegardé sur Supabase</span>
+          <span style="font-size:12px;color:var(--text-3);background:var(--bg);padding:3px 10px;border-radius:20px;border:1px solid var(--border)">Sauvegardé sur Supabase</span>
           <button class="btn btn-primary" style="margin-left:auto" onclick="saveBudgetConfig()">💾 Sauvegarder</button>
         </div>
 
@@ -192,17 +192,17 @@
     <div id="tab-process" class="panel">
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h2 style="margin:0">Taches types</h2>
-          <button class="btn" onclick="addTask()">+ Tache</button>
+          <h2 style="margin:0">Tâches types</h2>
+          <button class="btn" onclick="addTask()">+ Tâche</button>
         </div>
         <div class="process-table-scroll">
           <div class="process-header">
-            <span></span><span>Tache</span><span>Jours</span><span>Reference</span><span>Categorie</span><span>Prerequis</span><span></span>
+            <span></span><span>Tâche</span><span>Jours</span><span>Référence</span><span>Catégorie</span><span>Prérequis</span><span></span>
           </div>
           <div id="plist"></div>
         </div>
         <p style="font-size:12px;color:var(--text-3);margin-top:14px;padding-top:14px;border-top:1px solid var(--border-light)">
-          Prerequis : la tache ne sera active que si la tache selectionnee est cochee.
+          Prérequis : la tâche ne sera active que si la tâche sélectionnée est cochée.
         </p>
       </div>
     </div>
@@ -224,7 +224,7 @@
     <div class="fiche-body">
       <div class="fiche-section" style="margin-bottom:8px">
         <div class="fiche-section-toggle" onclick="toggleFicheInfo()">
-          <span id="fiche-toggle-icon" style="font-size:9px;color:var(--text-3);display:inline-block;transition:transform .2s">&#9658;</span>
+          <span id="fiche-toggle-icon" style="font-size:11px;color:var(--text-3);display:inline-block;transition:transform .2s">&#9658;</span>
           <div class="fiche-section-title" style="margin-bottom:0">Informations</div>
         </div>
         <div id="fiche-info-collapsible" style="overflow:hidden;max-height:0;opacity:0;transition:max-height .3s ease,opacity .2s ease">
@@ -238,7 +238,7 @@
             <div class="fiche-field" style="grid-column:1/-1"><label>Salle / Ville</label><input type="text" id="fi-ville" onchange="updateFicheField('ville',this.value)"></div>
             <div class="fiche-field"><label>Date du concert</label><input type="date" id="fi-dc" onchange="updateFicheField('dc',this.value)"></div>
             <div class="fiche-field"><label>Date d'annonce</label><input type="date" id="fi-da" onchange="updateFicheField('da',this.value)"></div>
-            <div class="fiche-field" style="grid-column:1/-1"><label>Media / Photographes</label><input type="text" id="fi-medias" onchange="updateFicheField('medias',this.value)" placeholder="ex: Bien Public, L union..."></div>
+            <div class="fiche-field" style="grid-column:1/-1"><label>Média / Photographes</label><input type="text" id="fi-medias" onchange="updateFicheField('medias',this.value)" placeholder="ex: Bien Public, L union..."></div>
             <div class="fiche-field"><label>Jeu concours</label><input type="text" id="fi-jeux" onchange="updateFicheField('jeux',this.value)" placeholder="ex: L union 5x2..."></div>
             <div class="fiche-field"><label>Lien budget</label><input type="text" id="fi-budget" onchange="updateFicheField('budget',this.value)" placeholder="https://..."></div>
             <div class="fiche-field" style="grid-column:1/-1"><label>Notes</label><input type="text" id="fi-notes" onchange="updateFicheField('notes',this.value)" placeholder="Notes libres..."></div>
@@ -249,14 +249,14 @@
       <div class="fiche-section">
         <div class="fiche-section-title" style="display:flex;justify-content:space-between;align-items:center">
           <span>Plan de communication</span>
-          <button class="dash-widget-link" onclick="openCustomTaskModal(currentFicheId)">+ Ajouter une tache</button>
+          <button class="dash-widget-link" onclick="openCustomTaskModal(currentFicheId)">+ Ajouter une tâche</button>
         </div>
         <div class="fiche-tasks" id="fiche-tasks"></div>
       </div>
     </div>
     <div class="fiche-footer">
-      <button class="reset-btn" onclick="resetFicheTasks()">&#8635; Reinit. taches</button>
-      <button class="btn" onclick="openCampaignWizard(currentFicheId)" title="Questionnaire guide pour generer le rapport de campagne">📄 Rapport de campagne (PDF)</button>
+      <button class="reset-btn" onclick="resetFicheTasks()">&#8635; Réinit. tâches</button>
+      <button class="btn" onclick="openCampaignWizard(currentFicheId)" title="Questionnaire guidé pour générer le rapport de campagne">📄 Rapport de campagne (PDF)</button>
       <button class="btn" onclick="openBudgetModal()" style="background:#e8f5ee;color:#1a7a4f;border:1px solid #b8e0ca;font-weight:600">📊 Budget Promo</button>
       <button class="btn btn-danger" id="fi-archive-btn" onclick="deleteFicheConcert()">Déplacer vers Concerts passés</button>
       <button class="btn" id="fi-restore-btn" onclick="restoreConcert(currentFicheId)" style="display:none">&#8635; Remettre en actif</button>
@@ -267,10 +267,10 @@
 <div id="bilan-report"></div>
 <div class="tk-modal" id="tk-modal">
   <div class="tk-modal-box">
-    <div class="tk-modal-title" id="tk-modal-title">Nouvelle tache</div>
-    <div><label>Titre</label><input type="text" id="tk-nom" placeholder="Titre de la tache..."></div>
+    <div class="tk-modal-title" id="tk-modal-title">Nouvelle tâche</div>
+    <div><label>Titre</label><input type="text" id="tk-nom" placeholder="Titre de la tâche..."></div>
     <div><label>Date</label><input type="date" id="tk-date"></div>
-    <div><label>Priorite</label>
+    <div><label>Priorité</label>
       <select id="tk-prio">
         <option value="normal">Normale</option>
         <option value="high">Haute</option>
@@ -279,7 +279,7 @@
     </div>
     <div><label>Note (optionnel)</label><textarea id="tk-note" placeholder="ex: en attente du retour client..." style="width:100%;min-height:50px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;resize:vertical"></textarea></div>
     <div>
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="tk-recur-on" style="width:auto" onchange="document.getElementById('tk-recur-config').style.display=this.checked?'flex':'none'"> Tache recurrente</label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="tk-recur-on" style="width:auto" onchange="document.getElementById('tk-recur-config').style.display=this.checked?'flex':'none'"> Tâche récurrente</label>
       <div id="tk-recur-config" style="display:none;gap:8px;margin-top:6px;align-items:center">
         <span style="font-size:12px;color:var(--text-2)" id="tk-recur-prefix">Tous les</span>
         <input type="number" id="tk-recur-n" min="1" value="1" style="width:60px">
@@ -321,7 +321,7 @@
 <div class="tk-modal" id="wizard-modal">
   <div class="tk-modal-box" style="width:560px;max-width:90vw">
     <div class="tk-modal-title" id="wizard-title">Rapport de campagne</div>
-    <div style="font-size:11px;color:var(--text-3);margin-bottom:12px;line-height:1.5" id="wizard-progress"></div>
+    <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;line-height:1.5" id="wizard-progress"></div>
     <div class="media-grid" id="wizard-step-grid" style="margin-bottom:12px"></div>
     <div class="media-add-row" style="margin-bottom:16px">
       <input type="file" id="wizard-file-input" accept="image/*" style="display:none" onchange="wizardUploadFile(this)">
@@ -339,10 +339,10 @@
 </div>
 <div class="tk-modal" id="custom-task-modal">
   <div class="tk-modal-box">
-    <div class="tk-modal-title" id="custom-task-modal-title">Ajouter une tache</div>
+    <div class="tk-modal-title" id="custom-task-modal-title">Ajouter une tâche</div>
     <div><label>Titre</label><input type="text" id="ct-nom" placeholder="ex: Relance partenaire local..."></div>
     <div><label>Date</label><input type="date" id="ct-date"></div>
-    <div><label>Categorie</label>
+    <div><label>Catégorie</label>
       <select id="ct-cat"></select>
     </div>
     <div class="tk-modal-actions">
@@ -353,10 +353,10 @@
 </div>
 <div class="tk-modal" id="date-override-modal">
   <div class="tk-modal-box" style="width:340px">
-    <div class="tk-modal-title">Decaler l'echeance</div>
+    <div class="tk-modal-title">Décaler l'échéance</div>
     <div><label>Nouvelle date pour ce concert</label><input type="date" id="do-date"></div>
     <div class="tk-modal-actions" style="justify-content:space-between">
-      <button class="btn" onclick="clearDateOverride()">↺ Date par defaut</button>
+      <button class="btn" onclick="clearDateOverride()">↺ Date par défaut</button>
       <div style="display:flex;gap:8px">
         <button class="btn" onclick="document.getElementById('date-override-modal').classList.remove('open')">Annuler</button>
         <button class="btn btn-primary" onclick="saveDateOverride()">Enregistrer</button>
@@ -388,7 +388,7 @@
         <option value="concours">Concours</option>
         <option value="lifestyle">Lifestyle</option>
         <option value="infos">Infos pratiques</option>
-        <option value="recap">Recap concert</option>
+        <option value="recap">Récap concert</option>
         <option value="semaine">Cette semaine</option>
         <option value="photos">Photos</option>
         <option value="autre">Autre</option>
@@ -417,7 +417,7 @@
 <script>
 var SUPABASE_URL='https://vkehaerkbvfxlyjvrpzi.supabase.co';
 var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrZWhhZXJrYnZmeGx5anZycHppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTUyMTMsImV4cCI6MjA5MjY5MTIxM30.I5VTTUYXA0uKg6_WZ2XKIcXmnFvWR38Hkh4RVzgr9qg';
-var CATS={gen:{label:'General',cls:'p-gen'},prod:{label:'Production',cls:'p-prod'},col:{label:'Collage',cls:'p-col'},affp:{label:'Affichage protege',cls:'p-affp'},sp:{label:'Sponsoring',cls:'p-sp'},press:{label:'Presse',cls:'p-press'},jx:{label:'Jeu concours',cls:'p-jx'},rs:{label:'Reseaux sociaux',cls:'p-rs'},web:{label:'Web',cls:'p-web'},bud:{label:'Budget',cls:'p-bud'},ph:{label:'Photographes',cls:'p-ph'},radio:{label:'Radio',cls:'p-radio'},newsletter:{label:'Newsletter',cls:'p-newsletter'}};
+var CATS={gen:{label:'Général',cls:'p-gen'},prod:{label:'Production',cls:'p-prod'},col:{label:'Collage',cls:'p-col'},affp:{label:'Affichage protégé',cls:'p-affp'},sp:{label:'Sponsoring',cls:'p-sp'},press:{label:'Presse',cls:'p-press'},jx:{label:'Jeu concours',cls:'p-jx'},rs:{label:'Réseaux sociaux',cls:'p-rs'},web:{label:'Web',cls:'p-web'},bud:{label:'Budget',cls:'p-bud'},ph:{label:'Photographes',cls:'p-ph'},radio:{label:'Radio',cls:'p-radio'},newsletter:{label:'Newsletter',cls:'p-newsletter'}};
 var DEFAULT_PROCESS=[
   {id:1,nom:'Creer budget',cat:'gen',jours:5,ref:'annonce',prereq:null},
   {id:2,nom:'Creer kit promo salle',cat:'gen',jours:0,ref:'annonce',prereq:null},
@@ -636,7 +636,7 @@ async function flushSave(){
 function showSaveError(){
   var el=document.getElementById('sync-banner');
   if(!el)return;
-  el.textContent='⚠ Echec de la sauvegarde - nouvelle tentative...';
+  el.textContent='⚠ Échec de la sauvegarde – nouvelle tentative…';
   el.style.background='#c0392b';
   el.classList.add('show');
 }
@@ -869,13 +869,13 @@ function updateFilters(){
   var catOpts=Object.keys(CATS).map(function(k){return {value:k,label:CATS[k].label};});
   fillFilterSelect(document.getElementById('fville'),villeOpts,'Toutes les villes');
   fillFilterSelect(document.getElementById('cville'),villeOpts,'Toutes les villes');
-  fillFilterSelect(document.getElementById('fperiode'),periodeOpts,'Toutes les periodes');
-  fillFilterSelect(document.getElementById('fcat'),catOpts,'Toutes les categories');
-  fillFilterSelect(document.getElementById('cperiode'),periodeOpts,'Toutes les periodes');
-  fillFilterSelect(document.getElementById('ccat'),catOpts,'Toutes les categories');
+  fillFilterSelect(document.getElementById('fperiode'),periodeOpts,'Toutes les périodes');
+  fillFilterSelect(document.getElementById('fcat'),catOpts,'Toutes les catégories');
+  fillFilterSelect(document.getElementById('cperiode'),periodeOpts,'Toutes les périodes');
+  fillFilterSelect(document.getElementById('ccat'),catOpts,'Toutes les catégories');
   fillFilterSelect(document.getElementById('pastville'),villeOpts,'Toutes les villes');
-  fillFilterSelect(document.getElementById('pastperiode'),periodeOpts,'Toutes les periodes');
-  fillFilterSelect(document.getElementById('pastcat'),catOpts,'Toutes les categories');
+  fillFilterSelect(document.getElementById('pastperiode'),periodeOpts,'Toutes les périodes');
+  fillFilterSelect(document.getElementById('pastcat'),catOpts,'Toutes les catégories');
 }
 function toggleFiltersPanel(e,panelId){
   e.stopPropagation();
@@ -967,7 +967,7 @@ function exportCampaignReport(id){
     else if(!d)statusHtml='<span class="bilan-badge muted">Sans date</span>';
     else if(isLate(d))statusHtml='<span class="bilan-badge late">En retard</span>';
     else if(isSoon(d))statusHtml='<span class="bilan-badge warn">Cette semaine</span>';
-    else statusHtml='<span class="bilan-badge muted">A venir</span>';
+    else statusHtml='<span class="bilan-badge muted">À venir</span>';
     return '<tr><td>'+esc(t.nom)+'</td><td>'+esc(cat.label)+'</td><td>'+(d?fmt(d):'-')+'</td><td>'+statusHtml+'</td></tr>';
   }).join('');
   var rsForConcert=rsPosts.filter(function(p){return p.concertId===c.id||p.autoRef===c.id;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
@@ -979,7 +979,7 @@ function exportCampaignReport(id){
   }
   var rsRows=rsForConcert.map(function(p){
     var t=RS_TYPES[p.type]||RS_TYPES.autre;
-    var statusHtml=p.status==='posted'?'<span class="bilan-badge ok">Poste</span>':p.status==='ready'?'<span class="bilan-badge warn">Pret</span>':'<span class="bilan-badge muted">A faire</span>';
+    var statusHtml=p.status==='posted'?'<span class="bilan-badge ok">Posté</span>':p.status==='ready'?'<span class="bilan-badge warn">Prêt</span>':'<span class="bilan-badge muted">À faire</span>';
     return '<tr><td>'+fmt(new Date(p.date))+'</td><td>'+esc(t.label)+'</td><td>'+(p.format==='story'?'Story':'Post')+'</td><td>'+esc(netLabel(p))+'</td><td>'+statusHtml+'</td></tr>';
   }).join('');
   var ventes=VENTES[c.ventes||0];
@@ -992,16 +992,16 @@ function exportCampaignReport(id){
     html+='<div class="rpt-section">'+reportMediaGridHtml(items)+'</div>';
   });
   html+='<div class="rpt-divider"><h2>Suivi & avancement</h2></div>';
-  html+='<div class="bilan-header" style="margin-top:24px"><div><h1>'+esc(c.art)+'</h1><div class="bilan-sub">'+esc(formatLieu(c.ville))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div><div class="bilan-date">Please Please Communication<br>Rapport genere le '+fmtFull(new Date())+'</div></div>';
-  html+='<div class="bilan-section"><h2>Informations generales</h2><div class="bilan-infos">'
+  html+='<div class="bilan-header" style="margin-top:24px"><div><h1>'+esc(c.art)+'</h1><div class="bilan-sub">'+esc(formatLieu(c.ville))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div><div class="bilan-date">Please Please Communication<br>Rapport généré le '+fmtFull(new Date())+'</div></div>';
+  html+='<div class="bilan-section"><h2>Informations générales</h2><div class="bilan-infos">'
     +'<div><span>Salle</span>'+esc(formatLieu(c.ville)||'-')+'</div>'
     +'<div><span>Date du concert</span>'+(c.dc?fmtFull(new Date(c.dc)):'-')+'</div>'
     +'<div><span>Date d\'annonce</span>'+(c.da?fmtFull(new Date(c.da)):'-')+'</div>'
     +'<div><span>Statut des ventes</span>'+esc(ventes.label)+'</div>'
-    +'<div style="grid-column:1/-1"><span>Budget previsionnel</span>'+(c.budget?esc(c.budget):'<span class="bilan-empty">Non renseigne</span>')+'</div>'
+    +'<div style="grid-column:1/-1"><span>Budget prévisionnel</span>'+(c.budget?esc(c.budget):'<span class="bilan-empty">Non renseigné</span>')+'</div>'
     +'</div></div>';
   if(c.medias||c.jeux){
-    html+='<div class="bilan-section"><h2>Medias &amp; partenariats</h2>';
+    html+='<div class="bilan-section"><h2>Médias &amp; partenariats</h2>';
     if(c.medias)html+='<div class="bilan-text">'+esc(c.medias)+'</div>';
     if(c.jeux)html+='<div class="bilan-text" style="margin-top:8px">'+esc(c.jeux)+'</div>';
     html+='</div>';
@@ -1009,11 +1009,11 @@ function exportCampaignReport(id){
   if(c.notes){
     html+='<div class="bilan-section"><h2>Notes</h2><div class="bilan-text">'+esc(c.notes)+'</div></div>';
   }
-  html+='<div class="bilan-section"><h2>Plan de communication ('+doneCount+'/'+sorted.length+' realisees)</h2>';
-  html+=sorted.length?('<table class="bilan-table"><thead><tr><th>Tache</th><th>Categorie</th><th>Echeance</th><th>Statut</th></tr></thead><tbody>'+tasksRows+'</tbody></table>'):'<div class="bilan-empty">Aucune tache.</div>';
+  html+='<div class="bilan-section"><h2>Plan de communication ('+doneCount+'/'+sorted.length+' réalisées)</h2>';
+  html+=sorted.length?('<table class="bilan-table"><thead><tr><th>Tâche</th><th>Catégorie</th><th>Échéance</th><th>Statut</th></tr></thead><tbody>'+tasksRows+'</tbody></table>'):'<div class="bilan-empty">Aucune tâche.</div>';
   html+='</div>';
-  html+='<div class="bilan-section"><h2>Reseaux sociaux ('+postedCount+'/'+rsForConcert.length+' publies)</h2>';
-  html+=rsForConcert.length?('<table class="bilan-table"><thead><tr><th>Date</th><th>Type</th><th>Format</th><th>Reseaux</th><th>Statut</th></tr></thead><tbody>'+rsRows+'</tbody></table>'):'<div class="bilan-empty">Aucun post lie a ce concert.</div>';
+  html+='<div class="bilan-section"><h2>Réseaux sociaux ('+postedCount+'/'+rsForConcert.length+' publiés)</h2>';
+  html+=rsForConcert.length?('<table class="bilan-table"><thead><tr><th>Date</th><th>Type</th><th>Format</th><th>Réseaux</th><th>Statut</th></tr></thead><tbody>'+rsRows+'</tbody></table>'):'<div class="bilan-empty">Aucun post lié à ce concert.</div>';
   html+='</div>';
   document.getElementById('bilan-report').innerHTML=html;
   window.print();
@@ -1040,7 +1040,7 @@ function openCustomTaskModal(cid,tid){
   var catSel=document.getElementById('ct-cat');
   catSel.innerHTML=Object.keys(CATS).map(function(k){return '<option value="'+k+'">'+esc(CATS[k].label)+'</option>';}).join('');
   var t=tid?customTasks.find(function(x){return x.id===tid;}):null;
-  document.getElementById('custom-task-modal-title').textContent=tid?'Modifier la tache':'Ajouter une tache';
+  document.getElementById('custom-task-modal-title').textContent=tid?'Modifier la tâche':'Ajouter une tâche';
   document.getElementById('ct-nom').value=t?t.nom:'';
   document.getElementById('ct-date').value=t?(t.date||''):'';
   catSel.value=t?t.cat:'gen';
@@ -1064,7 +1064,7 @@ function saveCustomTask(){
   renderKanban();renderConcerts();
 }
 function deleteCustomTask(cid,tid){
-  customConfirm('Supprimer cette tache ?','Supprimer').then(function(ok){
+  customConfirm('Supprimer cette tâche ?','Supprimer').then(function(ok){
     if(!ok)return;
     customTasks=customTasks.filter(function(x){return x.id!==tid;});
     delete taskStates[tk(cid,tid)];
@@ -1125,9 +1125,9 @@ function renderFicheTasks(c){
     else if(isDone){dateStr='Fait';dateClass='done-date';badge='<span class="status-badge badge-done">Fait</span>';}
     else if(!d){dateStr='Date manquante';dateClass='future';}
     else if(isLate(d)){dateStr='En retard - '+fmt(d);dateClass='late';badge='<span class="status-badge badge-late">En retard</span>';}
-    else if(isSoon(d)){dateStr='Bientot - '+fmt(d);dateClass='soon';badge='<span class="status-badge badge-soon">Cette semaine</span>';}
+    else if(isSoon(d)){dateStr='Bientôt - '+fmt(d);dateClass='soon';badge='<span class="status-badge badge-soon">Cette semaine</span>';}
     else{dateStr=fmt(d);dateClass='future';}
-    if(isOverridden&&!isDone&&!isBlocked)dateStr+=' (modifiee)';
+    if(isOverridden&&!isDone&&!isBlocked)dateStr+=' (modifiée)';
     var clickable=!isBlocked;
     var actions='';
     if(!isBlocked&&!isDone){
@@ -1135,13 +1135,13 @@ function renderFicheTasks(c){
         actions='<button class="ftask-na-btn" onclick="event.stopPropagation();openCustomTaskModal(\''+c.id+'\','+tidLit(t)+')">Modifier</button>'
           +'<button class="ftask-na-btn" onclick="event.stopPropagation();deleteCustomTask(\''+c.id+'\','+tidLit(t)+')">Supprimer</button>';
       } else {
-        actions='<button class="ftask-na-btn" title="Decaler l\'echeance pour ce concert" onclick="event.stopPropagation();openDateOverrideModal(\''+c.id+'\','+tidLit(t)+')">Decaler</button>'
+        actions='<button class="ftask-na-btn" title="Décaler l\'échéance pour ce concert" onclick="event.stopPropagation();openDateOverrideModal(\''+c.id+'\','+tidLit(t)+')">Décaler</button>'
           +'<button class="ftask-na-btn" title="Marquer inutile pour ce concert" onclick="event.stopPropagation();toggleTaskNA(\''+c.id+'\','+tidLit(t)+')">Inutile</button>';
       }
     }
     return '<div class="ftask'+(isDone?' done':isBlocked?' blocked':'')+'"'+(clickable?' onclick="toggleFicheTask(\''+c.id+'\','+tidLit(t)+')"':'')+'>'+
       '<div class="ftask-chk'+(isDone?' on':isBlocked?' blocked':'')+'">'+( isDone?'&#10003;':isBlocked?'&#8987;':'')+' </div>'+
-      '<div style="flex:1"><div class="ftask-name">'+esc(t.nom)+(t.isCustom?' <span style="font-size:9px;color:var(--text-3);font-weight:400">(manuelle)</span>':'')+'</div>'+
+      '<div style="flex:1"><div class="ftask-name">'+esc(t.nom)+(t.isCustom?' <span style="font-size:11px;color:var(--text-3);font-weight:400">(manuelle)</span>':'')+'</div>'+
       '<div style="display:flex;align-items:center;gap:6px;margin-top:3px">'+
       '<span class="pill '+cat.cls+'">'+cat.label+'</span>'+
       '<span class="ftask-date '+dateClass+'">'+dateStr+'</span></div></div>'+actions+badge+'</div>';
@@ -1153,18 +1153,18 @@ function renderFicheTasks(c){
       '<div style="flex:1"><div class="ftask-name">'+esc(t.nom)+'</div>'+
       '<div style="display:flex;align-items:center;gap:6px;margin-top:3px">'+
       '<span class="pill '+cat.cls+'">'+cat.label+'</span>'+
-      '<span class="ftask-date">Marquee inutile</span></div></div>'+
-      '<button class="ftask-na-btn always" onclick="event.stopPropagation();toggleTaskNA(\''+c.id+'\','+tidLit(t)+')">&#8635; Reactiver</button></div>';
+      '<span class="ftask-date">Marquée inutile</span></div></div>'+
+      '<button class="ftask-na-btn always" onclick="event.stopPropagation();toggleTaskNA(\''+c.id+'\','+tidLit(t)+')">&#8635; Réactiver</button></div>';
   }
   var html='';
   if(late.length)html+='<div class="group-title" style="color:var(--red)">En retard ('+late.length+')</div>'+late.map(function(t){return taskHtml(t,false);}).join('');
   if(soon.length)html+='<div class="group-title'+(late.length?' second':'')+'" style="color:var(--amber)">Cette semaine ('+soon.length+')</div>'+soon.map(function(t){return taskHtml(t,false);}).join('');
-  if(future.length)html+='<div class="group-title second">A venir ('+future.length+')</div>'+future.map(function(t){return taskHtml(t,false);}).join('');
-  if(nocalc.length)html+='<div class="group-title second">Sans date calculee ('+nocalc.length+')</div>'+nocalc.map(function(t){return taskHtml(t,false);}).join('');
-  if(blocked.length)html+='<div class="group-title second" style="color:var(--text-3)">En attente de prerequis ('+blocked.length+')</div>'+blocked.map(function(t){return taskHtml(t,true);}).join('');
-  if(done.length)html+='<div class="group-title second" style="color:var(--green)">Terminees ('+done.length+')</div>'+done.map(function(t){return taskHtml(t,false);}).join('');
+  if(future.length)html+='<div class="group-title second">À venir ('+future.length+')</div>'+future.map(function(t){return taskHtml(t,false);}).join('');
+  if(nocalc.length)html+='<div class="group-title second">Sans date calculée ('+nocalc.length+')</div>'+nocalc.map(function(t){return taskHtml(t,false);}).join('');
+  if(blocked.length)html+='<div class="group-title second" style="color:var(--text-3)">En attente de prérequis ('+blocked.length+')</div>'+blocked.map(function(t){return taskHtml(t,true);}).join('');
+  if(done.length)html+='<div class="group-title second" style="color:var(--green)">Terminées ('+done.length+')</div>'+done.map(function(t){return taskHtml(t,false);}).join('');
   if(naTasks.length)html+='<div class="group-title second" style="color:var(--text-3)">Inutiles ('+naTasks.length+')</div>'+naTasks.map(naTaskHtml).join('');
-  if(!html)html='<div style="color:var(--text-3);font-size:13px;padding:1rem 0">Aucune tache.</div>';
+  if(!html)html='<div style="color:var(--text-3);font-size:13px;padding:1rem 0">Aucune tâche.</div>';
   el.innerHTML=html;
 }
 function toggleTaskNA(cid,tid){
@@ -1251,7 +1251,7 @@ function renderAnnonces(){
     return new Date(a.da)-new Date(b.da);
   });
   var head=document.querySelector('#ann-widget .dash-widget-title');
-  if(head)head.innerHTML='<span class="ann-dot" style="flex-shrink:0"></span>Annonces a venir'+(pending.length?' ('+pending.length+')':'');
+  if(head)head.innerHTML='<span class="ann-dot" style="flex-shrink:0"></span>Annonces à venir'+(pending.length?' ('+pending.length+')':'');
   if(!pending.length){wrap.innerHTML='<div style="padding:16px;font-size:12px;color:var(--text-3);text-align:center">Aucune annonce en attente</div>';return;}
   var cards=pending.map(function(c){
     var hasDate=!!c.da;
@@ -1268,13 +1268,13 @@ function renderAnnonces(){
       +'<div class="ann-compact-art">'+esc(c.art)+cancelBadge(c)+'</div>'
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-top:3px">'
       +'<span class="ann-compact-status">'+statusTxt+'</span>'
-      +'<button style="font-size:8px;padding:1px 5px;border-radius:3px;border:1px solid var(--border);background:var(--surface);color:var(--text-3);cursor:pointer;white-space:nowrap" onclick="event.stopPropagation();annonceDone(\''+c.id+'\')" title="Marquer comme annonce">&#10003;</button>'
+      +'<button style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text-3);cursor:pointer;white-space:nowrap" onclick="event.stopPropagation();annonceDone(\''+c.id+'\')" title="Marquer comme annoncé">&#10003;</button>'
       +'</div>'
       +'</div>';
   }).join('');
   wrap.innerHTML='<div class="ann-grid-compact">'+cards+'</div>';
 }
-function addTask(){process.push({id:nextId++,nom:'Nouvelle tache',cat:'gen',jours:-7,ref:'concert',prereq:null});scheduleSave('process');renderProcess();}
+function addTask(){process.push({id:nextId++,nom:'Nouvelle tâche',cat:'gen',jours:-7,ref:'concert',prereq:null});scheduleSave('process');renderProcess();}
 function updTask(id,field,val){
   var t=process.find(function(p){return p.id===id;});
   if(t){
@@ -1325,12 +1325,12 @@ function renderKanban(){
             var fmtCls=p.format==='story'?'rs-fmt-story':p.format==='tirage'?'rs-fmt-tirage':'rs-fmt-post';
             var fmtLbl=p.format==='story'?'Story':p.format==='tirage'?'🎲':'Post';
             var title=(rsResolveConcertLabel(p)||p.note||t.label).substring(0,18);
-            return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:600;white-space:nowrap'+(p.ready?';border-color:#b8e0ca;background:#eef7f2;color:#2d7a4f':'')+'">'
-              +'<span class="rs-post-format '+fmtCls+'" style="padding:1px 5px;font-size:8px">'+fmtLbl+'</span>'
+            return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600;white-space:nowrap'+(p.ready?';border-color:#b8e0ca;background:#eef7f2;color:#2d7a4f':'')+'">'
+              +'<span class="rs-post-format '+fmtCls+'" style="padding:1px 5px;font-size:11px">'+fmtLbl+'</span>'
               +'<span style="color:var(--text-2)">'+title+'</span>'
               +'</span>';
           }).join('')
-        : '<span style="font-size:10px;color:#ccc;font-style:italic">Rien de prévu</span>';
+        : '<span style="font-size:11px;color:#ccc;font-style:italic">Rien de prévu</span>';
       return '<div style="display:flex;align-items:center;gap:8px;padding:0 14px;border-right:1px solid var(--border-light);flex-shrink:0">'
         +'<span class="ncb-label" style="flex-shrink:0">'+proj.label+'</span>'
         +'<div class="ncb-sep" style="flex-shrink:0"></div>'
@@ -1404,12 +1404,12 @@ function renderKanban(){
       '<div class="col-name'+(hasLate?' late':'')+'">'+esc(c.art)+cancelBadge(c)+'</div>'+
       '<div class="col-sub'+(hasLate?' late':'')+'">'+( c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div>'+
       ventesHtml(c,'event.stopPropagation();toggleVentes(event,\''+c.id+'\')') +
-      '<div class="pbar" title="'+pct+'% des taches realisees"><div class="pfill" style="width:'+pct+'%"></div></div>'+
+      '<div class="pbar" title="'+pct+'% des tâches réalisées"><div class="pfill" style="width:'+pct+'%"></div></div>'+
       '</div>'+body+'</div>';
     return {hasLate:hasLate,html:cardHtml};
   });
   var visibleCards=hideOk?cards.filter(function(x){return x.hasLate;}):cards;
-  if(!visibleCards.length){wrap.innerHTML='<div class="empty-state">'+(hideOk?'Aucun concert avec une tache en attente.':'Aucun concert.')+'</div>';return;}
+  if(!visibleCards.length){wrap.innerHTML='<div class="empty-state">'+(hideOk?'Aucun concert avec une tâche en attente.':'Aucun concert.')+'</div>';return;}
   wrap.innerHTML='<div class="grid">'+visibleCards.map(function(x){return x.html;}).join('')+'</div>';
 }
 var concertsViewMode='list';
@@ -1456,9 +1456,9 @@ function renderConcerts(){
       var skipCol=!!taskStates['skip-'+c.id+'-col'];
       var med=c.medias||'';var jx=c.jeux||'';var bud=c.budget||'';var notes=c.notes||'';
 
-      var medHtml=med?med.split(',').map(function(m){return '<div style="line-height:1.6;font-size:11px;color:var(--text-2)">'+esc(m.trim())+'</div>';}).join(''):'';
-      var jxHtml=jx?jx.split(',').map(function(j){return '<div style="line-height:1.6;font-size:11px;color:var(--text-2)">'+esc(j.trim())+'</div>';}).join(''):'';
-      var notesHtml=notes?'<div style="line-height:1.5;font-size:11px;color:var(--text-2)">'+esc(notes)+'</div>':'';
+      var medHtml=med?med.split(',').map(function(m){return '<div style="line-height:1.6;font-size:12px;color:var(--text-2)">'+esc(m.trim())+'</div>';}).join(''):'';
+      var jxHtml=jx?jx.split(',').map(function(j){return '<div style="line-height:1.6;font-size:12px;color:var(--text-2)">'+esc(j.trim())+'</div>';}).join(''):'';
+      var notesHtml=notes?'<div style="line-height:1.5;font-size:12px;color:var(--text-2)">'+esc(notes)+'</div>':'';
       var budHtml=bud&&escUrl(bud)
         ?'<a href="'+escUrl(bud)+'" target="_blank" title="Ouvrir le lien budget dans un nouvel onglet" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);text-decoration:none;font-size:13px;transition:all .15s" onmouseover="this.style.background=\'var(--bg)\';this.style.color=\'var(--text)\'" onmouseout="this.style.background=\'var(--surface)\';this.style.color=\'var(--text-2)\'">&#8599;</a>'
         :'<div class="crow-cell-empty">Ajouter un lien...</div>';
@@ -1468,17 +1468,17 @@ function renderConcerts(){
         var daFmt=daDate.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
         daStr=notAnnounced
           ?'<div class="crow-da-pending" style="margin-top:3px">&#9679; Annonce : '+daFmt+'</div>'
-          :'<div style="font-size:10px;color:var(--text-3);margin-top:3px">Annonce : '+daFmt+'</div>';
+          :'<div style="font-size:11px;color:var(--text-3);margin-top:3px">Annonce : '+daFmt+'</div>';
       }
 
       var infoBloc='<div style="width:220px;flex-shrink:0;padding:12px 16px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border-light)">'
         +'<div class="crow-name">'+esc(c.art)+cancelBadge(c)+'</div>'
-        +'<div style="font-size:11px;font-weight:500;color:var(--text-2);margin-top:2px">'+(c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div>'
+        +'<div style="font-size:12px;font-weight:500;color:var(--text-2);margin-top:2px">'+(c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div>'
         +daStr+'</div>';
 
       var cellStyle='flex:1;padding:8px 12px;border-left:1px solid var(--border-light);display:flex;flex-direction:column;justify-content:center;cursor:pointer;transition:background .15s';
       var cM='<div style="'+cellStyle+'" onclick="startCellEdit(event,\''+c.id+'\',\'medias\')" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
-        +(med?'<div class="crow-cell-label">Medias</div>':'')+'<div>'+medHtml+'</div></div>';
+        +(med?'<div class="crow-cell-label">Médias</div>':'')+'<div>'+medHtml+'</div></div>';
       var cJ='<div style="'+cellStyle+'" onclick="startCellEdit(event,\''+c.id+'\',\'jeux\')" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
         +(jx?'<div class="crow-cell-label">Jeu concours</div>':'')+'<div>'+jxHtml+'</div></div>';
       var cN='<div style="'+cellStyle+'" onclick="startCellEdit(event,\''+c.id+'\',\'notes\')" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
@@ -1490,7 +1490,7 @@ function renderConcerts(){
         +(skipCol?'<button class="crow-skip-btn active" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'col\')">&#9679; Pas d\'affiche</button>':'');
       var statutBloc='<div style="width:120px;flex-shrink:0;padding:8px 12px;border-left:1px solid var(--border-light);display:flex;flex-direction:column;gap:6px;justify-content:center">'
         +ventesHtml(c,'toggleVentes(event,\''+c.id+'\')')
-        +(isAnnounced?'<button class="ann-undo" onclick="event.stopPropagation();annonceUndo(\''+c.id+'\')" style="font-size:11px;color:var(--text-3);text-align:left;background:none;border:none;cursor:pointer">&#8635; Annonce</button>':'')
+        +(isAnnounced?'<button class="ann-undo" onclick="event.stopPropagation();annonceUndo(\''+c.id+'\')" style="font-size:12px;color:var(--text-3);text-align:left;background:none;border:none;cursor:pointer">&#8635; Annonce</button>':'')
         +(skipBadges?'<div style="display:flex;flex-direction:column;gap:3px;margin-top:4px">'+skipBadges+'</div>':'')
         +'</div>';
 
@@ -1514,12 +1514,12 @@ function renderConcertsGrouped(liste,el){
     return '<div class="card crow-list-card" style="padding:0;margin-bottom:1rem">'
       +'<div style="padding:10px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">'
       +'<h2 style="margin:0">'+esc(key)+'</h2>'
-      +'<span style="font-size:11px;color:var(--text-3)">'+rows.length+' concert'+(rows.length>1?'s':'')+'</span>'
+      +'<span style="font-size:12px;color:var(--text-3)">'+rows.length+' concert'+(rows.length>1?'s':'')+'</span>'
       +'</div>'
       +rows.map(function(c){
         var ds=c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
         return '<div class="crow'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 20px;min-height:44px;cursor:pointer">'
-          +'<div style="min-width:0"><span class="crow-name">'+esc(c.art)+'</span>'+cancelBadge(c)+' <span style="font-size:11px;color:var(--text-3)">'+ds+'</span></div>'
+          +'<div style="min-width:0"><span class="crow-name">'+esc(c.art)+'</span>'+cancelBadge(c)+' <span style="font-size:12px;color:var(--text-3)">'+ds+'</span></div>'
           +ventesHtml(c,'event.stopPropagation();toggleVentes(event,\''+c.id+'\')')
           +'</div>';
       }).join('')
@@ -1552,15 +1552,15 @@ function renderConcertsCalendar(liste,el){
     var evs=byDay[day]||[];
     var isToday=todayD.getFullYear()===y&&todayD.getMonth()===m&&todayD.getDate()===day;
     cells+='<div style="background:var(--surface);border:1px solid '+(isToday?'var(--accent)':'var(--border)')+';border-radius:var(--radius-sm);min-height:110px;padding:6px;display:flex;flex-direction:column;gap:3px">'
-      +'<div style="font-size:11px;font-weight:'+(isToday?'700':'500')+';color:'+(isToday?'var(--accent)':'var(--text-3)')+'">'+day+'</div>'
+      +'<div style="font-size:12px;font-weight:'+(isToday?'700':'500')+';color:'+(isToday?'var(--accent)':'var(--text-3)')+'">'+day+'</div>'
       +evs.slice(0,3).map(function(c){
         var lieu=formatLieu(c.ville);
         return '<div class="crow'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')" title="'+esc(c.art)+(lieu?' - '+esc(lieu):'')+'" style="display:flex;flex-direction:column;align-items:flex-start;min-height:0;border-bottom:none;padding:2px 5px;border-radius:4px;background:var(--bg);cursor:pointer;overflow:hidden">'
-          +'<div style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(c.art)+cancelBadge(c)+'</div>'
-          +(lieu?'<div style="font-size:9px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(lieu)+'</div>':'')
+          +'<div style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(c.art)+cancelBadge(c)+'</div>'
+          +(lieu?'<div style="font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(lieu)+'</div>':'')
           +'</div>';
       }).join('')
-      +(evs.length>3?'<div style="font-size:10px;color:var(--text-3);padding:0 5px">+'+(evs.length-3)+' autre'+(evs.length-3>1?'s':'')+'</div>':'')
+      +(evs.length>3?'<div style="font-size:11px;color:var(--text-3);padding:0 5px">+'+(evs.length-3)+' autre'+(evs.length-3>1?'s':'')+'</div>':'')
       +'</div>';
   }
   var totalCells=firstDow+nbDays;
@@ -1575,7 +1575,7 @@ function renderConcertsCalendar(liste,el){
     +'<button class="btn" style="margin-left:8px" onclick="calToday()">Aujourd\'hui</button>'
     +'</div>'
     +'<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px">'
-    +jours.map(function(j){return '<div style="font-size:11px;font-weight:600;color:var(--text-3);text-align:center">'+j+'</div>';}).join('')
+    +jours.map(function(j){return '<div style="font-size:12px;font-weight:600;color:var(--text-3);text-align:center">'+j+'</div>';}).join('')
     +'</div>'
     +'<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">'+cells+'</div>'
     +'</div>';
@@ -1605,7 +1605,7 @@ function renderPastConcerts(){
       var ds=c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
       return '<div class="crow" onclick="openFiche(\''+c.id+'\')" style="display:flex;align-items:center;padding:0 16px;min-height:52px;justify-content:space-between;cursor:pointer">'
         +'<div><div class="crow-name">'+esc(c.art)+cancelBadge(c)+'</div>'
-        +'<div style="font-size:11px;font-weight:500;color:var(--text-2);margin-top:2px">'+(c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div></div>'
+        +'<div style="font-size:12px;font-weight:500;color:var(--text-2);margin-top:2px">'+(c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div></div>'
         +'<div style="display:flex;align-items:center;gap:20px;flex-shrink:0">'
         +'<button class="btn" onclick="event.stopPropagation();restoreConcert(\''+c.id+'\')">&#8635; Remettre en actif</button>'
         +'<button class="dbtn" onclick="event.stopPropagation();permanentlyDeleteConcert(\''+c.id+'\')">Supprimer définitivement</button>'
@@ -1636,15 +1636,15 @@ function renderProcess(){
           '<input type="number" value="'+esc(t.jours)+'" onchange="updTask('+t.id+',\'jours\',this.value)">'+
           '<select onchange="updTask('+t.id+',\'ref\',this.value)">'+
           '<option value="concert"'+(t.ref==='concert'?' selected':'')+'>J avant concert</option>'+
-          '<option value="annonce"'+(t.ref==='annonce'?' selected':'')+'>J apres annonce</option>'+
+          '<option value="annonce"'+(t.ref==='annonce'?' selected':'')+'>J après annonce</option>'+
           '</select>'+
           catSelect(t)+prereqSelect(t)+
           '<button class="dbtn" onclick="delTask('+t.id+')">x</button></div>';
       }).join('');
   }
   document.getElementById('plist').innerHTML=
-    renderGroup(annonce,'Taches liees a la date d\'annonce',false)+
-    renderGroup(concert,'Taches liees a la date de concert',true);
+    renderGroup(annonce,'Tâches liées à la date d\'annonce',false)+
+    renderGroup(concert,'Tâches liées à la date de concert',true);
 }
 function dragStart(e,id){dragSrcId=id;}
 function dragOver(e){e.preventDefault();}
@@ -1812,14 +1812,14 @@ function startCellEdit(e,cid,field){
   var c=concerts.find(function(x){return x.id===cid;});
   if(!c)return;
   var cur=c[field]||'';
-  var labels={medias:'Media / Photo',jeux:'Jeu concours',notes:'Notes',budget:'Budget'};
+  var labels={medias:'Média / Photo',jeux:'Jeu concours',notes:'Notes',budget:'Budget'};
   var placeholders={medias:'Bien Public, L union...',jeux:'L union 5x2...',notes:'Notes libres...',budget:'https://...'};
   cell.classList.add('editing');
   var inp=document.createElement('input');
   inp.type='text';
   inp.value=cur;
   inp.placeholder=placeholders[field]||'';
-  inp.style.cssText='width:100%;border:none;outline:none;background:transparent;font-size:11px;color:#111;font-family:inherit;padding:0';
+  inp.style.cssText='width:100%;border:none;outline:none;background:transparent;font-size:12px;color:#111;font-family:inherit;padding:0';
   cell.innerHTML='<div class="crow-cell-label">'+labels[field]+'</div>';
   cell.appendChild(inp);
   inp.focus();inp.select();
@@ -1916,7 +1916,7 @@ function renderTaches(){
       taskEl.addEventListener('dragstart',function(e){e.dataTransfer.setData('tkid',t.id);taskEl.style.opacity='.4';e.stopPropagation();});
       taskEl.addEventListener('dragend',function(){taskEl.style.opacity='1';});
       var nameEl=document.createElement('div');nameEl.className='tk-task-name';nameEl.textContent=t.nom;
-      if(t.recur){var recurIcon=document.createElement('span');recurIcon.textContent=' \u{1F501}';recurIcon.title='Tache recurrente';nameEl.appendChild(recurIcon);}
+      if(t.recur){var recurIcon=document.createElement('span');recurIcon.textContent=' \u{1F501}';recurIcon.title='Tâche récurrente';nameEl.appendChild(recurIcon);}
       if(t.note){var noteIcon=document.createElement('span');noteIcon.textContent=' \u{1F4DD}';noteIcon.title=t.note;nameEl.appendChild(noteIcon);}
       taskEl.appendChild(nameEl);
       if(df){var dateEl=document.createElement('div');dateEl.className='tk-task-date '+df.cls;dateEl.textContent=df.txt;taskEl.appendChild(dateEl);}
@@ -1931,7 +1931,7 @@ function renderTaches(){
       delBtn.addEventListener('click',function(){tkDelTask(t.id);});
       var delegBtn=document.createElement('button');
       delegBtn.className='tk-task-btn'+(t.delegue?' deleg-active':'');
-      delegBtn.innerHTML=t.delegue?'&#9679; Delegue':'&#9675; Deleguer';
+      delegBtn.innerHTML=t.delegue?'&#9679; Délégué':'&#9675; Déléguer';
       delegBtn.addEventListener('click',function(){tkToggleDelegue(t.id);});
       actions.appendChild(doneBtn);actions.appendChild(editBtn);actions.appendChild(delBtn);actions.appendChild(delegBtn);
       taskEl.appendChild(actions);
@@ -1939,7 +1939,7 @@ function renderTaches(){
     });
     colEl.appendChild(tasksEl);
     // Bouton ajouter tâche
-    var addTaskBtn=document.createElement('button');addTaskBtn.className='tk-add-task-btn';addTaskBtn.textContent='+ Ajouter une tache';
+    var addTaskBtn=document.createElement('button');addTaskBtn.className='tk-add-task-btn';addTaskBtn.textContent='+ Ajouter une tâche';
     addTaskBtn.addEventListener('click',function(){tkOpenModal(col.id);});
     colEl.appendChild(addTaskBtn);
     board.appendChild(colEl);
@@ -1967,7 +1967,7 @@ function tkFillRecurUI(t){
 }
 function tkOpenModal(colId){
   tkEditId=null;tkAddColId=colId;
-  document.getElementById('tk-modal-title').textContent='Nouvelle tache';
+  document.getElementById('tk-modal-title').textContent='Nouvelle tâche';
   document.getElementById('tk-nom').value='';
   document.getElementById('tk-date').value='';
   document.getElementById('tk-prio').value='normal';
@@ -1980,7 +1980,7 @@ function tkOpenModal(colId){
 function tkEditTask(id){
   var t=tkTasks.find(function(x){return x.id===id;});if(!t)return;
   tkEditId=id;tkAddColId=null;
-  document.getElementById('tk-modal-title').textContent='Modifier la tache';
+  document.getElementById('tk-modal-title').textContent='Modifier la tâche';
   document.getElementById('tk-nom').value=t.nom;
   document.getElementById('tk-date').value=t.date||'';
   document.getElementById('tk-prio').value=t.prio||'normal';
@@ -2160,7 +2160,7 @@ function renderTkWidget(){
         var dot=document.createElement('div');dot.className='tk-widget-dot '+(t.prio||'normal');
         var name=document.createElement('div');name.className='tk-widget-task-name';
         name.textContent=t.nom;name.title=t.nom;
-        if(t.isPinned){name.style.fontStyle='italic';name.style.fontSize='10px';}
+        if(t.isPinned){name.style.fontStyle='italic';name.style.fontSize='11px';}
         row.appendChild(chk);row.appendChild(dot);row.appendChild(name);
         if(!t.isPinned){row.addEventListener('click',function(){tkEditTask(t.id);});}
         colEl.appendChild(row);
@@ -2168,7 +2168,7 @@ function renderTkWidget(){
     }
 
     var addBtn=document.createElement('button');addBtn.className='tk-widget-add-btn';addBtn.textContent='+';
-    addBtn.title='Ajouter une tache dans '+col.nom;
+    addBtn.title='Ajouter une tâche dans '+col.nom;
     addBtn.addEventListener('click',function(e){
       e.stopPropagation();
       if(!tkCols.find(function(c){return c.id===colId;})){
@@ -2191,7 +2191,7 @@ var RS_TYPES={
   concours:{label:'Concours',cls:'rs-t-concours'},
   lifestyle:{label:'Lifestyle',cls:'rs-t-lifestyle'},
   infos:{label:'Infos pratiques',cls:'rs-t-infos'},
-  recap:{label:'Recap concert',cls:'rs-t-recap'},
+  recap:{label:'Récap concert',cls:'rs-t-recap'},
   semaine:{label:'Cette semaine',cls:'rs-t-semaine'},
   photos:{label:'Photos',cls:'rs-t-photos'},
   autre:{label:'Autre',cls:'rs-t-autre'}
@@ -2297,9 +2297,9 @@ function renderRS(){
       +'<div class="rs-day-header'+(isWE&&!isToday?' weekend':'')+'" id="rsday-'+dateStr+'" style="'+headerStyle+'" onclick="'+rowClick+'">'
       +'<span style="display:inline-flex;flex-direction:column;align-items:center;min-width:36px;line-height:1">'
       +'<span class="rs-day-num" style="'+numStyle+'line-height:1;">'+dayNum+'</span>'
-      +'<span style="font-size:9px;color:'+(isToday?'#2563eb':(isPast?'#ccc':'var(--text-3)'))+';text-transform:uppercase;font-weight:700;letter-spacing:.03em;margin-top:1px;">'+monthName+'</span>'
+      +'<span style="font-size:11px;color:'+(isToday?'#2563eb':(isPast?'#ccc':'var(--text-3)'))+';text-transform:uppercase;font-weight:700;letter-spacing:.03em;margin-top:1px;">'+monthName+'</span>'
       +'</span>'
-      +'<span style="font-size:10px;min-width:36px;'+nameStyle+(isPast&&!isToday?'color:#ccc;':'')+(isWE&&!isToday&&!isPast?'color:var(--text-3);':'')+'">'+dayName+'</span>'
+      +'<span style="font-size:11px;min-width:36px;'+nameStyle+(isPast&&!isToday?'color:#ccc;':'')+(isWE&&!isToday&&!isPast?'color:var(--text-3);':'')+'">'+dayName+'</span>'
       +'<div class="rs-chips">'+chips+'</div>'
       +'<button class="rs-add-day-btn" onclick="event.stopPropagation();rsOpenModal(\''+dateStr+'\')">+ Ajouter</button>'
       +'</div>'
@@ -2349,10 +2349,10 @@ function renderRS(){
   var _nextLbl=_nextM.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
   _nextLbl=_nextLbl.charAt(0).toUpperCase()+_nextLbl.slice(1);
   var topHtml='<div style="padding:8px 16px;border-bottom:1px solid var(--border-light);background:var(--bg)">'
-    +'<button onclick="rsExtend(\'before\')" style="font-size:11px;color:var(--text-3);background:none;border:1px solid var(--border);padding:4px 14px;border-radius:20px;cursor:pointer">↑ '+_prevLbl+'</button>'
+    +'<button onclick="rsExtend(\'before\')" style="font-size:12px;color:var(--text-3);background:none;border:1px solid var(--border);padding:4px 14px;border-radius:20px;cursor:pointer">↑ '+_prevLbl+'</button>'
     +'</div>';
   var botHtml='<div style="padding:8px 16px;border-top:1px solid var(--border-light);background:var(--bg)">'
-    +'<button onclick="rsExtend(\'after\')" style="font-size:11px;color:var(--text-3);background:none;border:1px solid var(--border);padding:4px 14px;border-radius:20px;cursor:pointer">↓ '+_nextLbl+'</button>'
+    +'<button onclick="rsExtend(\'after\')" style="font-size:12px;color:var(--text-3);background:none;border:1px solid var(--border);padding:4px 14px;border-radius:20px;cursor:pointer">↓ '+_nextLbl+'</button>'
     +'</div>';
 
   wrap.innerHTML=tabsHtml+'<div class="rs-card">'+topHtml+daysHtml+botHtml+'</div>';
@@ -2609,9 +2609,9 @@ function renderBcSalleEditor() {
 
   html += '<div style="margin-bottom:20px">';
   html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Affichage</span>';
-  html += '<button onclick="bcAddSalleRow(\'affichage\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:11px;cursor:pointer">+ Ligne</button></div>';
+  html += '<button onclick="bcAddSalleRow(\'affichage\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">+ Ligne</button></div>';
   html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
-  html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;background:var(--bg);padding:6px 10px;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>Qté</span><span>PU €</span><span>Total €</span><span></span></div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;background:var(--bg);padding:6px 10px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>Qté</span><span>PU €</span><span>Total €</span><span></span></div>';
   affichage.forEach(function(r,i){
     html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
     html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
@@ -2626,9 +2626,9 @@ function renderBcSalleEditor() {
 
   html += '<div style="margin-bottom:20px">';
   html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-3)">OP Media Radio spécifiques</span>';
-  html += '<button onclick="bcAddSalleRow(\'radio\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:11px;cursor:pointer">+ Ligne</button></div>';
+  html += '<button onclick="bcAddSalleRow(\'radio\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">+ Ligne</button></div>';
   html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
-  html += '<div style="display:grid;grid-template-columns:1fr 120px 24px;background:var(--bg);padding:6px 10px;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>Type</span><span></span></div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 120px 24px;background:var(--bg);padding:6px 10px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>Type</span><span></span></div>';
   radio.forEach(function(r,i){
     html += '<div style="display:grid;grid-template-columns:1fr 120px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
     html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateSalleRow(\'radio\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
@@ -2692,12 +2692,12 @@ function renderBcTemplateEditor() {
     html += '<div style="margin-bottom:20px">';
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
     html += '<span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-3);letter-spacing:.05em">'+s.label+'</span>';
-    html += '<button onclick="bcAddRow(\''+s.key+'\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:11px;cursor:pointer">+ Ligne</button></div>';
+    html += '<button onclick="bcAddRow(\''+s.key+'\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">+ Ligne</button></div>';
     html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
     if (s.showStreet) {
-      html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;gap:0;background:var(--bg);padding:6px 10px;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>Qté</span><span>PU €</span><span>Total €</span><span></span></div>';
+      html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;gap:0;background:var(--bg);padding:6px 10px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>Qté</span><span>PU €</span><span>Total €</span><span></span></div>';
     } else {
-      html += '<div style="display:grid;grid-template-columns:1fr '+(s.showTarif?'80px':'100px')+' 90px 24px;gap:0;background:var(--bg);padding:6px 10px;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>'+(s.showTarif?'Total €':'Type')+'</span><span>Statut</span><span></span></div>';
+      html += '<div style="display:grid;grid-template-columns:1fr '+(s.showTarif?'80px':'100px')+' 90px 24px;gap:0;background:var(--bg);padding:6px 10px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>'+(s.showTarif?'Total €':'Type')+'</span><span>Statut</span><span></span></div>';
     }
     rows.forEach(function(r,i){
       if (s.showStreet) {
@@ -2714,7 +2714,7 @@ function renderBcTemplateEditor() {
         } else {
           html += '<input value="'+escHtml(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateRow(\''+s.key+'\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
         }
-        html += '<select onchange="bcUpdateRow(\''+s.key+'\','+i+',\'statut\',this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px">';
+        html += '<select onchange="bcUpdateRow(\''+s.key+'\','+i+',\'statut\',this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px">';
         html += '<option value="Pr\u00e9visionnel"'+(r.statut!=='Engag\u00e9'?' selected':'')+'>Prévisionnel</option>';
         html += '<option value="Engag\u00e9"'+(r.statut==='Engag\u00e9'?' selected':'')+'>Engagé</option>';
         html += '</select>';
@@ -2739,9 +2739,9 @@ function renderBcStyleEditor() {
     html += '<div style="margin-bottom:20px">';
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
     html += '<span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-3)">'+s.label+'</span>';
-    html += '<button onclick="bcAddStyleRow(\''+s.key+'\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:11px;cursor:pointer">+ Ligne</button></div>';
+    html += '<button onclick="bcAddStyleRow(\''+s.key+'\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">+ Ligne</button></div>';
     html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
-    html += '<div style="display:grid;grid-template-columns:1fr 100px 24px;background:var(--bg);padding:6px 10px;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>'+(s.showTarif?'Total €':'Type')+'</span><span></span></div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 100px 24px;background:var(--bg);padding:6px 10px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>'+(s.showTarif?'Total €':'Type')+'</span><span></span></div>';
     s.rows.forEach(function(r,i){
       html += '<div style="display:grid;grid-template-columns:1fr 100px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
       html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateStyleRow(\''+s.key+'\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
@@ -2850,7 +2850,7 @@ loadBudgetConfig();
     <div style="padding:18px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
       <div>
         <div style="font-size:15px;font-weight:700;color:var(--text)">📊 Créer le budget promo</div>
-        <div id="budget-subtitle" style="font-size:11px;color:var(--text-3);margin-top:2px"></div>
+        <div id="budget-subtitle" style="font-size:12px;color:var(--text-3);margin-top:2px"></div>
       </div>
       <button onclick="closeBudgetModal()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-3)">✕</button>
     </div>
@@ -2860,17 +2860,17 @@ loadBudgetConfig();
         <div id="budget-auth-status" style="width:8px;height:8px;border-radius:50%;background:#ccc;flex-shrink:0"></div>
         <div style="flex:1">
           <div id="budget-auth-label" style="font-size:12px;font-weight:600;color:var(--text)">Non connecté à Google</div>
-          <div id="budget-auth-sub" style="font-size:10px;color:var(--text-3)">Nécessaire pour créer le Sheet dans ton Drive</div>
+          <div id="budget-auth-sub" style="font-size:11px;color:var(--text-3)">Nécessaire pour créer le Sheet dans ton Drive</div>
         </div>
-        <button id="budget-auth-btn" onclick="budgetGoogleAuth()" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-size:11px;font-weight:600;cursor:pointer;color:var(--text)">Se connecter</button>
+        <button id="budget-auth-btn" onclick="budgetGoogleAuth()" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;color:var(--text)">Se connecter</button>
       </div>
       <div id="budget-client-id-wrap" style="margin-top:10px;display:none">
-        <label style="font-size:10px;color:var(--text-3);display:block;margin-bottom:4px">CLIENT ID GOOGLE OAUTH 2.0</label>
+        <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px">CLIENT ID GOOGLE OAUTH 2.0</label>
         <div style="display:flex;gap:6px">
-          <input id="budget-client-id" type="text" placeholder="xxxx.apps.googleusercontent.com" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:monospace;background:var(--bg)">
-          <button onclick="budgetSaveClientId()" style="padding:6px 12px;border-radius:6px;border:none;background:#1a7a4f;color:#fff;font-size:11px;font-weight:600;cursor:pointer">OK</button>
+          <input id="budget-client-id" type="text" placeholder="xxxx.apps.googleusercontent.com" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:monospace;background:var(--bg)">
+          <button onclick="budgetSaveClientId()" style="padding:6px 12px;border-radius:6px;border:none;background:#1a7a4f;color:#fff;font-size:12px;font-weight:600;cursor:pointer">OK</button>
         </div>
-        <div style="font-size:9px;color:var(--text-3);margin-top:4px">
+        <div style="font-size:11px;color:var(--text-3);margin-top:4px">
           <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#1a7a4f">Google Cloud Console</a> → Créer des identifiants → ID client OAuth → Application Web → Ajouter <code>http://localhost</code> (ou ton domaine) aux origines autorisées
         </div>
       </div>
@@ -2878,8 +2878,8 @@ loadBudgetConfig();
     <!-- Formulaire -->
     <div style="padding:16px 24px">
       <!-- Infos pré-remplies -->
-      <div style="background:var(--bg);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--text-2)">
-        <div style="font-weight:700;color:var(--text);margin-bottom:6px;font-size:10px;text-transform:uppercase;letter-spacing:.05em">Infos depuis la fiche</div>
+      <div style="background:var(--bg);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text-2)">
+        <div style="font-weight:700;color:var(--text);margin-bottom:6px;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Infos depuis la fiche</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
           <div>🎤 <span id="bud-info-art" style="font-weight:600;color:var(--text)"></span></div>
           <div>📍 <span id="bud-info-ville"></span></div>
@@ -2889,15 +2889,15 @@ loadBudgetConfig();
       </div>
       <!-- Budget alloué -->
       <div style="margin-bottom:14px">
-        <label style="font-size:11px;font-weight:700;color:var(--text);display:block;margin-bottom:6px">Budget alloué (€ HT) <span style="color:#e53">*</span></label>
+        <label style="font-size:12px;font-weight:700;color:var(--text);display:block;margin-bottom:6px">Budget alloué (€ HT) <span style="color:#e53">*</span></label>
         <div style="display:flex;gap:8px">
           <input id="bud-montant" type="number" min="0" step="100" placeholder="ex: 3000" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;background:var(--bg)">
         </div>
-        <div id="bud-template-hint" style="margin-top:6px;font-size:10px;padding:5px 10px;border-radius:6px;display:none"></div>
+        <div id="bud-template-hint" style="margin-top:6px;font-size:11px;padding:5px 10px;border-radius:6px;display:none"></div>
       </div>
       <!-- Style musical -->
       <div style="margin-bottom:14px">
-        <label style="font-size:11px;font-weight:700;color:var(--text);display:block;margin-bottom:6px">Style musical</label>
+        <label style="font-size:12px;font-weight:700;color:var(--text);display:block;margin-bottom:6px">Style musical</label>
         <div style="display:flex;gap:6px;flex-wrap:wrap" id="bud-style-btns">
           <button class="bud-style-btn" data-style="rap" onclick="budSelectStyle(this)">🎤 Rap / Hip-hop</button>
           <button class="bud-style-btn" data-style="pop" onclick="budSelectStyle(this)">🎵 Pop</button>
@@ -2907,13 +2907,13 @@ loadBudgetConfig();
       </div>
       <!-- Aperçu template -->
       <div id="bud-template-preview" style="display:none;margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
-        <div style="padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--border);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3)">Lignes pré-remplies selon le template</div>
-        <div id="bud-template-lines" style="padding:10px 12px;display:flex;flex-direction:column;gap:3px;font-size:11px"></div>
+        <div style="padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--border);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3)">Lignes pré-remplies selon le template</div>
+        <div id="bud-template-lines" style="padding:10px 12px;display:flex;flex-direction:column;gap:3px;font-size:12px"></div>
       </div>
     </div>
     <!-- Footer -->
     <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;align-items:center">
-      <div id="budget-status-msg" style="flex:1;font-size:11px;color:var(--text-3)"></div>
+      <div id="budget-status-msg" style="flex:1;font-size:12px;color:var(--text-3)"></div>
       <button onclick="closeBudgetModal()" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:12px;cursor:pointer">Annuler</button>
       <button id="budget-create-btn" onclick="budgetCreateSheet()" style="padding:8px 18px;border-radius:8px;border:none;background:#1a7a4f;color:#fff;font-size:12px;font-weight:700;cursor:pointer;opacity:.5" disabled>Créer le Google Sheet</button>
     </div>
@@ -3198,8 +3198,8 @@ function openBudgetModal() {
   document.getElementById('bud-info-date').textContent = c.dc ? new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : '—';
   var flags = document.getElementById('bud-info-flags');
   flags.innerHTML = '';
-  if (taskStates['skip-'+c.id+'-sp']) flags.innerHTML += '<span style="background:#fff0e8;color:#b05020;border:1px solid #f0a070;border-radius:20px;padding:1px 7px;font-size:9px;font-weight:700">Sponso prod</span>';
-  if (taskStates['skip-'+c.id+'-col']) flags.innerHTML += '<span style="background:#f5f5f5;color:#888;border:1px solid #ddd;border-radius:20px;padding:1px 7px;font-size:9px;font-weight:700">Pas d\'affiche</span>';
+  if (taskStates['skip-'+c.id+'-sp']) flags.innerHTML += '<span style="background:#fff0e8;color:#b05020;border:1px solid #f0a070;border-radius:20px;padding:1px 7px;font-size:11px;font-weight:700">Sponso prod</span>';
+  if (taskStates['skip-'+c.id+'-col']) flags.innerHTML += '<span style="background:#f5f5f5;color:#888;border:1px solid #ddd;border-radius:20px;padding:1px 7px;font-size:11px;font-weight:700">Pas d\'affiche</span>';
 
   document.getElementById('budget-subtitle').textContent = c.art + (c.ville ? ' · ' + c.ville : '') + (c.dc ? ' · ' + new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) : '');
   document.getElementById('bud-montant').value = '';
@@ -3256,7 +3256,7 @@ function budUpdatePreview() {
   sections.forEach(function(s){
     var rows = tpl.lines[s.key];
     if (!rows || !rows.length) return;
-    html += '<div style="font-weight:700;color:var(--text-3);font-size:9px;text-transform:uppercase;letter-spacing:.05em;margin-top:6px;margin-bottom:2px">'+s.label+'</div>';
+    html += '<div style="font-weight:700;color:var(--text-3);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-top:6px;margin-bottom:2px">'+s.label+'</div>';
     rows.forEach(function(r){
       var price = r.total ? r.total+'€' : (r.qte && r.pu ? (r.qte*r.pu).toFixed(0)+'€' : '—');
       html += '<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border-light)">'
