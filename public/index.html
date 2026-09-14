@@ -1932,31 +1932,38 @@ function renderTaches(){
     });
     allTasks.forEach(function(t){
       var df=t.date?tkFmtDate(t.date):null;
-      var pl=tkPrioLabel(t.prio||'normal');
       var taskEl=document.createElement('div');taskEl.className='tk-task'+(t.done?' done':'')+(t.delegue?' delegue':'');
       taskEl.draggable=true;
       taskEl.addEventListener('dragstart',function(e){e.dataTransfer.setData('tkid',t.id);taskEl.style.opacity='.4';e.stopPropagation();});
       taskEl.addEventListener('dragend',function(){taskEl.style.opacity='1';});
+      // Case a cocher, meme geste que partout ailleurs dans l'appli. Pour une
+      // tache recurrente, tkToggleDone programme la prochaine occurrence.
+      var chk=document.createElement('div');chk.className='tk-chk'+(t.done?' on':'');
+      chk.title=t.recur?'Fait → passer à la prochaine occurrence':'Marquer comme fait';
+      chk.addEventListener('click',function(e){e.stopPropagation();tkToggleDone(t.id);});
+      var body=document.createElement('div');body.className='tk-task-body';
       var nameEl=document.createElement('div');nameEl.className='tk-task-name';nameEl.textContent=t.nom;
       if(t.recur){var recurIcon=document.createElement('span');recurIcon.textContent=' \u{1F501}';recurIcon.title='Tâche récurrente';nameEl.appendChild(recurIcon);}
       if(t.note){var noteIcon=document.createElement('span');noteIcon.textContent=' \u{1F4DD}';noteIcon.title=t.note;nameEl.appendChild(noteIcon);}
-      taskEl.appendChild(nameEl);
-      if(df){var dateEl=document.createElement('div');dateEl.className='tk-task-date '+df.cls;dateEl.textContent=df.txt;taskEl.appendChild(dateEl);}
-      var prioEl=document.createElement('span');prioEl.className='tk-task-prio '+pl.cls;prioEl.textContent=pl.txt;taskEl.appendChild(prioEl);
+      body.appendChild(nameEl);
+      // Ligne meta : date + priorite (seulement si Haute/Basse : "Normale" est
+      // la valeur par defaut, l'afficher n'apporte rien) + actions au survol.
+      var meta=document.createElement('div');meta.className='tk-task-meta';
+      if(df){var dateEl=document.createElement('span');dateEl.className='tk-task-date '+df.cls;dateEl.textContent=df.txt;meta.appendChild(dateEl);}
+      if(t.prio==='high'||t.prio==='low'){var pl=tkPrioLabel(t.prio);var prioEl=document.createElement('span');prioEl.className='tk-task-prio '+pl.cls;prioEl.textContent=pl.txt;meta.appendChild(prioEl);}
       var actions=document.createElement('div');actions.className='tk-task-actions';
-      var doneBtn=document.createElement('button');doneBtn.className='tk-task-btn done-btn';
-      doneBtn.innerHTML=t.done?'&#8635; Rouvrir':'&#10003; Fait';
-      doneBtn.addEventListener('click',function(){tkToggleDone(t.id);});
-      var editBtn=document.createElement('button');editBtn.className='tk-task-btn';editBtn.innerHTML='&#9998; Modifier';
-      editBtn.addEventListener('click',function(){tkEditTask(t.id);});
-      var delBtn=document.createElement('button');delBtn.className='tk-task-btn del-btn';delBtn.innerHTML='&#x2715;';
-      delBtn.addEventListener('click',function(){tkDelTask(t.id);});
+      var editBtn=document.createElement('button');editBtn.className='tk-task-btn';editBtn.innerHTML='&#9998;';editBtn.title='Modifier';
+      editBtn.addEventListener('click',function(e){e.stopPropagation();tkEditTask(t.id);});
       var delegBtn=document.createElement('button');
       delegBtn.className='tk-task-btn'+(t.delegue?' deleg-active':'');
-      delegBtn.innerHTML=t.delegue?'&#9679; Délégué':'&#9675; Déléguer';
-      delegBtn.addEventListener('click',function(){tkToggleDelegue(t.id);});
-      actions.appendChild(doneBtn);actions.appendChild(editBtn);actions.appendChild(delBtn);actions.appendChild(delegBtn);
-      taskEl.appendChild(actions);
+      delegBtn.innerHTML=t.delegue?'&#9679;':'&#9675;';delegBtn.title=t.delegue?'Délégué (cliquer pour reprendre)':'Déléguer';
+      delegBtn.addEventListener('click',function(e){e.stopPropagation();tkToggleDelegue(t.id);});
+      var delBtn=document.createElement('button');delBtn.className='tk-task-btn del-btn';delBtn.innerHTML='&#x2715;';delBtn.title='Supprimer';
+      delBtn.addEventListener('click',function(e){e.stopPropagation();tkDelTask(t.id);});
+      actions.appendChild(editBtn);actions.appendChild(delegBtn);actions.appendChild(delBtn);
+      meta.appendChild(actions);
+      body.appendChild(meta);
+      taskEl.appendChild(chk);taskEl.appendChild(body);
       tasksEl.appendChild(taskEl);
     });
     colEl.appendChild(tasksEl);
