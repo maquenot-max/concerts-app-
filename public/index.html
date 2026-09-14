@@ -215,7 +215,16 @@
   <div class="fiche" id="fiche">
     <div class="fiche-header">
       <h2 id="fiche-title">Concert</h2>
-      <button class="fiche-close" onclick="closeFicheBtn()">&#x2715;</button>
+      <div class="filters-popover">
+        <button class="fiche-close" onclick="toggleFiltersPanel(event,'fiche-menu')" title="Plus d'actions">&#8943;</button>
+        <div class="filters-panel fiche-menu" id="fiche-menu" style="display:none">
+          <button class="menu-item" onclick="closeFicheMenu();resetFicheTasks()">&#8635; Réinitialiser les tâches</button>
+          <button class="menu-item" id="fi-archive-btn" onclick="closeFicheMenu();deleteFicheConcert()">Déplacer vers Concerts passés</button>
+          <button class="menu-item" id="fi-restore-btn" onclick="closeFicheMenu();restoreConcert(currentFicheId)" style="display:none">&#8635; Remettre en actif</button>
+          <button class="menu-item danger" id="fi-perma-delete-btn" onclick="closeFicheMenu();permanentlyDeleteConcert(currentFicheId)" style="display:none">Supprimer définitivement</button>
+        </div>
+      </div>
+      <button class="fiche-close" onclick="closeFicheBtn()" title="Fermer">&#x2715;</button>
     </div>
     <div class="fiche-skip-bar">
       <button class="fiche-skip-btn" id="skip-sp-btn" onclick="toggleSkip('sp')"><span id="skip-sp-icon">○</span> Sponso gérée par la prod</button>
@@ -255,12 +264,8 @@
       </div>
     </div>
     <div class="fiche-footer">
-      <button class="reset-btn" onclick="resetFicheTasks()">&#8635; Réinit. tâches</button>
-      <button class="btn" onclick="openCampaignWizard(currentFicheId)" title="Questionnaire guidé pour générer le rapport de campagne">📄 Rapport de campagne (PDF)</button>
-      <button class="btn" onclick="openBudgetModal()" style="background:#e8f5ee;color:#1a7a4f;border:1px solid #b8e0ca;font-weight:600">📊 Budget Promo</button>
-      <button class="btn btn-danger" id="fi-archive-btn" onclick="deleteFicheConcert()">Déplacer vers Concerts passés</button>
-      <button class="btn" id="fi-restore-btn" onclick="restoreConcert(currentFicheId)" style="display:none">&#8635; Remettre en actif</button>
-      <button class="dbtn" id="fi-perma-delete-btn" onclick="permanentlyDeleteConcert(currentFicheId)" style="display:none;margin-left:auto">Supprimer définitivement</button>
+      <button class="btn" style="flex:1" onclick="openCampaignWizard(currentFicheId)" title="Questionnaire guidé pour générer le rapport de campagne (PDF)">Rapport de campagne</button>
+      <button class="btn" style="flex:1" onclick="openBudgetModal()" title="Créer ou ouvrir le budget promo (Google Sheet)">Budget promo</button>
     </div>
   </div>
 </div>
@@ -906,6 +911,7 @@ function matchesCategoryFilter(c,cat){
 }
 function openFiche(id){
   var c=concerts.find(function(x){return x.id===id;});if(!c)return;
+  if(currentFicheId!==id)ficheGroupsOpen={done:false,na:false};
   currentFicheId=id;
   document.getElementById('fiche-title').textContent=c.art||'Concert';
   document.getElementById('fi-art').value=c.art||'';
@@ -926,7 +932,23 @@ function openFiche(id){
   document.body.style.overflow='hidden';
 }
 function closeFiche(e){if(e.target===document.getElementById('overlay'))closeFicheBtn();}
-function closeFicheBtn(){document.getElementById('overlay').classList.remove('open');document.body.style.overflow='';currentFicheId=null;render();}
+function closeFicheMenu(){var m=document.getElementById('fiche-menu');if(m)m.style.display='none';}
+function closeFicheBtn(){closeFicheMenu();document.getElementById('overlay').classList.remove('open');document.body.style.overflow='';currentFicheId=null;render();}
+// Groupes repliables de la fiche (Terminées / Inutiles) : repliés par défaut
+// pour que les tâches actives restent visibles, état conservé tant qu'on
+// reste sur la même fiche.
+var ficheGroupsOpen={done:false,na:false};
+function toggleFicheGroup(key){
+  ficheGroupsOpen[key]=!ficheGroupsOpen[key];
+  var c=concerts.find(function(x){return x.id===currentFicheId;});
+  if(c)renderFicheTasks(c);
+}
+function ficheGroupHtml(key,label,count,color,itemsHtml){
+  var open=!!ficheGroupsOpen[key];
+  return '<div class="group-title second fg-toggle" style="color:'+color+'" onclick="toggleFicheGroup(\''+key+'\')">'
+    +'<span class="fg-chev'+(open?' open':'')+'">&#9656;</span>'+label+' ('+count+')</div>'
+    +'<div style="display:'+(open?'':'none')+'">'+itemsHtml+'</div>';
+}
 var REPORT_SECTIONS=[
   {title:'Diffusion & Affichage',cats:['col','affp']},
   {title:'Médias & Presse',cats:['press','radio']},
@@ -1162,8 +1184,8 @@ function renderFicheTasks(c){
   if(future.length)html+='<div class="group-title second">À venir ('+future.length+')</div>'+future.map(function(t){return taskHtml(t,false);}).join('');
   if(nocalc.length)html+='<div class="group-title second">Sans date calculée ('+nocalc.length+')</div>'+nocalc.map(function(t){return taskHtml(t,false);}).join('');
   if(blocked.length)html+='<div class="group-title second" style="color:var(--text-3)">En attente de prérequis ('+blocked.length+')</div>'+blocked.map(function(t){return taskHtml(t,true);}).join('');
-  if(done.length)html+='<div class="group-title second" style="color:var(--green)">Terminées ('+done.length+')</div>'+done.map(function(t){return taskHtml(t,false);}).join('');
-  if(naTasks.length)html+='<div class="group-title second" style="color:var(--text-3)">Inutiles ('+naTasks.length+')</div>'+naTasks.map(naTaskHtml).join('');
+  if(done.length)html+=ficheGroupHtml('done','Terminées',done.length,'var(--green)',done.map(function(t){return taskHtml(t,false);}).join(''));
+  if(naTasks.length)html+=ficheGroupHtml('na','Inutiles',naTasks.length,'var(--text-3)',naTasks.map(naTaskHtml).join(''));
   if(!html)html='<div style="color:var(--text-3);font-size:13px;padding:1rem 0">Aucune tâche.</div>';
   el.innerHTML=html;
 }

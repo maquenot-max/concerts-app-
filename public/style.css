@@ -61,6 +61,12 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .filters-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;margin-left:6px;border-radius:20px;background:var(--text);color:#fff;font-size:11px;font-weight:700}
 .filters-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:20;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow-md);padding:10px;display:flex;flex-direction:column;gap:8px;min-width:200px}
 .filters-panel select{width:100%}
+/* Menu d'actions (fiche) : meme popover, aligne a droite, items en liste */
+.fiche-menu{left:auto;right:0;min-width:240px;gap:0;padding:6px}
+.menu-item{display:block;width:100%;text-align:left;background:none;border:none;padding:8px 10px;font-size:13px;color:var(--text);cursor:pointer;border-radius:var(--radius-sm);font-family:inherit;white-space:nowrap}
+.menu-item:hover{background:var(--bg)}
+.menu-item.danger{color:var(--red)}
+.menu-item.danger:hover{background:var(--red-bg)}
 .view-toggle{display:flex;gap:2px;background:var(--bg);border-radius:8px;padding:3px}
 .view-toggle-btn{padding:6px 12px;font-size:12px;border:none;background:transparent;color:var(--text-2);border-radius:6px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
 .view-toggle-btn.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
@@ -132,8 +138,6 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .btn:disabled{opacity:0.4;cursor:not-allowed}
 .dbtn{background:none;border:none;cursor:pointer;color:#ccc;font-size:12px;padding:5px 8px;border-radius:var(--radius-sm)}
 .dbtn:hover{color:var(--red);background:var(--red-bg)}
-.reset-btn{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 14px;font-size:12px;cursor:pointer;color:var(--text-3);font-weight:500;transition:all .15s;flex:1}
-.reset-btn:hover{color:var(--red);border-color:var(--red-border);background:var(--red-bg)}
 
 /* ── CONCERTS LIST ────────────────────────────────────── */
 .crow{display:flex;align-items:stretch;gap:0;padding:0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;min-height:52px}
@@ -163,6 +167,9 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 /* ── GROUP TITLES ─────────────────────────────────────── */
 .group-title{font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.07em;padding:12px 0 6px;border-bottom:1px solid var(--border-light);margin-bottom:2px}
 .group-title.second{margin-top:20px}
+.fg-toggle{cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px}
+.fg-chev{display:inline-block;font-size:11px;transition:transform .15s}
+.fg-chev.open{transform:rotate(90deg)}
 
 /* ── FICHE ────────────────────────────────────────────── */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:100;align-items:flex-start;justify-content:flex-end;backdrop-filter:blur(2px)}
