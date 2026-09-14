@@ -1481,7 +1481,7 @@ function renderKanban(){
     sorted=sorted.filter(function(t){return !isNA(c,t);});
     var lateTasks=sorted.filter(function(t){var d=calcDate(c,t);return !taskStates[tk(c.id,t.id)]&&isUnlocked(c,t)&&(isLate(d)||isToday(d));});
     var doneN=sorted.filter(function(t){return taskStates[tk(c.id,t.id)];}).length;
-    var pct=Math.round(doneN/sorted.length*100);
+    var pct=sorted.length?Math.round(doneN/sorted.length*100):0;
     var ds=new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});
     var hasLate=lateTasks.length>0;
     var body=hasLate
@@ -1501,7 +1501,7 @@ function renderKanban(){
       '<div class="col-name'+(hasLate?' late':'')+'">'+esc(c.art)+cancelBadge(c)+'</div>'+
       '<div class="col-sub'+(hasLate?' late':'')+'">'+( c.ville?esc(formatLieu(c.ville))+' - ':'')+ds+'</div>'+
       ventesHtml(c,'event.stopPropagation();toggleVentes(event,\''+c.id+'\')') +
-      '<div class="pbar" title="'+pct+'% des tâches réalisées"><div class="pfill" style="width:'+pct+'%"></div></div>'+
+      '<div class="pbar'+(pct>=100?' full':'')+'" title="'+pct+'% des tâches réalisées"><div class="pfill" style="width:'+pct+'%"></div></div>'+
       '</div>'+body+'</div>';
     return {hasLate:hasLate,html:cardHtml};
   });
@@ -2312,9 +2312,10 @@ function renderRS(){
   if(!wrap)return;
 
   // Tabs projets
-  var tabsHtml='<div class="rs-proj-tabs">'
-    +'<button class="rs-proj-tab'+(rsCurrentProj==='pp'?' active':'')+'" onclick="rsSetProj(\'pp\')">Please Please</button>'
-    +'<button class="rs-proj-tab'+(rsCurrentProj==='antdt'?' active':'')+'" onclick="rsSetProj(\'antdt\')">ANTDT</button>'
+  // Meme selecteur segmente que Liste / Par salle / Calendrier
+  var tabsHtml='<div class="view-toggle" style="display:inline-flex;margin-bottom:1.5rem">'
+    +'<button class="view-toggle-btn'+(rsCurrentProj==='pp'?' active':'')+'" onclick="rsSetProj(\'pp\')">Please Please</button>'
+    +'<button class="view-toggle-btn'+(rsCurrentProj==='antdt'?' active':'')+'" onclick="rsSetProj(\'antdt\')">ANTDT</button>'
     +'</div>';
 
   var today=new Date();today.setHours(0,0,0,0);
@@ -2380,9 +2381,9 @@ function renderRS(){
     // Styles
     var headerStyle='';var numStyle='';var nameStyle='';
     if(isToday){
-      headerStyle='background:var(--bg);border-left:4px solid var(--text);padding-left:13px;';
-      numStyle='color:var(--text);font-size:16px;font-weight:800;';
-      nameStyle='color:var(--text);font-weight:700;';
+      headerStyle='background:var(--accent-soft);border-left:4px solid var(--accent);padding-left:13px;';
+      numStyle='color:var(--accent);font-size:16px;font-weight:800;';
+      nameStyle='color:var(--accent);font-weight:700;';
     } else if(isPast){
       var hasUnposted=dayPosts.some(function(p){return p.status!=='posted';});
       headerStyle=hasUnposted?'opacity:.7;border-left:2px solid #f0a030;':'opacity:.38;';
@@ -2405,7 +2406,7 @@ function renderRS(){
       +'<div class="rs-day-header'+(isWE&&!isToday?' weekend':'')+'" id="rsday-'+dateStr+'" style="'+headerStyle+'" onclick="'+rowClick+'">'
       +'<span style="display:inline-flex;flex-direction:column;align-items:center;min-width:36px;line-height:1">'
       +'<span class="rs-day-num" style="'+numStyle+'line-height:1;">'+dayNum+'</span>'
-      +'<span style="font-size:11px;color:'+(isToday?'var(--text)':(isPast?'#ccc':'var(--text-3)'))+';text-transform:uppercase;font-weight:700;letter-spacing:.03em;margin-top:1px;">'+monthName+'</span>'
+      +'<span style="font-size:11px;color:'+(isToday?'var(--accent)':(isPast?'var(--border-strong)':'var(--text-3)'))+';text-transform:uppercase;font-weight:700;letter-spacing:.03em;margin-top:1px;">'+monthName+'</span>'
       +'</span>'
       +'<span style="font-size:11px;min-width:36px;'+nameStyle+(isPast&&!isToday?'color:#ccc;':'')+(isWE&&!isToday&&!isPast?'color:var(--text-3);':'')+'">'+dayName+'</span>'
       +'<div class="rs-chips">'+chips+'</div>'
