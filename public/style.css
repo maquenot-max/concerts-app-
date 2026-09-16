@@ -99,8 +99,10 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 }
 .col-head.late{background:var(--surface-2);border-color:var(--border);border-bottom-color:var(--border-light)}
 /* Concert OK : la carte s'arrete a l'en-tete (pas de .col-body en dessous),
-   qui recupere donc les coins bas arrondis et n'a plus de bordure inferieure. */
-.col-head.only{border-bottom:none;border-radius:var(--radius)}
+   qui recupere donc les coins bas arrondis et une bordure complete sur les
+   4 cotes (au lieu de la bordure inferieure plus claire, pensee pour le
+   raccord avec un .col-body qui n'existe plus ici). */
+.col-head.only{border-bottom:1px solid var(--border);border-radius:var(--radius)}
 .col-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
 .col-name.late{color:var(--text)}
 .col-sub{font-size:12px;color:var(--text-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
