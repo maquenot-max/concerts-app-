@@ -482,6 +482,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .rs-chips{display:flex;gap:5px;flex:1;flex-wrap:wrap;align-items:center}
 .rs-chip{font-size:11px;font-weight:600;padding:2px 7px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--text-2);white-space:nowrap}
 .rs-chip.ready{background:#eef7f2;border-color:#b8e0ca;color:#2d7a4f}
+.rs-chip.posted{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .rs-chip.auto{background:rgba(201,162,39,.1);border-color:rgba(201,162,39,.35);color:var(--amber)}
 .rs-chip.story{border-style:dashed}
 .rs-chip-validated{display:inline-flex;align-items:center;color:#2d7a4f;margin-left:3px}
