@@ -488,7 +488,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .rs-add-day-btn:hover{border-color:var(--text-3);color:var(--text)}
 .rs-posts-list{padding:6px 16px 10px 52px;display:flex;flex-direction:column;gap:7px}
 .rs-post{background:var(--bg);border:1px solid transparent;border-radius:var(--radius-sm);padding:9px 12px;display:flex;flex-direction:column;gap:5px}
-.rs-post.ready{border-left:3px solid #2d7a4f;background:#fafff9}
+.rs-post.posted{border-left:3px solid var(--accent);background:var(--accent-soft)}
 .rs-post.auto{border-left:3px solid rgba(201,162,39,.5);background:rgba(201,162,39,.03)}
 .rs-post-row1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .rs-post-format{font-size:11px;font-weight:600;padding:1px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:.04em;flex-shrink:0;background:var(--bg);color:var(--text-2);border:1px solid var(--border)}
@@ -507,6 +507,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .rs-t-autre::before{background:#999}
 .rs-post-concert{font-size:12px;font-weight:600;color:var(--text)}
 .rs-post-note{font-size:12px;color:var(--text-2);flex:1}
+.rs-post-validated{display:inline-flex;align-items:center;color:#2d7a4f;flex-shrink:0}
 .rs-post-legend{font-size:12px;color:var(--text-2);border-left:2px solid var(--border);padding-left:8px;font-style:italic;line-height:1.4}
 .rs-post-link a{font-size:12px;color:var(--accent);text-decoration:none}
 .rs-post-link a:hover{text-decoration:underline}
@@ -519,6 +520,8 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .rs-ready-btn{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-3);transition:all .15s;margin-left:auto}
 .rs-ready-btn.on{background:#eef7f2;color:#2d7a4f;border-color:#b8e0ca}
 .rs-ready-btn.on.posted{background:#f0f4ff;color:#3050c0;border-color:#a0b8f0}
+.rs-validate-btn{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-3);transition:all .15s}
+.rs-validate-btn.on{background:#eef7f2;color:#2d7a4f;border-color:#b8e0ca}
 .rs-post-btns{display:flex;gap:4px}
 .rs-post-btn{font-size:11px;padding:4px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface);cursor:pointer;color:var(--text-3);transition:all .15s}
 .rs-post-btn:hover{background:var(--bg);color:var(--text)}
@@ -569,7 +572,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .ftask-chk .ico,.chk .ico{width:11px;height:11px;stroke-width:3}
 .fg-chev .ico,#fiche-toggle-icon .ico{width:12px;height:12px}
 .media-link-icon .ico{width:22px;height:22px;color:var(--text-3)}
-.rs-chip .ico,.rs-post-concert .ico{width:12px;height:12px;vertical-align:-2px}
+.rs-chip .ico,.rs-post-concert .ico,.rs-post-validated .ico{width:12px;height:12px;vertical-align:-2px}
 .rs-post-format .ico{width:11px;height:11px;vertical-align:-1px}
 .drag .ico{width:14px;height:14px}
 .dbtn .ico,.rs-post-btn .ico,.tk-task-btn .ico{width:13px;height:13px;vertical-align:-2px}

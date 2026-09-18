@@ -2954,12 +2954,13 @@ function renderRS(){
         var fmtLbl=p.format==='story'?'Story':p.format==='tirage'?'Tirage au sort':'Post';
         var isAuto=!!p.autoRef;
         var pcLabel=rsResolveConcertLabel(p);
-        daysHtml+='<div class="rs-post'+(p.status==='posted'?' ready':'')+(isAuto?' auto':'')+'">'
+        daysHtml+='<div class="rs-post'+(p.status==='posted'?' posted':'')+(isAuto?' auto':'')+'">'
           +'<div class="rs-post-row1">'
           +'<span class="rs-post-format '+fmtCls+'">'+fmtLbl+'</span>'
           +'<span class="rs-post-type '+t.cls+'">'+t.label+'</span>'
           +(pcLabel?'<span class="rs-post-concert">'+(isAuto?icon('megaphone')+' ':'')+esc(pcLabel)+'</span>':'')
           +(p.note&&!pcLabel?'<span class="rs-post-note">'+esc(p.note)+'</span>':'')
+          +(p.validated?'<span class="rs-post-validated" title="Validé">'+icon('check')+'</span>':'')
           +'</div>'
           +(p.legend?'<div class="rs-post-legend">'+esc(p.legend)+'</div>':'')
           +(p.link&&escUrl(p.link)?'<div class="rs-post-link"><a href="'+escUrl(p.link)+'" target="_blank">'+esc(p.link)+'</a></div>':'')
@@ -2969,6 +2970,7 @@ function renderRS(){
           +(p.tiktok?'<span class="rs-net-badge tiktok">TikTok</span>':'')
           +(p.linkedin?'<span class="rs-net-badge linkedin">LinkedIn</span>':'')
           +'<button class="rs-ready-btn'+(p.status==='posted'?' on posted':p.status==='ready'?' on':'')+'" onclick="rsToggleReady(\''+p.id+'\')">'          +(p.status==='posted'?icon('send')+' Posté':p.status==='ready'?icon('check')+' Prêt':icon('circle')+' Prêt')+'</button>'
+          +'<button class="rs-validate-btn'+(p.validated?' on':'')+'" onclick="rsToggleValidated(\''+p.id+'\')" title="Validé">'+icon('check')+' Validé</button>'
           +'<div class="rs-post-btns">'
           +'<button class="rs-post-btn" onclick="rsEditPost(\''+p.id+'\')" title="Modifier">'+icon('pencil')+'</button>'
           +(isAuto?'':'<button class="rs-post-btn del" onclick="rsDelPost(\''+p.id+'\')" title="Supprimer">'+icon('x')+'</button>')
@@ -3186,6 +3188,18 @@ function rsToggleReady(id){
   else if(p.status==='ready')p.status='posted';
   else p.status='';
   p.ready=p.status!=='';
+  scheduleSave('rsposts');
+  var date=p.date;renderRS();
+  setTimeout(function(){
+    var el=document.getElementById('rslist-'+date);
+    if(el)el.style.display='block';
+  },40);
+}
+
+function rsToggleValidated(id){
+  var p=rsPosts.find(function(x){return x.id===id;});
+  if(!p)return;
+  p.validated=!p.validated;
   scheduleSave('rsposts');
   var date=p.date;renderRS();
   setTimeout(function(){
