@@ -511,6 +511,10 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .rs-post-note{font-size:12px;color:var(--text-2);flex:1}
 .rs-post-validated{display:inline-flex;align-items:center;color:#2d7a4f;flex-shrink:0}
 .rs-post-legend{font-size:12px;color:var(--text-2);border-left:2px solid var(--border);padding-left:8px;font-style:italic;line-height:1.4}
+.rs-post-legend-wrap{display:flex;align-items:flex-start;gap:8px}
+.rs-post-legend-wrap .rs-post-legend{flex:1}
+.rs-copy-btn{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-3);transition:all .15s;flex-shrink:0;white-space:nowrap}
+.rs-copy-btn:hover{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
 .rs-post-link a{font-size:12px;color:var(--accent);text-decoration:none}
 .rs-post-link a:hover{text-decoration:underline}
 .rs-post-row2{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -577,7 +581,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .rs-chip .ico,.rs-post-concert .ico,.rs-post-validated .ico{width:12px;height:12px;vertical-align:-2px}
 .rs-post-format .ico{width:11px;height:11px;vertical-align:-1px}
 .drag .ico{width:14px;height:14px}
-.dbtn .ico,.rs-post-btn .ico,.tk-task-btn .ico{width:13px;height:13px;vertical-align:-2px}
+.dbtn .ico,.rs-post-btn .ico,.tk-task-btn .ico,.rs-copy-btn .ico{width:13px;height:13px;vertical-align:-2px}
 .fiche-skip-btn .ico{width:12px;height:12px}
 .fiche-skip-btn.active .ico{color:var(--accent-ink)}
 
