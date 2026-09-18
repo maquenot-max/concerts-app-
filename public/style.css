@@ -484,6 +484,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .rs-chip.ready{background:#eef7f2;border-color:#b8e0ca;color:#2d7a4f}
 .rs-chip.auto{background:rgba(201,162,39,.1);border-color:rgba(201,162,39,.35);color:var(--amber)}
 .rs-chip.story{border-style:dashed}
+.rs-chip-validated{display:inline-flex;align-items:center;color:#2d7a4f;margin-left:3px}
 .rs-add-day-btn{font-size:11px;padding:2px 8px;border-radius:20px;border:1px dashed var(--border);background:none;color:var(--text-3);cursor:pointer;transition:all .15s;flex-shrink:0}
 .rs-add-day-btn:hover{border-color:var(--text-3);color:var(--text)}
 .rs-posts-list{padding:6px 16px 10px 52px;display:flex;flex-direction:column;gap:7px}

@@ -2928,7 +2928,7 @@ function renderRS(){
     dayPosts.forEach(function(p){
       var t=RS_TYPES[p.type]||RS_TYPES.autre;
       var pcLabel=rsResolveConcertLabel(p);
-      var lbl=(p.autoRef?icon('megaphone'):(p.format==='story'?icon('smartphone'):p.format==='tirage'?icon('dice'):icon('file')))+' '+t.label+(pcLabel?' · '+esc(pcLabel.substring(0,12)):p.note?' · '+esc(p.note.substring(0,15)):'');
+      var lbl=(p.autoRef?icon('megaphone'):(p.format==='story'?icon('smartphone'):p.format==='tirage'?icon('dice'):icon('file')))+' '+t.label+(pcLabel?' · '+esc(pcLabel.substring(0,12)):p.note?' · '+esc(p.note.substring(0,15)):'')+(p.validated?'<span class="rs-chip-validated" title="Validé">'+icon('check')+'</span>':'');
       chips+='<span class="rs-chip'+(p.ready?' ready':'')+(p.format==='story'?' story':'')+'">'+lbl+'</span>';
     });
 
