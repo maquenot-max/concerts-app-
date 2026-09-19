@@ -48,20 +48,20 @@
       <label>E-mail<input type="email" id="auth-email" autocomplete="username" required></label>
       <label>Mot de passe<input type="password" id="auth-password" autocomplete="current-password" required></label>
       <div class="auth-error" id="auth-error" style="display:none"></div>
-      <button class="btn btn-primary" type="submit" id="auth-submit" style="width:100%">Se connecter</button>
+      <button class="btn btn-primary" type="submit" id="auth-submit">Se connecter</button>
       <button class="auth-link" type="button" onclick="authForgot()">Mot de passe oublié ?</button>
     </form>
     <form id="auth-recover-form" onsubmit="return authSetNewPassword(event)" style="display:none">
       <p class="auth-help">Choisis un nouveau mot de passe (8 caractères minimum).</p>
       <label>Nouveau mot de passe<input type="password" id="auth-new-password" autocomplete="new-password" required minlength="8"></label>
       <div class="auth-error" id="auth-recover-error" style="display:none"></div>
-      <button class="btn btn-primary" type="submit" style="width:100%">Enregistrer</button>
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
     </form>
     <form id="auth-mfa-form" onsubmit="return authSubmitMfa(event)" style="display:none">
       <p class="auth-help">Ouvre ton application d'authentification et saisis le code à 6 chiffres.</p>
       <label>Code de vérification<input type="text" id="auth-mfa-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></label>
       <div class="auth-error" id="auth-mfa-error" style="display:none"></div>
-      <button class="btn btn-primary" type="submit" id="auth-mfa-submit" style="width:100%">Valider</button>
+      <button class="btn btn-primary" type="submit" id="auth-mfa-submit">Valider</button>
       <button class="auth-link" type="button" onclick="authSignOut()">Utiliser un autre compte</button>
     </form>
     <p class="auth-foot">Accès réservé à l'équipe. Pour obtenir un compte, demande à un administrateur.</p>
@@ -69,9 +69,9 @@
 </div>
 <div id="app">
   <header>
-    <h1 style="display:flex;align-items:center;gap:8px"><img src="favicon_io/favicon-32x32.png" style="width:20px;height:20px;border-radius:4px" alt=""><span class="h1-text">Please Please Communication &mdash; Dashboard</span></h1>
-    <nav class="nav" style="display:flex;gap:1px">
-      <button data-tab="rs" onclick="showTab('rs',this)" style="padding:5px 14px;font-size:13px;border:none;background:transparent;cursor:pointer;color:var(--text-2);border-radius:6px;font-weight:500;transition:all .15s;margin-right:12px;border-right:2px solid var(--border);padding-right:16px">Plannings RS</button>
+    <h1 class="brand"><img src="favicon_io/favicon-32x32.png" class="brand-logo" alt=""><span class="h1-text">Please Please Communication &mdash; Dashboard</span></h1>
+    <nav class="nav">
+      <button data-tab="rs" onclick="showTab('rs',this)">Plannings RS</button>
       <button class="active" data-tab="kanban" onclick="showTab('kanban',this)">Tableau de bord</button>
       <button id="btn-concerts" data-tab="concerts" onclick="showTab('concerts',this)">Concerts</button>
       <button id="btn-past" data-tab="past" onclick="showTab('past',this)" style="display:none">Concerts passés</button>
@@ -226,8 +226,8 @@
     </div>
     <div id="tab-process" class="panel">
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h2 style="margin:0">Tâches types</h2>
+        <div class="card-head">
+          <h2>Tâches types</h2>
           <button class="btn" onclick="addTask()">+ Tâche</button>
         </div>
         <div class="process-table-scroll">
@@ -236,7 +236,7 @@
           </div>
           <div id="plist"></div>
         </div>
-        <p style="font-size:12px;color:var(--text-3);margin-top:14px;padding-top:14px;border-top:1px solid var(--border-light)">
+        <p class="card-foot-note">
           Prérequis : la tâche ne sera active que si la tâche sélectionnée est cochée.
         </p>
       </div>
@@ -248,9 +248,9 @@
       <div id="sponso-wrap"></div>
     </div>
     <div id="tab-team" class="panel">
-      <div class="card" style="max-width:860px;margin:0 auto">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;gap:12px;flex-wrap:wrap">
-          <div><h2 style="margin:0 0 4px">Équipe</h2><div style="font-size:12px;color:var(--text-3);line-height:1.5">Les personnes autorisées à utiliser l'application. Un administrateur peut ajouter ou retirer un membre et réinitialiser un mot de passe.</div></div>
+      <div class="card card-narrow">
+        <div class="card-head">
+          <div><h2>Équipe</h2><div class="card-desc">Les personnes autorisées à utiliser l'application. Un administrateur peut ajouter ou retirer un membre et réinitialiser un mot de passe.</div></div>
           <button class="btn btn-primary" onclick="openTeamAddModal()">+ Ajouter un membre</button>
         </div>
         <div id="team-list"></div>
@@ -344,12 +344,12 @@
         <option value="low">Basse</option>
       </select>
     </div>
-    <div><label>Note (optionnel)</label><textarea id="tk-note" placeholder="ex: en attente du retour client..." style="width:100%;min-height:50px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;resize:vertical"></textarea></div>
+    <div><label>Note (optionnel)</label><textarea id="tk-note" placeholder="ex: en attente du retour client..."></textarea></div>
     <div>
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="tk-recur-on" style="width:auto" onchange="document.getElementById('tk-recur-config').style.display=this.checked?'flex':'none'"> Tâche récurrente</label>
-      <div id="tk-recur-config" style="display:none;gap:8px;margin-top:6px;align-items:center">
-        <span style="font-size:12px;color:var(--text-2)" id="tk-recur-prefix">Tous les</span>
-        <input type="number" id="tk-recur-n" min="1" value="1" style="width:60px">
+      <label class="tk-recur-label"><input type="checkbox" id="tk-recur-on" onchange="document.getElementById('tk-recur-config').style.display=this.checked?'flex':'none'"> Tâche récurrente</label>
+      <div id="tk-recur-config" class="tk-recur" style="display:none">
+        <span class="tk-recur-prefix" id="tk-recur-prefix">Tous les</span>
+        <input type="number" id="tk-recur-n" min="1" value="1" class="tk-recur-n">
         <select id="tk-recur-unit" onchange="var m=this.value==='monthday';document.getElementById('tk-recur-prefix').textContent=m?'Le':'Tous les';document.getElementById('tk-recur-n').title=m?'Jour du mois (1-31)':'';">
           <option value="days">jour(s)</option>
           <option value="weeks">semaine(s)</option>
@@ -372,26 +372,26 @@
   </div>
 </div>
 <div class="tk-modal" id="account-modal" onclick="if(event.target===this)this.classList.remove('open')">
-  <div class="tk-modal-box" style="width:380px">
+  <div class="tk-modal-box w-380">
     <div class="tk-modal-title">Mon compte</div>
     <div><label>Nouveau mot de passe</label><input type="password" id="acc-pwd" autocomplete="new-password" minlength="8"></div>
     <div><label>Confirmer</label><input type="password" id="acc-pwd2" autocomplete="new-password"></div>
-    <div class="tk-modal-actions" style="margin-top:0"><button class="btn btn-primary" onclick="saveAccountPassword()">Enregistrer le mot de passe</button></div>
-    <div style="border-top:1px solid var(--border-light);padding-top:12px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:4px">Double authentification</div>
-      <div id="acc-mfa-status" style="font-size:12px;color:var(--text-2);line-height:1.5;margin-bottom:8px">…</div>
+    <div class="tk-modal-actions tight"><button class="btn btn-primary" onclick="saveAccountPassword()">Enregistrer le mot de passe</button></div>
+    <div class="modal-sep">
+      <div class="modal-subtitle">Double authentification</div>
+      <div id="acc-mfa-status" class="modal-status">…</div>
       <button class="btn" id="acc-mfa-btn" onclick="mfaToggle()">Activer</button>
     </div>
     <div class="tk-modal-actions"><button class="btn" onclick="document.getElementById('account-modal').classList.remove('open')">Fermer</button></div>
   </div>
 </div>
 <div class="tk-modal" id="backup-modal" onclick="if(event.target===this)this.classList.remove('open')">
-  <div class="tk-modal-box" style="width:460px">
+  <div class="tk-modal-box w-460">
     <div class="tk-modal-title">Sauvegarde</div>
-    <div style="font-size:13px;color:var(--text-2);line-height:1.5">Télécharge une copie complète des données (concerts, tâches, plannings, réglages) dans un fichier que tu gardes où tu veux. À faire régulièrement : sur l'offre gratuite Supabase, c'est la seule sauvegarde.</div>
+    <div class="modal-text">Télécharge une copie complète des données (concerts, tâches, plannings, réglages) dans un fichier que tu gardes où tu veux. À faire régulièrement : sur l'offre gratuite Supabase, c'est la seule sauvegarde.</div>
     <button class="btn btn-primary" onclick="backupExport()">Télécharger une sauvegarde</button>
-    <div id="backup-restore-wrap" style="display:none;border-top:1px solid var(--border-light);padding-top:12px">
-      <div style="font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:8px"><b style="color:var(--text)">Restaurer</b> remplace toutes les données actuelles par celles d'un fichier de sauvegarde. Une copie de l'état actuel est téléchargée juste avant, par sécurité.</div>
+    <div id="backup-restore-wrap" class="modal-sep" style="display:none">
+      <div class="modal-text mb8"><b>Restaurer</b> remplace toutes les données actuelles par celles d'un fichier de sauvegarde. Une copie de l'état actuel est téléchargée juste avant, par sécurité.</div>
       <input type="file" id="backup-file" accept="application/json,.json" style="display:none" onchange="backupRestore(this)">
       <button class="btn btn-danger" onclick="document.getElementById('backup-file').click()">Restaurer depuis un fichier…</button>
     </div>
@@ -399,11 +399,11 @@
   </div>
 </div>
 <div class="tk-modal" id="mfa-enroll-modal" onclick="if(event.target===this)mfaCancelEnrollment()">
-  <div class="tk-modal-box" style="width:420px">
+  <div class="tk-modal-box w-420">
     <div class="tk-modal-title">Activer la double authentification</div>
-    <div style="font-size:13px;color:var(--text-2);line-height:1.5">1. Installe une application d'authentification si besoin (Google Authenticator, Microsoft Authenticator, Authy, 1Password…).<br>2. Scanne ce code, ou saisis la clé manuellement.<br>3. Entre le code à 6 chiffres affiché pour confirmer.</div>
-    <div style="display:flex;justify-content:center"><img id="mfa-qr" alt="QR code" style="width:180px;height:180px;border:1px solid var(--border);border-radius:var(--radius-sm);background:#fff"></div>
-    <div class="pwd-box" id="mfa-secret" style="font-size:13px;letter-spacing:.06em"></div>
+    <div class="modal-text">1. Installe une application d'authentification si besoin (Google Authenticator, Microsoft Authenticator, Authy, 1Password…).<br>2. Scanne ce code, ou saisis la clé manuellement.<br>3. Entre le code à 6 chiffres affiché pour confirmer.</div>
+    <div class="modal-center"><img id="mfa-qr" alt="QR code" class="mfa-qr"></div>
+    <div class="pwd-box small" id="mfa-secret"></div>
     <div><label>Code à 6 chiffres</label><input type="text" id="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></div>
     <div class="auth-error" id="mfa-enroll-error" style="display:none"></div>
     <div class="tk-modal-actions"><button class="btn" onclick="mfaCancelEnrollment()">Annuler</button><button class="btn btn-primary" onclick="mfaVerifyEnrollment()">Confirmer</button></div>
@@ -415,20 +415,20 @@
     <div><label>E-mail</label><input type="email" id="ta-email" placeholder="prenom@exemple.fr"></div>
     <div><label>Prénom</label><input type="text" id="ta-name" placeholder="ex: Julie"></div>
     <div><label>Rôle</label><select id="ta-role"><option value="member">Membre</option><option value="admin">Administrateur</option></select></div>
-    <p style="font-size:12px;color:var(--text-3);margin:0;line-height:1.5">Un mot de passe provisoire sera généré : transmets-le à la personne, elle pourra le changer depuis son menu.</p>
+    <p class="modal-note">Un mot de passe provisoire sera généré : transmets-le à la personne, elle pourra le changer depuis son menu.</p>
     <div class="tk-modal-actions"><button class="btn" onclick="document.getElementById('team-add-modal').classList.remove('open')">Annuler</button><button class="btn btn-primary" id="ta-submit" onclick="teamAdd()">Créer le compte</button></div>
   </div>
 </div>
 <div class="tk-modal" id="team-pwd-modal" onclick="if(event.target===this)this.classList.remove('open')">
-  <div class="tk-modal-box" style="width:400px">
+  <div class="tk-modal-box w-400">
     <div class="tk-modal-title" id="tp-title">Compte créé</div>
-    <div style="font-size:13px;color:var(--text-2);line-height:1.5">Mot de passe provisoire pour <b id="tp-email"></b> — il n'est affiché qu'une seule fois :</div>
+    <div class="modal-text">Mot de passe provisoire pour <b id="tp-email"></b> — il n'est affiché qu'une seule fois :</div>
     <div class="pwd-box" id="tp-pwd"></div>
     <div class="tk-modal-actions"><button class="btn" onclick="copyTempPassword()">Copier</button><button class="btn btn-primary" onclick="document.getElementById('team-pwd-modal').classList.remove('open')">Fermer</button></div>
   </div>
 </div>
 <div class="tk-modal" id="help-modal" onclick="if(event.target===this)closeHelp()">
-  <div class="tk-modal-box" style="width:460px">
+  <div class="tk-modal-box w-460">
     <div class="tk-modal-title">Raccourcis clavier</div>
     <div class="help-grid">
       <span class="help-keys"><kbd>⌘K</kbd></span><span>Rechercher un concert ou un onglet (Ctrl+K sur Windows)</span>
@@ -442,9 +442,9 @@
   </div>
 </div>
 <div class="tk-modal" id="confirm-modal">
-  <div class="tk-modal-box" style="width:380px">
+  <div class="tk-modal-box w-380">
     <div class="tk-modal-title" id="confirm-modal-title">Confirmer</div>
-    <div id="confirm-modal-msg" style="font-size:13px;color:var(--text-2);line-height:1.5"></div>
+    <div id="confirm-modal-msg" class="modal-text"></div>
     <div class="tk-modal-actions">
       <button class="btn" id="confirm-modal-cancel">Annuler</button>
       <button class="btn btn-danger" id="confirm-modal-ok">Confirmer</button>
@@ -452,7 +452,7 @@
   </div>
 </div>
 <div class="tk-modal" id="media-link-modal">
-  <div class="tk-modal-box" style="width:380px">
+  <div class="tk-modal-box w-380">
     <div class="tk-modal-title">Ajouter un lien</div>
     <div><label>URL</label><input type="text" id="media-link-url" placeholder="https://..."></div>
     <div><label>Légende (optionnel)</label><input type="text" id="media-link-caption" placeholder="ex: Article L'Union"></div>
@@ -463,18 +463,18 @@
   </div>
 </div>
 <div class="tk-modal" id="wizard-modal">
-  <div class="tk-modal-box" style="width:560px;max-width:90vw">
+  <div class="tk-modal-box w-560">
     <div class="tk-modal-title" id="wizard-title">Rapport de campagne</div>
-    <div style="font-size:12px;color:var(--text-3);margin-bottom:12px;line-height:1.5" id="wizard-progress"></div>
-    <div class="media-grid" id="wizard-step-grid" style="margin-bottom:12px"></div>
-    <div class="media-add-row" style="margin-bottom:16px">
+    <div class="modal-note mb12" id="wizard-progress"></div>
+    <div class="media-grid" id="wizard-step-grid"></div>
+    <div class="media-add-row">
       <input type="file" id="wizard-file-input" accept="image/*" style="display:none" onchange="wizardUploadFile(this)">
       <button class="btn" onclick="document.getElementById('wizard-file-input').click()"><svg class="ico" aria-hidden="true"><use href="#i-camera"></use></svg> Ajouter une photo</button>
       <button class="btn" onclick="wizardAddLinkPrompt()"><svg class="ico" aria-hidden="true"><use href="#i-link"></use></svg> Ajouter un lien</button>
     </div>
-    <div class="tk-modal-actions" style="justify-content:space-between">
+    <div class="tk-modal-actions between">
       <button class="btn" id="wizard-prev-btn" onclick="wizardPrev()"><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"></use></svg> Précédent</button>
-      <div style="display:flex;gap:8px">
+      <div class="modal-actions-group">
         <button class="btn" onclick="closeCampaignWizard()">Fermer</button>
         <button class="btn btn-primary" id="wizard-next-btn" onclick="wizardNext()">Suivant <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"></use></svg></button>
       </div>
@@ -496,12 +496,12 @@
   </div>
 </div>
 <div class="tk-modal" id="date-override-modal">
-  <div class="tk-modal-box" style="width:340px">
+  <div class="tk-modal-box w-340">
     <div class="tk-modal-title">Décaler l'échéance</div>
     <div><label>Nouvelle date pour ce concert</label><input type="date" id="do-date"></div>
-    <div class="tk-modal-actions" style="justify-content:space-between">
+    <div class="tk-modal-actions between">
       <button class="btn" onclick="clearDateOverride()"><svg class="ico" aria-hidden="true"><use href="#i-rotate"></use></svg> Date par défaut</button>
-      <div style="display:flex;gap:8px">
+      <div class="modal-actions-group">
         <button class="btn" onclick="document.getElementById('date-override-modal').classList.remove('open')">Annuler</button>
         <button class="btn btn-primary" onclick="saveDateOverride()">Enregistrer</button>
       </div>
@@ -4089,7 +4089,7 @@ startApp();
       <!-- Budget alloué -->
       <div style="margin-bottom:14px">
         <label style="font-size:12px;font-weight:700;color:var(--text);display:block;margin-bottom:6px">Budget alloué (€ HT) <span style="color:var(--red)">*</span></label>
-        <div style="display:flex;gap:8px">
+        <div class="modal-actions-group">
           <input id="bud-montant" type="number" min="0" step="100" placeholder="ex: 3000" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;background:var(--bg)">
         </div>
         <div id="bud-template-hint" style="margin-top:6px;font-size:11px;padding:5px 10px;border-radius:6px;display:none"></div>
