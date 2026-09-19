@@ -189,7 +189,7 @@
 
         <!-- Onglets internes -->
         <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px">
-          <button class="bc-tab active" onclick="showBcTab('templates',this)" style="padding:8px 18px;border:none;background:none;cursor:pointer;font-weight:600;font-size:13px;border-bottom:2px solid #2563eb;margin-bottom:-2px;color:#2563eb">Templates</button>
+          <button class="bc-tab active" onclick="showBcTab('templates',this)" style="padding:8px 18px;border:none;background:none;cursor:pointer;font-weight:600;font-size:13px;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--accent)">Templates</button>
           <button class="bc-tab" onclick="showBcTab('styles',this)" style="padding:8px 18px;border:none;background:none;cursor:pointer;font-size:13px;color:var(--text-3)">Styles musicaux</button>
           <button class="bc-tab" onclick="showBcTab('salles',this)" style="padding:8px 18px;border:none;background:none;cursor:pointer;font-size:13px;color:var(--text-3)">Salles / Villes</button>
         </div>
@@ -198,7 +198,7 @@
         <div id="bc-templates">
           <p style="font-size:12px;color:var(--text-3);margin-bottom:16px">Configure les lignes pré-remplies pour chaque tranche de budget. Les 3 lignes fixes (Newsletter, Agenda, Posts PP) sont toujours présentes et non modifiables ici.</p>
           <div style="display:flex;gap:8px;margin-bottom:16px">
-            <button class="bc-tpl-btn active" onclick="showBcTemplate('small',this)" style="padding:6px 14px;border-radius:6px;border:2px solid #2d7a4f;background:#e8f5ee;color:#2d7a4f;font-size:12px;font-weight:700;cursor:pointer">Petit (< 1 500€)</button>
+            <button class="bc-tpl-btn active" onclick="showBcTemplate('small',this)" style="padding:6px 14px;border-radius:6px;border:2px solid var(--accent);background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer">Petit (< 1 500€)</button>
             <button class="bc-tpl-btn" onclick="showBcTemplate('standard',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Standard (1 500–4 000€)</button>
             <button class="bc-tpl-btn" onclick="showBcTemplate('large',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Grand (> 4 000€)</button>
           </div>
@@ -209,7 +209,7 @@
         <div id="bc-styles" style="display:none">
           <p style="font-size:12px;color:var(--text-3);margin-bottom:16px">Configure les opérations Radio / TV / Presse et les ajustements digitaux pour chaque style musical.</p>
           <div style="display:flex;gap:8px;margin-bottom:16px">
-            <button class="bc-style-btn active" onclick="showBcStyle('rap',this)" style="padding:6px 14px;border-radius:6px;border:2px solid #2d7a4f;background:#e8f5ee;color:#2d7a4f;font-size:12px;font-weight:700;cursor:pointer">Rap</button>
+            <button class="bc-style-btn active" onclick="showBcStyle('rap',this)" style="padding:6px 14px;border-radius:6px;border:2px solid var(--accent);background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer">Rap</button>
             <button class="bc-style-btn" onclick="showBcStyle('pop',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Pop</button>
             <button class="bc-style-btn" onclick="showBcStyle('variete',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Variété</button>
             <button class="bc-style-btn" onclick="showBcStyle('autre',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Autre</button>
@@ -221,7 +221,7 @@
         <div id="bc-salles" style="display:none">
           <p style="font-size:12px;color:var(--text-3);margin-bottom:16px">Configure les lignes spécifiques par salle / ville. Les OP media radio peuvent être ajustés ici.</p>
           <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-            <button class="bc-salle-btn active" onclick="showBcSalle('zenith',this)" style="padding:6px 14px;border-radius:6px;border:2px solid #2d7a4f;background:#e8f5ee;color:#2d7a4f;font-size:12px;font-weight:700;cursor:pointer">Zénith Dijon</button>
+            <button class="bc-salle-btn active" onclick="showBcSalle('zenith',this)" style="padding:6px 14px;border-radius:6px;border:2px solid var(--accent);background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer">Zénith Dijon</button>
             <button class="bc-salle-btn" onclick="showBcSalle('reims',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Reims Arena</button>
             <button class="bc-salle-btn" onclick="showBcSalle('default',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Autres salles</button>
           </div>
@@ -576,7 +576,7 @@
 <!-- Notifications transitoires, empilées en haut au centre sous l'en-tête -->
 <div class="toast-stack">
   <div class="saving" id="saving">Sauvegarde...</div>
-  <div class="saving" id="sync-banner" style="background:#2d7a4f"></div>
+  <div class="saving" id="sync-banner" style="background:var(--green)"></div>
   <div class="saving toast-warn" id="app-toast"></div>
 </div>
 <script>
@@ -1135,7 +1135,7 @@ function showToast(msg,ms){
 function showSyncBanner(msg,fadeOut){
   var el=document.getElementById('sync-banner');
   if(!el)return;
-  el.style.background='#2d7a4f';
+  el.style.background='var(--green)';
   el.textContent=msg;
   el.classList.add('show');
   if(fadeOut){setTimeout(function(){el.classList.remove('show');},2000);}
@@ -1183,13 +1183,13 @@ function showSaveError(){
   var el=document.getElementById('sync-banner');
   if(!el)return;
   el.textContent='⚠ Échec de la sauvegarde – nouvelle tentative…';
-  el.style.background='#c0392b';
+  el.style.background='var(--red)';
   el.classList.add('show');
 }
 function hideSaveError(){
   var el=document.getElementById('sync-banner');
   if(!el)return;
-  el.style.background='#2d7a4f';
+  el.style.background='var(--green)';
   el.classList.remove('show');
 }
 window.addEventListener('beforeunload',function(e){
@@ -1997,7 +1997,7 @@ function renderKanban(){
             var fmtCls=p.format==='story'?'rs-fmt-story':p.format==='tirage'?'rs-fmt-tirage':'rs-fmt-post';
             var fmtLbl=p.format==='story'?'Story':p.format==='tirage'?icon('dice'):'Post';
             var title=(rsResolveConcertLabel(p)||p.note||t.label).substring(0,18);
-            return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600;white-space:nowrap'+(p.ready?';border-color:#b8e0ca;background:#eef7f2;color:#2d7a4f':'')+'">'
+            return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600;white-space:nowrap'+(p.ready?';border-color:var(--accent);background:var(--surface);color:var(--accent)':'')+'">'
               +'<span class="rs-post-format '+fmtCls+'" style="padding:1px 5px;font-size:11px">'+fmtLbl+'</span>'
               +'<span style="color:var(--text-2)">'+title+'</span>'
               +'</span>';
@@ -2352,7 +2352,7 @@ function toggleVentes(e,cid){
 function ventesHtml(c,onclick){
   var v=VENTES[c.ventes||0];
   return '<span class="ventes-badge '+v.cls+'" onclick="'+onclick+'">'
-    +'<span class="ventes-dot"></span>'+v.label+'</span>';
+    +'<span class="ventes-gauge" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'+v.label+'</span>';
 }
 function toggleFicheInfo(){
   var icon=document.getElementById('fiche-toggle-icon');
@@ -2508,7 +2508,7 @@ function startCellEdit(e,cid,field){
   inp.type='text';
   inp.value=cur;
   inp.placeholder=placeholders[field]||'';
-  inp.style.cssText='width:100%;border:none;outline:none;background:transparent;font-size:12px;color:#111;font-family:inherit;padding:0';
+  inp.style.cssText='width:100%;border:none;outline:none;background:transparent;font-size:12px;color:var(--text);font-family:inherit;padding:0';
   cell.innerHTML='<div class="crow-cell-label">'+labels[field]+'</div>';
   cell.appendChild(inp);
   inp.focus();inp.select();
@@ -2976,9 +2976,9 @@ function renderRS(){
       nameStyle='color:var(--accent);font-weight:700;';
     } else if(isPast){
       var hasUnposted=dayPosts.some(function(p){return p.status!=='posted';});
-      headerStyle=hasUnposted?'opacity:.7;border-left:2px solid #f0a030;':'opacity:.38;';
+      headerStyle=hasUnposted?'opacity:.7;border-left:2px solid var(--amber-border);':'opacity:.38;';
     } else if(isWE){
-      headerStyle='background:#fafaf8;';
+      headerStyle='background:var(--surface-2);';
     }
 
     var chips='';
@@ -3744,7 +3744,7 @@ function showBcTab(name, btn) {
   document.querySelectorAll('.bc-tab').forEach(function(b){
     b.style.borderBottom='none'; b.style.color='var(--text-3)'; b.style.fontWeight='';
   });
-  btn.style.borderBottom='2px solid #2563eb'; btn.style.color='#2563eb'; btn.style.fontWeight='600';
+  btn.style.borderBottom='2px solid var(--accent)'; btn.style.color='var(--accent)'; btn.style.fontWeight='600';
 }
 
 var _bcCurrentSalle = 'zenith';
@@ -3754,7 +3754,7 @@ function showBcSalle(salle, btn) {
   document.querySelectorAll('.bc-salle-btn').forEach(function(b){
     b.style.border='1px solid var(--border)'; b.style.background='var(--bg)'; b.style.color='var(--text)'; b.style.fontWeight='';
   });
-  btn.style.border='2px solid #2d7a4f'; btn.style.background='#e8f5ee'; btn.style.color='#2d7a4f'; btn.style.fontWeight='700';
+  btn.style.border='2px solid var(--accent)'; btn.style.background='var(--accent-soft)'; btn.style.color='var(--accent)'; btn.style.fontWeight='700';
   renderBcSalleEditor();
 }
 
@@ -3775,7 +3775,7 @@ function renderBcSalleEditor() {
     html += '<input value="'+(r.qte||'')+'" type="number" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'qte\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
     html += '<input value="'+(r.pu||'')+'" type="number" step="0.01" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'pu\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
     html += '<input value="'+(r.total||'')+'" type="number" placeholder="auto" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'total\',this.value?+this.value:undefined)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-    html += '<button onclick="bcDeleteSalleRow(\'affichage\','+i+')" style="border:none;background:none;color:#e53;cursor:pointer;font-size:16px;padding:0">×</button>';
+    html += '<button onclick="bcDeleteSalleRow(\'affichage\','+i+')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px;padding:0">×</button>';
     html += '</div>';
   });
   if (!affichage.length) html += '<div style="padding:12px;font-size:12px;color:var(--text-3);text-align:center;font-style:italic">Aucune ligne</div>';
@@ -3790,7 +3790,7 @@ function renderBcSalleEditor() {
     html += '<div style="display:grid;grid-template-columns:1fr 120px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
     html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateSalleRow(\'radio\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
     html += '<input value="'+escHtml(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateSalleRow(\'radio\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-    html += '<button onclick="bcDeleteSalleRow(\'radio\','+i+')" style="border:none;background:none;color:#e53;cursor:pointer;font-size:16px;padding:0">×</button>';
+    html += '<button onclick="bcDeleteSalleRow(\'radio\','+i+')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px;padding:0">×</button>';
     html += '</div>';
   });
   if (!radio.length) html += '<div style="padding:12px;font-size:12px;color:var(--text-3);text-align:center;font-style:italic">Aucun OP Media spécifique</div>';
@@ -3820,7 +3820,7 @@ function showBcTemplate(tpl, btn) {
   document.querySelectorAll('.bc-tpl-btn').forEach(function(b){
     b.style.border='1px solid var(--border)'; b.style.background='var(--bg)'; b.style.color='var(--text)'; b.style.fontWeight='';
   });
-  btn.style.border='2px solid #2d7a4f'; btn.style.background='#e8f5ee'; btn.style.color='#2d7a4f'; btn.style.fontWeight='700';
+  btn.style.border='2px solid var(--accent)'; btn.style.background='var(--accent-soft)'; btn.style.color='var(--accent)'; btn.style.fontWeight='700';
   renderBcTemplateEditor();
 }
 
@@ -3829,7 +3829,7 @@ function showBcStyle(style, btn) {
   document.querySelectorAll('.bc-style-btn').forEach(function(b){
     b.style.border='1px solid var(--border)'; b.style.background='var(--bg)'; b.style.color='var(--text)'; b.style.fontWeight='';
   });
-  btn.style.border='2px solid #2d7a4f'; btn.style.background='#e8f5ee'; btn.style.color='#2d7a4f'; btn.style.fontWeight='700';
+  btn.style.border='2px solid var(--accent)'; btn.style.background='var(--accent-soft)'; btn.style.color='var(--accent)'; btn.style.fontWeight='700';
   renderBcStyleEditor();
 }
 
@@ -3876,7 +3876,7 @@ function renderBcTemplateEditor() {
         html += '<option value="Engag\u00e9"'+(r.statut==='Engag\u00e9'?' selected':'')+'>Engagé</option>';
         html += '</select>';
       }
-      html += '<button onclick="bcDeleteRow(\''+s.key+'\','+i+')" style="border:none;background:none;color:#e53;cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>';
+      html += '<button onclick="bcDeleteRow(\''+s.key+'\','+i+')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>';
       html += '</div>';
     });
     if (!rows.length) html += '<div style="padding:12px;font-size:12px;color:var(--text-3);text-align:center;font-style:italic">Aucune ligne</div>';
@@ -3907,7 +3907,7 @@ function renderBcStyleEditor() {
       } else {
         html += '<input value="'+escHtml(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateStyleRow(\''+s.key+'\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
       }
-      html += '<button onclick="bcDeleteStyleRow(\''+s.key+'\','+i+')" style="border:none;background:none;color:#e53;cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>';
+      html += '<button onclick="bcDeleteStyleRow(\''+s.key+'\','+i+')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>';
       html += '</div>';
     });
     if (!s.rows.length) html += '<div style="padding:12px;font-size:12px;color:var(--text-3);text-align:center;font-style:italic">Aucune ligne spécifique</div>';
@@ -4111,7 +4111,7 @@ startApp();
     <!-- Connexion Google -->
     <div id="budget-auth-section" style="padding:16px 24px;border-bottom:1px solid var(--border-light)">
       <div style="display:flex;align-items:center;gap:10px">
-        <div id="budget-auth-status" style="width:8px;height:8px;border-radius:50%;background:#ccc;flex-shrink:0"></div>
+        <div id="budget-auth-status" style="width:8px;height:8px;border-radius:50%;background:var(--border-strong);flex-shrink:0"></div>
         <div style="flex:1">
           <div id="budget-auth-label" style="font-size:12px;font-weight:600;color:var(--text)">Non connecté à Google</div>
           <div id="budget-auth-sub" style="font-size:11px;color:var(--text-3)">Nécessaire pour créer le Sheet dans ton Drive</div>
@@ -4122,10 +4122,10 @@ startApp();
         <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px">CLIENT ID GOOGLE OAUTH 2.0</label>
         <div style="display:flex;gap:6px">
           <input id="budget-client-id" type="text" placeholder="xxxx.apps.googleusercontent.com" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:monospace;background:var(--bg)">
-          <button onclick="budgetSaveClientId()" style="padding:6px 12px;border-radius:6px;border:none;background:#1a7a4f;color:#fff;font-size:12px;font-weight:600;cursor:pointer">OK</button>
+          <button onclick="budgetSaveClientId()" style="padding:6px 12px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer">OK</button>
         </div>
         <div style="font-size:11px;color:var(--text-3);margin-top:4px">
-          <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:#1a7a4f">Google Cloud Console</a> → Créer des identifiants → ID client OAuth → Application Web → Ajouter <code>http://localhost</code> (ou ton domaine) aux origines autorisées
+          <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--accent)">Google Cloud Console</a> → Créer des identifiants → ID client OAuth → Application Web → Ajouter <code>http://localhost</code> (ou ton domaine) aux origines autorisées
         </div>
       </div>
     </div>
@@ -4143,7 +4143,7 @@ startApp();
       </div>
       <!-- Budget alloué -->
       <div style="margin-bottom:14px">
-        <label style="font-size:12px;font-weight:700;color:var(--text);display:block;margin-bottom:6px">Budget alloué (€ HT) <span style="color:#e53">*</span></label>
+        <label style="font-size:12px;font-weight:700;color:var(--text);display:block;margin-bottom:6px">Budget alloué (€ HT) <span style="color:var(--red)">*</span></label>
         <div style="display:flex;gap:8px">
           <input id="bud-montant" type="number" min="0" step="100" placeholder="ex: 3000" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;background:var(--bg)">
         </div>
@@ -4169,7 +4169,7 @@ startApp();
     <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;align-items:center">
       <div id="budget-status-msg" style="flex:1;font-size:12px;color:var(--text-3)"></div>
       <button onclick="closeBudgetModal()" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:12px;cursor:pointer">Annuler</button>
-      <button id="budget-create-btn" onclick="budgetCreateSheet()" style="padding:8px 18px;border-radius:8px;border:none;background:#1a7a4f;color:#fff;font-size:12px;font-weight:700;cursor:pointer;opacity:.5" disabled>Créer le Google Sheet</button>
+      <button id="budget-create-btn" onclick="budgetCreateSheet()" style="padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer;opacity:.5" disabled>Créer le Google Sheet</button>
     </div>
   </div>
 </div>
@@ -4452,8 +4452,8 @@ function openBudgetModal() {
   document.getElementById('bud-info-date').textContent = c.dc ? new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : '—';
   var flags = document.getElementById('bud-info-flags');
   flags.innerHTML = '';
-  if (taskStates['skip-'+c.id+'-sp']) flags.innerHTML += '<span style="background:#fff0e8;color:#b05020;border:1px solid #f0a070;border-radius:20px;padding:1px 7px;font-size:11px;font-weight:700">Sponso prod</span>';
-  if (taskStates['skip-'+c.id+'-col']) flags.innerHTML += '<span style="background:#f5f5f5;color:#888;border:1px solid #ddd;border-radius:20px;padding:1px 7px;font-size:11px;font-weight:700">Pas d\'affiche</span>';
+  if (taskStates['skip-'+c.id+'-sp']) flags.innerHTML += '<span style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);border-radius:20px;padding:1px 7px;font-size:11px;font-weight:700">Sponso prod</span>';
+  if (taskStates['skip-'+c.id+'-col']) flags.innerHTML += '<span style="background:var(--bg);color:var(--text-3);border:1px solid var(--border);border-radius:20px;padding:1px 7px;font-size:11px;font-weight:700">Pas d\'affiche</span>';
 
   document.getElementById('budget-subtitle').textContent = c.art + (c.ville ? ' · ' + c.ville : '') + (c.dc ? ' · ' + new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) : '');
   document.getElementById('bud-montant').value = '';
@@ -4496,8 +4496,8 @@ function budUpdatePreview() {
   var tplKey = montant < 1500 ? 'small' : montant <= 4000 ? 'standard' : 'large';
   var tplInfo = BUDGET_TEMPLATES[tplKey];
   hint.style.display = 'block';
-  hint.style.background = tplKey==='small'?'#e8f5e9':tplKey==='standard'?'#e8f0ff':'#fff0f0';
-  hint.style.color = tplKey==='small'?'#2e7d32':tplKey==='standard'?'#3050b0':'#c62828';
+  hint.style.background = 'var(--accent-soft)';
+  hint.style.color = 'var(--accent)';
   hint.textContent = tplInfo.label;
 
   if (!budSelectedStyle) { preview.style.display='none'; createBtn.disabled=true; createBtn.style.opacity='.5'; return; }
@@ -4534,21 +4534,21 @@ function updateBudgetAuthUI() {
   var cidWrap = document.getElementById('budget-client-id-wrap');
 
   if (budgetGToken) {
-    status.style.background = '#34a853';
+    status.style.background = 'var(--green)';
     label.textContent = 'Connecté à Google ✓';
     sub.textContent = 'Prêt à créer le Sheet dans ton Drive';
     btn.textContent = 'Déconnecter';
     btn.onclick = function(){ budgetGToken=null; updateBudgetAuthUI(); };
     cidWrap.style.display = 'none';
   } else if (BUDGET_CLIENT_ID) {
-    status.style.background = '#fbbc04';
+    status.style.background = 'var(--amber)';
     label.textContent = 'Client ID configuré';
     sub.textContent = 'Clique sur "Se connecter" pour autoriser l\'accès';
     btn.textContent = 'Se connecter';
     btn.onclick = budgetGoogleAuth;
     cidWrap.style.display = 'none';
   } else {
-    status.style.background = '#ea4335';
+    status.style.background = 'var(--red)';
     label.textContent = 'Client ID manquant';
     sub.textContent = 'Saisis ton Client ID Google OAuth pour continuer';
     btn.textContent = 'Configurer';
