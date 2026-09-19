@@ -266,7 +266,10 @@
 <div class="overlay" id="overlay" onclick="closeFiche(event)">
   <div class="fiche" id="fiche">
     <div class="fiche-header">
-      <h2 id="fiche-title">Concert</h2>
+      <div class="fiche-head-text">
+        <h2 id="fiche-title">Concert</h2>
+        <span class="fiche-sub" id="fiche-sub"></span>
+      </div>
       <button class="fiche-close fiche-expand" id="fiche-expand-btn" onclick="toggleFicheWide()" title="Agrandir la fiche"><svg class="ico" aria-hidden="true"><use href="#i-maximize"></use></svg></button>
       <div class="filters-popover">
         <button class="fiche-close" onclick="toggleFiltersPanel(event,'fiche-menu')" title="Plus d'actions"><svg class="ico" aria-hidden="true"><use href="#i-more"></use></svg></button>
@@ -280,62 +283,56 @@
       <button class="fiche-close" onclick="closeFicheBtn()" title="Fermer"><svg class="ico" aria-hidden="true"><use href="#i-x"></use></svg></button>
     </div>
     <div class="fiche-skip-bar">
-      <button class="fiche-skip-btn" id="skip-sp-btn" onclick="toggleSkip('sp')"><span id="skip-sp-icon" style="display:inline-flex"><svg class="ico" aria-hidden="true"><use href="#i-circle"></use></svg></span> Sponso gérée par la prod</button>
-      <button class="fiche-skip-btn" id="skip-col-btn" onclick="toggleSkip('col')"><span id="skip-col-icon" style="display:inline-flex"><svg class="ico" aria-hidden="true"><use href="#i-circle"></use></svg></span> Pas d'affiche dispo</button>
+      <button class="fiche-skip-btn" id="skip-sp-btn" onclick="toggleSkip('sp')"><span class="fiche-skip-ico" id="skip-sp-icon"><svg class="ico" aria-hidden="true"><use href="#i-circle"></use></svg></span> Sponso gérée par la prod</button>
+      <button class="fiche-skip-btn" id="skip-col-btn" onclick="toggleSkip('col')"><span class="fiche-skip-ico" id="skip-col-icon"><svg class="ico" aria-hidden="true"><use href="#i-circle"></use></svg></span> Pas d'affiche dispo</button>
     </div>
     <div class="fiche-body">
-      <div class="fiche-section" style="margin-bottom:8px">
-        <div class="fiche-section-toggle" onclick="toggleFicheInfo()">
-          <span id="fiche-toggle-icon" style="font-size:12px;color:var(--text-3);display:inline-flex;transition:transform .2s"><svg class="ico" aria-hidden="true"><use href="#i-chevron-right"></use></svg></span>
-          <div class="fiche-section-title" style="margin-bottom:0">Informations</div>
-        </div>
-        <div id="fiche-info-collapsible" style="overflow:hidden;max-height:0;opacity:0;transition:max-height .3s ease,opacity .2s ease">
-          <div style="height:8px"></div>
+      <section class="fiche-sec" id="fiche-sec-info">
+        <button type="button" class="fiche-sec-head" onclick="toggleFicheSec('info')" aria-expanded="false">
+          <span class="fiche-sec-chev"><svg class="ico" aria-hidden="true"><use href="#i-chevron-right"></use></svg></span>
+          <span class="fiche-sec-title">Informations</span>
+          <span class="fiche-sec-sum" id="fiche-info-sum"></span>
+        </button>
+        <div class="fiche-sec-body">
           <div class="fiche-fields">
-            <div class="fiche-field" style="grid-column:1/-1"><label>Artiste</label><input type="text" id="fi-art" onchange="updateFicheField('art',this.value)"></div>
-            <div class="fiche-field" style="grid-column:1/-1;flex-direction:row;align-items:center;gap:8px;display:flex">
-              <input type="checkbox" id="fi-annule" onchange="updateFicheField('annule',this.checked)" style="width:auto;margin:0">
-              <label for="fi-annule" style="margin:0;cursor:pointer">Concert annulé</label>
+            <div class="fiche-field wide"><label for="fi-art">Artiste</label><input type="text" id="fi-art" onchange="updateFicheField('art',this.value)"></div>
+            <div class="fiche-check">
+              <input type="checkbox" id="fi-annule" onchange="updateFicheField('annule',this.checked)">
+              <label for="fi-annule">Concert annulé</label>
             </div>
-            <div class="fiche-field" style="grid-column:1/-1"><label>Salle / Ville</label><input type="text" id="fi-ville" onchange="updateFicheField('ville',this.value)"></div>
-            <div class="fiche-field"><label style="display:flex;align-items:center;gap:5px"><svg class="ico" aria-hidden="true" style="width:12px;height:12px;color:var(--text-3)"><use href="#i-calendar"></use></svg>Date du concert</label><input type="date" id="fi-dc" onchange="updateFicheField('dc',this.value)"></div>
-            <div class="fiche-field"><label style="display:flex;align-items:center;gap:5px"><svg class="ico" aria-hidden="true" style="width:12px;height:12px;color:var(--text-3)"><use href="#i-calendar"></use></svg>Date d'annonce<button type="button" id="fi-da-undo" onclick="event.preventDefault();ficheAnnonceUndo()" title="Marquer comme non annoncée (remet la carte dans les annonces à venir)" style="display:none;background:none;border:none;padding:0;margin-left:2px;cursor:pointer;color:var(--text-3)"><svg class="ico" aria-hidden="true" style="width:12px;height:12px"><use href="#i-rotate"></use></svg></button></label><input type="date" id="fi-da" onchange="updateFicheField('da',this.value)"></div>
-            <div class="fiche-field" style="grid-column:1/-1"><label>Média / Photographes</label><input type="text" id="fi-medias" onchange="updateFicheField('medias',this.value)" placeholder="ex: Bien Public, L union..."></div>
-            <div class="fiche-field"><label>Jeu concours</label><input type="text" id="fi-jeux" onchange="updateFicheField('jeux',this.value)" placeholder="ex: L union 5x2..."></div>
-            <div class="fiche-field"><label>Lien budget</label><input type="text" id="fi-budget" onchange="updateFicheField('budget',this.value)" placeholder="https://..."></div>
-            <div class="fiche-field" style="grid-column:1/-1"><label>Notes</label><input type="text" id="fi-notes" onchange="updateFicheField('notes',this.value)" placeholder="Notes libres..."></div>
+            <div class="fiche-field wide"><label for="fi-ville">Salle / Ville</label><input type="text" id="fi-ville" onchange="updateFicheField('ville',this.value)"></div>
+            <div class="fiche-field"><label for="fi-dc"><svg class="ico" aria-hidden="true"><use href="#i-calendar"></use></svg>Date du concert</label><input type="date" id="fi-dc" onchange="updateFicheField('dc',this.value)"></div>
+            <div class="fiche-field"><label for="fi-da"><svg class="ico" aria-hidden="true"><use href="#i-calendar"></use></svg>Date d'annonce<button type="button" class="fiche-undo" id="fi-da-undo" onclick="event.preventDefault();ficheAnnonceUndo()" title="Marquer comme non annoncée (remet la carte dans les annonces à venir)" style="display:none"><svg class="ico" aria-hidden="true"><use href="#i-rotate"></use></svg></button></label><input type="date" id="fi-da" onchange="updateFicheField('da',this.value)"></div>
+            <div class="fiche-field wide"><label for="fi-medias">Média / Photographes</label><input type="text" id="fi-medias" onchange="updateFicheField('medias',this.value)" placeholder="Bien Public, L'Union…"></div>
+            <div class="fiche-field"><label for="fi-jeux">Jeu concours</label><input type="text" id="fi-jeux" onchange="updateFicheField('jeux',this.value)" placeholder="L'Union 5×2…"></div>
+            <div class="fiche-field"><label for="fi-budget">Lien budget</label><input type="text" id="fi-budget" onchange="updateFicheField('budget',this.value)" placeholder="https://…"></div>
+            <div class="fiche-field wide"><label for="fi-notes">Notes</label><input type="text" id="fi-notes" onchange="updateFicheField('notes',this.value)" placeholder="Notes libres…"></div>
           </div>
         </div>
-      </div>
-      <div class="section-sep"></div>
-      <div class="fiche-section" style="margin-bottom:8px">
-        <div class="fiche-section-toggle" onclick="toggleFicheSponso()">
-          <span id="fiche-sponso-icon" style="font-size:12px;color:var(--text-3);display:inline-flex;transition:transform .2s"><svg class="ico" aria-hidden="true"><use href="#i-chevron-right"></use></svg></span>
-          <div class="fiche-section-title" style="margin-bottom:0">Sponso</div>
-          <span id="fiche-sponso-sum" style="font-size:11px;color:var(--text-3);margin-left:auto"></span>
+      </section>
+      <section class="fiche-sec" id="fiche-sec-sponso">
+        <button type="button" class="fiche-sec-head" onclick="toggleFicheSec('sponso')" aria-expanded="false">
+          <span class="fiche-sec-chev"><svg class="ico" aria-hidden="true"><use href="#i-chevron-right"></use></svg></span>
+          <span class="fiche-sec-title">Sponso</span>
+          <span class="fiche-sec-sum" id="fiche-sponso-sum"></span>
+        </button>
+        <div class="fiche-sec-body"><div id="fiche-sponso"></div></div>
+      </section>
+      <section class="fiche-sec" id="fiche-sec-plan">
+        <div class="fiche-sec-head-row">
+          <button type="button" class="fiche-sec-head" onclick="toggleFicheSec('plan')" aria-expanded="false">
+            <span class="fiche-sec-chev"><svg class="ico" aria-hidden="true"><use href="#i-chevron-right"></use></svg></span>
+            <span class="fiche-sec-title">Plan de communication</span>
+            <span class="fiche-sec-sum" id="fiche-plan-sum"></span>
+          </button>
+          <button type="button" class="btn-link" onclick="openCustomTaskModal(currentFicheId)">+ Ajouter une tâche</button>
         </div>
-        <div id="fiche-sponso-collapsible" style="overflow:hidden;max-height:0;opacity:0;transition:max-height .3s ease,opacity .2s ease">
-          <div style="height:8px"></div>
-          <div id="fiche-sponso"></div>
-        </div>
-      </div>
-      <div class="section-sep"></div>
-      <div class="fiche-section">
-        <div class="fiche-section-toggle" onclick="toggleFichePlan()">
-          <span id="fiche-plan-icon" style="font-size:12px;color:var(--text-3);display:inline-flex;transition:transform .2s"><svg class="ico" aria-hidden="true"><use href="#i-chevron-right"></use></svg></span>
-          <div class="fiche-section-title" style="margin-bottom:0">Plan de communication</div>
-          <span id="fiche-plan-sum" style="font-size:11px;color:var(--text-3);margin-left:auto"></span>
-          <button class="dash-widget-link" style="margin-left:10px" onclick="event.stopPropagation();openCustomTaskModal(currentFicheId)">+ Ajouter une tâche</button>
-        </div>
-        <div id="fiche-plan-collapsible" style="overflow:hidden;max-height:0;opacity:0;transition:opacity .2s ease">
-          <div style="height:8px"></div>
-          <div class="fiche-tasks" id="fiche-tasks"></div>
-        </div>
-      </div>
+        <div class="fiche-sec-body"><div class="fiche-tasks" id="fiche-tasks"></div></div>
+      </section>
     </div>
     <div class="fiche-footer">
-      <button class="btn" style="flex:1" onclick="openCampaignWizard(currentFicheId)" title="Questionnaire guidé pour générer le rapport de campagne (PDF)">Rapport de campagne</button>
-      <button class="btn" style="flex:1" onclick="openBudgetModal()" title="Créer ou ouvrir le budget promo (Google Sheet)">Budget promo</button>
+      <button class="btn" onclick="openCampaignWizard(currentFicheId)" title="Questionnaire guidé pour générer le rapport de campagne (PDF)">Rapport de campagne</button>
+      <button class="btn" onclick="openBudgetModal()" title="Créer ou ouvrir le budget promo (Google Sheet)">Budget promo</button>
     </div>
   </div>
 </div>
@@ -1535,6 +1532,26 @@ function openFiche(id){
   if(currentFicheId!==id)ficheGroupsOpen={done:false,na:false};
   currentFicheId=id;
   document.getElementById('fiche-title').textContent=c.art||'Concert';
+  var subEl=document.getElementById('fiche-sub');
+  if(subEl){
+    var parts=[];
+    if(c.ville)parts.push(formatLieu(c.ville));
+    if(c.dc){
+      var dcd=new Date(c.dc);dcd.setHours(0,0,0,0);
+      parts.push(dcd.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}));
+      var t0=new Date();t0.setHours(0,0,0,0);
+      var j=Math.round((dcd-t0)/86400000);
+      parts.push(j===0?"aujourd'hui":j>0?'dans '+j+' jour'+(j>1?'s':''):'il y a '+(-j)+' jour'+(j<-1?'s':''));
+    }
+    subEl.textContent=parts.join(' · ');
+  }
+  var infoSum=document.getElementById('fiche-info-sum');
+  if(infoSum){
+    var bits=[];
+    if(c.medias)bits.push(c.medias);
+    if(c.da){var dad=new Date(c.da);var daf=dad.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});bits.push((taskStates['annonce-'+c.id]?'Annoncé le ':'Annonce le ')+daf);}
+    infoSum.textContent=bits.join(' · ');
+  }
   document.getElementById('fi-art').value=c.art||'';
   document.getElementById('fi-annule').checked=!!c.annule;
   document.getElementById('fi-ville').value=c.ville||'';
@@ -1575,11 +1592,11 @@ function toggleFicheGroup(key){
   var c=concerts.find(function(x){return x.id===currentFicheId;});
   if(c)renderFicheTasks(c);
 }
-function ficheGroupHtml(key,label,count,color,itemsHtml){
+function ficheGroupHtml(key,label,count,cls,itemsHtml){
   var open=!!ficheGroupsOpen[key];
-  return '<div class="group-title second fg-toggle" style="color:'+color+'" onclick="toggleFicheGroup(\''+key+'\')">'
+  return '<div class="group-title second fg-toggle '+cls+'" onclick="toggleFicheGroup(\''+key+'\')">'
     +'<span class="fg-chev'+(open?' open':'')+'">'+icon('chevron-right')+'</span>'+label+' ('+count+')</div>'
-    +'<div style="display:'+(open?'':'none')+'">'+itemsHtml+'</div>';
+    +'<div'+(open?'':' hidden')+'>'+itemsHtml+'</div>';
 }
 var REPORT_SECTIONS=[
   {title:'Diffusion & Affichage',cats:['col','affp']},
@@ -1776,7 +1793,7 @@ function renderFicheTasks(c){
   if(sumEl){
     var restant=late.length+soon.length+future.length+nocalc.length;
     sumEl.textContent=late.length?(late.length+' en retard'):(restant?restant+' à faire':'À jour');
-    sumEl.style.color=late.length?'var(--red)':'var(--text-3)';
+    sumEl.className='fiche-sec-sum'+(late.length?' tag tag-red':(restant?'':' tag tag-green'));
   }
   function taskHtml(t,isBlocked){
     var d=calcDate(c,t);var isDone=!!taskStates[tk(c.id,t.id)];
@@ -1803,8 +1820,8 @@ function renderFicheTasks(c){
     }
     return '<div class="ftask'+(isDone?' done':isBlocked?' blocked':'')+'"'+(clickable?' onclick="toggleFicheTask(\''+c.id+'\','+tidLit(t)+')"':'')+'>'+
       '<div class="ftask-chk'+(isDone?' on':isBlocked?' blocked':'')+'">'+(isDone?icon('check'):isBlocked?icon('hourglass'):'')+'</div>'+
-      '<div style="flex:1"><div class="ftask-name">'+esc(t.nom)+(t.isCustom?' <span style="font-size:11px;color:var(--text-3);font-weight:400">(manuelle)</span>':'')+'</div>'+
-      '<div style="display:flex;align-items:center;gap:6px;margin-top:3px">'+
+      '<div class="ftask-body"><div class="ftask-name">'+esc(t.nom)+(t.isCustom?' <span class="ftask-custom">(manuelle)</span>':'')+'</div>'+
+      '<div class="ftask-meta">'+
       '<span class="pill '+cat.cls+'">'+cat.label+'</span>'+
       '<span class="ftask-date '+dateClass+'">'+dateStr+'</span></div></div>'+actions+badge+'</div>';
   }
@@ -1812,21 +1829,21 @@ function renderFicheTasks(c){
     var cat=CATS[t.cat]||{cls:'p-gen',label:'?'};
     return '<div class="ftask na">'+
       '<div class="ftask-chk blocked">'+icon('ban')+'</div>'+
-      '<div style="flex:1"><div class="ftask-name">'+esc(t.nom)+'</div>'+
-      '<div style="display:flex;align-items:center;gap:6px;margin-top:3px">'+
+      '<div class="ftask-body"><div class="ftask-name">'+esc(t.nom)+'</div>'+
+      '<div class="ftask-meta">'+
       '<span class="pill '+cat.cls+'">'+cat.label+'</span>'+
       '<span class="ftask-date">Marquée inutile</span></div></div>'+
       '<button class="ftask-na-btn always" onclick="event.stopPropagation();toggleTaskNA(\''+c.id+'\','+tidLit(t)+')">'+icon('rotate')+' Réactiver</button></div>';
   }
   var html='';
-  if(late.length)html+='<div class="group-title" style="color:var(--red)">En retard ('+late.length+')</div>'+late.map(function(t){return taskHtml(t,false);}).join('');
-  if(soon.length)html+='<div class="group-title'+(late.length?' second':'')+'" style="color:var(--amber)">Cette semaine ('+soon.length+')</div>'+soon.map(function(t){return taskHtml(t,false);}).join('');
+  if(late.length)html+='<div class="group-title late">En retard ('+late.length+')</div>'+late.map(function(t){return taskHtml(t,false);}).join('');
+  if(soon.length)html+='<div class="group-title soon'+(late.length?' second':'')+'">Cette semaine ('+soon.length+')</div>'+soon.map(function(t){return taskHtml(t,false);}).join('');
   if(future.length)html+='<div class="group-title second">À venir ('+future.length+')</div>'+future.map(function(t){return taskHtml(t,false);}).join('');
   if(nocalc.length)html+='<div class="group-title second">Sans date calculée ('+nocalc.length+')</div>'+nocalc.map(function(t){return taskHtml(t,false);}).join('');
-  if(blocked.length)html+='<div class="group-title second" style="color:var(--text-3)">En attente de prérequis ('+blocked.length+')</div>'+blocked.map(function(t){return taskHtml(t,true);}).join('');
-  if(done.length)html+=ficheGroupHtml('done','Terminées',done.length,'var(--green)',done.map(function(t){return taskHtml(t,false);}).join(''));
-  if(naTasks.length)html+=ficheGroupHtml('na','Inutiles',naTasks.length,'var(--text-3)',naTasks.map(naTaskHtml).join(''));
-  if(!html)html='<div class="empty-state" style="padding:1.5rem 0">Aucune tâche pour ce concert.<br><button class="btn" onclick="openCustomTaskModal(currentFicheId)">+ Ajouter une tâche</button></div>';
+  if(blocked.length)html+='<div class="group-title second muted">En attente de prérequis ('+blocked.length+')</div>'+blocked.map(function(t){return taskHtml(t,true);}).join('');
+  if(done.length)html+=ficheGroupHtml('done','Terminées',done.length,'done',done.map(function(t){return taskHtml(t,false);}).join(''));
+  if(naTasks.length)html+=ficheGroupHtml('na','Inutiles',naTasks.length,'muted',naTasks.map(naTaskHtml).join(''));
+  if(!html)html='<div class="empty-state compact">Aucune tâche pour ce concert.<br><button class="btn" onclick="openCustomTaskModal(currentFicheId)">+ Ajouter une tâche</button></div>';
   el.innerHTML=html;
 }
 function toggleTaskNA(cid,tid){
@@ -2333,13 +2350,12 @@ function ventesHtml(c,onclick){
   return '<span class="ventes-badge '+v.cls+'" onclick="'+onclick+'">'
     +'<span class="ventes-gauge" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'+v.label+'</span>';
 }
-function toggleFicheInfo(){
-  var icon=document.getElementById('fiche-toggle-icon');
-  var box=document.getElementById('fiche-info-collapsible');
-  if(!icon||!box)return;
-  var open=box.style.maxHeight&&box.style.maxHeight!=='0px';
-  if(open){box.style.maxHeight='0';box.style.opacity='0';icon.style.transform='';}
-  else{box.style.maxHeight='800px';box.style.opacity='1';icon.style.transform='rotate(90deg)';}
+// Sections de la fiche : une classe .open, pas de hauteur plafond (la liste
+// de taches peut etre longue et grandir quand on coche).
+function toggleFicheSec(key){
+  var sec=document.getElementById('fiche-sec-'+key);if(!sec)return;
+  var open=sec.classList.toggle('open');
+  var head=sec.querySelector('.fiche-sec-head');if(head)head.setAttribute('aria-expanded',open?'true':'false');
 }
 var MEDIA_RETENTION_DAYS=7;
 function mediaGenId(){return 'md'+Date.now()+Math.floor(Math.random()*999);}
@@ -3382,7 +3398,7 @@ function spBlockHtml(c){
         +'<div class="sp-vague-head">'
         +'<span class="sp-vague-num">Vague '+(i+1)+'</span>'
         +'<span class="sp-badge '+m.cls+'" id="sp-st-'+v.id+'">'+m.label+'</span>'
-        +'<span style="flex:1"></span>'
+        +'<span class="grow"></span>'
         +'<label class="sp-tr" id="sp-tr-'+v.id+'"'+(st==='programmee'?'':' style="display:none"')+'>'
         +'<input type="checkbox"'+(v.transmise?' checked':'')+' onchange="spSetVague(\''+c.id+'\',\''+v.id+'\',\'transmise\',this.checked)"> Prestataire informé</label>'
         +'<button class="rs-post-btn del" title="Supprimer la vague" onclick="spDelVague(\''+c.id+'\',\''+v.id+'\')">'+icon('x')+'</button>'
@@ -3403,7 +3419,7 @@ function spBlockHtml(c){
     +'<label class="sp-f wide"><span>Lien de la créa</span><input type="text" placeholder="https://..." value="'+esc(s.crea||'')+'" onchange="spSetField(\''+c.id+'\',\'crea\',this.value)"></label>'
     +'<label class="sp-f"><span>Ville ciblée</span><input type="text" placeholder="Lyon" value="'+esc(s.ville||'')+'" onchange="spSetField(\''+c.id+'\',\'ville\',this.value)"></label>'
     +'<label class="sp-f"><span>Rayon (km)</span><input type="number" min="0" step="5" placeholder="30" value="'+esc(s.rayon||'')+'" onchange="spSetField(\''+c.id+'\',\'rayon\',this.value)"></label>'
-    +'<label class="sp-f wide"><span>Légende<button class="rs-copy-btn" style="margin-left:6px" onclick="event.preventDefault();spCopyLegende(\''+c.id+'\')" title="Copier la légende">'+icon('copy')+' Copier</button></span>'
+    +'<label class="sp-f wide"><span>Légende<button class="rs-copy-btn" onclick="event.preventDefault();spCopyLegende(\''+c.id+'\')" title="Copier la légende">'+icon('copy')+' Copier</button></span>'
     +'<textarea rows="3" placeholder="Texte de la légende..." onchange="spSetField(\''+c.id+'\',\'legende\',this.value)">'+esc(s.legende||'')+'</textarea></label>'
     +'</div>';
   h+='</div>';
@@ -3480,23 +3496,6 @@ function spUpdateFicheSum(cid){
   var s=spRead(c);
   var tot=s.vagues.reduce(function(a,v){return a+(parseFloat(v.budget)||0);},0);
   el.textContent=s.vagues.length?(s.vagues.length+' vague'+(s.vagues.length>1?'s':'')+(tot?' · '+spEuro(tot):'')):'';
-}
-function toggleFicheSponso(){
-  var ic=document.getElementById('fiche-sponso-icon'),box=document.getElementById('fiche-sponso-collapsible');
-  if(!ic||!box)return;
-  var open=box.style.maxHeight&&box.style.maxHeight!=='0px';
-  if(open){box.style.maxHeight='0';box.style.opacity='0';ic.style.transform='';}
-  else{box.style.maxHeight='2000px';box.style.opacity='1';ic.style.transform='rotate(90deg)';}
-}
-function toggleFichePlan(){
-  var ic=document.getElementById('fiche-plan-icon'),box=document.getElementById('fiche-plan-collapsible');
-  if(!ic||!box)return;
-  var open=box.style.maxHeight&&box.style.maxHeight!=='0px';
-  // Pas de hauteur plafond ici : la liste de taches peut etre tres longue et
-  // grandir encore quand on coche (elle se reorganise), une valeur fixe
-  // finirait par la couper.
-  if(open){box.style.maxHeight='0';box.style.opacity='0';ic.style.transform='';}
-  else{box.style.maxHeight='none';box.style.opacity='1';ic.style.transform='rotate(90deg)';}
 }
 
 // ── Modal ouvert depuis la timeline (saisie sans passer par la fiche) ──
