@@ -76,6 +76,7 @@
       <button id="btn-concerts" data-tab="concerts" onclick="showTab('concerts',this)">Concerts</button>
       <button id="btn-past" data-tab="past" onclick="showTab('past',this)" style="display:none">Concerts passés</button>
       <button id="btn-taches" data-tab="taches" onclick="showTab('taches',this)">Tâches</button>
+      <button id="btn-sponso" data-tab="sponso" onclick="showTab('sponso',this)">Sponso</button>
     </nav>
     <div class="filters-popover" id="user-menu-wrap" style="display:none">
       <button class="hdr-btn" id="user-btn" onclick="toggleFiltersPanel(event,'user-menu')" title="Mon compte"><svg class="ico" aria-hidden="true"><use href="#i-user"></use></svg></button>
@@ -249,6 +250,9 @@
     <div id="tab-taches" class="panel">
       <div id="taches-board-wrap"></div>
     </div>
+    <div id="tab-sponso" class="panel">
+      <div id="sponso-wrap"></div>
+    </div>
     <div id="tab-team" class="panel">
       <div class="card" style="max-width:860px;margin:0 auto">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;gap:12px;flex-wrap:wrap">
@@ -302,6 +306,18 @@
             <div class="fiche-field"><label>Lien budget</label><input type="text" id="fi-budget" onchange="updateFicheField('budget',this.value)" placeholder="https://..."></div>
             <div class="fiche-field" style="grid-column:1/-1"><label>Notes</label><input type="text" id="fi-notes" onchange="updateFicheField('notes',this.value)" placeholder="Notes libres..."></div>
           </div>
+        </div>
+      </div>
+      <div class="section-sep"></div>
+      <div class="fiche-section" style="margin-bottom:8px">
+        <div class="fiche-section-toggle" onclick="toggleFicheSponso()">
+          <span id="fiche-sponso-icon" style="font-size:12px;color:var(--text-3);display:inline-flex;transition:transform .2s"><svg class="ico" aria-hidden="true"><use href="#i-chevron-right"></use></svg></span>
+          <div class="fiche-section-title" style="margin-bottom:0">Sponso</div>
+          <span id="fiche-sponso-sum" style="font-size:11px;color:var(--text-3);margin-left:auto"></span>
+        </div>
+        <div id="fiche-sponso-collapsible" style="overflow:hidden;max-height:0;opacity:0;transition:max-height .3s ease,opacity .2s ease">
+          <div style="height:8px"></div>
+          <div id="fiche-sponso"></div>
         </div>
       </div>
       <div class="section-sep"></div>
@@ -493,6 +509,15 @@
         <button class="btn" onclick="document.getElementById('date-override-modal').classList.remove('open')">Annuler</button>
         <button class="btn btn-primary" onclick="saveDateOverride()">Enregistrer</button>
       </div>
+    </div>
+  </div>
+</div>
+<div class="rs-modal" id="sp-modal">
+  <div class="rs-modal-box">
+    <div class="rs-modal-title" id="sp-modal-title">Sponso</div>
+    <div id="sp-modal-body"></div>
+    <div class="rs-modal-actions">
+      <button class="btn" onclick="spCloseModal()">Fermer</button>
     </div>
   </div>
 </div>
@@ -1269,6 +1294,7 @@ function showTab(id,btn){
   if(btn)btn.classList.add('active');panel.classList.add('active');
   currentTab=id;
   if(id==='budgetconfig'){ renderBcTemplateEditor(); renderBcStyleEditor(); renderBcSalleEditor(); }
+  if(id==='sponso')renderSponso();
   if(id==='team')renderTeam();
   pushRoute(id,null);
   window.scrollTo(0,0);
@@ -1277,7 +1303,7 @@ function showTab(id,btn){
 // Permet de rafraichir sans revenir au Tableau de bord, d'envoyer le lien
 // d'une fiche, et d'utiliser le bouton retour du navigateur (il ferme la
 // fiche, puis revient a l'onglet precedent).
-var TAB_IDS=['rs','kanban','concerts','past','taches','process','budgetconfig','team'];
+var TAB_IDS=['rs','kanban','concerts','past','taches','sponso','process','budgetconfig','team'];
 var _routing=false; // vrai pendant applyRoute() : on ne re-pousse pas l'URL
 function routeHash(tab,ficheId){return '#'+tab+(ficheId?'/'+ficheId:'');}
 function pushRoute(tab,ficheId,replace){
@@ -1515,6 +1541,7 @@ function openFiche(id){
   if(document.getElementById('fi-budget'))document.getElementById('fi-budget').value=c.budget||'';
   if(document.getElementById('fi-notes'))document.getElementById('fi-notes').value=c.notes||'';
   renderFicheTasks(c);
+  spRenderFiche(id);
   updateSkipButtons();
   document.getElementById('fi-archive-btn').style.display=c.supprime?'none':'';
   document.getElementById('fi-restore-btn').style.display=c.supprime?'':'none';
@@ -3224,6 +3251,330 @@ function rsDelPost(id){
     if(el&&rsPosts.some(function(x){return x.date===date;}))el.style.display='block';
   },40);
 }
+// ── SUIVI SPONSO ────────────────────────────────────────────────────────────
+// Les vagues vivent dans l'objet concert (c.sponso) plutot que dans une cle
+// app_data a part : pas de contrainte a modifier en base, et la sauvegarde,
+// la synchro temps reel et la restauration suivent automatiquement.
+// Le statut d'une vague ne se saisit jamais, il se deduit de ses dates : rien
+// a tenir a jour a la main quand le temps passe.
+
+var spWindowBefore=1,spWindowAfter=5; // mois affiches avant / apres le mois courant
+var spModalCid=null;
+var SP_VIDE={billet:'',legende:'',crea:'',ville:'',rayon:'',vagues:[]};
+var SP_STATUTS={
+  acaler:{label:'À caler',cls:'sp-acaler'},
+  calee:{label:'Calée',cls:'sp-calee'},
+  encours:{label:'En cours',cls:'sp-encours'},
+  terminee:{label:'Terminée',cls:'sp-terminee'}
+};
+
+function spNewId(){return 'sp'+Date.now()+Math.floor(Math.random()*999);}
+function spRead(c){return c&&c.sponso?c.sponso:SP_VIDE;}
+function spWrite(c){
+  if(!c.sponso)c.sponso={billet:'',legende:'',crea:'',ville:'',rayon:'',vagues:[]};
+  if(!c.sponso.vagues)c.sponso.vagues=[];
+  return c.sponso;
+}
+function spConcert(cid){return concerts.find(function(x){return x.id===cid;});}
+function spHasData(c){
+  var s=spRead(c);
+  return (s.vagues&&s.vagues.length>0)||!!s.billet||!!s.legende||!!s.crea||!!s.ville;
+}
+function spTodayStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function spStatut(v){
+  if(!v.debut||!v.fin)return 'acaler';
+  var t=spTodayStr();
+  if(v.fin<t)return 'terminee';
+  if(v.debut<=t)return 'encours';
+  return 'calee';
+}
+function spEuro(n){
+  var v=parseFloat(n);
+  if(isNaN(v))return '';
+  return v.toLocaleString('fr-FR')+' €';
+}
+function spFmtDate(s){
+  if(!s)return '';
+  var d=new Date(s+'T00:00:00');
+  if(isNaN(d.getTime()))return '';
+  return d.getDate()+' '+d.toLocaleDateString('fr-FR',{month:'short'}).replace('.','');
+}
+function spCible(s){
+  if(!s.ville)return '';
+  return s.ville+(s.rayon?' + '+s.rayon+' km':'');
+}
+
+// ── Saisie (partagee entre la fiche concert et le modal de la timeline) ──
+function spBlockHtml(c){
+  var s=spRead(c);
+  var h='<div class="sp-block">';
+  if(s.vagues.length){
+    h+='<div class="sp-vagues">';
+    s.vagues.forEach(function(v,i){
+      var m=SP_STATUTS[spStatut(v)];
+      h+='<div class="sp-vague">'
+        +'<div class="sp-vague-head">'
+        +'<span class="sp-vague-num">Vague '+(i+1)+'</span>'
+        +'<span class="sp-badge '+m.cls+'" id="sp-st-'+v.id+'">'+m.label+'</span>'
+        +'<button class="rs-post-btn del" title="Supprimer la vague" onclick="spDelVague(\''+c.id+'\',\''+v.id+'\')">'+icon('x')+'</button>'
+        +'</div>'
+        +'<div class="sp-vague-fields">'
+        +'<label class="sp-f"><span>Budget</span><input type="number" min="0" step="50" placeholder="0" value="'+esc(v.budget||'')+'" onchange="spSetVague(\''+c.id+'\',\''+v.id+'\',\'budget\',this.value)"></label>'
+        +'<label class="sp-f"><span>Début</span><input type="date" value="'+esc(v.debut||'')+'" onchange="spSetVague(\''+c.id+'\',\''+v.id+'\',\'debut\',this.value)"></label>'
+        +'<label class="sp-f"><span>Fin</span><input type="date" value="'+esc(v.fin||'')+'" onchange="spSetVague(\''+c.id+'\',\''+v.id+'\',\'fin\',this.value)"></label>'
+        +'</div></div>';
+    });
+    h+='</div>';
+  } else {
+    h+='<div class="sp-empty">Aucune vague. Une vague sans dates reste visible en « à caler ».</div>';
+  }
+  h+='<button class="sp-add-btn" onclick="spAddVague(\''+c.id+'\')">+ Ajouter une vague</button>';
+  h+='<div class="sp-brief">'
+    +'<label class="sp-f wide"><span>Lien billetterie</span><input type="text" placeholder="https://..." value="'+esc(s.billet||'')+'" onchange="spSetField(\''+c.id+'\',\'billet\',this.value)"></label>'
+    +'<label class="sp-f wide"><span>Lien de la créa</span><input type="text" placeholder="https://..." value="'+esc(s.crea||'')+'" onchange="spSetField(\''+c.id+'\',\'crea\',this.value)"></label>'
+    +'<label class="sp-f"><span>Ville ciblée</span><input type="text" placeholder="Lyon" value="'+esc(s.ville||'')+'" onchange="spSetField(\''+c.id+'\',\'ville\',this.value)"></label>'
+    +'<label class="sp-f"><span>Rayon (km)</span><input type="number" min="0" step="5" placeholder="30" value="'+esc(s.rayon||'')+'" onchange="spSetField(\''+c.id+'\',\'rayon\',this.value)"></label>'
+    +'<label class="sp-f wide"><span>Légende<button class="rs-copy-btn" style="margin-left:6px" onclick="event.preventDefault();spCopyLegende(\''+c.id+'\')" title="Copier la légende">'+icon('copy')+' Copier</button></span>'
+    +'<textarea rows="3" placeholder="Texte de la légende..." onchange="spSetField(\''+c.id+'\',\'legende\',this.value)">'+esc(s.legende||'')+'</textarea></label>'
+    +'</div>';
+  h+='</div>';
+  return h;
+}
+
+function spSetField(cid,field,val){
+  var c=spConcert(cid);if(!c)return;
+  spWrite(c)[field]=val.trim();
+  scheduleSave('concerts');
+  if(currentTab==='sponso')renderSponso();
+}
+function spSetVague(cid,vid,field,val){
+  var c=spConcert(cid);if(!c)return;
+  var v=spWrite(c).vagues.find(function(x){return x.id===vid;});
+  if(!v)return;
+  v[field]=val;
+  scheduleSave('concerts');
+  // On met a jour le badge en place plutot que de reconstruire le bloc :
+  // sinon le champ suivant perd le focus quand on tabule d'un champ a l'autre.
+  var m=SP_STATUTS[spStatut(v)],el=document.getElementById('sp-st-'+vid);
+  if(el){el.textContent=m.label;el.className='sp-badge '+m.cls;}
+  spUpdateFicheSum(cid);
+  if(currentTab==='sponso')renderSponso();
+}
+function spAddVague(cid){
+  var c=spConcert(cid);if(!c)return;
+  spWrite(c).vagues.push({id:spNewId(),budget:'',debut:'',fin:''});
+  scheduleSave('concerts');spRefresh(cid);
+}
+async function spDelVague(cid,vid){
+  var c=spConcert(cid);if(!c)return;
+  if(!await customConfirm('Supprimer cette vague de sponso ?','Supprimer'))return;
+  var s=spWrite(c);
+  s.vagues=s.vagues.filter(function(x){return x.id!==vid;});
+  scheduleSave('concerts');spRefresh(cid);
+}
+function spCopyLegende(cid){
+  var c=spConcert(cid);if(!c)return;
+  var t=spRead(c).legende;
+  if(!t){showToast('Aucune légende à copier.');return;}
+  try{navigator.clipboard.writeText(t).then(function(){showToast('Légende copiée.');},function(){showToast('Sélectionne et copie la légende.');});}catch(e){showToast('Sélectionne et copie la légende.');}
+}
+function spRefresh(cid){
+  if(spModalCid===cid){
+    var c=spConcert(cid),body=document.getElementById('sp-modal-body');
+    if(c&&body)body.innerHTML=spBlockHtml(c);
+  }
+  if(currentFicheId===cid)spRenderFiche(cid);
+  if(currentTab==='sponso')renderSponso();
+}
+
+// ── Bloc dans la fiche concert ──
+function spRenderFiche(cid){
+  var c=spConcert(cid),el=document.getElementById('fiche-sponso');
+  if(!c||!el)return;
+  el.innerHTML=spBlockHtml(c);
+  spUpdateFicheSum(cid);
+}
+function spUpdateFicheSum(cid){
+  var c=spConcert(cid),el=document.getElementById('fiche-sponso-sum');
+  if(!c||!el||currentFicheId!==cid)return;
+  var s=spRead(c);
+  var tot=s.vagues.reduce(function(a,v){return a+(parseFloat(v.budget)||0);},0);
+  el.textContent=s.vagues.length?(s.vagues.length+' vague'+(s.vagues.length>1?'s':'')+(tot?' · '+spEuro(tot):'')):'';
+}
+function toggleFicheSponso(){
+  var ic=document.getElementById('fiche-sponso-icon'),box=document.getElementById('fiche-sponso-collapsible');
+  if(!ic||!box)return;
+  var open=box.style.maxHeight&&box.style.maxHeight!=='0px';
+  if(open){box.style.maxHeight='0';box.style.opacity='0';ic.style.transform='';}
+  else{box.style.maxHeight='2000px';box.style.opacity='1';ic.style.transform='rotate(90deg)';}
+}
+
+// ── Modal ouvert depuis la timeline (saisie sans passer par la fiche) ──
+function spOpenConcert(cid){
+  var c=spConcert(cid);if(!c)return;
+  spModalCid=cid;
+  document.getElementById('sp-modal-title').textContent='Sponso — '+(c.art||'Concert');
+  document.getElementById('sp-modal-body').innerHTML=spBlockHtml(c);
+  document.getElementById('sp-modal').classList.add('open');
+}
+function spCloseModal(){
+  document.getElementById('sp-modal').classList.remove('open');
+  spModalCid=null;
+  if(currentTab==='sponso')renderSponso();
+}
+function spExtend(dir){
+  if(dir==='before')spWindowBefore+=3;else spWindowAfter+=6;
+  renderSponso();
+}
+
+// ── Timeline ──
+function spMonths(){
+  var t=new Date();
+  var start=new Date(t.getFullYear(),t.getMonth()-spWindowBefore,1);
+  var end=new Date(t.getFullYear(),t.getMonth()+spWindowAfter,1);
+  // La fenetre s'elargit d'elle-meme jusqu'aux vagues deja datees : une vague
+  // calee dans six mois doit se voir sans avoir a deplier quoi que ce soit.
+  concerts.forEach(function(c){
+    if(c.supprime)return;
+    spRead(c).vagues.forEach(function(v){
+      [v.debut,v.fin].forEach(function(ds){
+        if(!ds)return;
+        var d=new Date(ds+'T00:00:00');
+        if(isNaN(d.getTime()))return;
+        var m=new Date(d.getFullYear(),d.getMonth(),1);
+        if(m<start)start=m;
+        if(m>end)end=m;
+      });
+    });
+  });
+  var out=[],cur=new Date(start.getFullYear(),start.getMonth(),1);
+  while(cur<=end&&out.length<48){
+    out.push(new Date(cur.getFullYear(),cur.getMonth(),1));
+    cur.setMonth(cur.getMonth()+1);
+  }
+  return out;
+}
+function renderSponso(){
+  var wrap=document.getElementById('sponso-wrap');
+  if(!wrap)return;
+  var months=spMonths(),last=months[months.length-1];
+  var winStart=months[0].getTime();
+  var winEnd=new Date(last.getFullYear(),last.getMonth()+1,1).getTime();
+  var span=winEnd-winStart;
+  function pct(ms){return (ms-winStart)/span*100;}
+  function ms(s){var d=new Date(s+'T00:00:00');return isNaN(d.getTime())?NaN:d.getTime();}
+
+  var rows=concerts.filter(function(c){return !c.supprime&&spHasData(c);})
+    .sort(function(a,b){return new Date(a.dc||'2100-01-01')-new Date(b.dc||'2100-01-01');});
+
+  // Chiffres d'en-tete : ce qui reste a depenser et ce qui n'est pas encore cale
+  var aVenir=0,nbACaler=0,nbEnCours=0;
+  rows.forEach(function(c){
+    spRead(c).vagues.forEach(function(v){
+      var st=spStatut(v);
+      if(st==='terminee')return;
+      aVenir+=parseFloat(v.budget)||0;
+      if(st==='acaler')nbACaler++;
+      if(st==='encours')nbEnCours++;
+    });
+  });
+
+  var statsHtml='<div class="sp-stats">'
+    +'<span class="sp-stat"><b>'+(spEuro(aVenir)||'0 €')+'</b> à venir</span>'
+    +'<span class="sp-stat"><b>'+nbEnCours+'</b> en cours</span>'
+    +'<span class="sp-stat'+(nbACaler?' warn':'')+'"><b>'+nbACaler+'</b> à caler</span>'
+    +'</div>';
+
+  var opts=concerts.filter(function(c){return !c.supprime;})
+    .sort(function(a,b){return new Date(a.dc||'2100-01-01')-new Date(b.dc||'2100-01-01');})
+    .map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.art||'Concert')+(c.dc?' · '+spFmtDate(c.dc):'')+'</option>';}).join('');
+  var addHtml='<div class="sp-addbar"><select id="sp-add-concert" onchange="if(this.value){spOpenConcert(this.value);this.value=\'\';}">'
+    +'<option value="">+ Ajouter de la sponso sur un concert...</option>'+opts+'</select></div>';
+
+  var headM='';
+  months.forEach(function(m,i){
+    var l=pct(m.getTime()),r=pct(new Date(m.getFullYear(),m.getMonth()+1,1).getTime());
+    var lbl=m.toLocaleDateString('fr-FR',{month:'short'}).replace('.','');
+    if(i===0||m.getMonth()===0)lbl+=' '+String(m.getFullYear()).slice(2);
+    headM+='<div class="sp-head-m" style="left:'+l+'%;width:'+(r-l)+'%">'+lbl+'</div>';
+  });
+
+  var deco='';
+  months.forEach(function(m,i){
+    if(i>0)deco+='<div class="sp-sep" style="left:'+pct(m.getTime())+'%"></div>';
+  });
+  var tms=ms(spTodayStr());
+  if(tms>=winStart&&tms<=winEnd)deco+='<div class="sp-today" style="left:'+pct(tms)+'%"></div>';
+
+  var body='';
+  rows.forEach(function(c){
+    var s=spRead(c);
+    var bars=deco;
+    var undated=[];
+    s.vagues.forEach(function(v,i){
+      var n=i+1;
+      if(!v.debut||!v.fin){undated.push({v:v,n:n});return;}
+      var a=ms(v.debut),b=ms(v.fin);
+      if(isNaN(a)||isNaN(b)||b<winStart||a>winEnd)return;
+      var l=Math.max(0,pct(a)),r=Math.min(100,pct(b));
+      var w=Math.max(r-l,1.2);
+      var st=spStatut(v);
+      var tip='V'+n+' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin)+(v.budget?' · '+spEuro(v.budget):'');
+      var lbl=v.budget?spEuro(v.budget):'V'+n;
+      // Une vague dure ~2 semaines : sur une fenetre de plusieurs mois la barre
+      // serait trop etroite pour son montant, d'ou le min-width en CSS. La
+      // duree exacte reste lisible dans l'infobulle et dans le modal.
+      bars+='<div class="sp-bar '+SP_STATUTS[st].cls+'" style="left:'+l+'%;width:'+w+'%" title="'+esc(tip)+'" onclick="spOpenConcert(\''+c.id+'\')">'
+        +'<span>'+esc(lbl)+'</span></div>';
+    });
+    // Repere de la date du concert : on voit d'un coup d'oeil si les vagues
+    // tombent bien avant la date, et ce qu'il reste de place pour en caler une.
+    var dcms=c.dc?ms(c.dc):NaN;
+    if(!isNaN(dcms)&&dcms>=winStart&&dcms<=winEnd)
+      bars+='<div class="sp-dc" style="left:'+pct(dcms)+'%" title="'+esc('Concert · '+spFmtDate(c.dc))+'"></div>';
+
+    var chips='';
+    undated.forEach(function(u){
+      chips+='<button class="sp-chip" onclick="spOpenConcert(\''+c.id+'\')">V'+u.n+(u.v.budget?' · '+esc(spEuro(u.v.budget)):'')+' · à caler</button>';
+    });
+
+    var cible=spCible(s);
+    body+='<div class="sp-row'+(chips?' has-chips':'')+'">'
+      +'<div class="sp-row-info" onclick="spOpenConcert(\''+c.id+'\')" title="Ouvrir la sponso de ce concert">'
+      +'<div class="sp-row-art">'+esc(c.art||'Concert')+'</div>'
+      +'<div class="sp-row-sub">'+esc([c.ville,c.dc?spFmtDate(c.dc):''].filter(Boolean).join(' · '))+'</div>'
+      +(cible?'<div class="sp-row-cible">'+icon('map-pin')+' '+esc(cible)+'</div>':'')
+      +'</div>'
+      +'<div class="sp-row-track" onclick="spOpenConcert(\''+c.id+'\')">'+bars+'</div>'
+      +'</div>'
+      +(chips?'<div class="sp-row-chips"><div class="sp-row-chips-in">'+chips+'</div></div>':'');
+  });
+
+  if(!rows.length)
+    body='<div class="sp-none">Aucun concert avec de la sponso pour l\'instant. Choisis un concert ci-dessous pour caler sa première vague.</div>';
+
+  var legend='<div class="sp-legend">'
+    +'<span><i class="sp-key sp-encours"></i>en cours</span>'
+    +'<span><i class="sp-key sp-calee"></i>calée</span>'
+    +'<span><i class="sp-key sp-terminee"></i>terminée</span>'
+    +'<span><i class="sp-key-dc"></i>date du concert</span>'
+    +'</div>';
+
+  wrap.innerHTML=statsHtml
+    +'<div class="sp-card">'
+    +'<div class="sp-scroll">'
+    +'<div class="sp-inner" style="min-width:'+Math.max(680,190+months.length*88)+'px">'
+    +'<div class="sp-head"><div class="sp-head-info">'
+    +'<button class="sp-nav-btn" onclick="spExtend(\'before\')" title="Afficher les mois précédents">'+icon('arrow-left')+'</button>'
+    +'<button class="sp-nav-btn" onclick="spExtend(\'after\')" title="Afficher les mois suivants">'+icon('arrow-right')+'</button>'
+    +'</div><div class="sp-head-track">'+headM+'</div></div>'
+    +body
+    +'</div></div>'
+    +legend
+    +addHtml
+    +'</div>';
+}
+
 // ── BUDGET CONFIG TOOL ──────────────────────────────────────────────────────
 
 var _bcCurrentTpl = 'small';
@@ -3489,7 +3840,7 @@ function renderBudgetConfig() {
 function render(){tkAdvanceRecurringTasks();renderKanban();renderConcerts();renderPastConcerts();renderProcess();renderTaches();renderTkWidget();renderRS();}
 // ── RECHERCHE GLOBALE (⌘K / Ctrl+K / "/") ──────────────────────────
 var cmdkItems=[],cmdkIdx=0;
-var CMDK_TABS=[{id:'kanban',label:'Tableau de bord'},{id:'concerts',label:'Concerts'},{id:'past',label:'Concerts passés'},{id:'taches',label:'Tâches'},{id:'rs',label:'Plannings RS'},{id:'process',label:'Process'}];
+var CMDK_TABS=[{id:'kanban',label:'Tableau de bord'},{id:'concerts',label:'Concerts'},{id:'past',label:'Concerts passés'},{id:'taches',label:'Tâches'},{id:'rs',label:'Plannings RS'},{id:'sponso',label:'Sponso'},{id:'process',label:'Process'}];
 function cmdkNorm(s){return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function openCmdK(){
   var inp=document.getElementById('cmdk-input');inp.value='';cmdkRender('');
