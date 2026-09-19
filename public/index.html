@@ -75,7 +75,6 @@
       <button class="active" data-tab="kanban" onclick="showTab('kanban',this)">Tableau de bord</button>
       <button id="btn-concerts" data-tab="concerts" onclick="showTab('concerts',this)">Concerts</button>
       <button id="btn-past" data-tab="past" onclick="showTab('past',this)" style="display:none">Concerts passés</button>
-      <button id="btn-taches" data-tab="taches" onclick="showTab('taches',this)">Tâches</button>
       <button id="btn-sponso" data-tab="sponso" onclick="showTab('sponso',this)">Sponso</button>
     </nav>
     <div class="filters-popover" id="user-menu-wrap" style="display:none">
@@ -322,11 +321,16 @@
       </div>
       <div class="section-sep"></div>
       <div class="fiche-section">
-        <div class="fiche-section-title" style="display:flex;justify-content:space-between;align-items:center">
-          <span>Plan de communication</span>
-          <button class="dash-widget-link" onclick="openCustomTaskModal(currentFicheId)">+ Ajouter une tâche</button>
+        <div class="fiche-section-toggle" onclick="toggleFichePlan()">
+          <span id="fiche-plan-icon" style="font-size:12px;color:var(--text-3);display:inline-flex;transition:transform .2s"><svg class="ico" aria-hidden="true"><use href="#i-chevron-right"></use></svg></span>
+          <div class="fiche-section-title" style="margin-bottom:0">Plan de communication</div>
+          <span id="fiche-plan-sum" style="font-size:11px;color:var(--text-3);margin-left:auto"></span>
+          <button class="dash-widget-link" style="margin-left:10px" onclick="event.stopPropagation();openCustomTaskModal(currentFicheId)">+ Ajouter une tâche</button>
         </div>
-        <div class="fiche-tasks" id="fiche-tasks"></div>
+        <div id="fiche-plan-collapsible" style="overflow:hidden;max-height:0;opacity:0;transition:opacity .2s ease">
+          <div style="height:8px"></div>
+          <div class="fiche-tasks" id="fiche-tasks"></div>
+        </div>
       </div>
     </div>
     <div class="fiche-footer">
@@ -1765,6 +1769,14 @@ function renderFicheTasks(c){
   var nocalc=sorted.filter(function(t){return !taskStates[tk(c.id,t.id)]&&isUnlocked(c,t)&&!calcDate(c,t);});
   var blocked=sorted.filter(function(t){return !taskStates[tk(c.id,t.id)]&&!isUnlocked(c,t);});
   var done=sorted.filter(function(t){return taskStates[tk(c.id,t.id)];});
+  // La section est repliee par defaut : le resume doit suffire a savoir s'il
+  // faut l'ouvrir.
+  var sumEl=document.getElementById('fiche-plan-sum');
+  if(sumEl){
+    var restant=late.length+soon.length+future.length+nocalc.length;
+    sumEl.textContent=late.length?(late.length+' en retard'):(restant?restant+' à faire':'À jour');
+    sumEl.style.color=late.length?'var(--red)':'var(--text-3)';
+  }
   function taskHtml(t,isBlocked){
     var d=calcDate(c,t);var isDone=!!taskStates[tk(c.id,t.id)];
     var cat=CATS[t.cat]||{cls:'p-gen',label:'?'};
@@ -2145,6 +2157,19 @@ function renderConcerts(){
       var cN=cell('notes','Notes',!!notes,notesHtml);
       var cB=cell('budget','Budget',hasBud,'<div style="margin-top:4px">'+budHtml+'</div>',';flex:0 0 110px');
 
+      // Recap sponso : total du concert + une pastille par vague (couleur =
+      // statut). Clic = saisie directe, sans passer par la fiche.
+      var sp=spRead(c),spTot=spTotal(c);
+      var spDots=sp.vagues.map(function(v,i){
+        var st=spStatut(v);
+        return '<i class="sp-dot '+SP_STATUTS[st].cls+'" title="'+esc('Vague '+(i+1)+' · '+SP_STATUTS[st].label+(v.debut&&v.fin?' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin):''))+'"></i>';
+      }).join('');
+      var cS='<div style="'+cellStyle+';flex:0 0 130px" onclick="event.stopPropagation();spOpenConcert(\''+c.id+'\')" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
+        +(sp.vagues.length
+          ?'<div class="crow-cell-label">Sponso</div><div class="sp-mini">'+(spTot?'<span class="sp-mini-tot">'+esc(spEuro(spTot))+'</span>':'')+'<span class="sp-mini-dots">'+spDots+'</span></div>'
+          :'<div class="crow-cell-hint">+ Sponso</div>')
+        +'</div>';
+
       var skipBadges=(skipSp?'<button class="crow-skip-btn active" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'sp\')">'+icon('circle-check')+' Sponso prod</button>':'')
         +(skipCol?'<button class="crow-skip-btn active" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'col\')">'+icon('circle-check')+' Pas d\'affiche</button>':'');
       var statutBloc='<div style="width:120px;flex-shrink:0;padding:8px 12px;display:flex;flex-direction:column;gap:6px;justify-content:center">'
@@ -2153,7 +2178,7 @@ function renderConcerts(){
         +'</div>';
 
       return '<div class="crow'+(notAnnounced?' not-announced':'')+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')" style="display:flex;align-items:stretch;padding:0;min-height:52px;"+((c.ventes||0)===4?"background:rgba(26,122,79,.06)":"")+">'
-        +infoBloc+cM+cJ+cN+cB+statutBloc
+        +infoBloc+cM+cJ+cN+cB+cS+statutBloc
         +'<span style="font-size:14px;color:var(--border-strong);padding:0 8px;display:flex;align-items:center">'+icon('chevron-right')+'</span></div>';
     }).join('')+'</div>';
 }
@@ -2442,7 +2467,9 @@ function toggleSkipFromList(cid, cat){
     updateSkipButtons();
     var c=concerts.find(function(x){return x.id===cid;});
     if(c)renderFicheTasks(c);
+    if(cat==='sp')spRenderFiche(cid);
   }
+  if(cat==='sp'&&spModalCid===cid)spOpenConcert(cid);
 }
 function toggleSkip(cat){
   if(!currentFicheId)return;
@@ -2451,6 +2478,7 @@ function toggleSkip(cat){
   scheduleSave('taskstates');updateSkipButtons();
   var c=concerts.find(function(x){return x.id===currentFicheId;});
   if(c)renderFicheTasks(c);
+  if(cat==='sp')spRenderFiche(currentFicheId);
 }
 function updateSkipButtons(){
   if(!currentFicheId)return;
@@ -3262,8 +3290,8 @@ var spWindowBefore=1,spWindowAfter=5; // mois affiches avant / apres le mois cou
 var spModalCid=null;
 var SP_VIDE={billet:'',legende:'',crea:'',ville:'',rayon:'',vagues:[]};
 var SP_STATUTS={
-  acaler:{label:'À caler',cls:'sp-acaler'},
-  calee:{label:'Calée',cls:'sp-calee'},
+  aprogrammer:{label:'À programmer',cls:'sp-aprogrammer'},
+  programmee:{label:'Programmée',cls:'sp-programmee'},
   encours:{label:'En cours',cls:'sp-encours'},
   terminee:{label:'Terminée',cls:'sp-terminee'}
 };
@@ -3282,11 +3310,11 @@ function spHasData(c){
 }
 function spTodayStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function spStatut(v){
-  if(!v.debut||!v.fin)return 'acaler';
+  if(!v.debut||!v.fin)return 'aprogrammer';
   var t=spTodayStr();
   if(v.fin<t)return 'terminee';
   if(v.debut<=t)return 'encours';
-  return 'calee';
+  return 'programmee';
 }
 function spEuro(n){
   var v=parseFloat(n);
@@ -3303,11 +3331,19 @@ function spCible(s){
   if(!s.ville)return '';
   return s.ville+(s.rayon?' + '+s.rayon+' km':'');
 }
+function spTotal(c){
+  return spRead(c).vagues.reduce(function(a,v){return a+(parseFloat(v.budget)||0);},0);
+}
+// "Sponso gérée par la prod" coche par ailleurs sur la fiche : on previent
+// sans rien bloquer, il arrive qu'on en fasse quand meme.
+function spSkipProd(cid){return !!taskStates['skip-'+cid+'-sp'];}
 
 // ── Saisie (partagee entre la fiche concert et le modal de la timeline) ──
 function spBlockHtml(c){
   var s=spRead(c);
   var h='<div class="sp-block">';
+  if(spSkipProd(c.id))
+    h+='<div class="sp-warn">'+icon('alert')+' <span>Ce concert est marqué <b>« Sponso gérée par la prod »</b>. Tu peux quand même programmer des vagues ici.</span></div>';
   if(s.vagues.length){
     h+='<div class="sp-vagues">';
     s.vagues.forEach(function(v,i){
@@ -3326,7 +3362,7 @@ function spBlockHtml(c){
     });
     h+='</div>';
   } else {
-    h+='<div class="sp-empty">Aucune vague. Une vague sans dates reste visible en « à caler ».</div>';
+    h+='<div class="sp-empty">Aucune vague. Une vague sans dates reste visible en « à programmer ».</div>';
   }
   h+='<button class="sp-add-btn" onclick="spAddVague(\''+c.id+'\')">+ Ajouter une vague</button>';
   h+='<div class="sp-brief">'
@@ -3345,7 +3381,7 @@ function spSetField(cid,field,val){
   var c=spConcert(cid);if(!c)return;
   spWrite(c)[field]=val.trim();
   scheduleSave('concerts');
-  if(currentTab==='sponso')renderSponso();
+  spRenderVues();
 }
 function spSetVague(cid,vid,field,val){
   var c=spConcert(cid);if(!c)return;
@@ -3358,7 +3394,7 @@ function spSetVague(cid,vid,field,val){
   var m=SP_STATUTS[spStatut(v)],el=document.getElementById('sp-st-'+vid);
   if(el){el.textContent=m.label;el.className='sp-badge '+m.cls;}
   spUpdateFicheSum(cid);
-  if(currentTab==='sponso')renderSponso();
+  spRenderVues();
 }
 function spAddVague(cid){
   var c=spConcert(cid);if(!c)return;
@@ -3384,7 +3420,12 @@ function spRefresh(cid){
     if(c&&body)body.innerHTML=spBlockHtml(c);
   }
   if(currentFicheId===cid)spRenderFiche(cid);
+  spRenderVues();
+}
+// Les deux vues qui affichent un recap sponso en dehors du bloc de saisie.
+function spRenderVues(){
   if(currentTab==='sponso')renderSponso();
+  if(currentTab==='concerts'||currentTab==='past')renderConcerts();
 }
 
 // ── Bloc dans la fiche concert ──
@@ -3408,6 +3449,16 @@ function toggleFicheSponso(){
   if(open){box.style.maxHeight='0';box.style.opacity='0';ic.style.transform='';}
   else{box.style.maxHeight='2000px';box.style.opacity='1';ic.style.transform='rotate(90deg)';}
 }
+function toggleFichePlan(){
+  var ic=document.getElementById('fiche-plan-icon'),box=document.getElementById('fiche-plan-collapsible');
+  if(!ic||!box)return;
+  var open=box.style.maxHeight&&box.style.maxHeight!=='0px';
+  // Pas de hauteur plafond ici : la liste de taches peut etre tres longue et
+  // grandir encore quand on coche (elle se reorganise), une valeur fixe
+  // finirait par la couper.
+  if(open){box.style.maxHeight='0';box.style.opacity='0';ic.style.transform='';}
+  else{box.style.maxHeight='none';box.style.opacity='1';ic.style.transform='rotate(90deg)';}
+}
 
 // ── Modal ouvert depuis la timeline (saisie sans passer par la fiche) ──
 function spOpenConcert(cid){
@@ -3420,7 +3471,7 @@ function spOpenConcert(cid){
 function spCloseModal(){
   document.getElementById('sp-modal').classList.remove('open');
   spModalCid=null;
-  if(currentTab==='sponso')renderSponso();
+  spRenderVues();
 }
 function spExtend(dir){
   if(dir==='before')spWindowBefore+=3;else spWindowAfter+=6;
@@ -3433,7 +3484,7 @@ function spMonths(){
   var start=new Date(t.getFullYear(),t.getMonth()-spWindowBefore,1);
   var end=new Date(t.getFullYear(),t.getMonth()+spWindowAfter,1);
   // La fenetre s'elargit d'elle-meme jusqu'aux vagues deja datees : une vague
-  // calee dans six mois doit se voir sans avoir a deplier quoi que ce soit.
+  // programmee dans six mois doit se voir sans avoir a deplier quoi que ce soit.
   concerts.forEach(function(c){
     if(c.supprime)return;
     spRead(c).vagues.forEach(function(v){
@@ -3467,22 +3518,20 @@ function renderSponso(){
   var rows=concerts.filter(function(c){return !c.supprime&&spHasData(c);})
     .sort(function(a,b){return new Date(a.dc||'2100-01-01')-new Date(b.dc||'2100-01-01');});
 
-  // Chiffres d'en-tete : ce qui reste a depenser et ce qui n'est pas encore cale
-  var aVenir=0,nbACaler=0,nbEnCours=0;
+  // Pas de budget cumule ici : chaque concert a son enveloppe, les additionner
+  // ne veut rien dire. Le total par concert est sur sa ligne.
+  var nbACaler=0,nbEnCours=0;
   rows.forEach(function(c){
     spRead(c).vagues.forEach(function(v){
       var st=spStatut(v);
-      if(st==='terminee')return;
-      aVenir+=parseFloat(v.budget)||0;
-      if(st==='acaler')nbACaler++;
+      if(st==='aprogrammer')nbACaler++;
       if(st==='encours')nbEnCours++;
     });
   });
 
   var statsHtml='<div class="sp-stats">'
-    +'<span class="sp-stat"><b>'+(spEuro(aVenir)||'0 €')+'</b> à venir</span>'
     +'<span class="sp-stat"><b>'+nbEnCours+'</b> en cours</span>'
-    +'<span class="sp-stat'+(nbACaler?' warn':'')+'"><b>'+nbACaler+'</b> à caler</span>'
+    +'<span class="sp-stat'+(nbACaler?' warn':'')+'"><b>'+nbACaler+'</b> à programmer</span>'
     +'</div>';
 
   var opts=concerts.filter(function(c){return !c.supprime;})
@@ -3535,15 +3584,18 @@ function renderSponso(){
 
     var chips='';
     undated.forEach(function(u){
-      chips+='<button class="sp-chip" onclick="spOpenConcert(\''+c.id+'\')">V'+u.n+(u.v.budget?' · '+esc(spEuro(u.v.budget)):'')+' · à caler</button>';
+      chips+='<button class="sp-chip" onclick="spOpenConcert(\''+c.id+'\')">V'+u.n+(u.v.budget?' · '+esc(spEuro(u.v.budget)):'')+' · à programmer</button>';
     });
 
     var cible=spCible(s);
+    var tot=spTotal(c);
     body+='<div class="sp-row'+(chips?' has-chips':'')+'">'
       +'<div class="sp-row-info" onclick="spOpenConcert(\''+c.id+'\')" title="Ouvrir la sponso de ce concert">'
-      +'<div class="sp-row-art">'+esc(c.art||'Concert')+'</div>'
+      +'<div class="sp-row-top"><div class="sp-row-art">'+esc(c.art||'Concert')+'</div>'
+      +(tot?'<div class="sp-row-tot" title="Budget sponso de ce concert">'+esc(spEuro(tot))+'</div>':'')+'</div>'
       +'<div class="sp-row-sub">'+esc([c.ville,c.dc?spFmtDate(c.dc):''].filter(Boolean).join(' · '))+'</div>'
       +(cible?'<div class="sp-row-cible">'+icon('map-pin')+' '+esc(cible)+'</div>':'')
+      +(spSkipProd(c.id)?'<div class="sp-row-prod">'+icon('alert')+' Sponso prod</div>':'')
       +'</div>'
       +'<div class="sp-row-track" onclick="spOpenConcert(\''+c.id+'\')">'+bars+'</div>'
       +'</div>'
@@ -3555,7 +3607,7 @@ function renderSponso(){
 
   var legend='<div class="sp-legend">'
     +'<span><i class="sp-key sp-encours"></i>en cours</span>'
-    +'<span><i class="sp-key sp-calee"></i>calée</span>'
+    +'<span><i class="sp-key sp-programmee"></i>programmée</span>'
     +'<span><i class="sp-key sp-terminee"></i>terminée</span>'
     +'<span><i class="sp-key-dc"></i>date du concert</span>'
     +'</div>';
