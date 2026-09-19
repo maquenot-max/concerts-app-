@@ -737,11 +737,6 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .rpt-card-link{padding:14px 10px;text-align:center;font-size:11px;color:#1a3d7c;word-break:break-all;min-height:110px;display:flex;align-items:center;justify-content:center}
 .rpt-caption{font-size:10px;color:#666;padding:5px 8px;line-height:1.3}
 /* Suivi sponso */
-.sp-stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1rem}
-.sp-stat{font-size:12px;color:var(--text-2);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:4px 12px}
-.sp-stat b{color:var(--text);font-weight:700}
-.sp-stat.warn{background:rgba(201,162,39,.1);border-color:rgba(201,162,39,.35);color:var(--amber)}
-.sp-stat.warn b{color:var(--amber)}
 .sp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
 .sp-scroll{overflow-x:auto}
 .sp-inner{min-width:680px}
@@ -755,6 +750,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .sp-nav-btn .ico{width:13px;height:13px;vertical-align:-2px}
 .sp-row{display:flex;align-items:stretch;border-bottom:1px solid var(--border-light)}
 .sp-row.has-chips{border-bottom:none}
+.sp-group{padding:6px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3);background:var(--bg);border-bottom:1px solid var(--border-light)}
+.sp-pill-n{display:inline-block;min-width:16px;padding:0 5px;margin-left:4px;border-radius:20px;background:var(--bg);color:var(--text-3);font-size:11px;font-weight:600;text-align:center}
+.view-toggle-btn.active .sp-pill-n{background:var(--accent-soft);color:var(--accent)}
 .sp-row-info{width:215px;flex-shrink:0;padding:8px 10px;cursor:pointer;border-right:1px solid var(--border-light);transition:background .1s}
 .sp-row-info:hover{background:var(--bg)}
 .sp-row-top{display:flex;align-items:baseline;gap:6px}
@@ -762,8 +760,6 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .sp-row-tot{font-size:12px;font-weight:700;color:var(--text-2);white-space:nowrap;flex-shrink:0}
 .sp-row-prod{font-size:11px;color:var(--amber);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sp-row-prod .ico{width:11px;height:11px;vertical-align:-1px}
-.sp-row-trou{font-size:11px;font-weight:600;color:var(--red);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sp-row-trou .ico{width:11px;height:11px;vertical-align:-1px}
 .sp-done{border-top:1px solid var(--border-light)}
 .sp-done-toggle{display:flex;align-items:center;gap:7px;padding:9px 12px;font-size:12px;font-weight:600;color:var(--text-3);cursor:pointer;user-select:none;transition:background .1s}
 .sp-done-toggle:hover{background:var(--bg);color:var(--text-2)}
@@ -799,8 +795,6 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .sp-key.sp-programmee{background:#c8d8f5}
 .sp-key.sp-terminee{background:var(--surface);border:1px solid var(--border)}
 .sp-key-dc{width:8px;height:8px;background:var(--text);transform:rotate(45deg);display:inline-block}
-.sp-addbar{padding:8px 12px;border-top:1px solid var(--border-light)}
-.sp-addbar select{font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text-2);max-width:100%;cursor:pointer;font-family:inherit}
 /* Bloc de saisie sponso (fiche concert + modal timeline) */
 .sp-block{display:flex;flex-direction:column;gap:8px}
 .sp-vagues{display:flex;flex-direction:column;gap:6px}
@@ -832,11 +826,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .sp-mini{display:flex;align-items:center;gap:7px;margin-top:2px}
 .sp-mini-tot{font-size:12px;font-weight:700;color:var(--text-2)}
 .sp-mini-dots{display:inline-flex;gap:3px}
-.sp-dot{width:8px;height:8px;border-radius:2px;display:inline-block}
-.sp-dot.sp-encours{background:#5dbd90}
-.sp-dot.sp-programmee{background:#8fb0e8}
-.sp-dot.sp-terminee{background:var(--border-strong)}
-.sp-dot.sp-aprogrammer{background:none;border:1px dashed var(--border-strong)}
+.sp-dot{width:8px;height:8px;border-radius:2px;display:inline-block;background:#8fb0e8}
 
 @media print{
   body *{visibility:hidden}

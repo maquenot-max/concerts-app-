@@ -1339,6 +1339,7 @@ window.addEventListener('popstate',applyRoute);
 document.addEventListener('keydown',function(e){
   if(e.key!=='Escape')return;
   var hm=document.getElementById('help-modal');if(hm&&hm.classList.contains('open')){closeHelp();return;}
+  var sm=document.getElementById('sp-modal');if(sm&&sm.classList.contains('open')){spCloseModal();return;}
   if(document.querySelector('.tk-modal.open,.rs-modal.open'))return;
   var bo=document.getElementById('budget-overlay');if(bo&&bo.style.display==='flex')return;
   var fm=document.getElementById('fiche-menu');
@@ -2162,8 +2163,9 @@ function renderConcerts(){
       var sp=spRead(c),spTot=spTotal(c);
       var spDots=spVaguesTriees(c).map(function(v,i){
         var st=spStatut(v);
-        var nt=spNonTransmise(v);
-        return '<i class="sp-dot '+SP_STATUTS[st].cls+(nt?' sp-nontransmise':'')+'" title="'+esc('Vague '+(i+1)+' · '+SP_STATUTS[st].label+(v.debut&&v.fin?' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin):'')+(nt?' · pas encore communiquée au presta':''))+'"></i>';
+        // Une seule couleur ici : la liste des concerts en a deja assez, le
+        // detail des statuts reste dans l'infobulle et sur l'onglet Sponso.
+        return '<i class="sp-dot" title="'+esc('Vague '+(i+1)+' · '+SP_STATUTS[st].label+(v.debut&&v.fin?' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin):'')+(spNonTransmise(v)?' · prestataire pas encore informé':''))+'"></i>';
       }).join('');
       var cS='<div style="'+cellStyle+';flex:0 0 130px" onclick="event.stopPropagation();spOpenConcert(\''+c.id+'\')" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
         +(sp.vagues.length
@@ -3289,6 +3291,7 @@ function rsDelPost(id){
 
 var spWindowBefore=1,spWindowAfter=5; // mois affiches avant / apres le mois courant
 var spModalCid=null,spTerminesOuvert=false;
+var spFiltre='tous',spVue='date';
 var SP_VIDE={billet:'',legende:'',crea:'',ville:'',rayon:'',vagues:[]};
 var SP_STATUTS={
   aprogrammer:{label:'À programmer',cls:'sp-aprogrammer'},
@@ -3366,6 +3369,16 @@ function spJoursAvant(c){
   var t=new Date();t.setHours(0,0,0,0);
   return Math.round((d.getTime()-t.getTime())/86400000);
 }
+function spEnCours(c){return spRead(c).vagues.some(function(v){return spStatut(v)==='encours';});}
+function spAVenirProg(c){return spRead(c).vagues.some(function(v){var s=spStatut(v);return s==='programmee'||s==='aprogrammer';});}
+// Ville de ciblage de la sponso, sinon celle du lieu ("Salle - Ville" ou
+// "Salle, Ville") : c'est la ville qui compte pour regrouper les campagnes.
+function spVilleDe(c){
+  var s=spRead(c);
+  if(s.ville)return s.ville.trim();
+  var parts=(c.ville||'').split(/\s[-–]\s|,/);
+  return (parts[parts.length-1]||'').trim()||'Ville non renseignée';
+}
 // Campagne close : plus aucune vague a venir ET le concert est passe. Tant que
 // le concert est devant, l'absence de vague est un trou a combler, pas une fin.
 function spEstTermine(c){
@@ -3393,7 +3406,7 @@ function spBlockHtml(c){
         +'<span class="sp-badge '+m.cls+'" id="sp-st-'+v.id+'">'+m.label+'</span>'
         +'<span style="flex:1"></span>'
         +'<label class="sp-tr" id="sp-tr-'+v.id+'"'+(st==='programmee'?'':' style="display:none"')+'>'
-        +'<input type="checkbox"'+(v.transmise?' checked':'')+' onchange="spSetVague(\''+c.id+'\',\''+v.id+'\',\'transmise\',this.checked)"> Communiquée au presta</label>'
+        +'<input type="checkbox"'+(v.transmise?' checked':'')+' onchange="spSetVague(\''+c.id+'\',\''+v.id+'\',\'transmise\',this.checked)"> Prestataire informé</label>'
         +'<button class="rs-post-btn del" title="Supprimer la vague" onclick="spDelVague(\''+c.id+'\',\''+v.id+'\')">'+icon('x')+'</button>'
         +'</div>'
         +'<div class="sp-vague-fields">'
@@ -3521,6 +3534,7 @@ function spCloseModal(){
   spModalCid=null;
   spRenderVues();
 }
+document.getElementById('sp-modal').addEventListener('click',function(e){if(e.target===this)spCloseModal();});
 function spExtend(dir){
   if(dir==='before')spWindowBefore+=3;else spWindowAfter+=6;
   renderSponso();
@@ -3559,37 +3573,31 @@ function renderSponso(){
   if(!wrap)return;
   var tous=concerts.filter(function(c){return !c.supprime&&spHasData(c);})
     .sort(function(a,b){return new Date(a.dc||'2100-01-01')-new Date(b.dc||'2100-01-01');});
-  var rows=tous.filter(function(c){return !spEstTermine(c);});
+  var actifs=tous.filter(function(c){return !spEstTermine(c);});
   var finis=tous.filter(spEstTermine);
 
-  var months=spMonths(rows),last=months[months.length-1];
+  // La fenetre se calcule sur tous les concerts actifs, pas sur le filtre :
+  // sinon les mois sauteraient a chaque changement de filtre.
+  var months=spMonths(actifs),last=months[months.length-1];
   var winStart=months[0].getTime();
   var winEnd=new Date(last.getFullYear(),last.getMonth()+1,1).getTime();
   var span=winEnd-winStart;
   function pct(ms){return (ms-winStart)/span*100;}
   function ms(s){var d=new Date(s+'T00:00:00');return isNaN(d.getTime())?NaN:d.getTime();}
 
-  // Pas de budget cumule ici : chaque concert a son enveloppe, les additionner
-  // ne veut rien dire. Le total par concert est sur sa ligne.
-  var nbACaler=0,nbEnCours=0;
-  rows.forEach(function(c){
-    spRead(c).vagues.forEach(function(v){
-      var st=spStatut(v);
-      if(st==='aprogrammer')nbACaler++;
-      if(st==='encours')nbEnCours++;
-    });
+  var enCours=actifs.filter(spEnCours),aVenir=actifs.filter(spAVenirProg);
+  var rows=spFiltre==='encours'?enCours:spFiltre==='avenir'?aVenir:actifs;
+  if(spVue==='ville')rows=rows.slice().sort(function(a,b){
+    var va=spVilleDe(a),vb=spVilleDe(b);
+    return va<vb?-1:va>vb?1:new Date(a.dc||'2100-01-01')-new Date(b.dc||'2100-01-01');
   });
 
-  var statsHtml='<div class="sp-stats">'
-    +'<span class="sp-stat"><b>'+nbEnCours+'</b> en cours</span>'
-    +'<span class="sp-stat'+(nbACaler?' warn':'')+'"><b>'+nbACaler+'</b> à programmer</span>'
+  function pill(id,label,n,cur,fn){return '<button class="view-toggle-btn'+(cur===id?' active':'')+'" onclick="'+fn+'(\''+id+'\')">'+label+(n!==null?' <span class="sp-pill-n">'+n+'</span>':'')+'</button>';}
+  var toolbar='<div class="filters">'
+    +'<div class="view-toggle">'+pill('tous','Toutes',actifs.length,spFiltre,'spSetFiltre')+pill('encours','En cours',enCours.length,spFiltre,'spSetFiltre')+pill('avenir','À venir',aVenir.length,spFiltre,'spSetFiltre')+'</div>'
+    +'<div class="view-toggle">'+pill('date','Par date',null,spVue,'spSetVue')+pill('ville','Par ville',null,spVue,'spSetVue')+'</div>'
+    +'<button class="btn btn-primary" style="margin-left:auto" onclick="spOpenPicker()">+ Ajouter une sponso</button>'
     +'</div>';
-
-  var opts=concerts.filter(function(c){return !c.supprime;})
-    .sort(function(a,b){return new Date(a.dc||'2100-01-01')-new Date(b.dc||'2100-01-01');})
-    .map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.art||'Concert')+(c.dc?' · '+spFmtDate(c.dc):'')+'</option>';}).join('');
-  var addHtml='<div class="sp-addbar"><select id="sp-add-concert" onchange="if(this.value){spOpenConcert(this.value);this.value=\'\';}">'
-    +'<option value="">+ Ajouter de la sponso sur un concert...</option>'+opts+'</select></div>';
 
   var headM='';
   months.forEach(function(m,i){
@@ -3606,9 +3614,13 @@ function renderSponso(){
   var tms=ms(spTodayStr());
   if(tms>=winStart&&tms<=winEnd)deco+='<div class="sp-today" style="left:'+pct(tms)+'%"></div>';
 
-  var body='';
+  var body='',villeCourante=null;
   rows.forEach(function(c){
     var s=spRead(c);
+    if(spVue==='ville'){
+      var vl=spVilleDe(c);
+      if(vl!==villeCourante){villeCourante=vl;body+='<div class="sp-group">'+esc(vl)+'</div>';}
+    }
     var bars=deco;
     var undated=[];
     spVaguesTriees(c).forEach(function(v,i){
@@ -3619,7 +3631,7 @@ function renderSponso(){
       var l=Math.max(0,pct(a)),r=Math.min(100,pct(b));
       var w=Math.max(r-l,1.2);
       var st=spStatut(v),nt=spNonTransmise(v);
-      var tip='V'+n+' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin)+(v.budget?' · '+spEuro(v.budget):'')+(nt?' · pas encore communiquée au presta':'');
+      var tip='V'+n+' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin)+(v.budget?' · '+spEuro(v.budget):'')+(nt?' · prestataire pas encore informé':'');
       var lbl=v.budget?spEuro(v.budget):'V'+n;
       // Une vague dure ~2 semaines : sur une fenetre de plusieurs mois la barre
       // serait trop etroite pour son montant, d'ou le min-width en CSS. La
@@ -3640,11 +3652,6 @@ function renderSponso(){
 
     var cible=spCible(s);
     var tot=spTotal(c);
-    // Plus rien de prevu alors que le concert est devant : c'est le trou qu'on
-    // veut reperer. Inutile de le signaler quand la prod s'en occupe.
-    var j=spJoursAvant(c),trou='';
-    if(!spAVenir(c)&&!spSkipProd(c.id))
-      trou='<div class="sp-row-trou">'+icon('hourglass')+' Rien de prévu'+(j!==null&&j>=0?' · J-'+j:'')+'</div>';
     body+='<div class="sp-row'+(chips?' has-chips':'')+'">'
       +'<div class="sp-row-info" onclick="spOpenConcert(\''+c.id+'\')" title="Ouvrir la sponso de ce concert">'
       +'<div class="sp-row-top"><div class="sp-row-art">'+esc(c.art||'Concert')+'</div>'
@@ -3652,7 +3659,6 @@ function renderSponso(){
       +'<div class="sp-row-sub">'+esc([c.ville,c.dc?spFmtDate(c.dc):''].filter(Boolean).join(' · '))+'</div>'
       +(cible?'<div class="sp-row-cible">'+icon('map-pin')+' '+esc(cible)+'</div>':'')
       +(spSkipProd(c.id)?'<div class="sp-row-prod">'+icon('alert')+' Sponso prod</div>':'')
-      +trou
       +'</div>'
       +'<div class="sp-row-track" onclick="spOpenConcert(\''+c.id+'\')">'+bars+'</div>'
       +'</div>'
@@ -3660,7 +3666,7 @@ function renderSponso(){
   });
 
   if(!rows.length)
-    body='<div class="sp-none">Aucune sponso en cours. Choisis un concert ci-dessous pour programmer sa première vague.</div>';
+    body='<div class="sp-none">'+(actifs.length?'Aucune sponso ne correspond à ce filtre.':'Aucune sponso pour l\'instant. « Ajouter une sponso » pour programmer une première vague.')+'</div>';
 
   // Campagnes closes : plus rien a anticiper ni a relancer, donc pas de
   // timeline. Une liste compacte suffit pour retrouver ce qui a ete depense.
@@ -3686,12 +3692,12 @@ function renderSponso(){
   var legend='<div class="sp-legend">'
     +'<span><i class="sp-key sp-encours"></i>en cours</span>'
     +'<span><i class="sp-key sp-programmee"></i>programmée</span>'
-    +'<span><i class="sp-key sp-programmee sp-nontransmise"></i>pas encore communiquée</span>'
+    +'<span><i class="sp-key sp-programmee sp-nontransmise"></i>prestataire non informé</span>'
     +'<span><i class="sp-key sp-terminee"></i>terminée</span>'
     +'<span><i class="sp-key-dc"></i>date du concert</span>'
     +'</div>';
 
-  wrap.innerHTML=statsHtml
+  wrap.innerHTML=toolbar
     +'<div class="sp-card">'
     +'<div class="sp-scroll">'
     +'<div class="sp-inner" style="min-width:'+Math.max(680,190+months.length*88)+'px">'
@@ -3703,8 +3709,21 @@ function renderSponso(){
     +'</div></div>'
     +legend
     +finisHtml
-    +addHtml
     +'</div>';
+}
+function spSetFiltre(f){spFiltre=f;renderSponso();}
+function spSetVue(v){spVue=v;renderSponso();}
+// Choix du concert avant d'ouvrir sa saisie : le modal sert de selecteur.
+function spOpenPicker(){
+  spModalCid=null;
+  var opts=concerts.filter(function(c){return !c.supprime;})
+    .sort(function(a,b){return new Date(a.dc||'2100-01-01')-new Date(b.dc||'2100-01-01');})
+    .map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.art||'Concert')+(c.dc?' · '+spFmtDate(c.dc):'')+(spHasData(c)?' · déjà une sponso':'')+'</option>';}).join('');
+  document.getElementById('sp-modal-title').textContent='Ajouter une sponso';
+  document.getElementById('sp-modal-body').innerHTML='<label class="sp-f wide"><span>Concert</span>'
+    +'<select id="sp-picker" onchange="if(this.value)spOpenConcert(this.value)"><option value="">Choisir un concert…</option>'+opts+'</select></label>';
+  document.getElementById('sp-modal').classList.add('open');
+  setTimeout(function(){var s=document.getElementById('sp-picker');if(s)s.focus();},50);
 }
 function spToggleTermines(){
   spTerminesOuvert=!spTerminesOuvert;
