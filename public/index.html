@@ -528,9 +528,9 @@
     <div>
       <label>Format</label>
       <div class="rs-modal-fmt">
-        <div class="rs-modal-fmt-btn post on" id="rs-fmt-post" onclick="rsToggleFmt('post')">Post</div>
-        <div class="rs-modal-fmt-btn story" id="rs-fmt-story" onclick="rsToggleFmt('story')">Story</div>
-        <div class="rs-modal-fmt-btn tirage" id="rs-fmt-tirage" onclick="rsToggleFmt('tirage')">Tirage au sort</div>
+        <button type="button" class="rs-modal-fmt-btn post on" id="rs-fmt-post" onclick="rsToggleFmt('post')">Post</button>
+        <button type="button" class="rs-modal-fmt-btn story" id="rs-fmt-story" onclick="rsToggleFmt('story')">Story</button>
+        <button type="button" class="rs-modal-fmt-btn tirage" id="rs-fmt-tirage" onclick="rsToggleFmt('tirage')">Tirage au sort</button>
       </div>
     </div>
     <div>
@@ -558,10 +558,10 @@
     <div>
       <label>Réseaux</label>
       <div class="rs-modal-nets">
-        <div class="rs-modal-net fb" id="rs-net-fb" onclick="rsToggleNet('fb')">Facebook</div>
-        <div class="rs-modal-net insta" id="rs-net-insta" onclick="rsToggleNet('insta')">Instagram</div>
-        <div class="rs-modal-net tiktok" id="rs-net-tiktok" onclick="rsToggleNet('tiktok')">TikTok</div>
-        <div class="rs-modal-net linkedin" id="rs-net-linkedin" onclick="rsToggleNet('linkedin')">LinkedIn</div>
+        <button type="button" class="rs-modal-net fb" id="rs-net-fb" onclick="rsToggleNet('fb')">Facebook</button>
+        <button type="button" class="rs-modal-net insta" id="rs-net-insta" onclick="rsToggleNet('insta')">Instagram</button>
+        <button type="button" class="rs-modal-net tiktok" id="rs-net-tiktok" onclick="rsToggleNet('tiktok')">TikTok</button>
+        <button type="button" class="rs-modal-net linkedin" id="rs-net-linkedin" onclick="rsToggleNet('linkedin')">LinkedIn</button>
       </div>
     </div>
     <div class="rs-modal-actions">
@@ -2897,13 +2897,17 @@ function renderRS(){
 
   // Tabs projets
   // Meme selecteur segmente que Liste / Par salle / Calendrier
-  var tabsHtml='<div class="view-toggle" style="display:inline-flex;margin-bottom:1.5rem">'
-    +'<button class="view-toggle-btn'+(rsCurrentProj==='pp'?' active':'')+'" onclick="rsSetProj(\'pp\')">Please Please</button>'
-    +'<button class="view-toggle-btn'+(rsCurrentProj==='antdt'?' active':'')+'" onclick="rsSetProj(\'antdt\')">ANTDT</button>'
-    +'</div>';
-
   var today=new Date();today.setHours(0,0,0,0);
   var todayStr=today.getFullYear()+'-'+(String(today.getMonth()+1).padStart(2,'0'))+'-'+(String(today.getDate()).padStart(2,'0'));
+
+  var tabsHtml='<div class="filters">'
+    +'<div class="view-toggle">'
+    +'<button class="view-toggle-btn'+(rsCurrentProj==='pp'?' active':'')+'" onclick="rsSetProj(\'pp\')">Please Please</button>'
+    +'<button class="view-toggle-btn'+(rsCurrentProj==='antdt'?' active':'')+'" onclick="rsSetProj(\'antdt\')">ANTDT</button>'
+    +'</div>'
+    +'<span class="grow"></span>'
+    +'<button class="btn btn-primary" onclick="rsOpenModal(\''+todayStr+'\')">+ Ajouter un contenu</button>'
+    +'</div>';
 
   // Plage visible : -3j / +15j depuis aujourd'hui
   // rsWindowOffset permet d'étendre la plage
@@ -2962,18 +2966,8 @@ function renderRS(){
     var dayPosts=rsPosts.filter(function(p){return p.date===dateStr&&p.proj===rsCurrentProj;});
     var hasContent=dayPosts.length>0;
 
-    // Styles
-    var headerStyle='';var numStyle='';var nameStyle='';
-    if(isToday){
-      headerStyle='background:var(--accent-soft);border-left:4px solid var(--accent);padding-left:13px;';
-      numStyle='color:var(--accent);font-size:16px;font-weight:800;';
-      nameStyle='color:var(--accent);font-weight:700;';
-    } else if(isPast){
-      var hasUnposted=dayPosts.some(function(p){return p.status!=='posted';});
-      headerStyle=hasUnposted?'opacity:.7;border-left:2px solid var(--amber-border);':'opacity:.38;';
-    } else if(isWE){
-      headerStyle='background:var(--surface-2);';
-    }
+    var hasUnposted=isPast&&dayPosts.some(function(p){return p.status!=='posted';});
+    var headCls='rs-day-header'+(isToday?' today':'')+(isPast&&!isToday?(hasUnposted?' past unposted':' past'):'')+(isWE&&!isToday?' weekend':'');
 
     var chips='';
 
@@ -2987,12 +2981,9 @@ function renderRS(){
     var rowClick=hasContent?'rsToggleDay(\''+dateStr+'\')':'rsOpenModal(\''+dateStr+'\')';
 
     daysHtml+='<div class="rs-day" id="rsday-wrap-'+dateStr+'">'
-      +'<div class="rs-day-header'+(isWE&&!isToday?' weekend':'')+'" id="rsday-'+dateStr+'" style="'+headerStyle+'" onclick="'+rowClick+'">'
-      +'<span style="display:inline-flex;flex-direction:column;align-items:center;min-width:36px;line-height:1">'
-      +'<span class="rs-day-num" style="'+numStyle+'line-height:1;">'+dayNum+'</span>'
-      +'<span style="font-size:11px;color:'+(isToday?'var(--accent)':(isPast?'var(--border-strong)':'var(--text-3)'))+';text-transform:uppercase;font-weight:700;letter-spacing:.03em;margin-top:1px;">'+monthName+'</span>'
-      +'</span>'
-      +'<span style="font-size:11px;min-width:36px;'+nameStyle+(isPast&&!isToday?'color:var(--border-strong);':'')+(isWE&&!isToday&&!isPast?'color:var(--text-3);':'')+'">'+dayName+'</span>'
+      +'<div class="'+headCls+'" id="rsday-'+dateStr+'" onclick="'+rowClick+'">'
+      +'<span class="rs-day-date"><span class="rs-day-num">'+dayNum+'</span><span class="rs-day-month">'+monthName+'</span></span>'
+      +'<span class="rs-day-weekname">'+dayName+'</span>'
       +'<div class="rs-chips">'+chips+'</div>'
       +'<button class="rs-add-day-btn" onclick="event.stopPropagation();rsOpenModal(\''+dateStr+'\')">+ Ajouter</button>'
       +'</div>'
@@ -3017,10 +3008,10 @@ function renderRS(){
           +(p.legend?'<div class="rs-post-legend-wrap"><div class="rs-post-legend">'+esc(p.legend)+'</div><button class="rs-copy-btn" onclick="rsCopyLegend(\''+p.id+'\')" title="Copier la légende">'+icon('copy')+' Copier</button></div>':'')
           +(p.link&&escUrl(p.link)?'<div class="rs-post-link"><a href="'+escUrl(p.link)+'" target="_blank">'+esc(p.link)+'</a></div>':'')
           +'<div class="rs-post-row2">'
-          +(p.fb?'<span class="rs-net-badge fb">FB</span>':'')
-          +(p.insta?'<span class="rs-net-badge insta">Insta</span>':'')
-          +(p.tiktok?'<span class="rs-net-badge tiktok">TikTok</span>':'')
-          +(p.linkedin?'<span class="rs-net-badge linkedin">LinkedIn</span>':'')
+          +(p.fb?'<span class="rs-net-badge">Facebook</span>':'')
+          +(p.insta?'<span class="rs-net-badge">Instagram</span>':'')
+          +(p.tiktok?'<span class="rs-net-badge">TikTok</span>':'')
+          +(p.linkedin?'<span class="rs-net-badge">LinkedIn</span>':'')
           +'<button class="rs-ready-btn'+(p.status==='posted'?' on posted':p.status==='ready'?' on':'')+'" onclick="rsToggleReady(\''+p.id+'\')">'          +(p.status==='posted'?icon('send')+' Posté':p.status==='ready'?icon('check')+' Prêt':icon('circle')+' Prêt')+'</button>'
           +'<button class="rs-validate-btn'+(p.validated?' on':'')+'" onclick="rsToggleValidated(\''+p.id+'\')" title="Validé">'+icon('check')+' Validé</button>'
           +'<div class="rs-post-btns">'
@@ -3043,12 +3034,8 @@ function renderRS(){
   var _nextM=new Date(_wsAfter.getFullYear(),_wsAfter.getMonth()+1,1);
   var _nextLbl=_nextM.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
   _nextLbl=_nextLbl.charAt(0).toUpperCase()+_nextLbl.slice(1);
-  var topHtml='<div style="padding:8px 16px;border-bottom:1px solid var(--border-light);background:var(--bg)">'
-    +'<button onclick="rsExtend(\'before\')" style="font-size:12px;color:var(--text-3);background:none;border:1px solid var(--border);padding:4px 14px;border-radius:20px;cursor:pointer">'+icon('arrow-up')+' '+_prevLbl+'</button>'
-    +'</div>';
-  var botHtml='<div style="padding:8px 16px;border-top:1px solid var(--border-light);background:var(--bg)">'
-    +'<button onclick="rsExtend(\'after\')" style="font-size:12px;color:var(--text-3);background:none;border:1px solid var(--border);padding:4px 14px;border-radius:20px;cursor:pointer">'+icon('arrow-down')+' '+_nextLbl+'</button>'
-    +'</div>';
+  var topHtml='<div class="rs-extend top"><button class="btn btn-sm" onclick="rsExtend(\'before\')">'+icon('arrow-up')+' '+_prevLbl+'</button></div>';
+  var botHtml='<div class="rs-extend bottom"><button class="btn btn-sm" onclick="rsExtend(\'after\')">'+icon('arrow-down')+' '+_nextLbl+'</button></div>';
 
   wrap.innerHTML=tabsHtml+'<div class="rs-card">'+topHtml+daysHtml+botHtml+'</div>';
   rsSetupModal();
