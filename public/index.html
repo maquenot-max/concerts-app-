@@ -69,12 +69,12 @@
 </div>
 <div id="app">
   <header>
-    <h1 class="brand"><img src="favicon_io/favicon-32x32.png" class="brand-logo" alt=""><span class="h1-text">Please Please Communication &mdash; Dashboard</span></h1>
+    <h1 class="brand"><img src="favicon_io/favicon-32x32.png" class="brand-logo" alt=""><span class="h1-text">Please Please Communication &mdash; Dashboard</span><span class="h1-short">Please Please</span></h1>
     <nav class="nav">
-      <button data-tab="rs" onclick="showTab('rs',this)">Plannings RS</button>
-      <button class="active" data-tab="kanban" onclick="showTab('kanban',this)">Tableau de bord</button>
+      <button data-tab="rs" onclick="showTab('rs',this)"><span class="nav-long">Plannings RS</span><span class="nav-short">RS</span></button>
+      <button class="active" data-tab="kanban" onclick="showTab('kanban',this)"><span class="nav-long">Tableau de bord</span><span class="nav-short">Tableau</span></button>
       <button id="btn-concerts" data-tab="concerts" onclick="showTab('concerts',this)">Concerts</button>
-      <button id="btn-past" data-tab="past" onclick="showTab('past',this)" style="display:none">Concerts passés</button>
+      <button id="btn-past" data-tab="past" onclick="showTab('past',this)" style="display:none"><span class="nav-long">Concerts passés</span><span class="nav-short">Passés</span></button>
       <button id="btn-sponso" data-tab="sponso" onclick="showTab('sponso',this)">Sponso</button>
     </nav>
     <div class="filters-popover" id="user-menu-wrap" style="display:none">
