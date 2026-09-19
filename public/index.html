@@ -2162,7 +2162,8 @@ function renderConcerts(){
       var sp=spRead(c),spTot=spTotal(c);
       var spDots=spVaguesTriees(c).map(function(v,i){
         var st=spStatut(v);
-        return '<i class="sp-dot '+SP_STATUTS[st].cls+'" title="'+esc('Vague '+(i+1)+' · '+SP_STATUTS[st].label+(v.debut&&v.fin?' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin):''))+'"></i>';
+        var nt=spNonTransmise(v);
+        return '<i class="sp-dot '+SP_STATUTS[st].cls+(nt?' sp-nontransmise':'')+'" title="'+esc('Vague '+(i+1)+' · '+SP_STATUTS[st].label+(v.debut&&v.fin?' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin):'')+(nt?' · pas encore communiquée au presta':''))+'"></i>';
       }).join('');
       var cS='<div style="'+cellStyle+';flex:0 0 130px" onclick="event.stopPropagation();spOpenConcert(\''+c.id+'\')" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'\'">'
         +(sp.vagues.length
@@ -3344,6 +3345,10 @@ function spVaguesTriees(c){
   });
 }
 function spOrdre(c){return spVaguesTriees(c).map(function(v){return v.id;}).join(',');}
+// Programmee dans l'appli mais pas encore envoyee au presta : affichee en
+// pale. Ne vaut que pour les vagues a venir : une vague en cours ou terminee
+// a forcement ete transmise, elle ne doit pas palir faute de case cochee.
+function spNonTransmise(v){return spStatut(v)==='programmee'&&!v.transmise;}
 function spTotal(c){
   return spRead(c).vagues.reduce(function(a,v){return a+(parseFloat(v.budget)||0);},0);
 }
@@ -3381,11 +3386,14 @@ function spBlockHtml(c){
   if(s.vagues.length){
     h+='<div class="sp-vagues">';
     spVaguesTriees(c).forEach(function(v,i){
-      var m=SP_STATUTS[spStatut(v)];
+      var st=spStatut(v),m=SP_STATUTS[st];
       h+='<div class="sp-vague">'
         +'<div class="sp-vague-head">'
         +'<span class="sp-vague-num">Vague '+(i+1)+'</span>'
         +'<span class="sp-badge '+m.cls+'" id="sp-st-'+v.id+'">'+m.label+'</span>'
+        +'<span style="flex:1"></span>'
+        +'<label class="sp-tr" id="sp-tr-'+v.id+'"'+(st==='programmee'?'':' style="display:none"')+'>'
+        +'<input type="checkbox"'+(v.transmise?' checked':'')+' onchange="spSetVague(\''+c.id+'\',\''+v.id+'\',\'transmise\',this.checked)"> Communiquée au presta</label>'
         +'<button class="rs-post-btn del" title="Supprimer la vague" onclick="spDelVague(\''+c.id+'\',\''+v.id+'\')">'+icon('x')+'</button>'
         +'</div>'
         +'<div class="sp-vague-fields">'
@@ -3429,8 +3437,10 @@ function spSetVague(cid,vid,field,val){
   if(spOrdre(c)!==ordreAvant){spRefresh(cid);return;}
   // Sinon on met a jour le badge en place plutot que de reconstruire le bloc :
   // le champ suivant perdrait le focus quand on tabule d'un champ a l'autre.
-  var m=SP_STATUTS[spStatut(v)],el=document.getElementById('sp-st-'+vid);
+  var st=spStatut(v),m=SP_STATUTS[st],el=document.getElementById('sp-st-'+vid);
   if(el){el.textContent=m.label;el.className='sp-badge '+m.cls;}
+  var tr=document.getElementById('sp-tr-'+vid);
+  if(tr)tr.style.display=st==='programmee'?'':'none';
   spUpdateFicheSum(cid);
   spRenderVues();
 }
@@ -3608,21 +3618,20 @@ function renderSponso(){
       if(isNaN(a)||isNaN(b)||b<winStart||a>winEnd)return;
       var l=Math.max(0,pct(a)),r=Math.min(100,pct(b));
       var w=Math.max(r-l,1.2);
-      var st=spStatut(v);
-      var tip='V'+n+' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin)+(v.budget?' · '+spEuro(v.budget):'');
+      var st=spStatut(v),nt=spNonTransmise(v);
+      var tip='V'+n+' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin)+(v.budget?' · '+spEuro(v.budget):'')+(nt?' · pas encore communiquée au presta':'');
       var lbl=v.budget?spEuro(v.budget):'V'+n;
       // Une vague dure ~2 semaines : sur une fenetre de plusieurs mois la barre
       // serait trop etroite pour son montant, d'ou le min-width en CSS. La
       // duree exacte reste lisible dans l'infobulle et dans le modal.
-      bars+='<div class="sp-bar '+SP_STATUTS[st].cls+'" style="left:'+l+'%;width:'+w+'%" title="'+esc(tip)+'" onclick="spOpenConcert(\''+c.id+'\')">'
+      bars+='<div class="sp-bar '+SP_STATUTS[st].cls+(nt?' sp-nontransmise':'')+'" style="left:'+l+'%;width:'+w+'%" title="'+esc(tip)+'" onclick="spOpenConcert(\''+c.id+'\')">'
         +'<span>'+esc(lbl)+'</span></div>';
     });
     // Repere de la date du concert : on voit d'un coup d'oeil si les vagues
     // tombent bien avant la date, et ce qu'il reste de place pour en caler une.
     var dcms=c.dc?ms(c.dc):NaN;
     if(!isNaN(dcms)&&dcms>=winStart&&dcms<=winEnd)
-      bars+='<div class="sp-dc-line" style="left:'+pct(dcms)+'%"></div>'
-        +'<div class="sp-dc" style="left:'+pct(dcms)+'%" title="'+esc('Concert · '+spFmtDate(c.dc))+'"></div>';
+      bars+='<div class="sp-dc" style="left:'+pct(dcms)+'%" title="'+esc('Concert · '+spFmtDate(c.dc))+'"></div>';
 
     var chips='';
     undated.forEach(function(u){
@@ -3677,6 +3686,7 @@ function renderSponso(){
   var legend='<div class="sp-legend">'
     +'<span><i class="sp-key sp-encours"></i>en cours</span>'
     +'<span><i class="sp-key sp-programmee"></i>programmée</span>'
+    +'<span><i class="sp-key sp-programmee sp-nontransmise"></i>pas encore communiquée</span>'
     +'<span><i class="sp-key sp-terminee"></i>terminée</span>'
     +'<span><i class="sp-key-dc"></i>date du concert</span>'
     +'</div>';
