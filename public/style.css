@@ -100,34 +100,6 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .view-toggle-btn.active{background:var(--surface);color:var(--accent);border-color:transparent;box-shadow:var(--shadow-xs);font-weight:600}
 .view-toggle-btn:hover:not(.active){color:var(--text)}
 
-/* ── GRID KANBAN ──────────────────────────────────────── */
-.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
-.col{cursor:pointer;min-width:0;border-radius:var(--radius);box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s}
-.col:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
-.col-head{
-  padding:10px 12px;border-radius:var(--radius) var(--radius) 0 0;
-  border:1px solid var(--border);border-bottom:1px solid var(--border-light);background:var(--surface-2);
-}
-.col-head.late{background:var(--surface-2);border-color:var(--border);border-bottom-color:var(--border-light)}
-/* Concert OK : la carte s'arrete a l'en-tete (pas de .col-body en dessous),
-   qui recupere donc les coins bas arrondis et une bordure complete sur les
-   4 cotes (au lieu de la bordure inferieure plus claire, pensee pour le
-   raccord avec un .col-body qui n'existe plus ici). */
-.col-head.only{border-bottom:1px solid var(--border);border-radius:var(--radius)}
-.col-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
-.col-name.late{color:var(--text)}
-.col-sub{font-size:13px;color:var(--text-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
-.col-sub.late{color:var(--text-2)}
-.col-body{border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);background:var(--surface);overflow:hidden}
-.col-head.late+.col-body{border-color:var(--border)}
-.titem{padding:10px 12px;border-bottom:1px solid var(--border-light);display:flex;align-items:flex-start;gap:8px;cursor:pointer}
-.titem:last-child{border-bottom:none}
-.titem:hover{background:var(--bg)}
-.chk{width:18px;height:18px;border:1.5px solid var(--border-strong);border-radius:4px;flex-shrink:0;margin-top:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;position:relative}
-.chk.on{background:var(--accent);border-color:var(--accent)}
-.tname{font-size:13px;line-height:1.4;color:var(--text)}
-.tnew{display:inline-block;font-size:11px;font-weight:700;color:var(--amber);background:var(--amber-bg);padding:1px 7px;border-radius:var(--radius-pill);margin-top:3px}
-
 /* ── PILLS ────────────────────────────────────────────── */
 /* Palette harmonisee : meme formule (fond tres clair / texte sature) pour
    toutes les categories, teintes reparties uniformement pour rester
@@ -257,42 +229,6 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .fiche-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;position:sticky;bottom:0;background:rgba(255,255,255,.95);backdrop-filter:blur(8px)}
 .section-sep{height:1px;background:var(--border-light);margin:1.25rem 0}
 
-/* ── ANNONCES ─────────────────────────────────────────── */
-.annonces-wrap{margin-bottom:2rem}
-.ann-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.ann-dot{width:6px;height:6px;border-radius:50%;background:var(--text-3);display:inline-block;animation:pulse 2s infinite;flex-shrink:0}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
-.ann-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.ann-card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius);padding:16px;
-  display:flex;flex-direction:column;gap:6px;cursor:pointer;
-  box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s;
-}
-.ann-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
-.ann-card.ann-late{border-color:var(--red-border);background:var(--red-bg)}
-.ann-card.ann-nodate{border:1px dashed var(--border);background:var(--bg)}
-.ann-date{display:flex;align-items:baseline;gap:4px;margin-bottom:2px}
-.ann-day{font-size:36px;font-weight:800;line-height:1;color:var(--text);letter-spacing:-.03em}
-.ann-late .ann-day{color:var(--red)}
-.ann-nodate .ann-day{color:var(--text-3);font-size:28px}
-.ann-month{font-size:12px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em}
-.ann-late .ann-month{color:var(--red)}
-.ann-nodate .ann-month{color:var(--text-3)}
-.ann-art{font-size:13px;font-weight:700;line-height:1.3;color:var(--text);letter-spacing:-.01em}
-.ann-ville{font-size:12px;color:var(--text-3)}
-.ann-status{font-size:11px;padding:2px 7px;border-radius:var(--radius-pill);display:inline-block;background:var(--bg);color:var(--text-3);align-self:flex-start;font-weight:500;border:1px solid var(--border)}
-.ann-late .ann-status{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
-.ann-nodate .ann-status{background:var(--bg);color:var(--text-3)}
-.ann-btn{
-  background:transparent;color:var(--text-3);border:1px solid var(--border);
-  border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;cursor:pointer;
-  width:100%;margin-top:4px;font-weight:500;text-align:center;transition:all .15s;
-}
-.ann-btn:hover{background:var(--bg);color:var(--text);border-color:var(--border-strong)}
-.ann-late .ann-btn{color:var(--red);border-color:var(--red-border)}
-.ann-late .ann-btn:hover{background:var(--red-bg)}
-
 /* ── MISC ─────────────────────────────────────────────── */
 .loading-full{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;gap:16px;color:var(--text-3)}
 .loading-full p{font-size:13px;font-weight:500}
@@ -310,7 +246,6 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .empty-state{color:var(--text-3);font-size:13px;padding:3rem 0;text-align:center;line-height:1.6}
 .empty-state .btn{margin-top:10px}
 .empty-state.compact{padding:1.5rem 0}
-.titem.highlighted{background:var(--amber-bg);border-left:3px solid var(--amber-border);padding-left:9px}
 
 /* ── CELLULES INLINE EDITABLES (liste Concerts) ──────── */
 .crow-cell-label{font-size:11px;color:var(--text-4);font-weight:500;margin-bottom:2px}
@@ -373,52 +308,58 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .tk-modal input:focus,.tk-modal select:focus{border-color:var(--text-3)}
 .tk-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 
-/* ── WIDGET DASHBOARD ────────────────────────────────── */
-.dash-top{display:grid;grid-template-columns:1fr 2fr;gap:16px;margin-bottom:2rem}
-.dash-widget{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
-.dash-widget-head{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
-.dash-widget-title{font-size:14px;font-weight:600;color:var(--text);flex:1;display:flex;align-items:center;gap:6px}
-.dash-widget-link{font-size:11px;color:var(--text-3);cursor:pointer;padding:2px 6px;border-radius:4px;border:none;background:none;transition:all .15s}
-.dash-widget-link:hover{background:var(--bg);color:var(--text)}
-/* Annonces compactes 3 colonnes */
-.ann-grid-compact{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px}
-.ann-card-compact{background:var(--bg);border:1px solid transparent;border-radius:var(--radius-sm);padding:8px 10px;cursor:pointer;transition:box-shadow .15s}
-.ann-card-compact:hover{box-shadow:var(--shadow-md)}
-.ann-card-compact.ann-late{border-color:var(--red-border);background:var(--red-bg)}
-.ann-card-compact.ann-nodate{border:1px dashed var(--border)}
-.ann-compact-day{font-size:20px;font-weight:800;line-height:1;color:var(--text);letter-spacing:-.02em}
-.ann-late .ann-compact-day{color:var(--red)}
-.ann-nodate .ann-compact-day{color:var(--text-3);font-size:16px}
-.ann-compact-month{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;margin-left:2px}
-.ann-late .ann-compact-month{color:var(--red)}
-.ann-compact-art{font-size:12px;font-weight:600;color:var(--text);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ann-compact-status{font-size:12px;color:var(--text-3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.ann-card-compact.ann-today{border-color:var(--amber-border);background:var(--amber-bg)}
-.ann-card-compact.ann-today .ann-compact-day{color:var(--amber)}
-.ann-card-compact.ann-today .ann-compact-month{color:var(--amber)}
-.ann-card-compact.ann-today .ann-compact-art{color:var(--text)}
-.ann-late .ann-compact-status{color:var(--red);font-weight:600}
-/* Widget tâches : 4 colonnes */
-.tk-widget-board{display:grid;grid-template-columns:repeat(4,1fr);gap:0;padding:0}
-.tk-widget-col{border-right:1px solid var(--border-light);padding:8px}
-.tk-widget-col:last-child{border-right:none}
-.tk-widget-col-title{font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border-light)}
-.tk-widget-col-title.late{color:var(--red)}
-.tk-widget-col-title.today{color:var(--amber)}
-.tk-widget-task{display:flex;align-items:flex-start;gap:8px;padding:5px 2px;border-radius:4px;cursor:pointer;transition:background .1s}
-.tk-widget-task:hover{background:var(--bg)}
-.tk-widget-task.done{opacity:.4}
-.tk-widget-chk{width:18px;height:18px;border:1.5px solid var(--border-strong);border-radius:4px;flex-shrink:0;margin-top:0;cursor:pointer;position:relative}
-.tk-widget-chk.on{background:var(--accent);border-color:var(--accent)}
-.tk-widget-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:6px}
-.tk-widget-dot.high{background:var(--red)}
-.tk-widget-dot.normal{background:var(--border-strong)}
-.tk-widget-dot.low{background:var(--green)}
-.tk-widget-task-name{font-size:13px;font-weight:500;color:var(--text);line-height:1.3;flex:1}
-.tk-widget-task.done .tk-widget-task-name{text-decoration:line-through}
-.tk-widget-empty-col{font-size:12px;color:var(--text-3);padding:2px}
-.tk-widget-add-btn{margin:8px;width:calc(100% - 16px);padding:5px 8px;font-size:11px;color:var(--text-3);background:none;border:1px dashed var(--border);border-radius:var(--radius-sm);cursor:pointer;text-align:left;transition:all .15s}
-.tk-widget-add-btn:hover{background:var(--bg);color:var(--text);border-color:var(--text-3)}
+/* ── TABLEAU DE BORD ─────────────────────────────────── */
+.dash-top{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.dash-card{margin-bottom:0}
+.dash-body{padding:4px 20px 8px}
+.dash-empty{padding:14px 20px;font-size:13px;color:var(--text-3)}
+.skel-lines{padding:12px 0;display:flex;flex-direction:column;gap:8px}
+.skel-ann{height:72px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* Annonces a venir */
+.ann-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;padding:16px 20px}
+.ann-card{position:relative;display:flex;gap:14px;align-items:flex-start;padding:14px 44px 14px 16px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:border-color .15s,background .15s;min-width:0}
+.ann-card:hover{border-color:var(--border-strong)}
+.ann-card.late{border-color:var(--red-border)}
+.ann-date{display:flex;flex-direction:column;align-items:center;min-width:40px;flex-shrink:0}
+.ann-day{font-size:26px;font-weight:700;line-height:1;letter-spacing:-.02em;color:var(--text)}
+.ann-card.late .ann-day{color:var(--red)}
+.ann-card.nodate .ann-day{color:var(--text-3)}
+.ann-month{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;margin-top:3px}
+.ann-body{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.ann-art{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ann-lieu{font-size:13px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ann-body .tag{align-self:flex-start;margin-top:4px}
+.ann-done{position:absolute;top:12px;right:12px;width:26px;height:26px;padding:0;border:1px solid var(--border);border-radius:var(--radius-pill);background:var(--surface);color:var(--text-3);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+.ann-done .ico{width:13px;height:13px}
+.ann-done:hover{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+/* Aujourd'hui */
+.today-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-light)}
+.today-row:last-child{border-bottom:none}
+.today-label{width:120px;flex-shrink:0;font-size:12px;font-weight:500;color:var(--text-3);padding-top:3px}
+.today-art{font-size:14px}
+.today-sub{font-size:13px;color:var(--text-2);padding-top:1px}
+.today-proj{font-size:12px;color:var(--text-3);white-space:nowrap}
+.today-list{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.today-item{display:flex;align-items:center;gap:8px;min-width:0;cursor:pointer;font-family:inherit}
+.today-item:hover .today-item-title{color:var(--accent)}
+.today-item-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.today-check{width:18px;height:18px;margin:0;accent-color:var(--accent);flex-shrink:0}
+.today-row .btn-link{margin-left:auto;align-self:flex-start}
+/* Liste compacte des concerts */
+.dash-concerts-head{flex-wrap:wrap;gap:10px}
+.dash-concerts-head .hideok-toggle{height:34px;padding:0 12px;font-size:12px}
+.dash-concerts-head .btn{height:34px;padding:0 12px;font-size:13px;display:inline-flex;align-items:center}
+.search-field{position:relative;display:flex;align-items:center}
+.search-field .ico{position:absolute;left:11px;width:14px;height:14px;color:var(--text-4);pointer-events:none}
+.search-field input{height:34px;width:220px;padding:0 12px 0 32px;border:1px solid var(--border);border-radius:var(--radius-sm);font:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
+.search-field input:focus{border-color:var(--text-3)}
+.dash-row{display:grid;grid-template-columns:340px minmax(0,1fr) 220px 28px;gap:16px;align-items:center;padding:10px 20px;min-height:58px}
+.dash-tags{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dash-progress{display:flex;align-items:center;gap:10px}
+.dash-bar{flex:1;height:6px;border-radius:3px;background:#e9ebf0;overflow:hidden;display:block}
+.dash-bar-fill{display:block;height:6px;border-radius:3px;background:var(--accent)}
+.dash-count{width:44px;text-align:right;font-size:12px;color:var(--text-3)}
 
 /* ── SECTION REPLIABLE ───────────────────────────────── */
 .fiche-sec-head{display:flex;align-items:center;gap:8px;flex:1;min-width:0;width:100%;padding:14px 0;border:none;border-bottom:1px solid var(--border-light);background:none;font:inherit;text-align:left;cursor:pointer;color:var(--text);user-select:none}
@@ -455,32 +396,9 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 /* ── TACHES DELEGUES ─────────────────────────────────── */
 .tk-task.delegue{background:var(--accent-soft)}
 .tk-task.delegue .tk-task-name{color:var(--text-2)}
-.tk-widget-task.delegue .tk-widget-task-name{color:var(--text-2)}
-.tk-widget-task.delegue{background:var(--accent-soft);border-radius:4px}
 .tk-delegue-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:4px;vertical-align:middle;flex-shrink:0}
 .ftask.delegue .ftask-name{color:var(--text-2)}
 .ftask.delegue{background:var(--accent-soft);border-left:3px solid var(--accent)}
-
-/* ── BANNIERE PROCHAIN CONCERT ───────────────────────── */
-.next-concert-banner{display:flex;align-items:center;gap:12px;padding:7px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;width:100%;box-sizing:border-box}
-.ncb-label{font-size:12px;font-weight:500;color:var(--text-3);flex-shrink:0}
-.ncb-sep{width:1px;height:14px;background:var(--border);flex-shrink:0}
-.ncb-art{font-size:13px;font-weight:700;color:var(--text);flex-shrink:0}
-.ncb-info{font-size:12px;color:var(--text-2);flex-shrink:0}
-.ncb-countdown{margin-left:auto;font-size:12px;font-weight:600;padding:2px 10px;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--bg);color:var(--text-3);flex-shrink:0}
-.ncb-countdown.soon{color:var(--amber);background:var(--amber-bg);border-color:var(--amber-border)}
-.ncb-countdown.verysoon{color:var(--red);background:var(--red-bg);border-color:var(--red-border)}
-/* Filtre ventes */
-.ventes-filter{display:flex;align-items:center;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap}
-.ventes-filter span{font-size:12px;color:var(--text-3)}
-.vf-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:3px 9px;border-radius:var(--radius-pill);cursor:pointer;border:1px solid transparent;background:transparent;color:var(--text-2);transition:all .15s;font-family:inherit}
-.vf-btn::before{content:'';width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.vf-1::before{background:var(--accent);opacity:.3}
-.vf-2::before{background:var(--accent);opacity:.5}
-.vf-3::before{background:var(--accent);opacity:.75}
-.vf-4::before{background:var(--accent)}
-.vf-btn:hover{background:var(--bg)}
-.vf-btn.active{background:var(--accent-soft);color:var(--text)}
 
 /* ── TITRE COLONNE TACHES ────────────────────────────── */
 .tk-col-project-title{font-size:12px;font-weight:700;color:var(--text-2);padding:8px 12px 0;letter-spacing:-.01em}
@@ -670,7 +588,7 @@ button.tag:hover{border-color:var(--border-strong);color:var(--text)}
 .ico-muted{color:var(--text-3)}
 .btn .ico,.menu-item .ico{width:14px;height:14px;vertical-align:-2px;margin-right:2px}
 .fiche-close .ico{width:16px;height:16px}
-.ftask-chk .ico,.chk .ico{width:11px;height:11px;stroke-width:3}
+.ftask-chk .ico{width:11px;height:11px;stroke-width:3}
 .fg-chev .ico,#fiche-toggle-icon .ico{width:12px;height:12px}
 .media-link-icon .ico{width:22px;height:22px;color:var(--text-3)}
 .rs-chip .ico,.rs-post-concert .ico,.rs-post-validated .ico{width:12px;height:12px;vertical-align:-2px}
@@ -683,12 +601,11 @@ button.tag:hover{border-color:var(--border-strong);color:var(--text)}
 /* ── TYPOGRAPHIE ──────────────────────────────────────── */
 /* Geist pour toute l'interface (chiffres alignes). Les noms d'artistes en
    Bricolage Grotesque semi-condensee, en capitales : une tete d'affiche. */
-.artist,.col-name,.crow-name,.fiche-header h2,.ann-compact-art,.ncb-art,.cal-art,.rpt-cover h1,.bilan-header h1{font-family:'Bricolage Grotesque','Geist',-apple-system,BlinkMacSystemFont,sans-serif;font-stretch:88%;font-weight:700;letter-spacing:.005em;text-transform:uppercase}
+.artist,.col-name,.crow-name,.fiche-header h2,.ann-art,.cal-art,.rpt-cover h1,.bilan-header h1{font-family:'Bricolage Grotesque','Geist',-apple-system,BlinkMacSystemFont,sans-serif;font-stretch:88%;font-weight:700;letter-spacing:.005em;text-transform:uppercase}
 .col-name{font-size:14px}
 .crow-name{font-size:14px}
 .fiche-header h2{font-size:22px}
-.ann-compact-art{font-size:13px}
-.ncb-art{font-size:14px}
+.ann-art{font-size:14px}
 .cal-art{font-size:12px !important}
 .cmdk-title.artist{font-size:14px}
 .rpt-cover h1{font-size:40px}
@@ -696,7 +613,7 @@ button.tag:hover{border-color:var(--border-strong);color:var(--text)}
 
 /* ── ACCESSIBILITE : zones de clic elargies + focus clavier ── */
 /* Les cases a cocher font 16px visuellement mais acceptent le clic 6px autour. */
-.chk::after,.ftask-chk::after,.tk-widget-chk::after,.tk-chk::after{content:'';position:absolute;inset:-6px}
+.ftask-chk::after,.tk-chk::after{content:'';position:absolute;inset:-6px}
 /* Anneau de focus visible uniquement au clavier (Tab), jamais a la souris. */
 button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--radius-sm)}
 input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;border-color:var(--accent) !important;box-shadow:0 0 0 3px var(--accent-ring)}
@@ -708,10 +625,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .filters-panel{animation:popIn .12s ease}
 .tk-modal.open .tk-modal-box,.tk-modal.open .cmdk-box,.rs-modal.open .rs-modal-box,#budget-box{animation:popIn .16s ease}
 @keyframes popIn{from{opacity:0;transform:translateY(-4px) scale(.99)}to{opacity:1;transform:none}}
-.chk,.ftask-chk,.tk-chk,.tk-widget-chk{transition:background .15s,border-color .15s}
-.ftask-chk.on .ico,.chk.on .ico{animation:tick .18s ease}
+.ftask-chk,.tk-chk{transition:background .15s,border-color .15s}
+.ftask-chk.on .ico{animation:tick .18s ease}
 @keyframes tick{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
-.ann-card-compact,.tk-widget-task,.titem,.ftask,.menu-item,.cmdk-item{transition:background .15s}
+.ann-card,.ftask,.menu-item,.cmdk-item{transition:background .15s}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
 }
@@ -775,24 +692,19 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
   .filters{position:static;padding:0}
   .cmdk-foot{display:none}
   .cmdk-box{margin-top:-30vh}
-  .next-concert-banner{scrollbar-width:none}
-  .next-concert-banner::-webkit-scrollbar{display:none}
   .dash-top{grid-template-columns:1fr}
-  .tk-widget-board{grid-template-columns:repeat(2,1fr)}
-  .grid{grid-template-columns:repeat(2,1fr)}
+  .dash-row{grid-template-columns:1fr;gap:8px;padding:12px 16px}
+  .search-field,.search-field input{width:100%}
+  .today-row{flex-wrap:wrap}
+  .today-label{width:100%;padding-top:0}
+  .today-row .btn-link{margin-left:0;width:100%;text-align:left;padding-left:0}
   .filters input{width:100%}
   .crow-list-card{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .crow-grid{min-width:1040px}
   .fiche,.fiche.wide{width:100vw}
   .fiche-expand{display:none}
-  .dash-mid-row{flex-direction:column}
-  #next-concert-wrap,#today-rs-wrap{flex:1 1 auto}
-  .next-concert-banner{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .process-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .process-header,.prow{min-width:700px}
-}
-@media (max-width:480px){
-  .grid{grid-template-columns:1fr}
 }
 
 .bud-style-btn{padding:5px 12px;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer;transition:all .15s;color:var(--text-2)}
