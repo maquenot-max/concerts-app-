@@ -777,11 +777,15 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .sp-row-sub{font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sp-row-cible{font-size:11px;color:var(--text-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sp-row-cible .ico{width:11px;height:11px;vertical-align:-1px}
-.sp-row-track{flex:1;position:relative;min-height:38px;cursor:pointer;overflow:hidden}
+.sp-row-track{flex:1;position:relative;min-height:56px;cursor:pointer;overflow:hidden}
 .sp-sep{position:absolute;top:0;bottom:0;width:1px;background:var(--border-light)}
 .sp-today{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);opacity:.5}
-.sp-dc{position:absolute;top:50%;width:9px;height:9px;margin:-4px 0 0 -4px;background:var(--text);transform:rotate(45deg);border-radius:1px}
-.sp-bar{position:absolute;top:50%;transform:translateY(-50%);height:22px;min-width:62px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;overflow:hidden;white-space:nowrap;transition:filter .15s;box-shadow:0 0 0 1px var(--surface)}
+/* Date du concert : losange en haut de la ligne + trait fin qui passe sous les
+   barres. Centre verticalement, le losange tombait sur le montant d'une vague
+   qui finit le jour du concert. */
+.sp-dc-line{position:absolute;top:9px;bottom:0;width:2px;margin-left:-1px;background:var(--text);opacity:.22;z-index:1}
+.sp-dc{position:absolute;top:4px;width:9px;height:9px;margin-left:-4.5px;background:var(--text);transform:rotate(45deg);border-radius:1px;z-index:3}
+.sp-bar{position:absolute;z-index:2;top:50%;transform:translateY(-50%);height:22px;min-width:62px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;overflow:hidden;white-space:nowrap;transition:filter .15s;box-shadow:0 0 0 1px var(--surface)}
 .sp-bar:hover{filter:brightness(.94)}
 .sp-bar span{padding:0 5px;overflow:hidden;text-overflow:ellipsis}
 .sp-bar.sp-encours{background:#b8e0ca;color:#1d5c3a}

@@ -2160,7 +2160,7 @@ function renderConcerts(){
       // Recap sponso : total du concert + une pastille par vague (couleur =
       // statut). Clic = saisie directe, sans passer par la fiche.
       var sp=spRead(c),spTot=spTotal(c);
-      var spDots=sp.vagues.map(function(v,i){
+      var spDots=spVaguesTriees(c).map(function(v,i){
         var st=spStatut(v);
         return '<i class="sp-dot '+SP_STATUTS[st].cls+'" title="'+esc('Vague '+(i+1)+' · '+SP_STATUTS[st].label+(v.debut&&v.fin?' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin):''))+'"></i>';
       }).join('');
@@ -3331,6 +3331,19 @@ function spCible(s){
   if(!s.ville)return '';
   return s.ville+(s.rayon?' + '+s.rayon+' km':'');
 }
+// Numerotation chronologique : "Vague 1" est toujours la plus ancienne, quel
+// que soit l'ordre de saisie (on ajoute souvent une vague passee apres coup).
+// Les vagues sans date de debut ferment la marche. Tri a l'affichage plutot
+// qu'en base : les donnees deja saisies se renumerotent d'elles-memes.
+function spVaguesTriees(c){
+  return spRead(c).vagues.slice().sort(function(a,b){
+    if(!a.debut&&!b.debut)return 0;
+    if(!a.debut)return 1;
+    if(!b.debut)return -1;
+    return a.debut<b.debut?-1:a.debut>b.debut?1:0;
+  });
+}
+function spOrdre(c){return spVaguesTriees(c).map(function(v){return v.id;}).join(',');}
 function spTotal(c){
   return spRead(c).vagues.reduce(function(a,v){return a+(parseFloat(v.budget)||0);},0);
 }
@@ -3367,7 +3380,7 @@ function spBlockHtml(c){
     h+='<div class="sp-warn">'+icon('alert')+' <span>Ce concert est marqué <b>« Sponso gérée par la prod »</b>. Tu peux quand même programmer des vagues ici.</span></div>';
   if(s.vagues.length){
     h+='<div class="sp-vagues">';
-    s.vagues.forEach(function(v,i){
+    spVaguesTriees(c).forEach(function(v,i){
       var m=SP_STATUTS[spStatut(v)];
       h+='<div class="sp-vague">'
         +'<div class="sp-vague-head">'
@@ -3408,10 +3421,14 @@ function spSetVague(cid,vid,field,val){
   var c=spConcert(cid);if(!c)return;
   var v=spWrite(c).vagues.find(function(x){return x.id===vid;});
   if(!v)return;
+  var ordreAvant=spOrdre(c);
   v[field]=val;
   scheduleSave('concerts');
-  // On met a jour le badge en place plutot que de reconstruire le bloc :
-  // sinon le champ suivant perd le focus quand on tabule d'un champ a l'autre.
+  // La vague change de rang (date de debut modifiee) : on reconstruit pour
+  // qu'elle aille a sa place avec son nouveau numero.
+  if(spOrdre(c)!==ordreAvant){spRefresh(cid);return;}
+  // Sinon on met a jour le badge en place plutot que de reconstruire le bloc :
+  // le champ suivant perdrait le focus quand on tabule d'un champ a l'autre.
   var m=SP_STATUTS[spStatut(v)],el=document.getElementById('sp-st-'+vid);
   if(el){el.textContent=m.label;el.className='sp-badge '+m.cls;}
   spUpdateFicheSum(cid);
@@ -3500,14 +3517,15 @@ function spExtend(dir){
 }
 
 // ── Timeline ──
-// La fenetre se calcule sur les seules campagnes actives : sinon de vieilles
-// vagues terminees la tireraient indefiniment vers le passe.
+// La fenetre ne s'etend que vers l'avenir : une vague programmee dans six mois
+// doit se voir d'emblee, mais les vagues passees (saisies pour garder une
+// trace) ne doivent pas l'etirer vers l'arriere. Sinon tous les mois se
+// tassent, les barres gonflent jusqu'a leur largeur minimale et recouvrent la
+// date du concert. Le bouton ← reste la pour remonter a la demande.
 function spMonths(actifs){
   var t=new Date();
   var start=new Date(t.getFullYear(),t.getMonth()-spWindowBefore,1);
   var end=new Date(t.getFullYear(),t.getMonth()+spWindowAfter,1);
-  // La fenetre s'elargit d'elle-meme jusqu'aux vagues deja datees : une vague
-  // programmee dans six mois doit se voir sans avoir a deplier quoi que ce soit.
   actifs.forEach(function(c){
     spRead(c).vagues.forEach(function(v){
       [v.debut,v.fin].forEach(function(ds){
@@ -3515,7 +3533,6 @@ function spMonths(actifs){
         var d=new Date(ds+'T00:00:00');
         if(isNaN(d.getTime()))return;
         var m=new Date(d.getFullYear(),d.getMonth(),1);
-        if(m<start)start=m;
         if(m>end)end=m;
       });
     });
@@ -3584,7 +3601,7 @@ function renderSponso(){
     var s=spRead(c);
     var bars=deco;
     var undated=[];
-    s.vagues.forEach(function(v,i){
+    spVaguesTriees(c).forEach(function(v,i){
       var n=i+1;
       if(!v.debut||!v.fin){undated.push({v:v,n:n});return;}
       var a=ms(v.debut),b=ms(v.fin);
@@ -3604,7 +3621,8 @@ function renderSponso(){
     // tombent bien avant la date, et ce qu'il reste de place pour en caler une.
     var dcms=c.dc?ms(c.dc):NaN;
     if(!isNaN(dcms)&&dcms>=winStart&&dcms<=winEnd)
-      bars+='<div class="sp-dc" style="left:'+pct(dcms)+'%" title="'+esc('Concert · '+spFmtDate(c.dc))+'"></div>';
+      bars+='<div class="sp-dc-line" style="left:'+pct(dcms)+'%"></div>'
+        +'<div class="sp-dc" style="left:'+pct(dcms)+'%" title="'+esc('Concert · '+spFmtDate(c.dc))+'"></div>';
 
     var chips='';
     undated.forEach(function(u){
