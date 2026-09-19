@@ -3503,6 +3503,11 @@ function spExtend(dir){
   if(dir==='before')spWindowBefore+=3;else spWindowAfter+=6;
   renderSponso();
 }
+function spResetWindow(){spWindowBefore=1;spWindowAfter=5;renderSponso();}
+function spPeriodeLabel(months){
+  function lbl(m){var t=m.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});return t.charAt(0).toUpperCase()+t.slice(1);}
+  return lbl(months[0])+' – '+lbl(months[months.length-1]);
+}
 
 // ── Timeline ──
 // La fenetre ne s'etend que vers l'avenir : une vague programmee dans six mois
@@ -3560,7 +3565,14 @@ function renderSponso(){
   var toolbar='<div class="filters">'
     +'<div class="view-toggle">'+pill('tous','Toutes',actifs.length,spFiltre,'spSetFiltre')+pill('encours','En cours',enCours.length,spFiltre,'spSetFiltre')+pill('avenir','À venir',aVenir.length,spFiltre,'spSetFiltre')+'</div>'
     +'<div class="view-toggle">'+pill('date','Par date',null,spVue,'spSetVue')+pill('ville','Par ville',null,spVue,'spSetVue')+'</div>'
-    +'<button class="btn btn-primary" style="margin-left:auto" onclick="spOpenPicker()">+ Ajouter une sponso</button>'
+    +'<div class="month-nav sp-period">'
+    +'<button class="month-nav-btn" onclick="spExtend(\'before\')" aria-label="Afficher les mois précédents">'+icon('chevron-left')+'</button>'
+    +'<span class="month-nav-label">'+spPeriodeLabel(months)+'</span>'
+    +'<button class="month-nav-btn" onclick="spExtend(\'after\')" aria-label="Afficher les mois suivants">'+icon('chevron-right')+'</button>'
+    +'<button class="btn btn-sm" onclick="spResetWindow()">Aujourd\'hui</button>'
+    +'</div>'
+    +'<span class="grow"></span>'
+    +'<button class="btn btn-primary" onclick="spOpenPicker()">+ Ajouter une sponso</button>'
     +'</div>';
 
   var headM='';
@@ -3638,7 +3650,7 @@ function renderSponso(){
   if(finis.length){
     finisHtml='<div class="sp-done">'
       +'<div class="sp-done-toggle" onclick="spToggleTermines()">'
-      +'<span id="sp-done-icon" style="display:inline-flex;transition:transform .2s'+(spTerminesOuvert?';transform:rotate(90deg)':'')+'">'+icon('chevron-right')+'</span>'
+      +'<span class="sp-done-chev'+(spTerminesOuvert?' open':'')+'" id="sp-done-icon">'+icon('chevron-right')+'</span>'
       +'Sponso terminées <b>'+finis.length+'</b>'
       +'</div>'
       +'<div id="sp-done-list" style="display:'+(spTerminesOuvert?'block':'none')+'">'
@@ -3665,10 +3677,7 @@ function renderSponso(){
     +'<div class="sp-card">'
     +'<div class="sp-scroll">'
     +'<div class="sp-inner" style="min-width:'+Math.max(680,190+months.length*88)+'px">'
-    +'<div class="sp-head"><div class="sp-head-info">'
-    +'<button class="sp-nav-btn" onclick="spExtend(\'before\')" title="Afficher les mois précédents">'+icon('arrow-left')+'</button>'
-    +'<button class="sp-nav-btn" onclick="spExtend(\'after\')" title="Afficher les mois suivants">'+icon('arrow-right')+'</button>'
-    +'</div><div class="sp-head-track">'+headM+'</div></div>'
+    +'<div class="sp-head"><div class="sp-head-info">Concert</div><div class="sp-head-track">'+headM+'</div></div>'
     +body
     +'</div></div>'
     +legend
@@ -3693,7 +3702,7 @@ function spToggleTermines(){
   spTerminesOuvert=!spTerminesOuvert;
   var l=document.getElementById('sp-done-list'),ic=document.getElementById('sp-done-icon');
   if(l)l.style.display=spTerminesOuvert?'block':'none';
-  if(ic)ic.style.transform=spTerminesOuvert?'rotate(90deg)':'';
+  if(ic)ic.classList.toggle('open',spTerminesOuvert);
 }
 
 // ── BUDGET CONFIG TOOL ──────────────────────────────────────────────────────
