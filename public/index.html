@@ -241,6 +241,12 @@
       </div>
     </div>
     <div id="tab-taches" class="panel">
+      <div class="filters">
+        <label class="search-field"><svg class="ico" aria-hidden="true"><use href="#i-search"></use></svg><span class="sr-only">Rechercher une tâche</span><input type="search" id="tksearch" placeholder="Rechercher une tâche…" oninput="renderTaches()"></label>
+        <label class="hideok-toggle" title="Afficher aussi les tâches déjà faites"><input type="checkbox" id="tkshowdone" onchange="renderTaches()"> Afficher les tâches faites</label>
+        <span class="grow"></span>
+        <span class="list-head-sub" id="tk-sub"></span>
+      </div>
       <div id="taches-board-wrap"></div>
     </div>
     <div id="tab-sponso" class="panel">
@@ -912,7 +918,7 @@ async function renderTeam(){
     var d=await teamCall('list');
     loadTeamNames(); // reflete tout de suite un ajout/retrait recent dans les notifications
     var me=(currentUser.email||'').toLowerCase();
-    if(!d.members.length){el.innerHTML='<div class="empty-state">Aucun membre.</div>';return;}
+    if(!d.members.length){el.innerHTML='<div class="empty-state">Aucun membre pour le moment.<br><button class="btn btn-primary" onclick="openTeamAddModal()">+ Ajouter un membre</button></div>';return;}
     el.innerHTML='<table class="team-table"><thead><tr><th>Membre</th><th>Rôle</th><th>2FA</th><th>Dernière connexion</th><th></th></tr></thead><tbody>'+d.members.map(function(m){
       var isMe=m.email===me;
       var last=m.last_sign_in_at?new Date(m.last_sign_in_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'Jamais';
@@ -928,7 +934,7 @@ async function renderTeam(){
           +(isMe?'':'<button class="tk-task-btn del-btn" title="Retirer l\'accès" onclick="teamRemove(\''+esc(m.email)+'\')">'+icon('x')+'</button>')
         +'</td></tr>';
     }).join('')+'</tbody></table>';
-  }catch(e){el.innerHTML='<div class="empty-state">Impossible de charger l\'équipe : '+esc(e.message)+'</div>';}
+  }catch(e){el.innerHTML='<div class="empty-state">Impossible de charger l\'équipe : '+esc(e.message)+'<br><button class="btn" onclick="renderTeam()">Réessayer</button></div>';}
 }
 function openTeamAddModal(){document.getElementById('ta-email').value='';document.getElementById('ta-name').value='';document.getElementById('ta-role').value='member';document.getElementById('team-add-modal').classList.add('open');setTimeout(function(){document.getElementById('ta-email').focus();},50);}
 async function teamAdd(){
@@ -2242,7 +2248,7 @@ function renderPastConcerts(){
     if(!matchesCategoryFilter(c,pc))return false;
     return true;
   }).sort(function(a,b){return new Date(b.dc||0)-new Date(a.dc||0);});
-  if(!liste.length){el.innerHTML='<div class="empty-state">Aucun concert passé pour le moment.</div>';return;}
+  if(!liste.length){el.innerHTML='<div class="empty-state">Aucun concert passé pour le moment.<br><button class="btn" onclick="showTab(\'concerts\',document.getElementById(\'btn-concerts\'))">Retour aux concerts</button></div>';return;}
   el.innerHTML='<div class="card crow-list-card list-card">'
     +'<div class="list-head"><h2>'+liste.length+' concert'+(liste.length>1?'s':'')+' passé'+(liste.length>1?'s':'')+'</h2></div>'
     +liste.map(function(c){
@@ -2513,8 +2519,16 @@ function renderTaches(){
   // Construire le board
   var board=document.createElement('div');
   board.className='tk-board';
+  var q=((document.getElementById('tksearch')||{value:''}).value||'').toLowerCase();
+  var showDone=!!(document.getElementById('tkshowdone')||{}).checked;
+  var nbAffichees=0,nbFaites=0;
   tkCols.forEach(function(col){
-    var allTasks=tkTasks.filter(function(t){return t.colId===col.id&&!t.done;}).sort(function(a,b){
+    var allTasks=tkTasks.filter(function(t){
+      if(t.colId!==col.id)return false;
+      if(t.done&&!showDone)return false;
+      if(q&&t.nom.toLowerCase().indexOf(q)<0)return false;
+      return true;
+    }).sort(function(a,b){
       if(!a.date&&!b.date)return 0;if(!a.date)return 1;if(!b.date)return -1;
       return new Date(a.date)-new Date(b.date);
     });
@@ -2554,6 +2568,7 @@ function renderTaches(){
       fromTask.colId=col.id;scheduleSave('tktasks');renderTaches();renderTkWidget();
     });
     allTasks.forEach(function(t){
+      nbAffichees++;if(t.done)nbFaites++;
       var df=t.date?tkFmtDate(t.date):null;
       var taskEl=document.createElement('div');taskEl.className='tk-task'+(t.done?' done':'')+(t.delegue?' delegue':'');
       taskEl.draggable=true;
@@ -2600,6 +2615,8 @@ function renderTaches(){
   });
   
   wrap.innerHTML='';wrap.appendChild(board);
+  var sub=document.getElementById('tk-sub');
+  if(sub)sub.textContent=nbAffichees?(nbAffichees+' tâche'+(nbAffichees>1?'s':'')+(nbFaites?' · '+nbFaites+' faite'+(nbFaites>1?'s':''):'')):'Aucune tâche';
   // Setup modal buttons (une seule fois)
   tkSetupModal();
 }
