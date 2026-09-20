@@ -619,6 +619,9 @@ var concertMedia=[];
 var customTasks=[];
 var tkCols=[],tkTasks=[],tkEditId=null,tkAddColId=null;
 var rsPosts=[],rsEditId=null,rsCurrentProj="pp",rsCurrentDate=null,rsFmt="post",rsNetState={fb:false,insta:false,tiktok:false};
+// Planning RS : fenetre de 3 semaines (3 jours en arriere, 17 en avant),
+// decalee de 2 semaines a la fois par les fleches du bandeau.
+var RS_JOURS_AVANT=3,RS_JOURS_APRES=17,RS_PAS=14,rsWindowOffset=0;
 var dragSrcId=null,saveTimer=null,currentFicheId=null;
 
 // ── CLIENT SUPABASE ──────────────────────────────────────
@@ -2835,11 +2838,12 @@ function renderRS(){
     +'<button class="btn btn-primary" onclick="rsOpenModal(\''+todayStr+'\')">+ Ajouter un contenu</button>'
     +'</div>';
 
-  // Plage visible : -3j / +15j depuis aujourd'hui
-  // rsWindowOffset permet d'étendre la plage
-  if(typeof rsWindowBefore==='undefined'){rsWindowBefore=3;rsWindowAfter=15;}
-  var winStart=new Date(today);winStart.setDate(winStart.getDate()-rsWindowBefore);
-  var winEnd=new Date(today);winEnd.setDate(winEnd.getDate()+rsWindowAfter);
+  // Fenetre de 3 semaines calee sur aujourd'hui, qu'on decale de 2 semaines a
+  // la fois. On garde la continuite d'un mois a l'autre (un planning de
+  // publications se lit sur les prochaines semaines, pas sur un mois civil),
+  // avec le meme bandeau de navigation que les autres calendriers.
+  var winStart=new Date(today);winStart.setDate(winStart.getDate()-RS_JOURS_AVANT+rsWindowOffset);
+  var winEnd=new Date(today);winEnd.setDate(winEnd.getDate()+RS_JOURS_APRES+rsWindowOffset);
 
   // Annonces auto PP : créer/maintenir un post auto par concert PP non encore annoncé
   if(rsCurrentProj==='pp'){
@@ -2952,35 +2956,27 @@ function renderRS(){
   }
 
   // Boutons étendre
-  var _wsBefore=new Date(today);_wsBefore.setDate(_wsBefore.getDate()-rsWindowBefore);
-  var _prevM=new Date(_wsBefore.getFullYear(),_wsBefore.getMonth()-1,1);
-  var _prevLbl=_prevM.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-  _prevLbl=_prevLbl.charAt(0).toUpperCase()+_prevLbl.slice(1);
-  var _wsAfter=new Date(today);_wsAfter.setDate(_wsAfter.getDate()+rsWindowAfter);
-  var _nextM=new Date(_wsAfter.getFullYear(),_wsAfter.getMonth()+1,1);
-  var _nextLbl=_nextM.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-  _nextLbl=_nextLbl.charAt(0).toUpperCase()+_nextLbl.slice(1);
-  var topHtml='<div class="rs-extend top"><button class="btn btn-sm" onclick="rsExtend(\'before\')">'+icon('arrow-up')+' '+_prevLbl+'</button></div>';
-  var botHtml='<div class="rs-extend bottom"><button class="btn btn-sm" onclick="rsExtend(\'after\')">'+icon('arrow-down')+' '+_nextLbl+'</button></div>';
+  var navHtml='<div class="rs-head"><div class="month-nav">'
+    +'<button class="month-nav-btn" onclick="rsShift(-1)" aria-label="Deux semaines plus tôt">'+icon('chevron-left')+'</button>'
+    +'<span class="month-nav-label">'+rsPlageLabel(winStart,winEnd)+'</span>'
+    +'<button class="month-nav-btn" onclick="rsShift(1)" aria-label="Deux semaines plus tard">'+icon('chevron-right')+'</button>'
+    +(rsWindowOffset?'<button class="btn btn-sm" onclick="rsResetWindow()">Aujourd\'hui</button>':'')
+    +'</div></div>';
 
-  wrap.innerHTML=tabsHtml+'<div class="rs-card">'+topHtml+daysHtml+botHtml+'</div>';
+  wrap.innerHTML=tabsHtml+'<div class="rs-card">'+navHtml+daysHtml+'</div>';
   rsSetupModal();
 
 }
 
-function rsExtend(dir){
-  if(typeof rsWindowBefore==='undefined'){rsWindowBefore=3;rsWindowAfter=15;}
-  var today=new Date();today.setHours(0,0,0,0);
-  if(dir==='before'){
-    var curStart=new Date(today);curStart.setDate(curStart.getDate()-rsWindowBefore);
-    var prevMonthStart=new Date(curStart.getFullYear(),curStart.getMonth()-1,1);
-    rsWindowBefore+=Math.round((curStart-prevMonthStart)/(1000*60*60*24));
-  } else {
-    var curEnd=new Date(today);curEnd.setDate(curEnd.getDate()+rsWindowAfter);
-    var nextMonthEnd=new Date(curEnd.getFullYear(),curEnd.getMonth()+2,0);
-    rsWindowAfter+=Math.round((nextMonthEnd-curEnd)/(1000*60*60*24));
-  }
-  renderRS();
+function rsShift(sens){rsWindowOffset+=sens*RS_PAS;renderRS();window.scrollTo(0,0);}
+function rsResetWindow(){rsWindowOffset=0;renderRS();window.scrollTo(0,0);}
+// "17 sept. – 8 oct." ; l'annee n'apparait que si la plage en change.
+function rsPlageLabel(a,b){
+  var memeAnnee=a.getFullYear()===b.getFullYear();
+  var o={day:'numeric',month:'short'};
+  var d1=a.toLocaleDateString('fr-FR',memeAnnee?o:{day:'numeric',month:'short',year:'numeric'});
+  var d2=b.toLocaleDateString('fr-FR',memeAnnee?o:{day:'numeric',month:'short',year:'numeric'});
+  return d1+' – '+d2+(memeAnnee&&a.getFullYear()!==new Date().getFullYear()?' '+a.getFullYear():'');
 }
 
 function rsToggleDay(dateStr){
@@ -2991,7 +2987,7 @@ function rsToggleDay(dateStr){
 }
 
 
-function rsSetProj(p){rsCurrentProj=p;rsWindowBefore=3;rsWindowAfter=15;renderRS();}
+function rsSetProj(p){rsCurrentProj=p;rsWindowOffset=0;renderRS();}
 
 var rsModalReady=false;
 function rsSetupModal(){
