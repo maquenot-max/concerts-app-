@@ -23,13 +23,6 @@
   <div style="font-size:13px;color:var(--text-2);max-width:420px;line-height:1.5">La connexion à la base de données a échoué. Pour éviter d'écraser des données existantes, le site ne s'ouvre pas tant que le chargement n'a pas réussi. Vérifie ta connexion internet et réessaie.</div>
   <button class="btn btn-primary" onclick="init()">Réessayer</button>
 </div>
-<div id="tomorrow-reminder" style="display:none;position:fixed;bottom:16px;right:16px;z-index:150;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-md);padding:14px 16px;max-width:280px">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-    <div style="font-size:13px;font-weight:600;line-height:1.4" id="tomorrow-reminder-text"></div>
-    <button onclick="document.getElementById('tomorrow-reminder').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:16px;line-height:1;padding:0">×</button>
-  </div>
-  <button class="btn" style="margin-top:10px;width:100%" onclick="document.getElementById('tomorrow-reminder').style.display='none';showTab('taches',document.getElementById('btn-taches'))">Voir les tâches</button>
-</div>
 <div id="archive-suggestion" style="display:none;position:fixed;bottom:16px;left:16px;z-index:150;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-md);padding:14px 16px;max-width:300px">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
     <div style="font-size:13px;font-weight:600;line-height:1.4" id="archive-suggestion-text"></div>
@@ -75,7 +68,6 @@
       <button class="active" data-tab="kanban" onclick="showTab('kanban',this)"><span class="nav-long">Tableau de bord</span><span class="nav-short">Tableau</span></button>
       <button id="btn-concerts" data-tab="concerts" onclick="showTab('concerts',this)">Concerts</button>
       <button id="btn-past" data-tab="past" onclick="showTab('past',this)" style="display:none"><span class="nav-long">Concerts passés</span><span class="nav-short">Passés</span></button>
-      <button id="btn-taches" data-tab="taches" onclick="showTab('taches',this)">Tâches</button>
       <button id="btn-sponso" data-tab="sponso" onclick="showTab('sponso',this)">Sponso</button>
     </nav>
     <div class="filters-popover" id="user-menu-wrap" style="display:none">
@@ -1207,18 +1199,12 @@ window.addEventListener('beforeunload',function(e){
   }
 });
 var appDataLoaded=false;
-// Rappel a l'ouverture : taches (Kanban manuel) dont l'echeance est demain.
-function checkTomorrowReminder(){
-  var tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
-  var ts=tomorrow.getFullYear()+'-'+String(tomorrow.getMonth()+1).padStart(2,'0')+'-'+String(tomorrow.getDate()).padStart(2,'0');
-  var dueTomorrow=tkTasks.filter(function(t){return !t.done&&t.date===ts;});
-  if(!dueTomorrow.length)return;
-  var el=document.getElementById('tomorrow-reminder');
-  if(!el)return;
-  var noms=dueTomorrow.slice(0,3).map(function(t){return t.nom;}).join(', ')+(dueTomorrow.length>3?'…':'');
-  document.getElementById('tomorrow-reminder-text').textContent=(dueTomorrow.length===1?'1 tâche arrive à échéance demain : ':dueTomorrow.length+' tâches arrivent à échéance demain : ')+noms;
-  el.style.display='block';
-}
+// Le rappel "taches a echeance demain", qui s'ouvrait en bas a droite au
+// chargement, a ete retire le 20 septembre : trop intrusif pour ce qu'il
+// apportait. Consequence assumee : le widget Taches par projet ne montre que
+// le retard et le jour meme, donc plus rien n'annonce une echeance la VEILLE.
+// Une tache due demain apparaitra demain. Si ce delai manque un jour, c'est
+// le seuil du widget qu'il faut elargir, pas le pop-up qu'il faut remettre.
 // Suggestion (non intrusive, une fois par session) d'archiver les concerts
 // passes depuis plus d'une semaine vers "Concerts passes".
 function checkArchiveSuggestion(){
@@ -1286,7 +1272,6 @@ async function init(){
     render();
     applyRoute();
     initRealtime();
-    checkTomorrowReminder();
     checkArchiveSuggestion();
     sweepExpiredMedia();
   }catch(e){
@@ -1297,9 +1282,11 @@ async function init(){
   }
 }
 var currentTab='kanban';
-// Onglets sans bouton visible dans la barre de navigation : on met en avant
-// leur onglet parent, sinon la barre reste sans aucun repere actif.
-var TAB_PARENT={past:'concerts'};
+// Onglets sans bouton dans la barre de navigation : on met en avant leur
+// onglet parent, sinon la barre reste sans aucun repere actif.
+// Concerts passes s'atteint depuis Concerts ; Taches depuis le lien "Tout voir"
+// de la carte Taches par projet du tableau de bord.
+var TAB_PARENT={past:'concerts',taches:'kanban'};
 // Onglets reserves aux administrateurs. Les masquer dans le menu utilisateur
 // ne suffisait pas : ils restaient atteignables par la recherche ⌘K et en
 // tapant #process ou #budgetconfig dans l'URL. La garde est ici, au seul
