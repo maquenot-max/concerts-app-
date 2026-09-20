@@ -98,33 +98,32 @@
       <div class="dash-top">
         <div class="card list-card dash-card" id="ann-widget">
           <div class="list-head"><h2>Annonces à venir</h2><span class="list-head-sub" id="ann-count"></span></div>
-          <div id="ann-wrap-compact"><div class="ann-grid" aria-hidden="true"><div class="skel skel-ann"></div><div class="skel skel-ann"></div></div></div>
+          <div id="ann-wrap-compact"><div class="ann-grid" aria-hidden="true"><div class="skel skel-ann"></div><div class="skel skel-ann"></div><div class="skel skel-ann"></div></div></div>
         </div>
         <div class="card list-card dash-card">
-          <div class="list-head"><h2>Aujourd'hui</h2><span class="list-head-sub" id="today-label"></span></div>
-          <div id="today-wrap" class="dash-body"><div class="skel-lines" aria-hidden="true"><div class="skel skel-line w40"></div><div class="skel skel-line w80"></div><div class="skel skel-line w60"></div></div></div>
+          <div class="list-head"><h2>Tâches par projet</h2><a href="#" class="btn-link" onclick="event.preventDefault();showTab('taches')">Tout voir</a></div>
+          <div id="tk-widget-wrap"><div class="skel-lines" aria-hidden="true"><div class="skel skel-line w40"></div><div class="skel skel-line w80"></div><div class="skel skel-line w60"></div></div></div>
         </div>
       </div>
-      <div class="card list-card">
-        <div class="list-head dash-concerts-head">
-          <h2>Concerts</h2><span class="list-head-sub" id="kanban-sub"></span>
-          <span class="grow"></span>
-          <label class="search-field"><svg class="ico" aria-hidden="true"><use href="#i-search"></use></svg><span class="sr-only">Rechercher un artiste</span><input type="search" id="search" placeholder="Rechercher un artiste…" oninput="renderKanban()"></label>
-          <div class="filters-popover">
-            <button class="btn" onclick="toggleFiltersPanel(event,'kfilters-panel')">Filtres<span class="filters-badge" id="kfilters-badge" style="display:none"></span></button>
-            <div class="filters-panel" id="kfilters-panel" style="display:none">
-              <select id="fville" onchange="renderKanban()"><option value="">Toutes les villes</option></select>
-              <select id="fperiode" onchange="renderKanban()"><option value="">Toutes les périodes</option></select>
-              <select id="fcat" onchange="renderKanban()" title="Affiche les concerts ayant une tâche urgente ou en retard dans cette catégorie"><option value="">Toutes les catégories</option></select>
-              <select id="fventes" onchange="window._vf=this.value===''?null:parseInt(this.value);renderKanban()"><option value="">Toutes les ventes</option></select>
-            </div>
+      <div class="card dash-line" id="dash-line"></div>
+      <div class="filters dash-filters">
+        <label class="search-field"><svg class="ico" aria-hidden="true"><use href="#i-search"></use></svg><span class="sr-only">Rechercher un artiste</span><input type="search" id="search" placeholder="Rechercher un artiste…" oninput="renderKanban()"></label>
+        <div class="filters-popover">
+          <button class="btn" onclick="toggleFiltersPanel(event,'kfilters-panel')">Filtres<span class="filters-badge" id="kfilters-badge" style="display:none"></span></button>
+          <div class="filters-panel" id="kfilters-panel" style="display:none">
+            <select id="fville" onchange="renderKanban()"><option value="">Toutes les villes</option></select>
+            <select id="fperiode" onchange="renderKanban()"><option value="">Toutes les périodes</option></select>
+            <select id="fcat" onchange="renderKanban()" title="Affiche les concerts ayant une tâche urgente ou en retard dans cette catégorie"><option value="">Toutes les catégories</option></select>
+            <select id="fventes" onchange="window._vf=this.value===''?null:parseInt(this.value);renderKanban()"><option value="">Toutes les ventes</option></select>
           </div>
-          <label class="hideok-toggle" title="N'afficher que les concerts ayant une tâche en retard">
-            <input type="checkbox" id="fhideok" onchange="renderKanban()"> Masquer les concerts à jour
-          </label>
         </div>
-        <div id="kanban-wrap"><div class="skel-lines" aria-hidden="true"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-line w40"></div></div></div>
+        <label class="hideok-toggle" title="N'afficher que les concerts ayant une tâche à faire">
+          <input type="checkbox" id="fhideok" onchange="renderKanban()"> Masquer les concerts à jour
+        </label>
+        <span class="grow"></span>
+        <span class="list-head-sub" id="kanban-sub"></span>
       </div>
+      <div id="kanban-wrap"><div class="kb-grid" aria-hidden="true"><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-block"></div></div><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-block"></div></div><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div></div></div></div>
     </div>
     <div id="tab-concerts" class="panel">
       <div class="filters" id="concerts-filters">
@@ -1971,58 +1970,40 @@ function updTask(id,field,val){
   }
 }
 function delTask(id){process=process.filter(function(p){return p.id!==id;});scheduleSave('process');renderProcess();}
-// Carte "Aujourd'hui" : prochain concert, posts du jour et taches du jour
-// reunis, a la place de trois bandeaux separes.
-function renderTodayCard(today){
-  var wrap=document.getElementById('today-wrap');if(!wrap)return;
-  var lbl=document.getElementById('today-label');
-  if(lbl)lbl.textContent=today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
-  var todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
-  var html='';
+// Ligne fine sous les widgets : prochain concert et posts du jour.
+function renderDashLine(today){
+  var el=document.getElementById('dash-line');if(!el)return;
+  var groups=[];
   var nextC=concerts.filter(function(c){return !c.supprime&&!c.annule&&c.dc&&new Date(c.dc)>=today;}).sort(function(a,b){return new Date(a.dc)-new Date(b.dc);})[0];
   if(nextC){
     var d=new Date(nextC.dc);d.setHours(0,0,0,0);
     var diff=Math.round((d-today)/86400000);
     var cnt=diff===0?"Aujourd'hui":diff===1?'Demain':'J-'+diff;
-    html+='<div class="today-row"><span class="today-label">Prochain concert</span>'
-      +'<a href="#" class="today-art crow-name" onclick="event.preventDefault();openFiche(\''+nextC.id+'\')">'+esc(nextC.art)+cancelBadge(nextC)+'</a>'
-      +'<span class="today-sub">'+(nextC.ville?esc(formatLieu(nextC.ville))+' · ':'')+d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+'</span>'
-      +'<span class="grow"></span><span class="tag '+(diff<=7?'tag-red':diff<=30?'tag-amber':'tag-neutral')+'">'+cnt+'</span></div>';
+    groups.push('<span class="dash-line-group"><span class="dash-line-label">Prochain concert</span>'
+      +'<a href="#" class="crow-name dash-line-art" onclick="event.preventDefault();openFiche(\''+nextC.id+'\')">'+esc(nextC.art)+cancelBadge(nextC)+'</a>'
+      +'<span class="dash-line-sub">'+(nextC.ville?esc(formatLieu(nextC.ville))+' · ':'')+d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+'</span>'
+      +'<span class="tag '+(diff<=7?'tag-red':diff<=30?'tag-amber':'tag-neutral')+'">'+cnt+'</span></span>');
   }
-  var PROJ={pp:'Please Please',antdt:'ANTDT',gc:'Golden Coast',sr:'Saline Royale'};
+  var todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
   var posts=rsPosts.filter(function(p){return p.date===todayStr;});
-  var postsHtml=posts.length?posts.map(function(p){
+  var chips=posts.length?posts.map(function(p){
     var t=RS_TYPES[p.type]||RS_TYPES.autre;
     var fmtLbl=p.format==='story'?'Story':p.format==='tirage'?'Tirage':'Post';
-    var title=rsResolveConcertLabel(p)||p.note||t.label;
-    var st=p.status==='posted'?['tag-accent','Posté']:p.status==='ready'?['tag-outline-accent','Prêt']:['tag-neutral','À faire'];
-    return '<div class="today-item" onclick="showTab(\'rs\');rsSetProj(\''+esc(p.proj)+'\')">'
-      +'<span class="rs-post-format">'+fmtLbl+'</span>'
-      +'<span class="rs-post-type '+t.cls+'">'+t.label+'</span>'
-      +'<span class="today-item-title">'+esc(title)+'</span>'
-      +'<span class="today-proj">'+esc(PROJ[p.proj]||p.proj)+'</span>'
-      +'<span class="grow"></span><span class="tag '+st[0]+'">'+st[1]+'</span></div>';
-  }).join(''):'<span class="today-sub">Rien de prévu aujourd\'hui.</span>';
-  html+='<div class="today-row"><span class="today-label">Posts du jour</span><div class="today-list">'+postsHtml+'</div></div>';
-  var due=tkTasks.filter(function(t){return !t.done&&t.date&&t.date<=todayStr;}).sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0;});
-  var shown=due.slice(0,4);
-  var tasksHtml=shown.length?shown.map(function(t){
-    var col=tkCols.find(function(c){return c.id===t.colId;});
-    return '<label class="today-item"><input type="checkbox" class="today-check" onchange="tkToggleDone(\''+esc(t.id)+'\');renderKanban()">'
-      +'<span class="today-item-title">'+esc(t.nom)+'</span>'
-      +(col?'<span class="today-proj">'+esc(col.nom)+'</span>':'')
-      +(t.date<todayStr?'<span class="grow"></span><span class="tag tag-red">En retard</span>':'')+'</label>';
-  }).join('')+(due.length>shown.length?'<span class="today-sub">+ '+(due.length-shown.length)+' autre'+(due.length-shown.length>1?'s':'')+'</span>':''):'<span class="today-sub">Rien à faire aujourd\'hui.</span>';
-  html+='<div class="today-row"><span class="today-label">Tâches du jour</span><div class="today-list">'+tasksHtml+'</div>'
-    +'<a href="#" class="btn-link" onclick="event.preventDefault();showTab(\'taches\')">Toutes les tâches</a></div>';
-  wrap.innerHTML=html;
+    var title=(rsResolveConcertLabel(p)||p.note||t.label).substring(0,24);
+    var cls=p.status==='posted'?'tag-accent':p.status==='ready'?'tag-outline-accent':'tag-neutral';
+    return '<a href="#" class="tag '+cls+'" onclick="event.preventDefault();showTab(\'rs\');rsSetProj(\''+esc(p.proj)+'\')" title="'+esc(t.label)+'">'+fmtLbl+' · '+esc(title)+'</a>';
+  }).join(''):'<span class="dash-line-sub">Rien de prévu</span>';
+  groups.push('<span class="dash-line-group"><span class="dash-line-label">Posts du jour</span>'+chips+'</span>');
+  el.innerHTML=groups.join('<span class="dash-line-sep"></span>');
 }
-// Liste compacte des concerts : l'etat des taches en un coup d'oeil, le
-// detail reste dans la fiche (qui s'ouvre sur le plan de communication).
+// Cartes de concert cote a cote : l'en-tete, puis les taches a faire (en
+// retard ou du jour) cochables directement. Une carte sans tache s'arrete a
+// son en-tete : c'est l'absence de liste qui dit que tout est a jour.
 function renderKanban(){
   renderAnnonces();
+  renderTkWidget();
   var today=new Date();today.setHours(0,0,0,0);
-  renderTodayCard(today);
+  renderDashLine(today);
   var vsel=document.getElementById('fventes');
   if(vsel&&vsel.options.length<=1){
     VENTES.filter(function(v){return v.id>0;}).forEach(function(v){var o=document.createElement('option');o.value=String(v.id);o.textContent=v.label;vsel.appendChild(o);});
@@ -2035,7 +2016,7 @@ function renderKanban(){
   var wrap=document.getElementById('kanban-wrap');
   var sub=document.getElementById('kanban-sub');
   if(!list.length){if(sub)sub.textContent='';wrap.innerHTML=emptyConcertsHtml(kanbanFiltersActive(),'resetKanbanFilters()');return;}
-  var rows=list.map(function(c){
+  var cards=list.map(function(c){
     var sorted=sortedProcess(c);
     var skipSpK=!!taskStates['skip-'+c.id+'-sp'];
     var skipColK=!!taskStates['skip-'+c.id+'-col'];
@@ -2045,29 +2026,38 @@ function renderKanban(){
       return true;
     });}
     sorted=sorted.filter(function(t){return !isNA(c,t);});
-    var pending=sorted.filter(function(t){return !taskStates[tk(c.id,t.id)];});
-    var late=pending.filter(function(t){var d=calcDate(c,t);return isUnlocked(c,t)&&(isLate(d)||isToday(d));});
-    var soon=pending.filter(function(t){var d=calcDate(c,t);return isUnlocked(c,t)&&d&&!isLate(d)&&!isToday(d)&&isSoon(d);});
-    var next=pending.map(function(t){return calcDate(c,t);}).filter(function(d){return d&&d>today;}).sort(function(a,b){return a-b;})[0];
-    var total=sorted.length,done=total-pending.length;
-    var pct=total?Math.round(done/total*100):0;
+    var lateTasks=sorted.filter(function(t){var d=calcDate(c,t);return !taskStates[tk(c.id,t.id)]&&isUnlocked(c,t)&&(isLate(d)||isToday(d));});
+    var hasLate=lateTasks.length>0;
     var ds=c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
-    var tags='';
-    if(late.length)tags+='<span class="tag tag-red">'+late.length+' en retard</span>';
-    if(soon.length)tags+='<span class="tag tag-neutral">'+soon.length+' cette semaine</span>';
-    if(!late.length&&!soon.length)tags+=pending.length?(next?'<span class="crow-meta">Prochaine tâche le '+fmt(next)+'</span>':''):'<span class="tag tag-green">À jour</span>';
-    var html='<div class="crow dash-row'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\',\'plan\')">'
-      +'<div class="crow-info"><span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span><span class="crow-sub">'+(c.ville?esc(formatLieu(c.ville))+' · ':'')+ds+'</span></div>'
-      +'<div class="dash-tags">'+tags+'</div>'
-      +'<div class="dash-progress"><span class="dash-bar"><span class="dash-bar-fill" style="width:'+pct+'%"></span></span><span class="dash-count">'+done+'/'+total+'</span></div>'
-      +'<span class="crow-chevron">'+icon('chevron-right')+'</span></div>';
-    return {hasLate:late.length>0,html:html};
+    var shown=lateTasks.slice(0,4);
+    var body='';
+    if(hasLate){
+      body='<div class="kb-tasks">'+shown.map(function(t){
+        var cat=CATS[t.cat]||{cls:'p-gen',label:'?'};
+        var d=calcDate(c,t);var isHl=!!taskStates['hl-'+c.id+'-'+t.id];
+        var isNew=d?Math.floor((today-d)/86400000)<3:false;
+        return '<div class="kb-task'+(isHl?' hl':'')+'" title="Surligner (la tâche remonte dans les tâches Please Please)" onclick="event.stopPropagation();toggleHighlight(\''+c.id+'\','+tidLit(t)+')">'
+          +'<button type="button" class="kb-chk" aria-label="Marquer comme fait" onclick="event.stopPropagation();toggleTask(\''+c.id+'\','+tidLit(t)+')"></button>'
+          +'<span class="kb-task-body"><span class="kb-task-name">'+esc(t.nom)+'</span><span class="pill '+cat.cls+'">'+cat.label+'</span></span>'
+          +(isNew?'<span class="tag tag-amber">Nouveau</span>':'')
+          +'</div>';
+      }).join('')
+      +(lateTasks.length>shown.length?'<a href="#" class="kb-more" onclick="event.preventDefault();openFiche(\''+c.id+'\',\'plan\')">+ '+(lateTasks.length-shown.length)+' autres tâches</a>':'')
+      +'</div>';
+    }
+    var html='<div class="kb-card'+(c.annule?' is-cancelled':'')+'">'
+      +'<div class="kb-head'+(hasLate?'':' only')+'" onclick="openFiche(\''+c.id+'\')">'
+      +'<span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>'
+      +'<span class="kb-sub">'+(c.ville?esc(formatLieu(c.ville))+' · ':'')+ds+'</span>'
+      +ventesHtml(c,'toggleVentes(event,\''+c.id+'\')')
+      +'</div>'+body+'</div>';
+    return {hasLate:hasLate,html:html};
   });
-  var nbLate=rows.filter(function(r){return r.hasLate;}).length;
-  if(sub)sub.textContent=list.length+' en cours'+(nbLate?' · '+nbLate+' avec des tâches en retard':'');
-  var visible=hideOk?rows.filter(function(r){return r.hasLate;}):rows;
-  if(!visible.length){wrap.innerHTML=hideOk?'<div class="empty-state">Tout est à jour : aucun concert avec une tâche en retard.<br><button class="btn" onclick="document.getElementById(\'fhideok\').checked=false;renderKanban()">Afficher tous les concerts</button></div>':emptyConcertsHtml(kanbanFiltersActive(),'resetKanbanFilters()');return;}
-  wrap.innerHTML=visible.map(function(r){return r.html;}).join('');
+  var nbLate=cards.filter(function(x){return x.hasLate;}).length;
+  if(sub)sub.textContent=list.length+' concert'+(list.length>1?'s':'')+(nbLate?' · '+nbLate+' avec des tâches à faire':'');
+  var visible=hideOk?cards.filter(function(x){return x.hasLate;}):cards;
+  if(!visible.length){wrap.innerHTML=hideOk?'<div class="empty-state">Tout est à jour : aucun concert avec une tâche à faire.<br><button class="btn" onclick="document.getElementById(\'fhideok\').checked=false;renderKanban()">Afficher tous les concerts</button></div>':emptyConcertsHtml(kanbanFiltersActive(),'resetKanbanFilters()');return;}
+  wrap.innerHTML='<div class="kb-grid">'+visible.map(function(x){return x.html;}).join('')+'</div>';
 }
 var concertsViewMode='list';
 function setConcertsView(mode){
@@ -2737,114 +2727,56 @@ function renderTkWidget(){
   var wrap=document.getElementById('tk-widget-wrap');
   if(!wrap)return;
   var today=new Date();today.setHours(0,0,0,0);
-
-  // IDs et noms de référence des 4 projets
-  var projDefs={
-    pp:{id:'pp',nom:'Please Please'},
-    gc:{id:'gc',nom:'Golden Coast'},
-    antdt:{id:'antdt',nom:'ANTDT'},
-    sr:{id:'sr',nom:'Saline Royale'}
-  };
+  var projDefs={pp:{id:'pp',nom:'Please Please'},gc:{id:'gc',nom:'Golden Coast'},antdt:{id:'antdt',nom:'ANTDT'},sr:{id:'sr',nom:'Saline Royale'}};
   var projIds=['pp','gc','antdt','sr'];
-
-  // Respecter l'ordre de tkCols (comme dans l'onglet Tâches)
-  // On prend les colonnes de tkCols qui correspondent aux 4 projets, dans leur ordre
+  // Meme ordre que l'onglet Taches, les projets manquants ajoutes a la fin.
   var orderedCols=tkCols.filter(function(c){return projIds.indexOf(c.id)>=0;});
-  // Ajouter celles qui manquent encore
-  projIds.forEach(function(pid){
-    if(!orderedCols.find(function(c){return c.id===pid;})){
-      orderedCols.push(projDefs[pid]);
-    }
-  });
-
-  // Tâches épinglées concerts (dans PP)
-  var pinnedConcertTasks=[];
+  projIds.forEach(function(pid){if(!orderedCols.find(function(c){return c.id===pid;}))orderedCols.push(projDefs[pid]);});
+  // Taches de concert surlignees : elles remontent dans Please Please.
+  var pinned=[];
   concerts.forEach(function(c){
     if(c.supprime||c.annule)return;
     process.forEach(function(t){
-      var hlKey='hl-'+c.id+'-'+t.id;
-      if(taskStates[hlKey]&&!taskStates[c.id+'-'+t.id]&&!isNA(c,t)){
-        pinnedConcertTasks.push({
-          id:'hl-'+c.id+'-'+t.id,
-          colId:'pp',
-          nom:c.art+' - '+t.nom,
-          prio:'high',
-          done:false,
-          isPinned:true,
-          concertId:c.id,
-          taskId:t.id
-        });
-      }
+      if(taskStates['hl-'+c.id+'-'+t.id]&&!taskStates[c.id+'-'+t.id]&&!isNA(c,t))
+        pinned.push({id:'hl-'+c.id+'-'+t.id,colId:'pp',nom:c.art+' - '+t.nom,isPinned:true,concertId:c.id,taskId:t.id});
     });
   });
-
-  var board=document.createElement('div');
-  board.className='tk-widget-board';
-
+  var html='<div class="tkw-board">';
   orderedCols.forEach(function(col){
-    var colId=col.id;
-
-    // Tâches urgentes : retard + aujourd'hui + sans date
-    var manualUrgent=tkTasks.filter(function(t){
-      if(t.colId!==colId||t.done)return false;
+    var urgent=tkTasks.filter(function(t){
+      if(t.colId!==col.id||t.done)return false;
       if(!t.date)return true;
-      var d=new Date(t.date);d.setHours(0,0,0,0);
-      return d<=today;
+      var d=new Date(t.date);d.setHours(0,0,0,0);return d<=today;
     }).sort(function(a,b){
       if(!a.date&&!b.date)return 0;if(!a.date)return 1;if(!b.date)return -1;
       return new Date(a.date)-new Date(b.date);
     });
-
-    // Épinglées seulement dans PP
-    var pinned=colId==='pp'?pinnedConcertTasks:[];
-    var allTasks=pinned.concat(manualUrgent);
-
-    var colEl=document.createElement('div');colEl.className='tk-widget-col';
-
-    var title=document.createElement('div');title.className='tk-widget-col-title';
-    title.textContent=col.nom+(allTasks.length?' ('+allTasks.length+')':'');
-    colEl.appendChild(title);
-
-    if(!allTasks.length){
-      var emp=document.createElement('div');emp.className='tk-widget-empty-col';emp.textContent='Rien d\'urgent';colEl.appendChild(emp);
-    } else {
-      allTasks.forEach(function(t){
-        var row=document.createElement('div');row.className='tk-widget-task'+(t.delegue?' delegue':'');
-        var chk=document.createElement('div');chk.className='tk-widget-chk';
-        if(t.isPinned){
-          chk.addEventListener('click',function(e){
-            e.stopPropagation();
-            toggleTask(t.concertId,t.taskId);
-            toggleHighlight(t.concertId,t.taskId);
-          });
-        } else {
-          chk.addEventListener('click',function(e){e.stopPropagation();tkToggleDone(t.id);});
-        }
-        var dot=document.createElement('div');dot.className='tk-widget-dot '+(t.prio||'normal');
-        var name=document.createElement('div');name.className='tk-widget-task-name';
-        name.textContent=t.nom;name.title=t.nom;
-        if(t.delegue)name.insertAdjacentHTML('afterbegin',icon('user','ico-muted')+' ');
-        if(t.isPinned){name.style.fontStyle='italic';name.style.fontSize='11px';}
-        row.appendChild(chk);row.appendChild(dot);row.appendChild(name);
-        if(!t.isPinned){row.addEventListener('click',function(){tkEditTask(t.id);});}
-        colEl.appendChild(row);
-      });
-    }
-
-    var addBtn=document.createElement('button');addBtn.className='tk-widget-add-btn';addBtn.textContent='+';
-    addBtn.title='Ajouter une tâche dans '+col.nom;
-    addBtn.addEventListener('click',function(e){
-      e.stopPropagation();
-      if(!tkCols.find(function(c){return c.id===colId;})){
-        tkCols.push({id:colId,nom:col.nom});
+    var all=(col.id==='pp'?pinned:[]).concat(urgent);
+    html+='<div class="tkw-col"><div class="tkw-title">'+esc(col.nom)+(all.length?' <span class="tkw-count">'+all.length+'</span>':'')+'</div>';
+    if(!all.length)html+='<div class="tkw-empty">Rien d\'urgent</div>';
+    all.forEach(function(t){
+      var dateHtml='';
+      if(!t.isPinned){
+        if(t.date){
+          var dt=new Date(t.date);dt.setHours(0,0,0,0);var diff=Math.round((dt-today)/86400000);
+          dateHtml='<span class="tkw-date'+(diff<0?' late':diff===0?' today':'')+'">'+(diff===0?"Aujourd'hui":dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}))+'</span>';
+        } else dateHtml='<span class="tkw-date">Sans date</span>';
       }
-      tkOpenModal(colId);
+      var onChk=t.isPinned
+        ?"toggleTask('"+t.concertId+"',"+tidLit({id:t.taskId})+");toggleHighlight('"+t.concertId+"',"+tidLit({id:t.taskId})+")"
+        :"tkToggleDone('"+esc(t.id)+"')";
+      html+='<div class="tkw-task'+(t.delegue?' delegue':'')+(t.isPinned?' pinned':'')+'"'+(t.isPinned?'':' onclick="tkEditTask(\''+esc(t.id)+'\')"')+'>'
+        +'<button type="button" class="kb-chk" aria-label="Marquer comme fait" onclick="event.stopPropagation();'+onChk+'"></button>'
+        +'<span class="tkw-body"><span class="tkw-name">'+(t.delegue?icon('user','ico-muted')+' ':'')+esc(t.nom)+'</span>'+dateHtml+'</span>'
+        +'</div>';
     });
-    colEl.appendChild(addBtn);
-    board.appendChild(colEl);
+    html+='<button type="button" class="tkw-add" onclick="tkWidgetAdd(\''+esc(col.id)+'\',\''+esc(col.nom)+'\')">+ Ajouter</button></div>';
   });
-
-  wrap.innerHTML='';wrap.appendChild(board);
+  wrap.innerHTML=html+'</div>';
+}
+function tkWidgetAdd(colId,nom){
+  if(!tkCols.find(function(c){return c.id===colId;}))tkCols.push({id:colId,nom:nom});
+  tkOpenModal(colId);
 }
 
 // ── PLANNING RS ──────────────────────────────────────────
