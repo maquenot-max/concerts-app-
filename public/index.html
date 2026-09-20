@@ -2566,7 +2566,6 @@ function renderTaches(){
       chk.addEventListener('click',function(e){e.stopPropagation();tkToggleDone(t.id);});
       var body=document.createElement('div');body.className='tk-task-body';
       var nameEl=document.createElement('div');nameEl.className='tk-task-name';nameEl.textContent=t.nom;
-      if(t.delegue)nameEl.insertAdjacentHTML('afterbegin',icon('user','ico-muted')+' ');
       if(t.recur){var recurIcon=document.createElement('span');recurIcon.innerHTML=' '+icon('repeat','ico-muted');recurIcon.title='Tâche récurrente';nameEl.appendChild(recurIcon);}
       if(t.note){var noteIcon=document.createElement('span');noteIcon.innerHTML=' '+icon('note','ico-muted');noteIcon.title=t.note;nameEl.appendChild(noteIcon);}
       body.appendChild(nameEl);
@@ -2575,6 +2574,8 @@ function renderTaches(){
       var meta=document.createElement('div');meta.className='tk-task-meta';
       if(df){var dateEl=document.createElement('span');dateEl.className='tk-task-date '+df.cls;dateEl.textContent=df.txt;meta.appendChild(dateEl);}
       if(t.prio==='high'||t.prio==='low'){var pl=tkPrioLabel(t.prio);var prioEl=document.createElement('span');prioEl.className='tk-task-prio '+pl.cls;prioEl.textContent=pl.txt;meta.appendChild(prioEl);}
+      // Meme etiquette que sur le tableau de bord : ce qui est delegue se voit.
+      if(t.delegue){var dl=document.createElement('span');dl.className='tag tag-accent tkw-tag';dl.innerHTML=icon('user')+' Délégué';meta.appendChild(dl);}
       var actions=document.createElement('div');actions.className='tk-task-actions';
       var editBtn=document.createElement('button');editBtn.className='tk-task-btn';editBtn.innerHTML=icon('pencil');editBtn.title='Modifier';
       editBtn.addEventListener('click',function(e){e.stopPropagation();tkEditTask(t.id);});
@@ -2755,19 +2756,23 @@ function renderTkWidget(){
     html+='<div class="tkw-col"><div class="tkw-title">'+esc(col.nom)+(all.length?' <span class="tkw-count">'+all.length+'</span>':'')+'</div>';
     if(!all.length)html+='<div class="tkw-empty">Rien d\'urgent</div>';
     all.forEach(function(t){
-      var dateHtml='';
+      var meta='';
       if(!t.isPinned){
         if(t.date){
           var dt=new Date(t.date);dt.setHours(0,0,0,0);var diff=Math.round((dt-today)/86400000);
-          dateHtml='<span class="tkw-date'+(diff<0?' late':diff===0?' today':'')+'">'+(diff===0?"Aujourd'hui":dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}))+'</span>';
-        } else dateHtml='<span class="tkw-date">Sans date</span>';
+          meta='<span class="tkw-date'+(diff<0?' late':diff===0?' today':'')+'">'+(diff===0?"Aujourd'hui":dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}))+'</span>';
+        } else meta='<span class="tkw-date">Sans date</span>';
       }
+      // Deleguee : une etiquette explicite plutot qu'une icone discrete, on
+      // doit voir tout de suite ce qui est dans les mains de quelqu'un d'autre.
+      if(t.delegue)meta+='<span class="tag tag-accent tkw-tag">'+icon('user')+' Délégué</span>';
+      if(meta)meta='<span class="tkw-meta">'+meta+'</span>';
       var onChk=t.isPinned
         ?"toggleTask('"+t.concertId+"',"+tidLit({id:t.taskId})+");toggleHighlight('"+t.concertId+"',"+tidLit({id:t.taskId})+")"
         :"tkToggleDone('"+esc(t.id)+"')";
       html+='<div class="tkw-task'+(t.delegue?' delegue':'')+(t.isPinned?' pinned':'')+'"'+(t.isPinned?'':' onclick="tkEditTask(\''+esc(t.id)+'\')"')+'>'
         +'<button type="button" class="kb-chk" aria-label="Marquer comme fait" onclick="event.stopPropagation();'+onChk+'"></button>'
-        +'<span class="tkw-body"><span class="tkw-name">'+(t.delegue?icon('user','ico-muted')+' ':'')+esc(t.nom)+'</span>'+dateHtml+'</span>'
+        +'<span class="tkw-body"><span class="tkw-name">'+esc(t.nom)+'</span>'+meta+'</span>'
         +'</div>';
     });
     html+='<button type="button" class="tkw-add" onclick="tkWidgetAdd(\''+esc(col.id)+'\',\''+esc(col.nom)+'\')">+ Ajouter</button></div>';
