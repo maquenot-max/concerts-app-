@@ -705,6 +705,12 @@ async function loadCurrentMember(){
   renderUserMenu();
   return currentMember?'ok':'denied';
 }
+// Definition unique de "est administrateur" : masquage du menu, garde des
+// onglets reserves, sauvegarde/restauration et page Equipe s'appuient tous
+// dessus, pour qu'aucun de ces endroits ne puisse deriver des autres.
+// Cote navigateur, ca ne fait que cacher : c'est un confort d'interface, pas
+// une securite. Ce qui protege vraiment les donnees, ce sont les regles RLS.
+function isAdmin(){return !!(currentMember&&currentMember.role==='admin');}
 function renderUserMenu(){
   var wrap=document.getElementById('user-menu-wrap');if(!wrap)return;
   wrap.style.display=currentUser?'':'none';
@@ -713,9 +719,9 @@ function renderUserMenu(){
   var head=document.getElementById('user-menu-head');
   if(head)head.innerHTML='<div class="menu-head-name">'+esc(name||email)+'</div>'+(name?'<div class="menu-head-sub">'+esc(email)+'</div>':'')+(currentMember?'<div class="menu-head-sub">'+(currentMember.role==='admin'?'Administrateur':'Membre')+'</div>':'');
   var btn=document.getElementById('user-btn');if(btn)btn.title=name||email;
-  var isAdmin=!!(currentMember&&currentMember.role==='admin');
+  var admin=isAdmin();
   ['user-menu-team','user-menu-process','user-menu-budget'].forEach(function(id){
-    var el=document.getElementById(id);if(el)el.style.display=isAdmin?'':'none';
+    var el=document.getElementById(id);if(el)el.style.display=admin?'':'none';
   });
 }
 function closeUserMenu(){var m=document.getElementById('user-menu');if(m)m.style.display='none';}
@@ -864,7 +870,7 @@ async function saveAccountPassword(){
 var BACKUP_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','budget_templates','style_adjustments','regles_salles','concert_media','concert_tasks'];
 function openBackupModal(){
   var w=document.getElementById('backup-restore-wrap');
-  if(w)w.style.display=(currentMember&&currentMember.role==='admin')?'':'none';
+  if(w)w.style.display=isAdmin()?'':'none';
   document.getElementById('backup-modal').classList.add('open');
 }
 async function backupFetchAll(){
@@ -890,7 +896,7 @@ async function backupExport(){
 }
 async function backupRestore(input){
   var file=input.files&&input.files[0];input.value='';if(!file)return;
-  if(!currentMember||currentMember.role!=='admin'){showToast('Réservé aux administrateurs.');return;}
+  if(!isAdmin()){showToast('Réservé aux administrateurs.');return;}
   var payload;
   try{payload=JSON.parse(await file.text());}catch(e){showToast('Fichier illisible : ce n\'est pas une sauvegarde valide.',6000);return;}
   if(!payload||payload.app!=='ppcomm-dashboard'||!payload.data||typeof payload.data!=='object'){showToast('Ce fichier n\'est pas une sauvegarde de l\'application.',6000);return;}
@@ -916,7 +922,7 @@ async function teamCall(action,payload){
 }
 async function renderTeam(){
   var el=document.getElementById('team-list');if(!el)return;
-  if(!currentMember||currentMember.role!=='admin'){el.innerHTML='<div class="empty-state">Réservé aux administrateurs.</div>';return;}
+  if(!isAdmin()){el.innerHTML='<div class="empty-state">Réservé aux administrateurs.</div>';return;}
   el.innerHTML='<div class="empty-state">Chargement…</div>';
   try{
     var d=await teamCall('list');
@@ -932,10 +938,10 @@ async function renderTeam(){
         +'<td class="team-last">'+(m.mfa?'Activée':'—')+'</td>'
         +'<td class="team-last">'+last+'</td>'
         +'<td class="team-actions">'
-          +'<button class="tk-task-btn" title="Réinitialiser le mot de passe" onclick="teamReset(\''+esc(m.email)+'\')">'+icon('rotate')+'</button>'
-          +(m.mfa&&!isMe?'<button class="tk-task-btn" title="Désactiver sa double authentification (téléphone perdu)" onclick="teamMfaReset(\''+esc(m.email)+'\')">'+icon('ban')+'</button>':'')
-          +(isMe?'':'<button class="tk-task-btn" title="'+(m.role==='admin'?'Passer membre':'Passer administrateur')+'" onclick="teamRole(\''+esc(m.email)+'\',\''+(m.role==='admin'?'member':'admin')+'\')">'+icon('user')+'</button>')
-          +(isMe?'':'<button class="tk-task-btn del-btn" title="Retirer l\'accès" onclick="teamRemove(\''+esc(m.email)+'\')">'+icon('x')+'</button>')
+          +'<button class="tk-task-btn" title="Réinitialiser le mot de passe" onclick="teamReset(\''+escJs(m.email)+'\')">'+icon('rotate')+'</button>'
+          +(m.mfa&&!isMe?'<button class="tk-task-btn" title="Désactiver sa double authentification (téléphone perdu)" onclick="teamMfaReset(\''+escJs(m.email)+'\')">'+icon('ban')+'</button>':'')
+          +(isMe?'':'<button class="tk-task-btn" title="'+(m.role==='admin'?'Passer membre':'Passer administrateur')+'" onclick="teamRole(\''+escJs(m.email)+'\',\''+(m.role==='admin'?'member':'admin')+'\')">'+icon('user')+'</button>')
+          +(isMe?'':'<button class="tk-task-btn del-btn" title="Retirer l\'accès" onclick="teamRemove(\''+escJs(m.email)+'\')">'+icon('x')+'</button>')
         +'</td></tr>';
     }).join('')+'</tbody></table>';
   }catch(e){el.innerHTML='<div class="empty-state">Impossible de charger l\'équipe : '+esc(e.message)+'<br><button class="btn" onclick="renderTeam()">Réessayer</button></div>';}
@@ -1294,8 +1300,19 @@ var currentTab='kanban';
 // Onglets sans bouton visible dans la barre de navigation : on met en avant
 // leur onglet parent, sinon la barre reste sans aucun repere actif.
 var TAB_PARENT={past:'concerts'};
+// Onglets reserves aux administrateurs. Les masquer dans le menu utilisateur
+// ne suffisait pas : ils restaient atteignables par la recherche ⌘K et en
+// tapant #process ou #budgetconfig dans l'URL. La garde est ici, au seul
+// passage oblige pour afficher un onglet.
+var ADMIN_TABS={process:1,budgetconfig:1,team:1};
 function showTab(id,btn){
   var panel=document.getElementById('tab-'+id);if(!panel)return;
+  if(ADMIN_TABS[id]&&!isAdmin()){
+    // Au tout premier applyRoute(), l'identite n'est pas encore chargee : on
+    // refuse sans rien dire, applyRoute() repassera apres la connexion.
+    if(currentMember)showToast('Réservé aux administrateurs.');
+    return;
+  }
   btn=btn||document.querySelector('.nav button[data-tab="'+id+'"]');
   if(btn&&btn.style.display==='none')btn=null;
   if(!btn&&TAB_PARENT[id])btn=document.querySelector('.nav button[data-tab="'+TAB_PARENT[id]+'"]');
@@ -1361,20 +1378,45 @@ function calcDate(c,t){
 // Echappement HTML : toute donnee saisie par un utilisateur (nom d'artiste, notes,
 // taches...) doit passer par esc() avant d'etre inseree dans une chaine HTML/attribut,
 // sinon elle peut injecter du code execute par le navigateur des autres utilisateurs.
+//
+// ATTENTION : esc() ne suffit PAS a l'interieur d'un attribut onclick="...".
+// Le navigateur decode les entites AVANT de lire le JavaScript : &#39; y
+// redevient une vraie apostrophe, qui referme le litteral de chaine et permet
+// d'executer ce qui suit. Pour ce cas, utiliser escJs() ci-dessous.
 function esc(s){
   if(s===null||s===undefined)return '';
   return String(s).replace(/[&<>"']/g,function(ch){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
   });
 }
+// Echappement pour une valeur placee dans un litteral JS entre apostrophes,
+// lui-meme place dans un attribut HTML : onclick="fn('ICI')".
+// Deux couches a neutraliser, dans cet ordre :
+//  1. couche JS  : \ et ' sont echappes par un antislash, les sauts de ligne
+//     (y compris U+2028/2029, qui cassent aussi un litteral JS) deviennent \n.
+//  2. couche HTML : esc() par-dessus, pour que " ne ferme pas l'attribut et
+//     que & ne soit pas relu comme une entite. Le navigateur redecode, le
+//     moteur JS voit alors des apostrophes correctement echappees.
+function escJs(s){
+  if(s===null||s===undefined)return '';
+  return esc(String(s)
+    .replace(/\\/g,'\\\\')
+    .replace(/'/g,"\\'")
+    .replace(/\r/g,'\\r')
+    .replace(/\n/g,'\\n')
+    .replace(/[\u2028\u2029]/g,function(ch){return ch==='\u2028'?'\\u2028':'\\u2029';}));
+}
 // Pour les URL inserees dans un href/src : n'autorise que http(s) et les chemins
 // relatifs, pour bloquer les schemas dangereux comme javascript:.
-function escUrl(u){
+// safeUrl : valide le schema SANS echapper, pour pouvoir choisir ensuite la
+// couche d'echappement qui convient (esc pour un href, escJs pour un onclick).
+function safeUrl(u){
   u=(u||'').trim();
   if(!u)return '';
-  if(/^(https?:)?\/\//i.test(u)||/^[.\/#]/.test(u))return esc(u);
+  if(/^(https?:)?\/\//i.test(u)||/^[.\/#]/.test(u))return u;
   return '';
 }
+function escUrl(u){return esc(safeUrl(u));}
 // Icone du sprite Lucide (couleur du texte, taille 1em)
 function icon(name,extra){return '<svg class="ico'+(extra?' '+extra:'')+'" aria-hidden="true"><use href="#i-'+name+'"></use></svg>';}
 function cancelBadge(c){return c.annule?'<span class="cancel-badge">Annulé</span>':'';}
@@ -2018,7 +2060,7 @@ function renderDashLine(today){
     var fmtLbl=p.format==='story'?'Story':p.format==='tirage'?'Tirage':'Post';
     var title=(rsResolveConcertLabel(p)||p.note||t.label).substring(0,24);
     var cls=p.status==='posted'?'tag-accent':p.status==='ready'?'tag-outline-accent':'tag-neutral';
-    return '<a href="#" class="tag '+cls+'" onclick="event.preventDefault();showTab(\'rs\');rsSetProj(\''+esc(p.proj)+'\')" title="'+esc(t.label)+'">'+fmtLbl+' · '+esc(title)+'</a>';
+    return '<a href="#" class="tag '+cls+'" onclick="event.preventDefault();showTab(\'rs\');rsSetProj(\''+escJs(p.proj)+'\')" title="'+esc(t.label)+'">'+fmtLbl+' · '+esc(title)+'</a>';
   }).join(''):'<span class="dash-line-sub">Rien de prévu</span>';
   groups.push('<span class="dash-line-group"><span class="dash-line-label">Posts du jour</span>'+chips+'</span>');
   el.innerHTML=groups.join('<span class="dash-line-sep"></span>');
@@ -2395,11 +2437,11 @@ function renderWizardStep(){
   else{
     gridEl.innerHTML=items.map(function(m){
       if(m.type==='image'){
-        return '<div class="media-card"><img src="'+escUrl(m.url)+'" onclick="window.open(\''+escUrl(m.url)+'\',\'_blank\')">'
+        return '<div class="media-card"><img src="'+escUrl(m.url)+'" onclick="window.open(\''+escJs(safeUrl(m.url))+'\',\'_blank\')">'
           +(m.caption?'<div class="media-caption">'+esc(m.caption)+'</div>':'')
           +'<button class="media-del" onclick="event.stopPropagation();wizardDeleteItem(\''+m.id+'\')" title="Supprimer">'+icon('x')+'</button></div>';
       }
-      return '<div class="media-card media-link" onclick="window.open(\''+escUrl(m.url)+'\',\'_blank\')">'
+      return '<div class="media-card media-link" onclick="window.open(\''+escJs(safeUrl(m.url))+'\',\'_blank\')">'
         +'<div class="media-link-icon">'+icon('link')+'</div><div class="media-link-url">'+esc(m.caption||m.url)+'</div>'
         +'<button class="media-del" onclick="event.stopPropagation();wizardDeleteItem(\''+m.id+'\')" title="Supprimer">'+icon('x')+'</button></div>';
     }).join('');
@@ -2820,13 +2862,13 @@ function renderTkWidget(){
       if(meta)meta='<span class="tkw-meta">'+meta+'</span>';
       var onChk=t.isPinned
         ?"toggleTask('"+t.concertId+"',"+tidLit({id:t.taskId})+");toggleHighlight('"+t.concertId+"',"+tidLit({id:t.taskId})+")"
-        :"tkToggleDone('"+esc(t.id)+"')";
-      html+='<div class="tkw-task'+(t.delegue?' delegue':'')+(t.isPinned?' pinned':'')+'"'+(t.isPinned?'':' onclick="tkEditTask(\''+esc(t.id)+'\')"')+'>'
+        :"tkToggleDone('"+escJs(t.id)+"')";
+      html+='<div class="tkw-task'+(t.delegue?' delegue':'')+(t.isPinned?' pinned':'')+'"'+(t.isPinned?'':' onclick="tkEditTask(\''+escJs(t.id)+'\')"')+'>'
         +'<button type="button" class="kb-chk" aria-label="Marquer comme fait" onclick="event.stopPropagation();'+onChk+'"></button>'
         +'<span class="tkw-body"><span class="tkw-name">'+esc(t.nom)+'</span>'+meta+'</span>'
         +'</div>';
     });
-    html+='<button type="button" class="tkw-add" onclick="tkWidgetAdd(\''+esc(col.id)+'\',\''+esc(col.nom)+'\')">+ Ajouter</button></div>';
+    html+='<button type="button" class="tkw-add" onclick="tkWidgetAdd(\''+escJs(col.id)+'\',\''+escJs(col.nom)+'\')">+ Ajouter</button></div>';
   });
   wrap.innerHTML=html+'</div>';
 }
@@ -3949,6 +3991,9 @@ function cmdkRender(q){
     items.push({type:'concert',title:c.art,sub:(c.ville?formatLieu(c.ville)+' · ':'')+ds+(c.supprime?' · passé':''),action:function(){openFiche(c.id);}});
   });
   CMDK_TABS.forEach(function(t){
+    // Ne pas proposer un onglet que showTab refusera : Process figure dans
+    // cette liste mais reste reserve aux administrateurs.
+    if(ADMIN_TABS[t.id]&&!isAdmin())return;
     if(nq&&cmdkNorm(t.label).indexOf(nq)<0)return;
     items.push({type:'tab',title:t.label,sub:'Aller à l\'onglet',action:function(){showTab(t.id);}});
   });
