@@ -1,2 +1,6 @@
 [build]
   publish = "public"
+  # Verification mecanique avant mise en ligne (voir check.js). Un echec ici
+  # annule le deploiement : mieux vaut refuser une mise en ligne que servir une
+  # page blanche. Aucune dependance, aucun npm install.
+  command = "node check.js"
