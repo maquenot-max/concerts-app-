@@ -3265,7 +3265,22 @@ function rsDelPost(id){
 // Le statut d'une vague ne se saisit jamais, il se deduit de ses dates : rien
 // a tenir a jour a la main quand le temps passe.
 
-var spWindowBefore=1,spWindowAfter=5; // mois affiches avant / apres le mois courant
+// Fenetre GLISSANTE de 7 mois (1 avant, 5 apres le mois courant), decalee de
+// 3 mois a la fois par le bandeau : meme geste que le planning RS et que le
+// calendrier, qui utilisent le meme composant .month-nav.
+// Avant, les fleches ELARGISSAIENT la fenetre (+3 mois a gauche, +6 a droite)
+// sans jamais pouvoir la reduire : au bout de quelques clics la frise faisait
+// deux ecrans de large, toutes les barres etaient ecrasees a leur largeur
+// minimale, et seul "Aujourd'hui" permettait de revenir.
+var SP_MOIS_AVANT=1,SP_MOIS_APRES=5,SP_PAS=3,spMonthOffset=0;
+// Largeur d'un mois et de la colonne de gauche, en pixels. SP_INFO_PX doit
+// rester egal a la largeur de .sp-head-info / .sp-row-info dans style.css
+// (215px) : la frise reservait 190px et se retrouvait 25px trop etroite.
+var SP_MOIS_PX=140,SP_INFO_PX=215;
+// Garde-fou sur la vue par defaut : une vague saisie tres loin dans le temps
+// elargit la fenetre pour rester visible, mais jamais au-dela de cette limite,
+// sinon les mois se tassent et on retombe sur le probleme d'origine.
+var SP_MOIS_MAX=11;
 var spModalCid=null,spTerminesOuvert=false;
 var spFiltre='tous',spVue='date';
 var SP_VIDE={billet:'',legende:'',crea:'',ville:'',rayon:'',vagues:[]};
@@ -3494,37 +3509,37 @@ function spCloseModal(){
   spRenderVues();
 }
 document.getElementById('sp-modal').addEventListener('click',function(e){if(e.target===this)spCloseModal();});
-function spExtend(dir){
-  if(dir==='before')spWindowBefore+=3;else spWindowAfter+=6;
-  renderSponso();
-}
-function spResetWindow(){spWindowBefore=1;spWindowAfter=5;renderSponso();}
+function spShift(sens){spMonthOffset+=sens*SP_PAS;renderSponso();}
+function spResetWindow(){spMonthOffset=0;renderSponso();}
 function spPeriodeLabel(months){
   function lbl(m){var t=m.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});return t.charAt(0).toUpperCase()+t.slice(1);}
   return lbl(months[0])+' – '+lbl(months[months.length-1]);
 }
 
 // ── Timeline ──
-// La fenetre ne s'etend que vers l'avenir : une vague programmee dans six mois
-// doit se voir d'emblee, mais les vagues passees (saisies pour garder une
-// trace) ne doivent pas l'etirer vers l'arriere. Sinon tous les mois se
-// tassent, les barres gonflent jusqu'a leur largeur minimale et recouvrent la
-// date du concert. Le bouton ← reste la pour remonter a la demande.
+// Sur la vue par defaut (offset 0) seulement, la fenetre s'etire vers l'avenir
+// pour qu'une vague programmee au-dela des 5 mois se voie d'emblee, sans jamais
+// depasser SP_MOIS_MAX : au-dela, les mois se tassent et les barres deviennent
+// illisibles. Des que l'utilisateur navigue, la fenetre garde une largeur fixe,
+// donc une densite constante : c'est lui qui choisit ou il regarde.
 function spMonths(actifs){
   var t=new Date();
-  var start=new Date(t.getFullYear(),t.getMonth()-spWindowBefore,1);
-  var end=new Date(t.getFullYear(),t.getMonth()+spWindowAfter,1);
-  actifs.forEach(function(c){
-    spRead(c).vagues.forEach(function(v){
-      [v.debut,v.fin].forEach(function(ds){
-        if(!ds)return;
-        var d=new Date(ds+'T00:00:00');
-        if(isNaN(d.getTime()))return;
-        var m=new Date(d.getFullYear(),d.getMonth(),1);
-        if(m>end)end=m;
+  var start=new Date(t.getFullYear(),t.getMonth()-SP_MOIS_AVANT+spMonthOffset,1);
+  var end=new Date(t.getFullYear(),t.getMonth()+SP_MOIS_APRES+spMonthOffset,1);
+  if(!spMonthOffset){
+    var limite=new Date(t.getFullYear(),t.getMonth()+SP_MOIS_MAX,1);
+    actifs.forEach(function(c){
+      spRead(c).vagues.forEach(function(v){
+        [v.debut,v.fin].forEach(function(ds){
+          if(!ds)return;
+          var d=new Date(ds+'T00:00:00');
+          if(isNaN(d.getTime()))return;
+          var m=new Date(d.getFullYear(),d.getMonth(),1);
+          if(m>end&&m<=limite)end=m;
+        });
       });
     });
-  });
+  }
   var out=[],cur=new Date(start.getFullYear(),start.getMonth(),1);
   while(cur<=end&&out.length<48){
     out.push(new Date(cur.getFullYear(),cur.getMonth(),1));
@@ -3548,6 +3563,12 @@ function renderSponso(){
   var span=winEnd-winStart;
   function pct(ms){return (ms-winStart)/span*100;}
   function ms(s){var d=new Date(s+'T00:00:00');return isNaN(d.getTime())?NaN:d.getTime();}
+  // Largeur imposee a la frise, et ce qu'un "1 %" de piste vaut en pixels :
+  // sert a decider si le libelle d'une barre a la place de s'afficher. On part
+  // de la largeur minimale garantie ; si la fenetre du navigateur est plus
+  // large, la barre sera juste un peu plus a l'aise que prevu.
+  var largeurInner=Math.max(680,SP_INFO_PX+months.length*SP_MOIS_PX);
+  var pxParPourcent=(largeurInner-SP_INFO_PX)/100;
 
   var enCours=actifs.filter(spEnCours),aVenir=actifs.filter(spAVenirProg);
   var rows=spFiltre==='encours'?enCours:spFiltre==='avenir'?aVenir:actifs;
@@ -3561,10 +3582,10 @@ function renderSponso(){
     +'<div class="view-toggle">'+pill('tous','Toutes',actifs.length,spFiltre,'spSetFiltre')+pill('encours','En cours',enCours.length,spFiltre,'spSetFiltre')+pill('avenir','À venir',aVenir.length,spFiltre,'spSetFiltre')+'</div>'
     +'<div class="view-toggle">'+pill('date','Par date',null,spVue,'spSetVue')+pill('ville','Par ville',null,spVue,'spSetVue')+'</div>'
     +'<div class="month-nav sp-period">'
-    +'<button class="month-nav-btn" onclick="spExtend(\'before\')" aria-label="Afficher les mois précédents">'+icon('chevron-left')+'</button>'
+    +'<button class="month-nav-btn" onclick="spShift(-1)" aria-label="Trois mois plus tôt">'+icon('chevron-left')+'</button>'
     +'<span class="month-nav-label">'+spPeriodeLabel(months)+'</span>'
-    +'<button class="month-nav-btn" onclick="spExtend(\'after\')" aria-label="Afficher les mois suivants">'+icon('chevron-right')+'</button>'
-    +'<button class="btn btn-sm" onclick="spResetWindow()">Aujourd\'hui</button>'
+    +'<button class="month-nav-btn" onclick="spShift(1)" aria-label="Trois mois plus tard">'+icon('chevron-right')+'</button>'
+    +(spMonthOffset?'<button class="btn btn-sm" onclick="spResetWindow()">Aujourd\'hui</button>':'')
     +'</div>'
     +'<span class="grow"></span>'
     +'<button class="btn btn-primary" onclick="spOpenPicker()">+ Ajouter une sponso</button>'
@@ -3600,15 +3621,19 @@ function renderSponso(){
       var a=ms(v.debut),b=ms(v.fin);
       if(isNaN(a)||isNaN(b)||b<winStart||a>winEnd)return;
       var l=Math.max(0,pct(a)),r=Math.min(100,pct(b));
-      var w=Math.max(r-l,1.2);
+      var w=Math.max(r-l,0);
       var st=spStatut(v),nt=spNonTransmise(v);
       var tip='V'+n+' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin)+(v.budget?' · '+spEuro(v.budget):'')+(nt?' · prestataire pas encore informé':'');
-      var lbl=v.budget?spEuro(v.budget):'V'+n;
-      // Une vague dure ~2 semaines : sur une fenetre de plusieurs mois la barre
-      // serait trop etroite pour son montant, d'ou le min-width en CSS. La
-      // duree exacte reste lisible dans l'infobulle et dans le modal.
+      // La barre doit dire la verite sur ses dates : c'est tout l'interet de la
+      // frise (voir si les vagues tombent avant le concert, et ce qu'il reste
+      // de place). Une largeur minimale en CSS l'etirait au-dela de sa date de
+      // fin et recouvrait le losange du concert. C'est donc le LIBELLE qui cede
+      // quand la place manque, pas la geometrie : montant si ca rentre, sinon
+      // le numero de vague, sinon rien. L'infobulle garde tout.
+      var pxBarre=w*pxParPourcent;
+      var lbl=pxBarre>=44?(v.budget?spEuro(v.budget):'V'+n):(pxBarre>=24?'V'+n:'');
       bars+='<div class="sp-bar '+SP_STATUTS[st].cls+(nt?' sp-nontransmise':'')+'" style="left:'+l+'%;width:'+w+'%" title="'+esc(tip)+'" onclick="spOpenConcert(\''+c.id+'\')">'
-        +'<span>'+esc(lbl)+'</span></div>';
+        +(lbl?'<span>'+esc(lbl)+'</span>':'')+'</div>';
     });
     // Repere de la date du concert : on voit d'un coup d'oeil si les vagues
     // tombent bien avant la date, et ce qu'il reste de place pour en caler une.
@@ -3671,7 +3696,7 @@ function renderSponso(){
   wrap.innerHTML=toolbar
     +'<div class="sp-card">'
     +'<div class="sp-scroll">'
-    +'<div class="sp-inner" style="min-width:'+Math.max(680,190+months.length*88)+'px">'
+    +'<div class="sp-inner" style="min-width:'+largeurInner+'px">'
     +'<div class="sp-head"><div class="sp-head-info">Concert</div><div class="sp-head-track">'+headM+'</div></div>'
     +body
     +'</div></div>'
