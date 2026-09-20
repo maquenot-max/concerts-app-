@@ -3316,6 +3316,16 @@ function spEuro(n){
   if(isNaN(v))return '';
   return v.toLocaleString('fr-FR')+' €';
 }
+// Variante compacte pour l'etiquette d'une barre de la frise, ou chaque pixel
+// compte : l'espace avant l'euro coute 12px a elle seule, soit quatre fois
+// plus que le passage de 12 a 11px. Partout ailleurs (infobulles, totaux,
+// recap des campagnes terminees), spEuro() garde l'espace de la typographie
+// francaise.
+function spEuroCourt(n){
+  var v=parseFloat(n);
+  if(isNaN(v))return '';
+  return v.toLocaleString('fr-FR')+'€';
+}
 function spFmtDate(s){
   if(!s)return '';
   var d=new Date(s+'T00:00:00');
@@ -3563,12 +3573,10 @@ function renderSponso(){
   var span=winEnd-winStart;
   function pct(ms){return (ms-winStart)/span*100;}
   function ms(s){var d=new Date(s+'T00:00:00');return isNaN(d.getTime())?NaN:d.getTime();}
-  // Largeur imposee a la frise, et ce qu'un "1 %" de piste vaut en pixels :
-  // sert a decider si le libelle d'une barre a la place de s'afficher. On part
-  // de la largeur minimale garantie ; si la fenetre du navigateur est plus
-  // large, la barre sera juste un peu plus a l'aise que prevu.
+  // Largeur minimale imposee a la frise : SP_MOIS_PX par mois, plus la colonne
+  // de gauche. En dessous, les barres deviennent trop etroites pour leur
+  // montant ; au-dessus (ecran large), elles respirent.
   var largeurInner=Math.max(680,SP_INFO_PX+months.length*SP_MOIS_PX);
-  var pxParPourcent=(largeurInner-SP_INFO_PX)/100;
 
   var enCours=actifs.filter(spEnCours),aVenir=actifs.filter(spAVenirProg);
   var rows=spFiltre==='encours'?enCours:spFiltre==='avenir'?aVenir:actifs;
@@ -3627,11 +3635,14 @@ function renderSponso(){
       // La barre doit dire la verite sur ses dates : c'est tout l'interet de la
       // frise (voir si les vagues tombent avant le concert, et ce qu'il reste
       // de place). Une largeur minimale en CSS l'etirait au-dela de sa date de
-      // fin et recouvrait le losange du concert. C'est donc le LIBELLE qui cede
-      // quand la place manque, pas la geometrie : montant si ca rentre, sinon
-      // le numero de vague, sinon rien. L'infobulle garde tout.
-      var pxBarre=w*pxParPourcent;
-      var lbl=pxBarre>=44?(v.budget?spEuro(v.budget):'V'+n):(pxBarre>=24?'V'+n:'');
+      // fin et recouvrait le losange du concert.
+      // Le montant est TOUJOURS affiche : c'est l'information que l'on vient
+      // chercher ici. Il est rendu compact (11px, marges reduites, euro colle)
+      // pour tenir dans les vagues courtes ; s'il ne rentre vraiment pas, le
+      // CSS le coupe proprement avec des points de suspension. "V1" n'apparait
+      // que si aucun budget n'a ete saisi - ce n'est pas un repli faute de
+      // place, c'est qu'il n'y a rien a afficher.
+      var lbl=v.budget?spEuroCourt(v.budget):'V'+n;
       bars+='<div class="sp-bar '+SP_STATUTS[st].cls+(nt?' sp-nontransmise':'')+'" style="left:'+l+'%;width:'+w+'%" title="'+esc(tip)+'" onclick="spOpenConcert(\''+c.id+'\')">'
         +(lbl?'<span>'+esc(lbl)+'</span>':'')+'</div>';
     });

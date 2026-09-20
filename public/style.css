@@ -863,9 +863,15 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .sp-sep{position:absolute;top:0;bottom:0;width:1px;background:var(--border-light)}
 .sp-today{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);opacity:.5}
 .sp-dc{position:absolute;top:50%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;background:var(--text);transform:rotate(45deg);border-radius:1px;z-index:3}
-.sp-bar{position:absolute;z-index:2;top:50%;transform:translateY(-50%);height:26px;min-width:5px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;overflow:hidden;white-space:nowrap;transition:filter .15s;box-shadow:0 0 0 1px var(--surface)}
+/* Seule entorse assumee au plancher typographique de 12px : l'etiquette
+   d'une barre doit tenir dans une vague de dix jours, et le montant prime
+   sur tout le reste ici. min-width:0 sur le span est indispensable : sans
+   lui, un element flex ne descend pas sous la largeur de son texte, deborde
+   de la barre et se fait rogner des DEUX cotes par justify-content:center,
+   au lieu d'etre coupe proprement par text-overflow. */
+.sp-bar{position:absolute;z-index:2;top:50%;transform:translateY(-50%);height:26px;min-width:5px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;cursor:pointer;overflow:hidden;white-space:nowrap;transition:filter .15s;box-shadow:0 0 0 1px var(--surface)}
 .sp-bar:hover{filter:brightness(.94)}
-.sp-bar span{padding:0 5px;overflow:hidden;text-overflow:ellipsis}
+.sp-bar span{padding:0 2px;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .sp-bar.sp-encours{background:var(--accent);color:var(--accent-ink)}
 .sp-bar.sp-programmee{background:var(--accent-soft);color:var(--accent)}
 .sp-bar.sp-terminee{background:var(--bg);color:var(--text-3);border:1px solid var(--border)}
