@@ -75,6 +75,7 @@
       <button class="active" data-tab="kanban" onclick="showTab('kanban',this)"><span class="nav-long">Tableau de bord</span><span class="nav-short">Tableau</span></button>
       <button id="btn-concerts" data-tab="concerts" onclick="showTab('concerts',this)">Concerts</button>
       <button id="btn-past" data-tab="past" onclick="showTab('past',this)" style="display:none"><span class="nav-long">Concerts passés</span><span class="nav-short">Passés</span></button>
+      <button id="btn-taches" data-tab="taches" onclick="showTab('taches',this)">Tâches</button>
       <button id="btn-sponso" data-tab="sponso" onclick="showTab('sponso',this)">Sponso</button>
     </nav>
     <div class="filters-popover" id="user-menu-wrap" style="display:none">
@@ -1290,9 +1291,14 @@ async function init(){
   }
 }
 var currentTab='kanban';
+// Onglets sans bouton visible dans la barre de navigation : on met en avant
+// leur onglet parent, sinon la barre reste sans aucun repere actif.
+var TAB_PARENT={past:'concerts'};
 function showTab(id,btn){
   var panel=document.getElementById('tab-'+id);if(!panel)return;
   btn=btn||document.querySelector('.nav button[data-tab="'+id+'"]');
+  if(btn&&btn.style.display==='none')btn=null;
+  if(!btn&&TAB_PARENT[id])btn=document.querySelector('.nav button[data-tab="'+TAB_PARENT[id]+'"]');
   document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('active');});
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
   if(btn)btn.classList.add('active');panel.classList.add('active');
@@ -1918,7 +1924,12 @@ function annonceDone(cid){
 }
 function annonceUndo(cid){
   delete taskStates['annonce-'+cid];
-  scheduleSave('taskstates');renderAnnonces();renderConcerts();
+  // Symetrique exact de annonceDone : le post auto du planning RS doit
+  // repasser "a faire", sinon il reste affiche "Poste" pour toujours alors
+  // que l'annonce, elle, est revenue dans les annonces a venir.
+  var autoPost=rsPosts.find(function(p){return p.autoRef===cid&&p.proj==='pp';});
+  if(autoPost&&autoPost.status==='posted'){autoPost.status='';autoPost.ready=false;}
+  scheduleSave('taskstates','rsposts');renderAnnonces();renderConcerts();renderRS();
 }
 // Bouton "remettre l'annonce" de la fiche (a cote de la date d'annonce, dans Informations)
 function updateFicheAnnonceUndoBtn(){
@@ -1930,16 +1941,23 @@ function ficheAnnonceUndo(){
   annonceUndo(currentFicheId);
   updateFicheAnnonceUndoBtn();
 }
+// Regle UNIQUE de "concert encore a annoncer", partagee par le widget du
+// tableau de bord et le compteur de la page Concerts : les deux affichaient
+// des nombres differents (l'un ignorait les concerts annules, l'autre ceux
+// sans date d'annonce). Une date d'annonce deja passee vaut annonce faite.
+function annonceEnAttente(c){
+  if(c.supprime||c.annule)return false;
+  if(taskStates['annonce-'+c.id])return false;
+  if(!c.da)return true;
+  var da=new Date(c.da);da.setHours(0,0,0,0);
+  var today=new Date();today.setHours(0,0,0,0);
+  return da>=today;
+}
 function renderAnnonces(){
   var wrap=document.getElementById('ann-wrap-compact');
   if(!wrap)return;
   var today=new Date();today.setHours(0,0,0,0);
-  var pending=concerts.filter(function(c){
-    if(c.supprime||c.annule)return false;
-    if(taskStates['annonce-'+c.id])return false;
-    if(!c.da)return true;
-    var da=new Date(c.da);da.setHours(0,0,0,0);return da>=today;
-  }).sort(function(a,b){
+  var pending=concerts.filter(annonceEnAttente).sort(function(a,b){
     if(!a.da&&!b.da)return 0;if(!a.da)return 1;if(!b.da)return -1;
     return new Date(a.da)-new Date(b.da);
   });
@@ -2096,10 +2114,10 @@ function renderConcerts(){
   if(!liste.length){el.innerHTML=emptyConcertsHtml(!!(cs||cv2||cp2||cc2),'resetConcertsFilters()');return;}
   if(concertsViewMode==='salle'){renderConcertsGrouped(liste,el);return;}
   if(concertsViewMode==='calendar'){renderConcertsCalendar(liste,el);return;}
-  var today=new Date();today.setHours(0,0,0,0);
   function annonceDate(c){var d=c.da?new Date(c.da):null;if(d)d.setHours(0,0,0,0);return d;}
-  function annoncePending(c){var d=annonceDate(c);return !taskStates['annonce-'+c.id]&&(!d||d>=today);}
-  var aVenir=liste.filter(function(c){return annoncePending(c)&&annonceDate(c);}).length;
+  // Meme regle que le widget du tableau de bord (annonceEnAttente) : a filtres
+  // egaux, les deux compteurs affichent desormais le meme nombre.
+  var aVenir=liste.filter(annonceEnAttente).length;
 
   // Une grille par ligne, un seul en-tete de colonnes : les cellules ne
   // repetent plus leur libelle, une cellule vide n'affiche son invitation
@@ -2110,7 +2128,7 @@ function renderConcerts(){
     +'</div>'
     +'<div class="crow-grid crow-cols"><span>Concert</span><span>Médias</span><span>Jeu concours</span><span>Notes</span><span>Budget</span><span>Sponso</span><span>Ventes</span><span></span></div>'
     +liste.map(function(c){
-      var daDate=annonceDate(c),pending=annoncePending(c);
+      var daDate=annonceDate(c),pending=annonceEnAttente(c);
       var ds=new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
       var daFmt=daDate?daDate.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'';
       var skipSp=!!taskStates['skip-'+c.id+'-sp'];
@@ -2118,9 +2136,15 @@ function renderConcerts(){
       var bud=c.budget||'';
       var hasBud=!!(bud&&escUrl(bud));
 
+      // Un concert annule n'est plus "en attente" mais n'a pas ete annonce
+      // pour autant : il porte deja son badge Annulé, on reste neutre plutot
+      // que d'ecrire "Annoncé le" a tort.
       var annonce='';
-      if(daDate&&pending)annonce='<span class="tag tag-amber">Annonce le '+daFmt+'</span>';
-      else if(daDate)annonce='<span class="crow-meta">Annoncé le '+daFmt+'</span>';
+      if(daDate){
+        if(c.annule)annonce='<span class="crow-meta">Annonce le '+daFmt+'</span>';
+        else if(pending)annonce='<span class="tag tag-amber">Annonce le '+daFmt+'</span>';
+        else annonce='<span class="crow-meta">Annoncé le '+daFmt+'</span>';
+      }
       var flags=(skipSp?'<button class="tag tag-neutral on" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'sp\')" title="Sponso gérée par la prod : cliquer pour retirer">'+icon('circle-check')+' Sponso prod</button>':'')
         +(skipCol?'<button class="tag tag-neutral on" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'col\')" title="Pas d\'affiche disponible : cliquer pour retirer">'+icon('circle-check')+' Pas d\'affiche</button>':'');
 
@@ -2302,10 +2326,17 @@ function renderProcess(){
 function dragStart(e,id){dragSrcId=id;}
 function dragOver(e){e.preventDefault();}
 function dragLeave(e){}
+// La liste est affichee triee par "jours" : le glisser-deposer ne deplace donc
+// visiblement une tache que parmi celles qui tombent le meme jour (le tri est
+// stable, il conserve l'ordre du tableau a valeur egale). Vers un autre jour,
+// c'est le champ "J" qu'il faut changer, pas la poignee.
+// Sans la garde ci-dessous, un findIndex a -1 ferait splice(-1,1) et
+// deplacerait silencieusement la DERNIERE tache du process.
 function dragDrop(e,targetId){
   e.preventDefault();if(dragSrcId===targetId)return;
   var src=process.findIndex(function(p){return p.id===dragSrcId;});
   var tgt=process.findIndex(function(p){return p.id===targetId;});
+  if(src<0||tgt<0)return;
   var item=process.splice(src,1)[0];process.splice(tgt,0,item);
   scheduleSave('process');renderProcess();
 }
