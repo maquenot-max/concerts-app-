@@ -308,7 +308,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .tk-add-col-btn:hover{background:var(--bg);color:var(--text);border-color:var(--text-3)}
 .tk-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .tk-modal.open{display:flex}
-.tk-modal-box{background:var(--surface);border-radius:var(--radius);padding:1.5rem;width:400px;max-width:90vw;box-shadow:var(--shadow-md);display:flex;flex-direction:column;gap:12px}
+.tk-modal-box{background:var(--surface);border-radius:var(--radius);padding:1.5rem;width:400px;max-width:90vw;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-md);display:flex;flex-direction:column;gap:12px}
 .tk-modal-title{font-size:15px;font-weight:700;margin-bottom:4px}
 .tk-modal label{font-size:12px;color:var(--text-2);font-weight:500;display:block;margin-bottom:4px}
 .tk-modal input,.tk-modal select{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);outline:none}
