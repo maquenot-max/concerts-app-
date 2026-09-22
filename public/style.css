@@ -585,7 +585,7 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .field:last-child{margin-bottom:0}
 
 /* ── RECADRAGE PHOTO (carre, glisser + zoomer) ─────────── */
-.crop-viewport{width:300px;height:300px;max-width:100%;margin:0 auto;border-radius:var(--radius-sm);overflow:hidden;position:relative;background:#000;cursor:grab;touch-action:none}
+.crop-viewport{width:320px;height:180px;max-width:100%;margin:0 auto;border-radius:var(--radius-sm);overflow:hidden;position:relative;background:#000;cursor:grab;touch-action:none}
 .crop-viewport:active{cursor:grabbing}
 .crop-viewport img{position:absolute;top:0;left:0;user-select:none;pointer-events:none}
 .crop-zoom-row{display:flex;align-items:center;gap:10px;margin-top:14px}

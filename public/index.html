@@ -435,6 +435,7 @@
             <input type="text" id="nl-oneoff-url" readonly style="flex:1;min-width:0;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface-2)">
             <button type="button" class="btn btn-sm" onclick="nlCopyOneoffUrl()">Copier</button>
           </div>
+          <button type="button" class="btn btn-sm" onclick="recropOneoffPhoto()">Recadrer</button>
           <button type="button" class="btn btn-sm btn-danger" onclick="nlClearOneoffPhoto()">Retirer</button>
         </div>
       </div>
@@ -443,7 +444,7 @@
     </div>
 
     <div class="modal-sep">
-      <div class="nl-label">Dernières annonces <span style="font-weight:400;text-transform:none;letter-spacing:0">(optionnel)</span></div>
+      <div class="nl-label">L'actu Please Please <span style="font-weight:400;text-transform:none;letter-spacing:0">(optionnel)</span></div>
       <div id="nl-announce-list"></div>
       <button type="button" class="btn btn-sm" onclick="nlAddAnnouncement()">+ Ajouter une annonce</button>
     </div>
@@ -456,6 +457,12 @@
       <div class="pill-row" id="nl-city-row"></div>
       <div class="nl-count" id="nl-count"></div>
       <div class="nl-list" id="nl-list"></div>
+    </div>
+
+    <div class="modal-sep">
+      <div class="nl-label">Les dernières annonces <span style="font-weight:400;text-transform:none;letter-spacing:0">(optionnel — concerts annoncés dans les 30 derniers jours)</span></div>
+      <div class="nl-count" id="nl-announced-count"></div>
+      <div class="nl-list" id="nl-announced-list"></div>
     </div>
 
     <div class="modal-sep">
@@ -481,7 +488,7 @@
 <div class="tk-modal" id="photo-crop-modal" onclick="if(event.target===this)cropCancel()">
   <div class="tk-modal-box w-380">
     <div class="tk-modal-title">Recadrer la photo</div>
-    <div class="modal-note mb12">Toutes les photos sont recadrées au même format (carré) pour un rendu homogène dans la newsletter.</div>
+    <div class="modal-note mb12">Toutes les photos sont recadrées au même format (16:9) pour un rendu homogène dans la newsletter.</div>
     <div class="crop-viewport" id="crop-viewport" onpointerdown="cropPointerDown(event)" onpointermove="cropPointerMove(event)" onpointerup="cropPointerUp(event)" onpointercancel="cropPointerUp(event)">
       <img id="crop-img" alt="" draggable="false">
     </div>
@@ -1017,8 +1024,23 @@ function nlUpcomingConcerts(){
   var today=new Date();today.setHours(0,0,0,0);
   return concerts.filter(function(c){return !c.supprime&&!c.annule&&c.dc&&new Date(c.dc)>=today;});
 }
+// ── NEWSLETTER : "Les dernieres annonces" - concerts annonces recemment,
+// au sens de la date d'annonce (c.da), pas de la date du concert (c.dc).
+// Meme carte que la grille "Nos prochains concerts" (nlCardHtml), mais un
+// panier de selection separe puisque ce n'est pas la meme liste source.
+var NL_RECENT_ANNOUNCE_DAYS=30;
+var nlAnnouncedExcludedIds={};
+function nlRecentlyAnnouncedConcerts(){
+  var today=new Date();today.setHours(0,0,0,0);
+  var cutoff=new Date(today);cutoff.setDate(cutoff.getDate()-NL_RECENT_ANNOUNCE_DAYS);
+  return concerts.filter(function(c){
+    if(c.supprime||c.annule||!c.da)return false;
+    var d=new Date(c.da+'T00:00:00');
+    return d>=cutoff&&d<=today;
+  }).sort(function(a,b){return a.da<b.da?1:(a.da>b.da?-1:0);});
+}
 function openNewsletterModal(){
-  nlSelectedCities={};nlExcludedIds={};
+  nlSelectedCities={};nlExcludedIds={};nlAnnouncedExcludedIds={};
   document.getElementById('newsletter-modal').classList.add('open');
   nlRenderAll();
 }
@@ -1073,7 +1095,26 @@ function nlRenderList(){
       +'</label>';
   }).join('');
 }
-function nlRenderAll(){nlRenderGroups();nlRenderCities();nlRenderList();nlRenderAnnouncements();nlRenderSectionOrder();document.getElementById('nl-export-out').classList.remove('show');}
+function nlRenderAnnouncedList(){
+  var all=nlRecentlyAnnouncedConcerts();
+  var included=all.filter(function(c){return !nlAnnouncedExcludedIds[c.id];});
+  document.getElementById('nl-announced-count').innerHTML=all.length
+    ?'<b>'+included.length+'</b> concert'+(included.length>1?'s':'')+' sélectionné'+(included.length>1?'s':'')+' sur '+all.length+' annoncé'+(all.length>1?'s':'')+' ces '+NL_RECENT_ANNOUNCE_DAYS+' derniers jours'
+    :'Aucun concert annoncé ces '+NL_RECENT_ANNOUNCE_DAYS+' derniers jours.';
+  var listEl=document.getElementById('nl-announced-list');
+  if(!all.length){listEl.innerHTML='<div class="nl-empty">Rien à afficher pour l\'instant.</div>';return;}
+  listEl.innerHTML=all.map(function(c){
+    var checked=!nlAnnouncedExcludedIds[c.id];
+    var d=new Date(c.da+'T00:00:00');
+    return '<label class="nl-row">'
+      +'<input type="checkbox" '+(checked?'checked':'')+' onchange="nlToggleAnnouncedRow(\''+escJs(c.id)+'\')">'
+      +'<span class="art">'+esc(c.art)+'</span>'
+      +'<span class="sub">'+esc(getVille(c.ville))+' · annoncé le '+d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+'</span>'
+      +'</label>';
+  }).join('');
+}
+function nlToggleAnnouncedRow(id){nlAnnouncedExcludedIds[id]=!nlAnnouncedExcludedIds[id];nlRenderAnnouncedList();}
+function nlRenderAll(){nlRenderGroups();nlRenderCities();nlRenderList();nlRenderAnnouncements();nlRenderAnnouncedList();nlRenderSectionOrder();document.getElementById('nl-export-out').classList.remove('show');}
 function nlToggleCity(v){nlSelectedCities[v]=!nlSelectedCities[v];nlRenderAll();}
 function nlApplyGroup(id){
   var g=cityGroups.find(function(x){return x.id===id;});if(!g)return;
@@ -1185,12 +1226,7 @@ function nlBuildAnnouncementsHtml(list){
     var chunk=list.slice(i,i+3);
     rows.push('<tr>'+chunk.map(function(a,j){return nlAnnounceCardHtml(a,j);}).join('')+'</tr>');
   }
-  return ''
-    +'<tr><td style="padding:40px 32px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'
-    +'<td width="38%" valign="middle"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #ECEAE5;font-size:0;line-height:0;">&nbsp;</td></tr></table></td>'
-    +'<td align="center" valign="middle" style="padding:0 12px;font-family:Arial, Helvetica, sans-serif;font-size:12px;font-weight:bold;letter-spacing:1.5px;color:#9C9891;text-transform:uppercase;white-space:nowrap;">Dernières annonces</td>'
-    +'<td width="38%" valign="middle"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #ECEAE5;font-size:0;line-height:0;">&nbsp;</td></tr></table></td>'
-    +'</tr></table></td></tr>'
+  return nlSectionDivider('L\'actu Please Please')
     +'<tr><td class="px" style="padding:0 32px 8px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">'+rows.join('')+'</table></td></tr>';
 }
 // Assemble le document HTML complet de la newsletter (meme gabarit que
@@ -1208,13 +1244,27 @@ function nlHeroSectionHtml(heroLabel,heroTitle,heroText,heroLink,heroBtn,heroImg
     +'<tr><td align="center" style="padding:26px 0 0;">'+nlSolidButton(heroLink,heroBtn+'&nbsp;→',{h:46,w:230,arc:'50%',fill:'#324288',msoColor:'#ffffff',msoSize:15,msoLabel:heroBtn.toUpperCase(),style:'background-color:#324288;border-radius:24px;color:#ffffff;display:inline-block;font-family:Arial, Helvetica, sans-serif;font-size:15px;font-weight:bold;padding:15px 32px;'})+'</td></tr>'
     +'</table></td></tr>';
 }
+// Separateur partage par toutes les sections a base de grille (memes 3
+// <td> filet/texte/filet). Centralise ici apres qu'un padding du bas a 0
+// (au lieu de 24px) sur une copie de ce bloc ait colle le filet "Dernieres
+// annonces" aux cartes en dessous - une seule version a tenir a jour.
+function nlSectionDivider(label){
+  return '<tr><td style="padding:40px 32px 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'
+    +'<td width="38%" valign="middle"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #ECEAE5;font-size:0;line-height:0;">&nbsp;</td></tr></table></td>'
+    +'<td align="center" valign="middle" style="padding:0 12px;font-family:Arial, Helvetica, sans-serif;font-size:12px;font-weight:bold;letter-spacing:1.5px;color:#9C9891;text-transform:uppercase;white-space:nowrap;">'+label+'</td>'
+    +'<td width="38%" valign="middle"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #ECEAE5;font-size:0;line-height:0;">&nbsp;</td></tr></table></td>'
+    +'</tr></table></td></tr>';
+}
 function nlConcertsSectionHtml(included){
-  return ''
-    +'<tr><td style="padding:40px 32px 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'
-    +'<td width="38%" valign="middle"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #ECEAE5;font-size:0;line-height:0;">&nbsp;</td></tr></table></td>'
-    +'<td align="center" valign="middle" style="padding:0 12px;font-family:Arial, Helvetica, sans-serif;font-size:12px;font-weight:bold;letter-spacing:1.5px;color:#9C9891;text-transform:uppercase;white-space:nowrap;">Nos prochains concerts</td>'
-    +'<td width="38%" valign="middle"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #ECEAE5;font-size:0;line-height:0;">&nbsp;</td></tr></table></td>'
-    +'</tr></table></td></tr>'
+  return nlSectionDivider('Nos prochains concerts')
+    +'<tr><td class="px" style="padding:0 32px 8px;">'+nlBuildGridHtml(included)+'</td></tr>';
+}
+// "Les dernieres annonces" : memes cartes que la grille de concerts
+// ci-dessus (nlCardHtml/nlBuildGridHtml, meme fonction reutilisee), mais
+// la selection porte sur la date d'ANNONCE (c.da) plutot que la date du
+// concert (c.dc) - voir nlRecentlyAnnouncedConcerts.
+function nlAnnouncedSectionHtml(included){
+  return nlSectionDivider('Les dernières annonces')
     +'<tr><td class="px" style="padding:0 32px 8px;">'+nlBuildGridHtml(included)+'</td></tr>';
 }
 function nlCtaSectionHtml(ctaTitle,ctaSub,ctaLink,ctaBtn){
@@ -1241,11 +1291,14 @@ function nlBuildFullHtml(included){
   var ctaBtn=nlVal('nl-cta-btn','Toutes nos dates');
   var logoBlue=NL_LOGO_BLUE?escUrl(NL_LOGO_BLUE):'[URL_LOGO]';
 
+  var announcedIncluded=nlRecentlyAnnouncedConcerts().filter(function(c){return !nlAnnouncedExcludedIds[c.id];});
+
   // Ordre et visibilite choisis dans le panneau "Sections" de la modale.
   var sectionHtml={
     hero: nlSectionVisible.hero?nlHeroSectionHtml(heroLabel,heroTitle,heroText,heroLink,heroBtn,heroImg):'',
     announcements: nlSectionVisible.announcements?nlBuildAnnouncementsHtml(nlAnnouncements):'',
     concerts: nlSectionVisible.concerts?nlConcertsSectionHtml(included):'',
+    announced: (nlSectionVisible.announced&&announcedIncluded.length)?nlAnnouncedSectionHtml(announcedIncluded):'',
     cta: nlSectionVisible.cta?nlCtaSectionHtml(ctaTitle,ctaSub,ctaLink,ctaBtn):''
   };
   var orderedSections=nlSectionOrder.map(function(key){return sectionHtml[key]||'';}).join('');
@@ -1327,6 +1380,18 @@ function onOneoffPhotoFileChosen(input){
   var file=input.files&&input.files[0];input.value='';if(!file)return;
   startCrop(file,function(blob){uploadOneoffPhotoBlob(blob);});
 }
+function recropOneoffPhoto(){
+  if(!nlOneoffPhoto)return;
+  fetch(nlOneoffPhoto.url).then(function(r){
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return r.blob();
+  }).then(function(blob){
+    startCrop(blob,function(newBlob){uploadOneoffPhotoBlob(newBlob);});
+  }).catch(function(e){
+    console.error(e);
+    showToast('Impossible de charger la photo actuelle pour la recadrer.');
+  });
+}
 async function uploadOneoffPhotoBlob(blob){
   try{
     var path='newsletter-photos/'+Date.now()+'.jpg';
@@ -1376,6 +1441,7 @@ function nlRenderAnnouncements(){
         +'<div style="display:flex;gap:6px">'
           +'<input type="text" placeholder="Titre de l\'annonce" value="'+esc(a.title)+'" oninput="nlAnnouncementField('+i+',\'title\',this.value)" style="flex:1;min-width:0;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px">'
           +'<button type="button" class="btn btn-sm" onclick="document.getElementById(\'nl-announce-file-'+i+'\').click()">Photo</button>'
+          +(a.photo?'<button type="button" class="btn btn-sm" onclick="recropAnnouncementPhoto('+i+')">Recadrer</button>':'')
           +'<input type="file" id="nl-announce-file-'+i+'" accept="image/*" style="display:none" onchange="onAnnouncementPhotoFileChosen(this,'+i+')">'
           +'<button type="button" class="btn btn-sm btn-danger" onclick="nlRemoveAnnouncement('+i+')">✕</button>'
         +'</div>'
@@ -1388,6 +1454,18 @@ function nlRenderAnnouncements(){
 function onAnnouncementPhotoFileChosen(input,i){
   var file=input.files&&input.files[0];input.value='';if(!file)return;
   startCrop(file,function(blob){uploadAnnouncementPhotoBlob(blob,i);});
+}
+function recropAnnouncementPhoto(i){
+  var a=nlAnnouncements[i];if(!a||!a.photo)return;
+  fetch(a.photo.url).then(function(r){
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return r.blob();
+  }).then(function(blob){
+    startCrop(blob,function(newBlob){uploadAnnouncementPhotoBlob(newBlob,i);});
+  }).catch(function(e){
+    console.error(e);
+    showToast('Impossible de charger la photo actuelle pour la recadrer.');
+  });
 }
 async function uploadAnnouncementPhotoBlob(blob,i){
   try{
@@ -1406,9 +1484,9 @@ async function uploadAnnouncementPhotoBlob(blob,i){
 // derivees d'une saisie utilisateur), donc pas de risque d'echappement a
 // gerer dans les onclick ci-dessous - voir check.js regle 4. Persiste tant
 // que la page vit, comme nlAnnouncements.
-var nlSectionOrder=['hero','announcements','concerts','cta'];
-var nlSectionVisible={hero:true,announcements:true,concerts:true,cta:true};
-var NL_SECTION_LABELS={hero:'Article principal',announcements:'Dernières annonces',concerts:'Nos prochains concerts',cta:'Bandeau final'};
+var nlSectionOrder=['hero','announcements','concerts','announced','cta'];
+var nlSectionVisible={hero:true,announcements:true,concerts:true,announced:true,cta:true};
+var NL_SECTION_LABELS={hero:'Article principal',announcements:'L\'actu Please Please',concerts:'Nos prochains concerts',announced:'Les dernières annonces',cta:'Bandeau final'};
 function nlRenderSectionOrder(){
   var el=document.getElementById('nl-section-order');
   el.innerHTML=nlSectionOrder.map(function(key,i){
@@ -1554,19 +1632,21 @@ async function storageDelete(path){
   await fetch(SUPABASE_URL+'/storage/v1/object/concert-media/'+path,{method:'DELETE',headers:await authHeaders()});
 }
 
-// ── RECADRAGE PHOTO : glisser + zoomer dans un cadre carre fixe avant
-// upload, pour que toutes les photos (artistes, article) aient le meme
-// format. Pas de dependance externe : juste canvas + evenements pointeur.
-var CROP_VP=300,CROP_OUT=640;
+// ── RECADRAGE PHOTO : glisser + zoomer dans un cadre 16:9 fixe avant
+// upload, pour que toutes les photos (artistes, article, annonces) aient
+// le meme format. Pas de dependance externe : juste canvas + evenements
+// pointeur. Cadre rectangulaire (pas carre) : largeur et hauteur du
+// viewport/de la sortie sont donc gerees separement partout ci-dessous.
+var CROP_VP_W=320,CROP_VP_H=180,CROP_OUT_W=640,CROP_OUT_H=360;
 var cropState=null,cropDrag=null;
 function startCrop(file,onDone){
   var url=URL.createObjectURL(file);
   var img=new Image();
   img.onload=function(){
-    var baseScale=Math.max(CROP_VP/img.naturalWidth,CROP_VP/img.naturalHeight);
+    var baseScale=Math.max(CROP_VP_W/img.naturalWidth,CROP_VP_H/img.naturalHeight);
     var dispW=img.naturalWidth*baseScale,dispH=img.naturalHeight*baseScale;
     cropState={img:img,url:url,natW:img.naturalWidth,natH:img.naturalHeight,baseScale:baseScale,zoom:1,
-      offsetX:(CROP_VP-dispW)/2,offsetY:(CROP_VP-dispH)/2,onDone:onDone};
+      offsetX:(CROP_VP_W-dispW)/2,offsetY:(CROP_VP_H-dispH)/2,onDone:onDone};
     document.getElementById('crop-img').src=url;
     document.getElementById('crop-zoom').value=1;
     applyCropTransform();
@@ -1579,8 +1659,8 @@ function clampCropOffset(){
   var s=cropState;if(!s)return;
   var eff=s.baseScale*s.zoom;
   var dispW=s.natW*eff,dispH=s.natH*eff;
-  s.offsetX=Math.max(Math.min(0,CROP_VP-dispW),Math.min(0,s.offsetX));
-  s.offsetY=Math.max(Math.min(0,CROP_VP-dispH),Math.min(0,s.offsetY));
+  s.offsetX=Math.max(Math.min(0,CROP_VP_W-dispW),Math.min(0,s.offsetX));
+  s.offsetY=Math.max(Math.min(0,CROP_VP_H-dispH),Math.min(0,s.offsetY));
 }
 function applyCropTransform(){
   var s=cropState;if(!s)return;
@@ -1617,10 +1697,10 @@ function cropCancel(){
 function cropConfirm(){
   var s=cropState;if(!s)return;
   var eff=s.baseScale*s.zoom;
-  var sx=-s.offsetX/eff,sy=-s.offsetY/eff,sw=CROP_VP/eff,sh=CROP_VP/eff;
+  var sx=-s.offsetX/eff,sy=-s.offsetY/eff,sw=CROP_VP_W/eff,sh=CROP_VP_H/eff;
   var canvas=document.createElement('canvas');
-  canvas.width=CROP_OUT;canvas.height=CROP_OUT;
-  canvas.getContext('2d').drawImage(s.img,sx,sy,sw,sh,0,0,CROP_OUT,CROP_OUT);
+  canvas.width=CROP_OUT_W;canvas.height=CROP_OUT_H;
+  canvas.getContext('2d').drawImage(s.img,sx,sy,sw,sh,0,0,CROP_OUT_W,CROP_OUT_H);
   canvas.toBlob(function(blob){
     var onDone=s.onDone;
     URL.revokeObjectURL(s.url);
@@ -1643,6 +1723,7 @@ function renderFichePhoto(c){
         :'Sera utilisée pour tous les concerts de <b>'+esc(c.art)+'</b>.')+'</div>'
       +'<div class="media-add-row">'
         +'<button type="button" class="btn btn-sm" onclick="document.getElementById(\'fiche-photo-input\').click()">Changer la photo</button>'
+        +'<button type="button" class="btn btn-sm" onclick="recropArtistPhoto()">Recadrer</button>'
         +'<button type="button" class="btn btn-sm btn-danger" onclick="removeArtistPhoto()">Retirer</button>'
       +'</div></div></div>';
   }else{
@@ -1656,6 +1737,22 @@ function renderFichePhoto(c){
 function onFichePhotoFileChosen(input){
   var file=input.files&&input.files[0];input.value='';if(!file)return;
   startCrop(file,function(blob){uploadArtistPhotoBlob(blob);});
+}
+// Rouvre l'outil de recadrage sur la photo deja en ligne (refetchee en
+// blob), pour ajuster le cadrage sans avoir a choisir un nouveau fichier.
+function recropArtistPhoto(){
+  var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
+  var key=artKey(c.art);
+  var entry=key?artistPhotos[key]:null;if(!entry)return;
+  fetch(entry.url).then(function(r){
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return r.blob();
+  }).then(function(blob){
+    startCrop(blob,function(newBlob){uploadArtistPhotoBlob(newBlob);});
+  }).catch(function(e){
+    console.error(e);
+    showToast('Impossible de charger la photo actuelle pour la recadrer.');
+  });
 }
 async function uploadArtistPhotoBlob(blob){
   var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
