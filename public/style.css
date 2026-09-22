@@ -580,6 +580,16 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .nl-empty{padding:20px 12px;text-align:center;color:var(--text-3);font-size:12.5px;font-style:italic}
 .nl-export-out{display:none;background:var(--surface-2);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:10px 12px;font-size:11px;font-family:ui-monospace,'SF Mono',Consolas,monospace;color:var(--text-2);max-height:160px;overflow:auto;white-space:pre-wrap;word-break:break-word}
 .nl-export-out.show{display:block}
+.nl-fields-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+
+/* ── RECADRAGE PHOTO (carre, glisser + zoomer) ─────────── */
+.crop-viewport{width:300px;height:300px;max-width:100%;margin:0 auto;border-radius:var(--radius-sm);overflow:hidden;position:relative;background:#000;cursor:grab;touch-action:none}
+.crop-viewport:active{cursor:grabbing}
+.crop-viewport img{position:absolute;top:0;left:0;user-select:none;pointer-events:none}
+.crop-zoom-row{display:flex;align-items:center;gap:10px;margin-top:14px}
+.crop-zoom-row input[type=range]{flex:1}
 
 .crow-list-card{overflow:hidden}
 

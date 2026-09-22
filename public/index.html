@@ -303,7 +303,7 @@
             <div class="fiche-field wide"><label for="fi-notes">Notes</label><input type="text" id="fi-notes" onchange="updateFicheField('notes',this.value)" placeholder="Notes libres…"></div>
             <div class="fiche-field wide">
               <label>Photo</label>
-              <input type="file" id="fiche-photo-input" accept="image/*" style="display:none" onchange="uploadArtistPhoto(this)">
+              <input type="file" id="fiche-photo-input" accept="image/*" style="display:none" onchange="onFichePhotoFileChosen(this)">
               <div id="fiche-photo"></div>
             </div>
           </div>
@@ -405,21 +405,24 @@
 <div class="tk-modal" id="newsletter-modal" onclick="if(event.target===this)closeNewsletterModal()">
   <div class="tk-modal-box w-560">
     <div class="tk-modal-title">Générer une newsletter</div>
-    <div class="modal-note mb12">Choisis une ou plusieurs villes (ou un groupe enregistré) pour sélectionner les concerts à inclure, puis exporte.</div>
-    <div>
-      <div class="nl-label">Groupes enregistrés</div>
-      <div class="pill-row" id="nl-group-row"></div>
+    <div class="modal-note mb12">Remplis l'article principal, choisis les concerts à inclure, puis copie le code HTML complet — prêt à coller dans l'éditeur.</div>
+
+    <div class="nl-fields-2col">
+      <div class="field"><label>Édition</label><input type="text" id="nl-edition" placeholder="Édition · Septembre 2026"></div>
+      <div class="field"><label>Lien "voir en ligne"</label><input type="text" id="nl-online-link" placeholder="https://..."></div>
     </div>
-    <div>
-      <div class="nl-label">Villes</div>
-      <div class="pill-row" id="nl-city-row"></div>
-    </div>
-    <div>
-      <div class="nl-count" id="nl-count"></div>
-      <div class="nl-list" id="nl-list"></div>
-    </div>
+    <div class="field"><label>Texte d'aperçu (preheader)</label><textarea id="nl-preheader" rows="2" placeholder="Phrase affichée sous l'objet dans la boîte de réception…"></textarea></div>
+
     <div class="modal-sep">
-      <div class="nl-label">Photo ponctuelle (article à la une, festival…)</div>
+      <div class="nl-label">Article principal</div>
+      <div class="field"><label>Étiquette</label><input type="text" id="nl-hero-label" placeholder="Nouveau festival"></div>
+      <div class="field"><label>Titre</label><input type="text" id="nl-hero-title" placeholder="Titre accrocheur de l'article"></div>
+      <div class="field"><label>Texte</label><textarea id="nl-hero-text" rows="2" placeholder="Deux phrases maximum : quoi, où, quand."></textarea></div>
+      <div class="nl-fields-2col">
+        <div class="field"><label>Lien du bouton</label><input type="text" id="nl-hero-link" placeholder="https://..."></div>
+        <div class="field"><label>Texte du bouton</label><input type="text" id="nl-hero-btn" placeholder="Découvrir"></div>
+      </div>
+      <div class="nl-label" style="margin-top:12px">Photo de l'article</div>
       <div class="photo-widget" id="nl-oneoff-photo" style="display:none">
         <div class="photo-widget-slot"><img id="nl-oneoff-img" alt=""></div>
         <div class="photo-widget-meta">
@@ -430,16 +433,54 @@
           <button type="button" class="btn btn-sm btn-danger" onclick="nlClearOneoffPhoto()">Retirer</button>
         </div>
       </div>
-      <input type="file" id="nl-oneoff-input" accept="image/*" style="display:none" onchange="nlUploadOneoffPhoto(this)">
+      <input type="file" id="nl-oneoff-input" accept="image/*" style="display:none" onchange="onOneoffPhotoFileChosen(this)">
       <button type="button" class="btn btn-sm" id="nl-oneoff-add-btn" onclick="document.getElementById('nl-oneoff-input').click()">Ajouter une photo</button>
     </div>
+
+    <div class="modal-sep">
+      <div class="nl-label">Grille de concerts</div>
+      <div class="nl-label" style="margin-top:0">Groupes enregistrés</div>
+      <div class="pill-row" id="nl-group-row"></div>
+      <div class="nl-label">Villes</div>
+      <div class="pill-row" id="nl-city-row"></div>
+      <div class="nl-count" id="nl-count"></div>
+      <div class="nl-list" id="nl-list"></div>
+    </div>
+
+    <div class="modal-sep">
+      <div class="nl-label">Bandeau final</div>
+      <div class="field"><label>Titre</label><input type="text" id="nl-cta-title" value="Envie de voir la suite ?"></div>
+      <div class="field"><label>Sous-titre</label><input type="text" id="nl-cta-sub" value="Retrouvez tous nos concerts et festivals à venir."></div>
+      <div class="nl-fields-2col">
+        <div class="field"><label>Lien du bouton</label><input type="text" id="nl-cta-link" placeholder="https://..."></div>
+        <div class="field"><label>Texte du bouton</label><input type="text" id="nl-cta-btn" value="Toutes nos dates"></div>
+      </div>
+    </div>
+
     <div class="nl-export-out" id="nl-export-out"></div>
     <div class="tk-modal-actions between">
       <button class="btn-link" onclick="newsletterSaveGroup()">Enregistrer comme groupe…</button>
       <div style="display:flex;gap:8px">
         <button class="btn" onclick="closeNewsletterModal()">Fermer</button>
-        <button class="btn btn-primary" onclick="newsletterExport()">Copier le code HTML</button>
+        <button class="btn btn-primary" onclick="newsletterExport()">Copier le code HTML complet</button>
       </div>
+    </div>
+  </div>
+</div>
+<div class="tk-modal" id="photo-crop-modal" onclick="if(event.target===this)cropCancel()">
+  <div class="tk-modal-box w-380">
+    <div class="tk-modal-title">Recadrer la photo</div>
+    <div class="modal-note mb12">Toutes les photos sont recadrées au même format (carré) pour un rendu homogène dans la newsletter.</div>
+    <div class="crop-viewport" id="crop-viewport" onpointerdown="cropPointerDown(event)" onpointermove="cropPointerMove(event)" onpointerup="cropPointerUp(event)" onpointercancel="cropPointerUp(event)">
+      <img id="crop-img" alt="" draggable="false">
+    </div>
+    <div class="crop-zoom-row">
+      <span style="font-size:12px;color:var(--text-3)">Zoom</span>
+      <input type="range" id="crop-zoom" min="1" max="3" step="0.01" value="1" oninput="cropZoomChange(this.value)">
+    </div>
+    <div class="tk-modal-actions">
+      <button class="btn" onclick="cropCancel()">Annuler</button>
+      <button class="btn btn-primary" onclick="cropConfirm()">Valider</button>
     </div>
   </div>
 </div>
@@ -1040,6 +1081,40 @@ function newsletterSaveGroup(){
   nlRenderGroups();
   showToast('Groupe "'+nom+'" enregistré.');
 }
+// Element fixe de la marque, communs a toutes les editions. A mettre a jour
+// ici si le logo bleu (en-tete) est un jour heberge quelque part - pour
+// l'instant seul le blanc (pied de page sombre) a une URL publique connue.
+var NL_LOGO_BLUE='';
+var NL_LOGO_WHITE='https://pleasepleasefamilyy.fr/sites/default/files/2026-09/logo-pp-familyy-blanc.png';
+var NL_ICON_INSTA='https://pleasepleasefamilyy.fr/sites/default/files/2026-09/logo%20insta.png';
+var NL_ICON_FB='https://pleasepleasefamilyy.fr/sites/default/files/2026-09/log%20fb.png';
+var NL_ICON_TIKTOK='https://pleasepleasefamilyy.fr/sites/default/files/2026-09/logo%20tiktok.png';
+var NL_LINK_INSTA='https://www.instagram.com/pleasepleaselive/';
+var NL_LINK_FB='https://www.facebook.com/pleasepleaselive/';
+var NL_LINK_TIKTOK='https://www.tiktok.com/@pleasepleaselive';
+var NL_ADDRESS='Please Please Familyy — Dijon, France';
+var NL_UNSUB='https://backstage.gigz.fr/__unsubscribe?email={{ userEmail }}&sid=157&campaignId={{ campaignId }}';
+// Concatenation deliberee : un marqueur de commentaire HTML (utilise plus
+// bas pour les alternatives Outlook) ne doit jamais apparaitre tel quel
+// dans ce bloc de script, sinon le navigateur perd le fil de l'element
+// avant meme que le JS ne s'execute.
+var NL_CM='<'+'!--';
+function nlVal(id,placeholder){
+  var el=document.getElementById(id);
+  var v=el?el.value.trim():'';
+  return v?esc(v):'['+placeholder+']';
+}
+function nlValUrl(id,placeholder){
+  var el=document.getElementById(id);
+  var v=el?el.value.trim():'';
+  return v?escUrl(v):'['+placeholder+']';
+}
+// Bouton plein avec repli VML (angles arrondis sous Outlook) : memes gabarits
+// que ceux deja donnes a la main plus haut dans la conversation.
+function nlSolidButton(href,label,opts){
+  return NL_CM+'[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="'+href+'" style="height:'+opts.h+'px;v-text-anchor:middle;width:'+opts.w+'px;" arcsize="'+opts.arc+'" stroke="f" fillcolor="'+opts.fill+'"><center style="color:'+opts.msoColor+';font-family:Arial,sans-serif;font-size:'+opts.msoSize+'px;font-weight:bold;">'+opts.msoLabel+'</center></v:roundrect><![endif]-->'
+    +NL_CM+'[if !mso]>'+NL_CM+'><a href="'+href+'" target="_blank" style="'+opts.style+'">'+label+'</a>'+NL_CM+'<![endif]-->';
+}
 // Genere le code HTML d'une carte de la grille "Nos prochains concerts",
 // meme gabarit que le template de newsletter (Poppins/Fraunces, 3 colonnes).
 function nlCardHtml(c,colIndex){
@@ -1069,33 +1144,128 @@ function nlBuildGridHtml(list){
   }
   return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">\n'+rows.join('\n')+'\n</table>';
 }
+// Assemble le document HTML complet de la newsletter (meme gabarit que
+// celui elabore a la main plus haut dans la conversation : filet degrade,
+// en-tete, article principal, grille de concerts, bandeau CTA, pied de
+// page sombre). Les elements de marque fixes viennent des constantes NL_*.
+function nlBuildFullHtml(included){
+  var edition=nlVal('nl-edition','Édition · Mois Année');
+  var preheader=nlVal('nl-preheader',"Phrase d'accroche");
+  var onlineLink=nlValUrl('nl-online-link','LIEN_VERSION_EN_LIGNE');
+  var heroLabel=nlVal('nl-hero-label','ÉTIQUETTE');
+  var heroTitle=nlVal('nl-hero-title',"Titre accrocheur de l'article");
+  var heroText=nlVal('nl-hero-text',"Paragraphe d'introduction");
+  var heroLink=nlValUrl('nl-hero-link','LIEN_ARTICLE');
+  var heroBtn=nlVal('nl-hero-btn','Découvrir');
+  var heroImg=nlOneoffPhoto?escUrl(nlOneoffPhoto.url):'[URL_IMAGE_ARTICLE]';
+  var ctaTitle=nlVal('nl-cta-title','Envie de voir la suite ?');
+  var ctaSub=nlVal('nl-cta-sub','Sous-titre');
+  var ctaLink=nlValUrl('nl-cta-link','LIEN_TOUTES_LES_DATES');
+  var ctaBtn=nlVal('nl-cta-btn','Toutes nos dates');
+  var logoBlue=NL_LOGO_BLUE?escUrl(NL_LOGO_BLUE):'[URL_LOGO]';
+
+  return ''
++'<!DOCTYPE html>'
++'<html lang="fr" xmlns:o="urn:schemas-microsoft-com:office:office">'
++'<head>'
++'<meta charset="UTF-8">'
++'<meta name="viewport" content="width=device-width, initial-scale=1">'
++'<meta name="x-apple-disable-message-reformatting">'
++'<meta http-equiv="X-UA-Compatible" content="IE=edge">'
++'<meta name="format-detection" content="telephone=no">'
++'<title>'+edition+'</title>'
++NL_CM+'[if mso]><noscript><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->'
++'<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;1,500;1,600&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet" type="text/css">'
++'<style>body,table,td{margin:0;padding:0;}img{border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;display:block;}table{border-collapse:collapse;}a{text-decoration:none;}'
++'@media only screen and (max-width:640px){.container{width:100% !important;}.fluid-img{width:100% !important;height:auto !important;}.stack{display:block !important;width:100% !important;}.stack-pad{padding:0 0 24px 0 !important;}.px{padding-left:22px !important;padding-right:22px !important;}.h1{font-size:26px !important;line-height:32px !important;}.card-name{font-size:18px !important;}.masthead-tag{display:none !important;}}'
++'</style></head>'
++'<body style="margin:0;padding:0;background-color:#F3F1ED;font-family:Arial, Helvetica, sans-serif;">'
++'<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">'+preheader+'</div>'
++'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F3F1ED;"><tr><td align="center" style="padding:32px 14px;">'
++'<table role="presentation" class="container" width="640" cellpadding="0" cellspacing="0" style="width:640px;max-width:640px;">'
+
++'<tr><td align="center" style="padding:0 0 16px;font-family:Arial, Helvetica, sans-serif;font-size:12px;color:#9C9891;"><a href="'+onlineLink+'" target="_blank" style="color:#9C9891;text-decoration:underline;">Voir la version en ligne</a></td></tr>'
+
++'<tr><td style="background-color:#FFFFFF;border-radius:20px;box-shadow:0 16px 40px rgba(35,32,58,0.10);overflow:hidden;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">'
+
++'<tr><td style="height:5px;line-height:5px;font-size:0;background-color:#324288;background-image:linear-gradient(90deg,#324288,#7A5FB0,#D8C7E9);">&nbsp;</td></tr>'
+
++'<tr><td class="px" style="padding:26px 32px 22px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'
++'<td align="left" valign="middle"><img src="'+logoBlue+'" width="150" alt="Please Please Familyy" style="display:block;width:150px;height:auto;"></td>'
++'<td class="masthead-tag" align="right" valign="middle" style="font-family:Arial, Helvetica, sans-serif;font-size:11px;font-weight:bold;letter-spacing:1.2px;text-transform:uppercase;color:#9C9891;white-space:nowrap;">'+edition+'</td>'
++'</tr></table></td></tr>'
+
++'<tr><td class="px" style="padding:0 32px;">'
++'<img class="fluid-img" src="'+heroImg+'" width="576" alt="'+heroTitle+'" style="display:block;width:100%;border-radius:14px;">'
++'<table role="presentation" width="100%" cellpadding="0" cellspacing="0">'
++'<tr><td align="center" style="padding:20px 0 0;"><span style="background-color:#EFE7F7;color:#6C4E96;font-family:Arial, Helvetica, sans-serif;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;border-radius:20px;padding:6px 14px;display:inline-block;">'+heroLabel+'</span></td></tr>'
++'<tr><td align="center" class="h1" style="padding:16px 0 0;font-family:\'Poppins\', Arial, Helvetica, sans-serif;font-size:32px;line-height:40px;font-weight:800;color:#16171F;">'+heroTitle+'</td></tr>'
++'<tr><td align="center" style="padding:14px 0 0;font-family:Arial, Helvetica, sans-serif;font-size:16px;line-height:26px;color:#6E6A5F;">'+heroText+'</td></tr>'
++'<tr><td align="center" style="padding:26px 0 0;">'+nlSolidButton(heroLink,heroBtn+'&nbsp;→',{h:46,w:230,arc:'50%',fill:'#324288',msoColor:'#ffffff',msoSize:15,msoLabel:heroBtn.toUpperCase(),style:'background-color:#324288;border-radius:24px;color:#ffffff;display:inline-block;font-family:Arial, Helvetica, sans-serif;font-size:15px;font-weight:bold;padding:15px 32px;'})+'</td></tr>'
++'</table></td></tr>'
+
++'<tr><td style="padding:40px 32px 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'
++'<td width="38%" valign="middle"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #ECEAE5;font-size:0;line-height:0;">&nbsp;</td></tr></table></td>'
++'<td align="center" valign="middle" style="padding:0 12px;font-family:Arial, Helvetica, sans-serif;font-size:12px;font-weight:bold;letter-spacing:1.5px;color:#9C9891;text-transform:uppercase;white-space:nowrap;">Nos prochains concerts</td>'
++'<td width="38%" valign="middle"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #ECEAE5;font-size:0;line-height:0;">&nbsp;</td></tr></table></td>'
++'</tr></table></td></tr>'
+
++'<tr><td class="px" style="padding:0 32px 8px;">'+nlBuildGridHtml(included)+'</td></tr>'
+
++'<tr><td style="padding:12px 32px 36px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#324288;background-image:linear-gradient(135deg,#324288,#4A3B85),repeating-linear-gradient(135deg,rgba(255,255,255,0.05) 0px,rgba(255,255,255,0.05) 1px,transparent 1px,transparent 13px);border-radius:18px;"><tr><td align="center" style="padding:36px 24px;">'
++'<div style="font-family:\'Poppins\', Arial, Helvetica, sans-serif;font-size:22px;font-weight:700;color:#ffffff;">'+ctaTitle+'</div>'
++'<div style="padding-top:8px;font-family:\'Fraunces\', Georgia, serif;font-style:italic;font-size:15px;color:#D8C7E9;">'+ctaSub+'</div>'
++'<div style="padding-top:22px;">'+nlSolidButton(ctaLink,ctaBtn,{h:44,w:210,arc:'50%',fill:'#ffffff',msoColor:'#324288',msoSize:14,msoLabel:ctaBtn.toUpperCase(),style:'background-color:#ffffff;border-radius:22px;color:#324288;display:inline-block;font-family:Arial, Helvetica, sans-serif;font-size:14px;font-weight:bold;padding:13px 28px;'})+'</div>'
++'</td></tr></table></td></tr>'
+
++'</table></td></tr>'
+
++'<tr><td style="padding:20px 0 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#16171F;border-radius:20px;overflow:hidden;">'
++'<tr><td align="center" style="padding:34px 32px 6px;"><img src="'+escUrl(NL_LOGO_WHITE)+'" width="120" alt="Please Please Familyy" style="display:block;width:120px;height:auto;margin:0 auto;"></td></tr>'
++'<tr><td align="center" style="padding:16px 32px 26px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr>'
++'<td style="padding:0 6px;"><a href="'+escUrl(NL_LINK_INSTA)+'" target="_blank"><img src="'+escUrl(NL_ICON_INSTA)+'" width="30" height="30" alt="Instagram" style="display:block;width:30px;height:30px;"></a></td>'
++'<td style="padding:0 6px;"><a href="'+escUrl(NL_LINK_FB)+'" target="_blank"><img src="'+escUrl(NL_ICON_FB)+'" width="30" height="30" alt="Facebook" style="display:block;width:30px;height:30px;"></a></td>'
++'<td style="padding:0 6px;"><a href="'+escUrl(NL_LINK_TIKTOK)+'" target="_blank"><img src="'+escUrl(NL_ICON_TIKTOK)+'" width="30" height="30" alt="TikTok" style="display:block;width:30px;height:30px;"></a></td>'
++'</tr></table></td></tr>'
++'<tr><td align="center" style="padding:0 32px;border-top:1px solid #2A2C3A;">'
++'<div style="padding:20px 0 6px;font-family:Arial, Helvetica, sans-serif;font-size:12px;line-height:20px;color:#948F80;">'+esc(NL_ADDRESS)+'</div>'
++'<div style="padding:0 0 28px;font-family:Arial, Helvetica, sans-serif;font-size:12px;line-height:20px;color:#948F80;">Vous recevez cet e-mail car vous êtes inscrit·e à notre newsletter. <a href="'+escUrl(NL_UNSUB)+'" target="_blank" style="color:#D8C7E9;text-decoration:underline;">Se désinscrire</a></div>'
++'</td></tr></table></td></tr>'
+
++'</table></td></tr></table></body></html>';
+}
 function newsletterExport(){
   var included=nlMatching().filter(function(c){return !nlExcludedIds[c.id];});
   if(!included.length){showToast('Aucun concert sélectionné.');return;}
-  var html=nlBuildGridHtml(included);
+  var html=nlBuildFullHtml(included);
   var out=document.getElementById('nl-export-out');
   out.textContent=html;
   out.classList.add('show');
   var count=included.length;
   var withoutPhoto=included.filter(function(c){var k=artKey(c.art);return !(k&&artistPhotos[k]);}).length;
-  var msg=count+' concert'+(count>1?'s':'')+' — code copié.'+(withoutPhoto?' '+withoutPhoto+' sans photo (placeholder [URL_IMAGE] à remplacer).':'');
+  var warn=[];
+  if(withoutPhoto)warn.push(withoutPhoto+' concert'+(withoutPhoto>1?'s':'')+' sans photo');
+  if(!nlOneoffPhoto)warn.push('pas de photo pour l\'article');
+  if(!NL_LOGO_BLUE)warn.push('logo bleu manquant');
+  var msg='Newsletter complète copiée ('+count+' concert'+(count>1?'s':'')+').'+(warn.length?' À compléter : '+warn.join(', ')+'.':'');
   if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(html).then(function(){showToast(msg);}).catch(function(){showToast(count+' concert'+(count>1?'s':'')+' — code prêt ci-dessous (copie manuelle).');});
+    navigator.clipboard.writeText(html).then(function(){showToast(msg,6000);}).catch(function(){showToast('Code prêt ci-dessous (copie manuelle).',6000);});
   }else{
-    showToast(count+' concert'+(count>1?'s':'')+' — code prêt ci-dessous (copie manuelle).');
+    showToast('Code prêt ci-dessous (copie manuelle).',6000);
   }
 }
 // Photo ponctuelle (article a la une, festival...) : pas liee a un concert,
 // juste un moyen d'obtenir une URL publique a coller ailleurs. Pas
 // sauvegardee dans app_data, elle ne sert que le temps de la session.
 var nlOneoffPhoto=null;
-async function nlUploadOneoffPhoto(input){
-  var file=input.files&&input.files[0];if(!file)return;
-  input.disabled=true;
+function onOneoffPhotoFileChosen(input){
+  var file=input.files&&input.files[0];input.value='';if(!file)return;
+  startCrop(file,function(blob){uploadOneoffPhotoBlob(blob);});
+}
+async function uploadOneoffPhotoBlob(blob){
   try{
-    var ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
-    var path='newsletter-photos/'+Date.now()+'.'+ext;
-    var url=await storageUpload(path,file);
+    var path='newsletter-photos/'+Date.now()+'.jpg';
+    var url=await storageUpload(path,blob);
     if(nlOneoffPhoto&&nlOneoffPhoto.path)storageDelete(nlOneoffPhoto.path);
     nlOneoffPhoto={url:url,path:path};
     document.getElementById('nl-oneoff-img').src=url;
@@ -1106,7 +1276,6 @@ async function nlUploadOneoffPhoto(input){
     console.error(e);
     showToast('Échec de l\'envoi de la photo : '+e.message);
   }
-  input.disabled=false;input.value='';
 }
 function nlClearOneoffPhoto(){
   if(nlOneoffPhoto&&nlOneoffPhoto.path)storageDelete(nlOneoffPhoto.path);
@@ -1231,6 +1400,82 @@ async function storageDelete(path){
   await fetch(SUPABASE_URL+'/storage/v1/object/concert-media/'+path,{method:'DELETE',headers:await authHeaders()});
 }
 
+// ── RECADRAGE PHOTO : glisser + zoomer dans un cadre carre fixe avant
+// upload, pour que toutes les photos (artistes, article) aient le meme
+// format. Pas de dependance externe : juste canvas + evenements pointeur.
+var CROP_VP=300,CROP_OUT=640;
+var cropState=null,cropDrag=null;
+function startCrop(file,onDone){
+  var url=URL.createObjectURL(file);
+  var img=new Image();
+  img.onload=function(){
+    var baseScale=Math.max(CROP_VP/img.naturalWidth,CROP_VP/img.naturalHeight);
+    var dispW=img.naturalWidth*baseScale,dispH=img.naturalHeight*baseScale;
+    cropState={img:img,url:url,natW:img.naturalWidth,natH:img.naturalHeight,baseScale:baseScale,zoom:1,
+      offsetX:(CROP_VP-dispW)/2,offsetY:(CROP_VP-dispH)/2,onDone:onDone};
+    document.getElementById('crop-img').src=url;
+    document.getElementById('crop-zoom').value=1;
+    applyCropTransform();
+    document.getElementById('photo-crop-modal').classList.add('open');
+  };
+  img.onerror=function(){URL.revokeObjectURL(url);showToast('Image illisible.');};
+  img.src=url;
+}
+function clampCropOffset(){
+  var s=cropState;if(!s)return;
+  var eff=s.baseScale*s.zoom;
+  var dispW=s.natW*eff,dispH=s.natH*eff;
+  s.offsetX=Math.max(Math.min(0,CROP_VP-dispW),Math.min(0,s.offsetX));
+  s.offsetY=Math.max(Math.min(0,CROP_VP-dispH),Math.min(0,s.offsetY));
+}
+function applyCropTransform(){
+  var s=cropState;if(!s)return;
+  var eff=s.baseScale*s.zoom;
+  var el=document.getElementById('crop-img');
+  el.style.width=(s.natW*eff)+'px';
+  el.style.height=(s.natH*eff)+'px';
+  el.style.transform='translate('+s.offsetX+'px,'+s.offsetY+'px)';
+}
+function cropPointerDown(e){
+  if(!cropState)return;
+  cropDrag={x:e.clientX,y:e.clientY,ox:cropState.offsetX,oy:cropState.offsetY};
+  if(e.target.setPointerCapture)e.target.setPointerCapture(e.pointerId);
+}
+function cropPointerMove(e){
+  if(!cropDrag||!cropState)return;
+  cropState.offsetX=cropDrag.ox+(e.clientX-cropDrag.x);
+  cropState.offsetY=cropDrag.oy+(e.clientY-cropDrag.y);
+  clampCropOffset();
+  applyCropTransform();
+}
+function cropPointerUp(){cropDrag=null;}
+function cropZoomChange(v){
+  if(!cropState)return;
+  cropState.zoom=parseFloat(v)||1;
+  clampCropOffset();
+  applyCropTransform();
+}
+function cropCancel(){
+  if(cropState&&cropState.url)URL.revokeObjectURL(cropState.url);
+  cropState=null;cropDrag=null;
+  document.getElementById('photo-crop-modal').classList.remove('open');
+}
+function cropConfirm(){
+  var s=cropState;if(!s)return;
+  var eff=s.baseScale*s.zoom;
+  var sx=-s.offsetX/eff,sy=-s.offsetY/eff,sw=CROP_VP/eff,sh=CROP_VP/eff;
+  var canvas=document.createElement('canvas');
+  canvas.width=CROP_OUT;canvas.height=CROP_OUT;
+  canvas.getContext('2d').drawImage(s.img,sx,sy,sw,sh,0,0,CROP_OUT,CROP_OUT);
+  canvas.toBlob(function(blob){
+    var onDone=s.onDone;
+    URL.revokeObjectURL(s.url);
+    cropState=null;cropDrag=null;
+    document.getElementById('photo-crop-modal').classList.remove('open');
+    if(onDone&&blob)onDone(blob);
+  },'image/jpeg',0.9);
+}
+
 // ── PHOTO : une photo par artiste, partagee par tous ses concerts ──────
 function renderFichePhoto(c){
   var key=artKey(c.art);
@@ -1254,17 +1499,18 @@ function renderFichePhoto(c){
   }
   document.getElementById('fiche-photo').innerHTML=html;
 }
-async function uploadArtistPhoto(input){
-  var file=input.files&&input.files[0];if(!file)return;
+function onFichePhotoFileChosen(input){
+  var file=input.files&&input.files[0];input.value='';if(!file)return;
+  startCrop(file,function(blob){uploadArtistPhotoBlob(blob);});
+}
+async function uploadArtistPhotoBlob(blob){
   var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
   var key=artKey(c.art);
-  if(!key){showToast('Renseigne d\'abord le nom de l\'artiste.');input.value='';return;}
+  if(!key){showToast('Renseigne d\'abord le nom de l\'artiste.');return;}
   var old=artistPhotos[key];
-  input.disabled=true;
   try{
-    var ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
-    var path='artist-photos/'+key.replace(/[^a-z0-9]+/g,'-')+'-'+Date.now()+'.'+ext;
-    var url=await storageUpload(path,file);
+    var path='artist-photos/'+key.replace(/[^a-z0-9]+/g,'-')+'-'+Date.now()+'.jpg';
+    var url=await storageUpload(path,blob);
     if(old&&old.path)storageDelete(old.path);
     artistPhotos[key]={art:c.art,url:url,path:path};
     scheduleSave('artist_photos');
@@ -1273,7 +1519,6 @@ async function uploadArtistPhoto(input){
     console.error(e);
     showToast('Échec de l\'envoi de la photo : '+e.message);
   }
-  input.disabled=false;input.value='';
 }
 function removeArtistPhoto(){
   var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
