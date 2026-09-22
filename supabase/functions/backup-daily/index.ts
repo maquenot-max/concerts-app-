@@ -11,11 +11,16 @@
 // de service. Ce secret n'existe qu'en base, il n'a jamais ete ecrit ailleurs.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-// Memes cles que BACKUP_KEYS cote application, et que la contrainte CHECK.
+// Memes cles que BACKUP_KEYS cote application, et que la contrainte CHECK
+// app_data_key_allowlist. Toute cle ajoutee a la contrainte doit l'etre ici
+// aussi : artist_photos et city_groups (ajoutees le 22/09) ont manque aux
+// sauvegardes nocturnes jusqu'au 23/09 faute de cette mise a jour. La reponse
+// signale desormais toute cle presente en base mais absente de cette liste
+// ("ignorees"), pour que l'oubli ne puisse plus passer inapercu.
 const CLES = [
   "concerts", "taskstates", "process", "tkcols", "tktasks", "rsposts",
   "budget_templates", "style_adjustments", "regles_salles",
-  "concert_media", "concert_tasks",
+  "concert_media", "concert_tasks", "artist_photos", "city_groups",
 ];
 const BUCKET = "backups";
 const RETENTION_JOURS = 30;
@@ -59,8 +64,9 @@ Deno.serve(async (req: Request) => {
 
     const data: Record<string, unknown> = {};
     const illisibles: string[] = [];
+    const ignorees: string[] = [];
     for (const r of rows || []) {
-      if (!CLES.includes(r.key)) continue;
+      if (!CLES.includes(r.key)) { ignorees.push(r.key); continue; }
       try { data[r.key] = JSON.parse(r.value); }
       catch { illisibles.push(r.key); }
     }
@@ -128,6 +134,8 @@ Deno.serve(async (req: Request) => {
       plus_ancienne: dates[0] ?? null,
       sans_date: sansDate,
       illisibles,
+      // Doit rester vide : une cle ici existe en base mais n'est pas sauvegardee.
+      ignorees,
     });
   } catch (e) {
     return json({ error: String((e as Error)?.message || e) }, 500);
