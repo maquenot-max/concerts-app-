@@ -456,6 +456,14 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .media-del:hover{background:rgba(200,40,40,.85)}
 .media-add-row{display:flex;gap:8px}
 
+/* ── PHOTO (partagee par artiste) ──────────────────────── */
+.photo-widget{display:flex;gap:14px;align-items:flex-start}
+.photo-widget-slot{width:86px;height:86px;border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;flex-shrink:0;background:var(--surface-2)}
+.photo-widget-slot img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-widget-meta{flex:1;min-width:0}
+.photo-widget-note{font-size:12.5px;color:var(--text-2);line-height:1.5;margin-bottom:10px}
+.photo-widget-note b{color:var(--text)}
+
 /* ── TACHES DELEGUES ─────────────────────────────────── */
 .tk-task.delegue{background:var(--accent-soft);border-radius:var(--radius-xs);padding-left:8px;padding-right:8px;margin:0 -4px}
 .tk-delegue-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:4px;vertical-align:middle;flex-shrink:0}
@@ -555,6 +563,24 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .rs-modal-fmt-btn.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .rs-modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
 .rs-modal-fmt-btn,.rs-modal-net{font-family:inherit}
+
+/* ── MODALE NEWSLETTER (selection par ville/groupe) ────── */
+.nl-label{font-size:11.5px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--text-3);margin-bottom:7px}
+.pill-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.group-pill{padding:5px 12px;border-radius:var(--radius-pill);cursor:pointer;border:1px dashed var(--border-strong);font-size:12px;font-weight:500;background:var(--surface);color:var(--text-2);user-select:none}
+.group-pill.on{background:var(--accent-soft);border-style:solid;border-color:var(--accent);color:var(--accent)}
+.nl-count{font-size:12.5px;color:var(--text-2);margin-bottom:8px}
+.nl-count b{color:var(--text)}
+.nl-list{max-height:230px;overflow-y:auto;border:1px solid var(--border-light);border-radius:var(--radius-sm)}
+.nl-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--border-light);font-size:12.5px;cursor:pointer}
+.nl-row:last-child{border-bottom:none}
+.nl-row input{width:15px;height:15px;accent-color:var(--accent);flex-shrink:0}
+.nl-row .art{font-weight:600;color:var(--text)}
+.nl-row .sub{color:var(--text-3);margin-left:auto;white-space:nowrap;padding-left:8px}
+.nl-empty{padding:20px 12px;text-align:center;color:var(--text-3);font-size:12.5px;font-style:italic}
+.nl-export-out{display:none;background:var(--surface-2);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:10px 12px;font-size:11px;font-family:ui-monospace,'SF Mono',Consolas,monospace;color:var(--text-2);max-height:160px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.nl-export-out.show{display:block}
+
 .crow-list-card{overflow:hidden}
 
 /* ── COMPOSANTS PARTAGES (etape 2 de la refonte) ─────── */

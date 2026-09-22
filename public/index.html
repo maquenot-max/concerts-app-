@@ -74,6 +74,7 @@
       <button class="hdr-btn" id="user-btn" onclick="toggleFiltersPanel(event,'user-menu')" title="Mon compte"><svg class="ico" aria-hidden="true"><use href="#i-user"></use></svg></button>
       <div class="filters-panel fiche-menu" id="user-menu" style="display:none">
         <div class="menu-head" id="user-menu-head"></div>
+        <button class="menu-item" onclick="closeUserMenu();openNewsletterModal()">Newsletter</button>
         <button class="menu-item" id="user-menu-team" onclick="closeUserMenu();showTab('team')" style="display:none">Équipe</button>
         <button class="menu-item" id="user-menu-process" onclick="closeUserMenu();showTab('process')" style="display:none">Process</button>
         <button class="menu-item" id="user-menu-budget" onclick="closeUserMenu();showTab('budgetconfig')" style="display:none">Budget</button>
@@ -300,6 +301,11 @@
             <div class="fiche-field"><label for="fi-jeux">Jeu concours</label><input type="text" id="fi-jeux" onchange="updateFicheField('jeux',this.value)" placeholder="L'Union 5×2…"></div>
             <div class="fiche-field"><label for="fi-budget">Lien budget</label><input type="text" id="fi-budget" onchange="updateFicheField('budget',this.value)" placeholder="https://…"></div>
             <div class="fiche-field wide"><label for="fi-notes">Notes</label><input type="text" id="fi-notes" onchange="updateFicheField('notes',this.value)" placeholder="Notes libres…"></div>
+            <div class="fiche-field wide">
+              <label>Photo</label>
+              <input type="file" id="fiche-photo-input" accept="image/*" style="display:none" onchange="uploadArtistPhoto(this)">
+              <div id="fiche-photo"></div>
+            </div>
           </div>
         </div>
       </section>
@@ -394,6 +400,47 @@
       <button class="btn btn-danger" onclick="document.getElementById('backup-file').click()">Restaurer depuis un fichier…</button>
     </div>
     <div class="tk-modal-actions"><button class="btn" onclick="document.getElementById('backup-modal').classList.remove('open')">Fermer</button></div>
+  </div>
+</div>
+<div class="tk-modal" id="newsletter-modal" onclick="if(event.target===this)closeNewsletterModal()">
+  <div class="tk-modal-box w-560">
+    <div class="tk-modal-title">Générer une newsletter</div>
+    <div class="modal-note mb12">Choisis une ou plusieurs villes (ou un groupe enregistré) pour sélectionner les concerts à inclure, puis exporte.</div>
+    <div>
+      <div class="nl-label">Groupes enregistrés</div>
+      <div class="pill-row" id="nl-group-row"></div>
+    </div>
+    <div>
+      <div class="nl-label">Villes</div>
+      <div class="pill-row" id="nl-city-row"></div>
+    </div>
+    <div>
+      <div class="nl-count" id="nl-count"></div>
+      <div class="nl-list" id="nl-list"></div>
+    </div>
+    <div class="modal-sep">
+      <div class="nl-label">Photo ponctuelle (article à la une, festival…)</div>
+      <div class="photo-widget" id="nl-oneoff-photo" style="display:none">
+        <div class="photo-widget-slot"><img id="nl-oneoff-img" alt=""></div>
+        <div class="photo-widget-meta">
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <input type="text" id="nl-oneoff-url" readonly style="flex:1;min-width:0;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface-2)">
+            <button type="button" class="btn btn-sm" onclick="nlCopyOneoffUrl()">Copier</button>
+          </div>
+          <button type="button" class="btn btn-sm btn-danger" onclick="nlClearOneoffPhoto()">Retirer</button>
+        </div>
+      </div>
+      <input type="file" id="nl-oneoff-input" accept="image/*" style="display:none" onchange="nlUploadOneoffPhoto(this)">
+      <button type="button" class="btn btn-sm" id="nl-oneoff-add-btn" onclick="document.getElementById('nl-oneoff-input').click()">Ajouter une photo</button>
+    </div>
+    <div class="nl-export-out" id="nl-export-out"></div>
+    <div class="tk-modal-actions between">
+      <button class="btn-link" onclick="newsletterSaveGroup()">Enregistrer comme groupe…</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="closeNewsletterModal()">Fermer</button>
+        <button class="btn btn-primary" onclick="newsletterExport()">Exporter (JSON)</button>
+      </div>
+    </div>
   </div>
 </div>
 <div class="tk-modal" id="mfa-enroll-modal" onclick="if(event.target===this)mfaCancelEnrollment()">
@@ -609,7 +656,13 @@ var VENTES=[
 ];
 var concerts=[],taskStates={},process=DEFAULT_PROCESS,nextId=26;
 var concertMedia=[];
+var artistPhotos={};
+var cityGroups=[];
 var customTasks=[];
+// Cle de regroupement par artiste pour artistPhotos (trim + minuscule) : les
+// concerts partagent une seule photo par artiste, contrairement a
+// concertMedia qui est propre a chaque concert.
+function artKey(art){return (art||'').trim().toLowerCase();}
 var tkCols=[],tkTasks=[],tkEditId=null,tkAddColId=null;
 var rsPosts=[],rsEditId=null,rsCurrentProj="pp",rsCurrentDate=null,rsFmt="post",rsNetState={fb:false,insta:false,tiktok:false};
 // Planning RS : fenetre de 3 semaines (3 jours en arriere, 17 en avant),
@@ -859,7 +912,7 @@ async function saveAccountPassword(){
   showToast('Mot de passe modifié.');
 }
 // ── SAUVEGARDE : export (tous) / restauration (administrateurs) de toutes les cles ──
-var BACKUP_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','budget_templates','style_adjustments','regles_salles','concert_media','concert_tasks'];
+var BACKUP_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','budget_templates','style_adjustments','regles_salles','concert_media','concert_tasks','artist_photos','city_groups'];
 function openBackupModal(){
   var w=document.getElementById('backup-restore-wrap');
   if(w)w.style.display=isAdmin()?'':'none';
@@ -904,6 +957,152 @@ async function backupRestore(input){
     setTimeout(function(){location.reload();},1200);
   }catch(e){showToast('Échec de la restauration : '+e.message,8000);}
 }
+
+// ── NEWSLETTER : selection de concerts par ville / groupe de villes ────
+var nlSelectedCities={};
+var nlExcludedIds={};
+function nlUpcomingConcerts(){
+  var today=new Date();today.setHours(0,0,0,0);
+  return concerts.filter(function(c){return !c.supprime&&!c.annule&&c.dc&&new Date(c.dc)>=today;});
+}
+function openNewsletterModal(){
+  nlSelectedCities={};nlExcludedIds={};
+  document.getElementById('newsletter-modal').classList.add('open');
+  nlRenderAll();
+}
+function closeNewsletterModal(){
+  document.getElementById('newsletter-modal').classList.remove('open');
+}
+function nlCityList(){
+  var villes={};
+  nlUpcomingConcerts().forEach(function(c){var v=getVille(c.ville);if(v)villes[v]=1;});
+  return Object.keys(villes).sort();
+}
+function nlMatching(){
+  var any=Object.keys(nlSelectedCities).some(function(k){return nlSelectedCities[k];});
+  return nlUpcomingConcerts().filter(function(c){
+    if(any&&!nlSelectedCities[getVille(c.ville)])return false;
+    return true;
+  });
+}
+function nlRenderGroups(){
+  var el=document.getElementById('nl-group-row');
+  if(!cityGroups.length){el.innerHTML='<span style="font-size:12px;color:var(--text-3);font-style:italic">Aucun groupe enregistré pour l\'instant.</span>';return;}
+  el.innerHTML=cityGroups.map(function(g){
+    var on=g.villes.length>0&&g.villes.every(function(v){return nlSelectedCities[v];});
+    return '<span class="group-pill'+(on?' on':'')+'" onclick="nlApplyGroup(\''+escJs(g.id)+'\')">'+esc(g.nom)+'</span>';
+  }).join('');
+}
+function nlRenderCities(){
+  var el=document.getElementById('nl-city-row');
+  var cities=nlCityList();
+  if(!cities.length){el.innerHTML='<span style="font-size:12px;color:var(--text-3);font-style:italic">Aucun concert à venir.</span>';return;}
+  el.innerHTML=cities.map(function(v){
+    var on=!!nlSelectedCities[v];
+    return '<span class="rs-modal-net'+(on?' on':'')+'" onclick="nlToggleCity(\''+escJs(v)+'\')">'+esc(v)+'</span>';
+  }).join('');
+}
+function nlRenderList(){
+  var all=nlMatching();
+  var included=all.filter(function(c){return !nlExcludedIds[c.id];});
+  var any=Object.keys(nlSelectedCities).some(function(k){return nlSelectedCities[k];});
+  document.getElementById('nl-count').innerHTML=any
+    ?'<b>'+included.length+'</b> concert'+(included.length>1?'s':'')+' sélectionné'+(included.length>1?'s':'')+' sur '+all.length
+    :'Choisis une ville ou un groupe — <b>'+all.length+'</b> concert'+(all.length>1?'s':'')+' à venir au total';
+  var listEl=document.getElementById('nl-list');
+  if(!all.length){listEl.innerHTML='<div class="nl-empty">Aucun concert à venir pour cette sélection.</div>';return;}
+  listEl.innerHTML=all.map(function(c){
+    var checked=!nlExcludedIds[c.id];
+    var d=new Date(c.dc);
+    return '<label class="nl-row">'
+      +'<input type="checkbox" '+(checked?'checked':'')+' onchange="nlToggleRow(\''+escJs(c.id)+'\')">'
+      +'<span class="art">'+esc(c.art)+'</span>'
+      +'<span class="sub">'+esc(getVille(c.ville))+' · '+d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+'</span>'
+      +'</label>';
+  }).join('');
+}
+function nlRenderAll(){nlRenderGroups();nlRenderCities();nlRenderList();document.getElementById('nl-export-out').classList.remove('show');}
+function nlToggleCity(v){nlSelectedCities[v]=!nlSelectedCities[v];nlRenderAll();}
+function nlApplyGroup(id){
+  var g=cityGroups.find(function(x){return x.id===id;});if(!g)return;
+  var on=g.villes.length>0&&g.villes.every(function(v){return nlSelectedCities[v];});
+  g.villes.forEach(function(v){nlSelectedCities[v]=!on;});
+  nlRenderAll();
+}
+function nlToggleRow(id){nlExcludedIds[id]=!nlExcludedIds[id];nlRenderList();}
+function newsletterSaveGroup(){
+  var chosen=Object.keys(nlSelectedCities).filter(function(k){return nlSelectedCities[k];});
+  if(!chosen.length){showToast('Sélectionne au moins une ville d\'abord.');return;}
+  var nom=(prompt('Nom du groupe (ex. "Bourgogne") :')||'').trim();
+  if(!nom)return;
+  cityGroups.push({id:'cg'+Date.now(),nom:nom,villes:chosen});
+  scheduleSave('city_groups');
+  nlRenderGroups();
+  showToast('Groupe "'+nom+'" enregistré.');
+}
+function newsletterExport(){
+  var included=nlMatching().filter(function(c){return !nlExcludedIds[c.id];});
+  if(!included.length){showToast('Aucun concert sélectionné.');return;}
+  var payload=included.map(function(c){
+    var key=artKey(c.art);
+    var photo=key&&artistPhotos[key]?artistPhotos[key].url:'';
+    return {art:c.art,date:c.dc,ville:getVille(c.ville),lieu:formatLieu(c.ville),billetterie:(c.sponso&&c.sponso.billet)||'',photo:photo};
+  });
+  var out=document.getElementById('nl-export-out');
+  out.textContent=JSON.stringify(payload,null,2);
+  out.classList.add('show');
+  var d=new Date();
+  var stamp=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='newsletter-'+stamp+'.json';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1500);
+}
+// Photo ponctuelle (article a la une, festival...) : pas liee a un concert,
+// juste un moyen d'obtenir une URL publique a coller ailleurs. Pas
+// sauvegardee dans app_data, elle ne sert que le temps de la session.
+var nlOneoffPhoto=null;
+async function nlUploadOneoffPhoto(input){
+  var file=input.files&&input.files[0];if(!file)return;
+  input.disabled=true;
+  try{
+    var ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+    var path='newsletter-photos/'+Date.now()+'.'+ext;
+    var url=await storageUpload(path,file);
+    if(nlOneoffPhoto&&nlOneoffPhoto.path)storageDelete(nlOneoffPhoto.path);
+    nlOneoffPhoto={url:url,path:path};
+    document.getElementById('nl-oneoff-img').src=url;
+    document.getElementById('nl-oneoff-url').value=url;
+    document.getElementById('nl-oneoff-photo').style.display='flex';
+    document.getElementById('nl-oneoff-add-btn').textContent='Changer la photo';
+  }catch(e){
+    console.error(e);
+    showToast('Échec de l\'envoi de la photo : '+e.message);
+  }
+  input.disabled=false;input.value='';
+}
+function nlClearOneoffPhoto(){
+  if(nlOneoffPhoto&&nlOneoffPhoto.path)storageDelete(nlOneoffPhoto.path);
+  nlOneoffPhoto=null;
+  document.getElementById('nl-oneoff-photo').style.display='none';
+  document.getElementById('nl-oneoff-url').value='';
+  document.getElementById('nl-oneoff-add-btn').textContent='Ajouter une photo';
+}
+function nlCopyOneoffUrl(){
+  var el=document.getElementById('nl-oneoff-url');
+  var url=el.value;if(!url)return;
+  function done(){showToast('URL copiée.');}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(done).catch(function(){
+      el.select();el.setSelectionRange(0,99999);
+      try{document.execCommand('copy');done();}catch(e){}
+    });
+  }else{
+    el.select();el.setSelectionRange(0,99999);
+    try{document.execCommand('copy');done();}catch(e){}
+  }
+}
+
 // ── EQUIPE (administrateurs) : via la fonction serveur team-admin ──
 async function teamCall(action,payload){
   var body=Object.assign({action:action},payload||{});
@@ -1005,6 +1204,74 @@ async function storageDelete(path){
   await fetch(SUPABASE_URL+'/storage/v1/object/concert-media/'+path,{method:'DELETE',headers:await authHeaders()});
 }
 
+// ── PHOTO : une photo par artiste, partagee par tous ses concerts ──────
+function renderFichePhoto(c){
+  var key=artKey(c.art);
+  var entry=key?artistPhotos[key]:null;
+  var others=key?concerts.filter(function(x){return x.id!==c.id&&!x.supprime&&artKey(x.art)===key;}).length:0;
+  var html='';
+  if(entry){
+    html+='<div class="photo-widget"><div class="photo-widget-slot"><img src="'+escUrl(entry.url)+'" alt=""></div><div class="photo-widget-meta">'
+      +'<div class="photo-widget-note">'+(others
+        ?'Utilisée aussi pour <b>'+others+' autre'+(others>1?'s':'')+' concert'+(others>1?'s':'')+'</b> de '+esc(c.art)+'.'
+        :'Sera utilisée pour tous les concerts de <b>'+esc(c.art)+'</b>.')+'</div>'
+      +'<div class="media-add-row">'
+        +'<button type="button" class="btn btn-sm" onclick="document.getElementById(\'fiche-photo-input\').click()">Changer la photo</button>'
+        +'<button type="button" class="btn btn-sm btn-danger" onclick="removeArtistPhoto()">Retirer</button>'
+      +'</div></div></div>';
+  }else{
+    html+='<div class="photo-widget-note">Aucune photo pour <b>'+esc(c.art||'cet artiste')+'</b>. Une fois ajoutée, elle sert pour tous ses concerts.</div>'
+      +'<div class="media-add-row">'
+        +'<button type="button" class="btn btn-sm" onclick="document.getElementById(\'fiche-photo-input\').click()">Ajouter une photo</button>'
+      +'</div>';
+  }
+  document.getElementById('fiche-photo').innerHTML=html;
+}
+async function uploadArtistPhoto(input){
+  var file=input.files&&input.files[0];if(!file)return;
+  var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
+  var key=artKey(c.art);
+  if(!key){showToast('Renseigne d\'abord le nom de l\'artiste.');input.value='';return;}
+  var old=artistPhotos[key];
+  input.disabled=true;
+  try{
+    var ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+    var path='artist-photos/'+key.replace(/[^a-z0-9]+/g,'-')+'-'+Date.now()+'.'+ext;
+    var url=await storageUpload(path,file);
+    if(old&&old.path)storageDelete(old.path);
+    artistPhotos[key]={art:c.art,url:url,path:path};
+    scheduleSave('artist_photos');
+    renderFichePhoto(c);
+  }catch(e){
+    console.error(e);
+    showToast('Échec de l\'envoi de la photo : '+e.message);
+  }
+  input.disabled=false;input.value='';
+}
+function removeArtistPhoto(){
+  var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
+  var key=artKey(c.art);
+  var entry=key?artistPhotos[key]:null;if(!entry)return;
+  customConfirm('Retirer la photo de '+c.art+' ? Elle disparaîtra de tous ses concerts.','Retirer').then(function(ok){
+    if(!ok)return;
+    if(entry.path)storageDelete(entry.path);
+    delete artistPhotos[key];
+    scheduleSave('artist_photos');
+    renderFichePhoto(c);
+  });
+}
+// Supprime la photo d'un artiste si plus aucun concert (non archive) ne
+// l'utilise ; appele apres une suppression definitive de concert.
+function cleanupArtistPhotoIfOrphan(art){
+  var key=artKey(art);if(!key)return;
+  var entry=artistPhotos[key];if(!entry)return;
+  var stillUsed=concerts.some(function(x){return artKey(x.art)===key;});
+  if(stillUsed)return;
+  if(entry.path)storageDelete(entry.path);
+  delete artistPhotos[key];
+  scheduleSave('artist_photos');
+}
+
 // ── REALTIME : écouter les changements ────────────────────
 var _rtChannel=null;
 var _lastSaveTs=0; // timestamp de notre dernière sauvegarde locale
@@ -1083,7 +1350,7 @@ async function reloadFromRemote(changedKey,updatedBy){
   var who=teamDisplayName(updatedBy);
   showSyncBanner(who?('Mise à jour de '+who+'...'):'Synchronisation...');
   try{
-    var keys=changedKey?[changedKey]:['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media','concert_tasks'];
+    var keys=changedKey?[changedKey]:['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media','concert_tasks','artist_photos','city_groups'];
     for(var i=0;i<keys.length;i++){
       var k=keys[i];
       if(k==='taskstates'){
@@ -1113,6 +1380,21 @@ async function reloadFromRemote(changedKey,updatedBy){
       else if(k==='rsposts')rsPosts=mergeArrayById(await dbGet('rsposts',[]),rsPosts);
       else if(k==='concert_media')concertMedia=mergeArrayById(await dbGet('concert_media',[]),concertMedia);
       else if(k==='concert_tasks')customTasks=mergeArrayById(await dbGet('concert_tasks',[]),customTasks);
+      else if(k==='city_groups')cityGroups=mergeArrayById(await dbGet('city_groups',[]),cityGroups);
+      else if(k==='artist_photos'){
+        // Meme strategie de fusion "objet" que taskstates : mergeArrayById ne
+        // convient pas, artistPhotos n'est pas un tableau.
+        var remote=await dbGet('artist_photos',{});
+        if(remote){
+          if(Date.now()-_lastSaveTs<10000){
+            Object.keys(remote).forEach(function(key){
+              if(!(key in artistPhotos)) artistPhotos[key]=remote[key];
+            });
+          } else {
+            artistPhotos=remote;
+          }
+        }
+      }
     }
     render();
     showSyncBanner(who?('Mis à jour par '+who):'À jour ✓',true);
@@ -1142,11 +1424,11 @@ function showSyncBanner(msg,fadeOut){
 
 // ── SAUVEGARDE : uniquement les domaines modifies (evite d'ecraser
 // les autres domaines avec une copie locale potentiellement perimee) ──
-var ALL_SAVE_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media','concert_tasks'];
+var ALL_SAVE_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media','concert_tasks','artist_photos','city_groups'];
 var pendingSaveKeys={};
 var saveRetryTimer=null;
 function currentValueFor(key){
-  return {concerts:concerts,taskstates:taskStates,process:process,tkcols:tkCols,tktasks:tkTasks,rsposts:rsPosts,concert_media:concertMedia,concert_tasks:customTasks}[key];
+  return {concerts:concerts,taskstates:taskStates,process:process,tkcols:tkCols,tktasks:tkTasks,rsposts:rsPosts,concert_media:concertMedia,concert_tasks:customTasks,artist_photos:artistPhotos,city_groups:cityGroups}[key];
 }
 function scheduleSave(){
   if(!appDataLoaded){
@@ -1251,6 +1533,8 @@ async function init(){
     nextId=process.length?Math.max.apply(null,process.map(function(t){return t.id;}))+1:26;
     rsPosts=(await dbGet('rsposts',[]))||[];
     concertMedia=(await dbGet('concert_media',[]))||[];
+    artistPhotos=(await dbGet('artist_photos',{}))||{};
+    cityGroups=(await dbGet('city_groups',[]))||[];
     customTasks=(await dbGet('concert_tasks',[]))||[];
     var tkRes=await Promise.all([dbGet('tkcols',[]),dbGet('tktasks',[])]);
     tkCols=tkRes[0]||[];tkTasks=tkRes[1]||[];
@@ -1603,6 +1887,7 @@ function openFiche(id,sec){
   if(document.getElementById('fi-notes'))document.getElementById('fi-notes').value=c.notes||'';
   renderFicheTasks(c);
   spRenderFiche(id);
+  renderFichePhoto(c);
   updateSkipButtons();
   document.getElementById('fi-archive-btn').style.display=c.supprime?'none':'';
   document.getElementById('fi-restore-btn').style.display=c.supprime?'':'none';
@@ -1934,6 +2219,7 @@ async function permanentlyDeleteConcert(id){
   var orphanMedia=concertMedia.filter(function(m){return m.concertId===id;});
   concertMedia=concertMedia.filter(function(m){return m.concertId!==id;});
   customTasks=customTasks.filter(function(t){return t.concertId!==id;});
+  cleanupArtistPhotoIfOrphan(c.art);
   scheduleSave('concerts','concert_media','concert_tasks');
   orphanMedia.forEach(function(m){if(m.type==='image'&&m.path)storageDelete(m.path);});
   if(currentFicheId===id)closeFicheBtn();else render();
