@@ -438,7 +438,7 @@
       <button class="btn-link" onclick="newsletterSaveGroup()">Enregistrer comme groupe…</button>
       <div style="display:flex;gap:8px">
         <button class="btn" onclick="closeNewsletterModal()">Fermer</button>
-        <button class="btn btn-primary" onclick="newsletterExport()">Exporter (JSON)</button>
+        <button class="btn btn-primary" onclick="newsletterExport()">Copier le code HTML</button>
       </div>
     </div>
   </div>
@@ -1040,23 +1040,50 @@ function newsletterSaveGroup(){
   nlRenderGroups();
   showToast('Groupe "'+nom+'" enregistré.');
 }
+// Genere le code HTML d'une carte de la grille "Nos prochains concerts",
+// meme gabarit que le template de newsletter (Poppins/Fraunces, 3 colonnes).
+function nlCardHtml(c,colIndex){
+  var pad=colIndex===0?'0 8px 28px 0':(colIndex===1?'0 4px 28px':'0 0 28px 8px');
+  var key=artKey(c.art);
+  var photoUrl=key&&artistPhotos[key]?artistPhotos[key].url:'';
+  var img=photoUrl?escUrl(photoUrl):'[URL_IMAGE]';
+  var billet=(c.sponso&&c.sponso.billet)?escUrl(c.sponso.billet):'[LIEN_BILLETTERIE]';
+  var dateStr=c.dc?new Date(c.dc+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';
+  return ''
+    +'<td class="stack stack-pad" width="33.33%" valign="top" style="padding:'+pad+';">'
+      +'<a href="'+billet+'" target="_blank">'
+        +'<img class="fluid-img" src="'+img+'" width="176" alt="'+esc(c.art)+'" style="display:block;width:100%;border-radius:12px;box-shadow:0 8px 18px rgba(35,32,58,0.12);">'
+      +'</a>'
+      +'<table role="presentation" width="100%" cellpadding="0" cellspacing="0">'
+        +'<tr><td style="padding:12px 0 0;font-family:\'Fraunces\', Georgia, serif;font-style:italic;font-weight:600;font-size:14px;color:#7A5FB0;">'+esc(dateStr)+'</td></tr>'
+        +'<tr><td style="padding:2px 0 0;font-family:\'Poppins\', Arial, Helvetica, sans-serif;font-size:16px;font-weight:700;color:#16171F;">'+esc(c.art)+'</td></tr>'
+        +'<tr><td style="padding:2px 0 0;font-family:Arial, Helvetica, sans-serif;font-size:11.5px;letter-spacing:0.4px;text-transform:uppercase;color:#9C9891;">'+esc(formatLieu(c.ville))+'</td></tr>'
+      +'</table>'
+    +'</td>';
+}
+function nlBuildGridHtml(list){
+  var rows=[];
+  for(var i=0;i<list.length;i+=3){
+    var chunk=list.slice(i,i+3);
+    rows.push('<tr>'+chunk.map(function(c,j){return nlCardHtml(c,j);}).join('')+'</tr>');
+  }
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">\n'+rows.join('\n')+'\n</table>';
+}
 function newsletterExport(){
   var included=nlMatching().filter(function(c){return !nlExcludedIds[c.id];});
   if(!included.length){showToast('Aucun concert sélectionné.');return;}
-  var payload=included.map(function(c){
-    var key=artKey(c.art);
-    var photo=key&&artistPhotos[key]?artistPhotos[key].url:'';
-    return {art:c.art,date:c.dc,ville:getVille(c.ville),lieu:formatLieu(c.ville),billetterie:(c.sponso&&c.sponso.billet)||'',photo:photo};
-  });
+  var html=nlBuildGridHtml(included);
   var out=document.getElementById('nl-export-out');
-  out.textContent=JSON.stringify(payload,null,2);
+  out.textContent=html;
   out.classList.add('show');
-  var d=new Date();
-  var stamp=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='newsletter-'+stamp+'.json';
-  document.body.appendChild(a);a.click();
-  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1500);
+  var count=included.length;
+  var withoutPhoto=included.filter(function(c){var k=artKey(c.art);return !(k&&artistPhotos[k]);}).length;
+  var msg=count+' concert'+(count>1?'s':'')+' — code copié.'+(withoutPhoto?' '+withoutPhoto+' sans photo (placeholder [URL_IMAGE] à remplacer).':'');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(html).then(function(){showToast(msg);}).catch(function(){showToast(count+' concert'+(count>1?'s':'')+' — code prêt ci-dessous (copie manuelle).');});
+  }else{
+    showToast(count+' concert'+(count>1?'s':'')+' — code prêt ci-dessous (copie manuelle).');
+  }
 }
 // Photo ponctuelle (article a la une, festival...) : pas liee a un concert,
 // juste un moyen d'obtenir une URL publique a coller ailleurs. Pas
