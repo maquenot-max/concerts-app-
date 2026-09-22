@@ -2,7 +2,10 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- supabase-js : version figee + empreinte (integrity). Avec "@2", jsdelivr servait la derniere 2.x publiee sur npm, sans controle :
+     une version compromise aurait eu acces a la session. Pour monter de version : changer le numero ici ET dans _headers (CSP),
+     puis recalculer l'empreinte : curl -s <url> | openssl dgst -sha384 -binary | openssl base64 -A -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js" integrity="sha384-xPW3QHswsICVC2mW6BFNwMbhpLkbZ133fKOhxNx3QGGgAOJfL3O9t8r2aWn1aez6" crossorigin="anonymous"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Please Please Communication - Dashboard</title>
 <link rel="icon" type="image/x-icon" href="favicon_io/favicon.ico">
@@ -719,6 +722,16 @@ var customTasks=[];
 // concerts partagent une seule photo par artiste, contrairement a
 // concertMedia qui est propre a chaque concert.
 function artKey(art){return (art||'').trim().toLowerCase();}
+// Identifiant unique pour un element cree dans l'appli. L'ancien motif
+// (Date.now() + un nombre entre 0 et 998) produisait des doublons des que
+// plusieurs elements naissaient dans la meme milliseconde : deux posts auto
+// du planning RS partageaient ainsi le meme id (constate le 22/09).
+function uid(prefix){
+  var r='';
+  try{r=crypto.randomUUID().replace(/-/g,'').slice(0,12);}catch(e){}
+  if(!r)r=Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,6);
+  return prefix+Date.now()+r;
+}
 var tkCols=[],tkTasks=[],tkEditId=null,tkAddColId=null;
 var rsPosts=[],rsEditId=null,rsCurrentProj="pp",rsCurrentDate=null,rsFmt="post",rsNetState={fb:false,insta:false,tiktok:false};
 // Planning RS : fenetre de 3 semaines (3 jours en arriere, 17 en avant),
@@ -1005,13 +1018,23 @@ async function backupRestore(input){
   if(!keys.length){showToast('La sauvegarde ne contient aucune donnée reconnue.',6000);return;}
   var when=payload.exportedAt?new Date(payload.exportedAt).toLocaleString('fr-FR'):'date inconnue';
   var nb=Array.isArray(payload.data.concerts)?payload.data.concerts.length:0;
-  if(!await customConfirm('Remplacer toutes les données actuelles par la sauvegarde du '+when+' ('+nb+' concerts, '+keys.length+' jeux de données) ? Une copie de l\'état actuel sera d\'abord téléchargée.','Restaurer'))return;
+  if(!await customConfirm('Remplacer toutes les données actuelles par la sauvegarde du '+when+' ('+nb+' concerts, '+keys.length+' jeux de données) ? Une copie de l\'état actuel sera d\'abord téléchargée. Idéalement, les autres personnes ferment l\'appli avant : une modification qu\'elles n\'auraient pas encore enregistrée serait ré-appliquée par-dessus la sauvegarde.','Restaurer'))return;
+  var faites=[];
   try{
     var current=await backupFetchAll();backupDownload(current,'avant-restauration-');
-    for(var i=0;i<keys.length;i++)await dbSet(keys[i],payload.data[keys[i]]);
+    // Plus aucune ecriture depuis cette page : elle se recharge juste apres, et
+    // un envoi encore en attente reecrirait l'ancien etat par-dessus.
+    _restoring=true;clearTimeout(saveTimer);clearTimeout(saveRetryTimer);pendingSaveKeys={};
+    for(var i=0;i<keys.length;i++){await dbSet(keys[i],payload.data[keys[i]]);faites.push(keys[i]);}
     showToast('Restauration terminée, rechargement…');
     setTimeout(function(){location.reload();},1200);
-  }catch(e){showToast('Échec de la restauration : '+e.message,8000);}
+  }catch(e){
+    if(!faites.length){_restoring=false;showToast('Échec de la restauration, rien n\'a été modifié : '+e.message,8000);return;}
+    // Restauration partielle : la page ne reflete plus la base, on recharge
+    // pour montrer l'etat reel. La copie d'avant restauration est telechargee.
+    showToast('Restauration interrompue ('+e.message+'). Déjà restaurés : '+faites.join(', ')+'. Relance la restauration ; la copie d\'avant est dans tes téléchargements. Rechargement…',10000);
+    setTimeout(function(){location.reload();},6000);
+  }
 }
 
 // ── NEWSLETTER : selection de concerts par ville / groupe de villes ────
@@ -1125,7 +1148,7 @@ function newsletterSaveGroup(){
   if(!chosen.length){showToast('Sélectionne au moins une ville d\'abord.');return;}
   var nom=(prompt('Nom du groupe (ex. "Bourgogne") :')||'').trim();
   if(!nom)return;
-  cityGroups.push({id:'cg'+Date.now(),nom:nom,villes:chosen});
+  cityGroups.push({id:uid('cg'),nom:nom,villes:chosen});
   scheduleSave('city_groups');
   nlRenderGroups();
   showToast('Groupe "'+nom+'" enregistré.');
@@ -1358,45 +1381,64 @@ function newsletterExport(){
   var out=document.getElementById('nl-export-out');
   out.textContent=html;
   out.classList.add('show');
-  var count=included.length;
-  var withoutPhoto=included.filter(function(c){var k=artKey(c.art);return !(k&&artistPhotos[k]);}).length;
+  // Concerts reellement presents dans l'HTML : grille et "Dernieres annonces".
+  // Le decompte du message porte sur eux, comme les alertes qui suivent.
+  var montres={};
+  if(nlSectionVisible.concerts)included.forEach(function(c){montres[c.id]=c;});
+  if(nlSectionVisible.announced)nlRecentlyAnnouncedConcerts().filter(function(c){return !nlAnnouncedExcludedIds[c.id];}).forEach(function(c){montres[c.id]=c;});
+  var liste=Object.keys(montres).map(function(id){return montres[id];});
+  var count=liste.length;
+  var withoutPhoto=liste.filter(function(c){var k=artKey(c.art);return !(k&&artistPhotos[k]);}).length;
+  // Sans lien billetterie valide, la carte part avec [LIEN_BILLETTERIE] dans
+  // son lien : a signaler au meme titre qu'une photo manquante.
+  var withoutTicket=liste.filter(function(c){return !(c.sponso&&safeUrl(c.sponso.billet));}).length;
   var warn=[];
   if(withoutPhoto)warn.push(withoutPhoto+' concert'+(withoutPhoto>1?'s':'')+' sans photo');
-  if(!nlOneoffPhoto)warn.push('pas de photo pour l\'article');
+  if(withoutTicket)warn.push(withoutTicket+' concert'+(withoutTicket>1?'s':'')+' sans lien billetterie (Sponso de la fiche)');
+  if(nlSectionVisible.hero&&!nlOneoffPhoto)warn.push('pas de photo pour l\'article');
   if(!NL_LOGO_BLUE)warn.push('logo bleu manquant');
+  // Les photos exportees peuvent partir dans un e-mail : on ne les supprimera
+  // plus du bucket, meme si on les change ensuite dans le formulaire.
+  if(nlSectionVisible.hero&&nlOneoffPhoto)nlExportedPaths[nlOneoffPhoto.path]=1;
+  if(nlSectionVisible.announcements)nlAnnouncements.forEach(function(a){if(a.photo)nlExportedPaths[a.photo.path]=1;});
   var msg='Newsletter complète copiée ('+count+' concert'+(count>1?'s':'')+').'+(warn.length?' À compléter : '+warn.join(', ')+'.':'');
   if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(html).then(function(){showToast(msg,6000);}).catch(function(){showToast('Code prêt ci-dessous (copie manuelle).',6000);});
+    navigator.clipboard.writeText(html).then(function(){showToast(msg,8000);}).catch(function(){showToast('Code prêt ci-dessous (copie manuelle).'+(warn.length?' À compléter : '+warn.join(', ')+'.':''),8000);});
   }else{
-    showToast('Code prêt ci-dessous (copie manuelle).',6000);
+    showToast('Code prêt ci-dessous (copie manuelle).'+(warn.length?' À compléter : '+warn.join(', ')+'.':''),8000);
   }
+}
+// Photos de newsletter deja exportees (donc peut-etre dans un e-mail envoye) :
+// elles restent dans le bucket, quoi qu'on fasse ensuite dans le formulaire.
+// Une photo remplacee AVANT tout export n'a servi nulle part, on la supprime.
+var nlExportedPaths={};
+function nlDeleteIfUnused(photo){
+  if(photo&&photo.path&&!nlExportedPaths[photo.path])storageDelete(photo.path);
 }
 // Photo ponctuelle (article a la une, festival...) : pas liee a un concert,
 // juste un moyen d'obtenir une URL publique a coller ailleurs. Pas
 // sauvegardee dans app_data, elle ne sert que le temps de la session.
+// Sortie en 1280x720 : l'image s'affiche sur 576 px de large, il en faut le
+// double pour rester nette sur un ecran haute definition (les cartes, 176 px,
+// se contentent de 640x360).
+var NL_HERO_CROP={outW:1280,outH:720};
 var nlOneoffPhoto=null;
 function onOneoffPhotoFileChosen(input){
   var file=input.files&&input.files[0];input.value='';if(!file)return;
-  startCrop(file,function(blob){uploadOneoffPhotoBlob(blob);});
+  cropFromFile(file,NL_HERO_CROP,function(blob,orig){uploadOneoffPhotoBlob(blob,orig);});
 }
+// Recadrer repart de l'image d'origine (gardee en memoire pour la session),
+// pas de la version deja recadree : on peut donc aussi dezoomer.
 function recropOneoffPhoto(){
-  if(!nlOneoffPhoto)return;
-  fetch(nlOneoffPhoto.url).then(function(r){
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    return r.blob();
-  }).then(function(blob){
-    startCrop(blob,function(newBlob){uploadOneoffPhotoBlob(newBlob);});
-  }).catch(function(e){
-    console.error(e);
-    showToast('Impossible de charger la photo actuelle pour la recadrer.');
-  });
+  var ph=nlOneoffPhoto;if(!ph)return;
+  cropFromExisting(ph.orig,ph.url,NL_HERO_CROP,function(blob,orig){uploadOneoffPhotoBlob(blob,orig);});
 }
-async function uploadOneoffPhotoBlob(blob){
+async function uploadOneoffPhotoBlob(blob,orig){
   try{
     var path='newsletter-photos/'+Date.now()+'.jpg';
     var url=await storageUpload(path,blob);
-    if(nlOneoffPhoto&&nlOneoffPhoto.path)storageDelete(nlOneoffPhoto.path);
-    nlOneoffPhoto={url:url,path:path};
+    nlDeleteIfUnused(nlOneoffPhoto);
+    nlOneoffPhoto={url:url,path:path,orig:orig||null};
     document.getElementById('nl-oneoff-img').src=url;
     document.getElementById('nl-oneoff-url').value=url;
     document.getElementById('nl-oneoff-photo').style.display='flex';
@@ -1406,10 +1448,10 @@ async function uploadOneoffPhotoBlob(blob){
     showToast('Échec de l\'envoi de la photo : '+e.message);
   }
 }
-// Dernieres annonces : items libres (pas lies a un concert), memes regles
-// de photo que ci-dessus (recadrage carre) pour rester homogene. Persiste
-// tant que la page vit, comme nlOneoffPhoto - pas reinitialise a chaque
-// ouverture de la modale.
+// Actu Please Please : items libres (pas lies a un concert), meme format de
+// photo que les cartes de concert (16:9) pour rester homogene. Persiste tant
+// que la page vit, comme nlOneoffPhoto - pas reinitialise a chaque ouverture
+// de la modale.
 var nlAnnouncements=[];
 function nlAddAnnouncement(){
   nlAnnouncements.push({title:'',text:'',link:'',photo:null});
@@ -1417,7 +1459,7 @@ function nlAddAnnouncement(){
 }
 function nlRemoveAnnouncement(i){
   var a=nlAnnouncements[i];
-  if(a&&a.photo&&a.photo.path)storageDelete(a.photo.path);
+  if(a)nlDeleteIfUnused(a.photo);
   nlAnnouncements.splice(i,1);
   nlRenderAnnouncements();
 }
@@ -1450,29 +1492,25 @@ function nlRenderAnnouncements(){
     +'</div>';
   }).join('');
 }
+// La photo est rattachee a l'OBJET annonce, pas a sa position dans la liste :
+// si une autre annonce est retiree pendant le recadrage ou l'envoi, la photo
+// ne se retrouve pas sur la mauvaise ligne.
 function onAnnouncementPhotoFileChosen(input,i){
   var file=input.files&&input.files[0];input.value='';if(!file)return;
-  startCrop(file,function(blob){uploadAnnouncementPhotoBlob(blob,i);});
+  var a=nlAnnouncements[i];if(!a)return;
+  cropFromFile(file,null,function(blob,orig){uploadAnnouncementPhotoBlob(blob,orig,a);});
 }
 function recropAnnouncementPhoto(i){
   var a=nlAnnouncements[i];if(!a||!a.photo)return;
-  fetch(a.photo.url).then(function(r){
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    return r.blob();
-  }).then(function(blob){
-    startCrop(blob,function(newBlob){uploadAnnouncementPhotoBlob(newBlob,i);});
-  }).catch(function(e){
-    console.error(e);
-    showToast('Impossible de charger la photo actuelle pour la recadrer.');
-  });
+  cropFromExisting(a.photo.orig,a.photo.url,null,function(blob,orig){uploadAnnouncementPhotoBlob(blob,orig,a);});
 }
-async function uploadAnnouncementPhotoBlob(blob,i){
+async function uploadAnnouncementPhotoBlob(blob,orig,a){
   try{
     var path='newsletter-photos/announce-'+Date.now()+'.jpg';
     var url=await storageUpload(path,blob);
-    var old=nlAnnouncements[i]&&nlAnnouncements[i].photo;
-    if(old&&old.path)storageDelete(old.path);
-    if(nlAnnouncements[i])nlAnnouncements[i].photo={url:url,path:path};
+    if(nlAnnouncements.indexOf(a)<0){storageDelete(path);return;} // annonce retiree entre-temps
+    nlDeleteIfUnused(a.photo);
+    a.photo={url:url,path:path,orig:orig||null};
     nlRenderAnnouncements();
   }catch(e){
     console.error(e);
@@ -1491,7 +1529,7 @@ function nlRenderSectionOrder(){
   el.innerHTML=nlSectionOrder.map(function(key,i){
     var on=nlSectionVisible[key];
     return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;margin-bottom:6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:'+(on?'var(--surface)':'var(--surface-2)')+'">'
-      +'<input type="checkbox" '+(on?'checked':'')+' onchange="nlToggleSectionVisible(\''+key+'\')" title="Afficher cette section dans la newsletter">'
+      +'<input type="checkbox" '+(on?'checked':'')+' onchange="nlToggleSectionVisible(\''+escJs(key)+'\')" title="Afficher cette section dans la newsletter">'
       +'<span style="flex:1;font-size:12.5px;font-weight:600;color:'+(on?'var(--text)':'var(--text-3)')+'">'+NL_SECTION_LABELS[key]+'</span>'
       +'<button type="button" class="btn btn-sm" '+(i===0?'disabled':'')+' onclick="nlMoveSection('+i+',-1)" title="Monter">↑</button>'
       +'<button type="button" class="btn btn-sm" '+(i===nlSectionOrder.length-1?'disabled':'')+' onclick="nlMoveSection('+i+',1)" title="Descendre">↓</button>'
@@ -1509,7 +1547,7 @@ function nlMoveSection(i,dir){
   nlRenderSectionOrder();
 }
 function nlClearOneoffPhoto(){
-  if(nlOneoffPhoto&&nlOneoffPhoto.path)storageDelete(nlOneoffPhoto.path);
+  nlDeleteIfUnused(nlOneoffPhoto);
   nlOneoffPhoto=null;
   document.getElementById('nl-oneoff-photo').style.display='none';
   document.getElementById('nl-oneoff-url').value='';
@@ -1558,7 +1596,7 @@ async function renderTeam(){
         +'<td class="team-actions">'
           +'<button class="tk-task-btn" title="Réinitialiser le mot de passe" onclick="teamReset(\''+escJs(m.email)+'\')">'+icon('rotate')+'</button>'
           +(m.mfa&&!isMe?'<button class="tk-task-btn" title="Désactiver sa double authentification (téléphone perdu)" onclick="teamMfaReset(\''+escJs(m.email)+'\')">'+icon('ban')+'</button>':'')
-          +(isMe?'':'<button class="tk-task-btn" title="'+(m.role==='admin'?'Passer membre':'Passer administrateur')+'" onclick="teamRole(\''+escJs(m.email)+'\',\''+(m.role==='admin'?'member':'admin')+'\')">'+icon('user')+'</button>')
+          +(isMe?'':'<button class="tk-task-btn" title="'+(m.role==='admin'?'Passer membre':'Passer administrateur')+'" onclick="teamRole(\''+escJs(m.email)+'\',\''+escJs(m.role==='admin'?'member':'admin')+'\')">'+icon('user')+'</button>')
           +(isMe?'':'<button class="tk-task-btn del-btn" title="Retirer l\'accès" onclick="teamRemove(\''+escJs(m.email)+'\')">'+icon('x')+'</button>')
         +'</td></tr>';
     }).join('')+'</tbody></table>';
@@ -1606,17 +1644,43 @@ function copyTempPassword(){
   var t=document.getElementById('tp-pwd').textContent;
   try{navigator.clipboard.writeText(t).then(function(){showToast('Copié.');},function(){showToast('Sélectionne et copie le mot de passe.');});}catch(e){showToast('Sélectionne et copie le mot de passe.');}
 }
-async function dbGet(key,fallback){
-  var r=await fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.'+key+'&select=value',{headers:await authHeaders()});
+// Lecture d'une cle avec sa date de derniere modification (updated_at, posee
+// par le trigger serveur). Cette date sert de numero de version : une
+// ecriture n'est acceptee que si elle n'a pas bouge depuis (voir SYNCHRO).
+async function dbGetRow(key){
+  var r=await fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.'+encodeURIComponent(key)+'&select=value,updated_at',{headers:await authHeaders()});
   if(r.status===401)handleUnauthorized();
   if(!r.ok)throw new Error('Lecture Supabase echouee pour "'+key+'" (HTTP '+r.status+')');
   var rows=await r.json();
   // Un tableau vide est un etat valide (cle jamais ecrite) ; toute autre forme
   // de reponse (objet d'erreur, null...) signale un vrai probleme de lecture.
   if(!Array.isArray(rows))throw new Error('Reponse Supabase inattendue pour "'+key+'"');
-  if(!rows.length)return fallback;
-  try{return JSON.parse(rows[0].value);}catch(e){return fallback;}
+  if(!rows.length)return {exists:false,value:undefined,at:null};
+  // Une valeur illisible n'est jamais remplacee par une valeur par defaut : la
+  // sauvegarde suivante ecraserait alors les vraies donnees.
+  var value;
+  try{value=JSON.parse(rows[0].value);}catch(e){throw new Error('Valeur illisible en base pour "'+key+'"');}
+  return {exists:true,value:value,at:rows[0].updated_at};
 }
+// Ecriture conditionnelle : la valeur n'est remplacee que si personne ne l'a
+// modifiee depuis notre derniere lecture (meme updated_at). Renvoie la
+// nouvelle date de version, ou null en cas de conflit.
+async function dbWriteIfUnchanged(key,str,at,exists){
+  var h=Object.assign(await authHeaders(),{'Content-Type':'application/json','Prefer':'return=representation'});
+  var r;
+  if(exists){
+    r=await fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.'+encodeURIComponent(key)+'&updated_at='+(at?'eq.'+encodeURIComponent(at):'is.null')+'&select=updated_at',{method:'PATCH',headers:h,body:JSON.stringify({value:str})});
+  }else{
+    r=await fetch(SUPABASE_URL+'/rest/v1/app_data?select=updated_at',{method:'POST',headers:h,body:JSON.stringify({key:key,value:str})});
+    if(r.status===409)return null; // creee entre-temps par quelqu'un d'autre
+  }
+  if(r.status===401)handleUnauthorized();
+  if(!r.ok)throw new Error('Ecriture Supabase echouee pour "'+key+'" (HTTP '+r.status+')');
+  var rows=await r.json();
+  return (Array.isArray(rows)&&rows.length&&rows[0].updated_at)||null;
+}
+// Ecriture inconditionnelle : reservee a la restauration d'une sauvegarde, dont
+// le but est justement de remplacer ce qui est en base.
 async function dbSet(key,value){
   var r=await fetch(SUPABASE_URL+'/rest/v1/app_data',{method:'POST',headers:Object.assign(await authHeaders(),{'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({key:key,value:JSON.stringify(value)})});
   if(r.status===401)handleUnauthorized();
@@ -1637,15 +1701,59 @@ async function storageDelete(path){
 // pointeur. Cadre rectangulaire (pas carre) : largeur et hauteur du
 // viewport/de la sortie sont donc gerees separement partout ci-dessous.
 var CROP_VP_W=320,CROP_VP_H=180,CROP_OUT_W=640,CROP_OUT_H=360;
+// Taille maximale de l'image d'origine conservee pour pouvoir recadrer plus
+// tard (reduite a l'arrivee : une photo de telephone depasse souvent 5 Mo).
+var CROP_ORIG_MAX=2400;
 var cropState=null,cropDrag=null;
-function startCrop(file,onDone){
+// Reduit une image a CROP_ORIG_MAX px de cote au plus, en JPEG sur fond blanc
+// (un PNG transparent ressortait sur fond noir). Renvoie null si illisible.
+function downscaleImage(file,maxDim){
+  return new Promise(function(resolve){
+    var url=URL.createObjectURL(file),img=new Image();
+    img.onload=function(){
+      var s=Math.min(1,maxDim/Math.max(img.naturalWidth,img.naturalHeight));
+      var w=Math.max(1,Math.round(img.naturalWidth*s)),h=Math.max(1,Math.round(img.naturalHeight*s));
+      var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      var ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      cv.toBlob(function(b){resolve(b);},'image/jpeg',0.9);
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);resolve(null);};
+    img.src=url;
+  });
+}
+// Nouveau fichier : on garde une copie de l'original (reduite) et on recadre
+// a partir d'elle. onDone(blobRecadre, original).
+function cropFromFile(file,opts,onDone){
+  downscaleImage(file,CROP_ORIG_MAX).then(function(orig){
+    if(!orig){showToast('Image illisible (format non pris en charge ? Les photos HEIC d\'iPhone doivent être converties en JPEG).',8000);return;}
+    startCrop(orig,function(blob){onDone(blob,orig);},opts);
+  });
+}
+// Recadrage d'une photo deja en ligne : depuis l'original quand on l'a (on
+// peut alors dezoomer et recuperer ce qui avait ete coupe), sinon depuis la
+// version recadree (photos anterieures au 23/09 : on ne peut que resserrer).
+function cropFromExisting(origBlob,url,opts,onDone){
+  if(origBlob){startCrop(origBlob,function(blob){onDone(blob,origBlob);},opts);return;}
+  fetch(url).then(function(r){
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return r.blob();
+  }).then(function(blob){
+    startCrop(blob,function(newBlob){onDone(newBlob,null);},opts);
+  }).catch(function(e){
+    console.error(e);
+    showToast('Impossible de charger la photo actuelle pour la recadrer.');
+  });
+}
+function startCrop(file,onDone,opts){
   var url=URL.createObjectURL(file);
   var img=new Image();
   img.onload=function(){
     var baseScale=Math.max(CROP_VP_W/img.naturalWidth,CROP_VP_H/img.naturalHeight);
     var dispW=img.naturalWidth*baseScale,dispH=img.naturalHeight*baseScale;
     cropState={img:img,url:url,natW:img.naturalWidth,natH:img.naturalHeight,baseScale:baseScale,zoom:1,
-      offsetX:(CROP_VP_W-dispW)/2,offsetY:(CROP_VP_H-dispH)/2,onDone:onDone};
+      offsetX:(CROP_VP_W-dispW)/2,offsetY:(CROP_VP_H-dispH)/2,onDone:onDone,
+      outW:(opts&&opts.outW)||CROP_OUT_W,outH:(opts&&opts.outH)||CROP_OUT_H};
     document.getElementById('crop-img').src=url;
     document.getElementById('crop-zoom').value=1;
     applyCropTransform();
@@ -1698,8 +1806,10 @@ function cropConfirm(){
   var eff=s.baseScale*s.zoom;
   var sx=-s.offsetX/eff,sy=-s.offsetY/eff,sw=CROP_VP_W/eff,sh=CROP_VP_H/eff;
   var canvas=document.createElement('canvas');
-  canvas.width=CROP_OUT_W;canvas.height=CROP_OUT_H;
-  canvas.getContext('2d').drawImage(s.img,sx,sy,sw,sh,0,0,CROP_OUT_W,CROP_OUT_H);
+  canvas.width=s.outW;canvas.height=s.outH;
+  var ctx=canvas.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,s.outW,s.outH); // fond blanc sous un PNG transparent
+  ctx.drawImage(s.img,sx,sy,sw,sh,0,0,s.outW,s.outH);
   canvas.toBlob(function(blob){
     var onDone=s.onDone;
     URL.revokeObjectURL(s.url);
@@ -1710,6 +1820,10 @@ function cropConfirm(){
 }
 
 // ── PHOTO : une photo par artiste, partagee par tous ses concerts ──────
+// Aucun fichier de photo d'artiste n'est supprime du bucket (changement,
+// recadrage, retrait, suppression du concert) : il peut figurer dans une
+// newsletter deja envoyee, qui perdrait alors son image. Seule la reference
+// dans artistPhotos disparait. Poids : ~50 Ko par photo recadree.
 function renderFichePhoto(c){
   var key=artKey(c.art);
   var entry=key?artistPhotos[key]:null;
@@ -1735,36 +1849,42 @@ function renderFichePhoto(c){
 }
 function onFichePhotoFileChosen(input){
   var file=input.files&&input.files[0];input.value='';if(!file)return;
-  startCrop(file,function(blob){uploadArtistPhotoBlob(blob);});
+  var cid=currentFicheId;
+  cropFromFile(file,null,function(blob,orig){uploadArtistPhotoBlob(cid,blob,orig);});
 }
-// Rouvre l'outil de recadrage sur la photo deja en ligne (refetchee en
-// blob), pour ajuster le cadrage sans avoir a choisir un nouveau fichier.
+// Rouvre l'outil de recadrage sur la photo deja en ligne, a partir de
+// l'original enregistre avec elle quand il existe.
 function recropArtistPhoto(){
-  var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
+  var cid=currentFicheId;
+  var c=concerts.find(function(x){return x.id===cid;});if(!c)return;
   var key=artKey(c.art);
   var entry=key?artistPhotos[key]:null;if(!entry)return;
-  fetch(entry.url).then(function(r){
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    return r.blob();
-  }).then(function(blob){
-    startCrop(blob,function(newBlob){uploadArtistPhotoBlob(newBlob);});
-  }).catch(function(e){
-    console.error(e);
-    showToast('Impossible de charger la photo actuelle pour la recadrer.');
-  });
+  cropFromExisting(null,(entry.orig&&entry.orig.url)||entry.url,null,function(blob){uploadArtistPhotoBlob(cid,blob,null);});
 }
-async function uploadArtistPhotoBlob(blob){
-  var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
+// cid : le concert dont la fiche etait ouverte au moment du choix (et non celle
+// ouverte a la fin de l'envoi). origBlob : original d'un NOUVEAU fichier, a
+// conserver pour les recadrages ; null lors d'un recadrage (on garde l'ancien).
+async function uploadArtistPhotoBlob(cid,blob,origBlob){
+  var c=concerts.find(function(x){return x.id===cid;});if(!c)return;
   var key=artKey(c.art);
   if(!key){showToast('Renseigne d\'abord le nom de l\'artiste.');return;}
-  var old=artistPhotos[key];
   try{
-    var path='artist-photos/'+key.replace(/[^a-z0-9]+/g,'-')+'-'+Date.now()+'.jpg';
+    var slug=key.replace(/[^a-z0-9]+/g,'-'),ts=Date.now();
+    var path='artist-photos/'+slug+'-'+ts+'.jpg';
     var url=await storageUpload(path,blob);
-    if(old&&old.path)storageDelete(old.path);
-    artistPhotos[key]={art:c.art,url:url,path:path};
+    var prev=artistPhotos[key];
+    var orig=(!origBlob&&prev&&prev.orig)?prev.orig:null;
+    if(origBlob){
+      try{
+        var op='artist-photos/originaux/'+slug+'-'+ts+'.jpg';
+        orig={url:await storageUpload(op,origBlob),path:op};
+      }catch(e){console.warn('Original non enregistré (le recadrage partira de la version recadrée)',e);orig=null;}
+    }
+    var entry={art:c.art,url:url,path:path};
+    if(orig)entry.orig=orig;
+    artistPhotos[key]=entry;
     scheduleSave('artist_photos');
-    renderFichePhoto(c);
+    if(currentFicheId===cid)renderFichePhoto(c);
   }catch(e){
     console.error(e);
     showToast('Échec de l\'envoi de la photo : '+e.message);
@@ -1774,30 +1894,41 @@ function removeArtistPhoto(){
   var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
   var key=artKey(c.art);
   var entry=key?artistPhotos[key]:null;if(!entry)return;
-  customConfirm('Retirer la photo de '+c.art+' ? Elle disparaîtra de tous ses concerts.','Retirer').then(function(ok){
+  customConfirm('Retirer la photo de '+c.art+' ? Elle disparaîtra de tous ses concerts (le fichier reste en ligne pour les newsletters déjà envoyées).','Retirer').then(function(ok){
     if(!ok)return;
-    if(entry.path)storageDelete(entry.path);
     delete artistPhotos[key];
     scheduleSave('artist_photos');
     renderFichePhoto(c);
   });
 }
-// Supprime la photo d'un artiste si plus aucun concert (non archive) ne
-// l'utilise ; appele apres une suppression definitive de concert.
+// Retire la reference a la photo d'un artiste si plus aucun concert (y compris
+// archive) ne l'utilise ; appele apres une suppression definitive de concert.
 function cleanupArtistPhotoIfOrphan(art){
   var key=artKey(art);if(!key)return;
-  var entry=artistPhotos[key];if(!entry)return;
+  if(!artistPhotos[key])return;
   var stillUsed=concerts.some(function(x){return artKey(x.art)===key;});
   if(stillUsed)return;
-  if(entry.path)storageDelete(entry.path);
   delete artistPhotos[key];
+  scheduleSave('artist_photos');
+}
+// Renommer un artiste (faute de frappe corrigee...) : sa photo, rangee sous
+// son nom, suit le nouveau nom au lieu de disparaitre de la fiche. L'ancienne
+// entree reste si d'autres concerts portent encore l'ancien nom.
+function moveArtistPhotoOnRename(c,oldArt){
+  var ok=artKey(oldArt),nk=artKey(c.art);
+  if(!ok||!nk||ok===nk||!artistPhotos[ok]||artistPhotos[nk])return;
+  artistPhotos[nk]=Object.assign(syncClone(artistPhotos[ok]),{art:c.art});
+  if(!concerts.some(function(x){return x!==c&&artKey(x.art)===ok;}))delete artistPhotos[ok];
   scheduleSave('artist_photos');
 }
 
 // ── REALTIME : écouter les changements ────────────────────
-var _rtChannel=null;
-var _lastSaveTs=0; // timestamp de notre dernière sauvegarde locale
-var _reloadPending=false;
+// Chaque ecriture d'un collegue declenche un evenement UPDATE sur app_data. On
+// relit alors la cle et on la FUSIONNE avec l'etat local (voir SYNCHRO) : rien
+// n'est ignore ni ecrase, meme en pleine saisie. Seul le re-affichage attend
+// que l'utilisateur ait fini (fenetre ouverte, champ en cours d'edition), pour
+// ne pas lui retirer le champ sous les doigts.
+var _rtChannel=null,_rtWasSubscribed=false,_renderPending=false,_hiddenAt=0;
 
 // Le modal Budget n'utilise pas de classe ".open" comme les autres (juste un
 // style.display bascule directement) : il faut donc le detecter a part pour
@@ -1808,33 +1939,68 @@ function isAnyModalOpen(){
   if(budgetOverlay&&budgetOverlay.style.display==='flex')return true;
   return false;
 }
+function userIsEditing(){
+  var a=document.activeElement;
+  return !!(a&&['INPUT','TEXTAREA','SELECT'].indexOf(a.tagName)>=0);
+}
+// Re-affichage apres une fusion : tout de suite si l'utilisateur ne fait rien,
+// sinon des qu'il a ferme sa fenetre ou quitte son champ.
+function requestRender(){
+  if(isAnyModalOpen()||userIsEditing()){_renderPending=true;return;}
+  _renderPending=false;render();
+}
+function flushPendingRender(){
+  if(_renderPending&&!isAnyModalOpen()&&!userIsEditing()){_renderPending=false;render();}
+}
 function initRealtime(){
   if(_rtChannel)return;
   var sb=getSupabase();
   _rtChannel=sb.channel('app_data_changes')
-    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'app_data'},function(payload){
-      // Ignorer nos propres sauvegardes (dans les 2s qui suivent notre save)
-      if(Date.now()-_lastSaveTs<3000)return;
-      var who=payload.new&&payload.new.updated_by;
-      // Ne pas recharger si l'utilisateur est en train d'interagir
-      var inputFocused=document.activeElement&&['INPUT','TEXTAREA','SELECT'].indexOf(document.activeElement.tagName)>=0;
-      if(isAnyModalOpen()||inputFocused){
-        _reloadPending=true;
-        showSyncBanner(who?('Modifications de '+teamDisplayName(who)+' en attente...'):'En attente...');
-        return;
-      }
-      reloadFromRemote(payload.new.key,who);
+    // INSERT aussi : la premiere ecriture d'une nouvelle cle est un INSERT, qui
+    // passait inapercu des autres postes tant qu'on n'ecoutait que UPDATE.
+    .on('postgres_changes',{event:'*',schema:'public',table:'app_data'},function(payload){
+      var k=payload.new&&payload.new.key;
+      if(ALL_SAVE_KEYS.indexOf(k)<0)return; // cles Budget : lues a la demande
+      pullRemote([k],payload.new.updated_by);
     })
     .subscribe(function(status){
-      if(status==='SUBSCRIBED'){
-        console.log('Realtime connecté');
-      }
+      if(status!=='SUBSCRIBED')return;
+      // Reconnexion apres une coupure : les evenements manques sont perdus,
+      // on relit donc toutes les cles.
+      if(_rtWasSubscribed)pullRemote(ALL_SAVE_KEYS,null);
+      _rtWasSubscribed=true;
+      console.log('Realtime connecté');
     });
-
-  // Recharger dès que l'utilisateur ferme une modale ou quitte un champ
-  document.addEventListener('focusout',function(){
-    if(_reloadPending&&!isAnyModalOpen()){_reloadPending=false;reloadFromRemote(null);}
+  document.addEventListener('focusout',function(){setTimeout(flushPendingRender,0);});
+  setInterval(flushPendingRender,1500);
+  // Onglet revenu au premier plan apres un moment en arriere-plan (ordinateur
+  // en veille, autre onglet) : le canal a pu decrocher, on se resynchronise.
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='hidden'){_hiddenAt=Date.now();return;}
+    if(_hiddenAt&&Date.now()-_hiddenAt>30000)pullRemote(ALL_SAVE_KEYS,null);
   });
+}
+// Relit les cles donnees et les fusionne avec l'etat local. Une version deja
+// connue (notre propre ecriture qui revient en echo) est ignoree.
+async function pullRemote(keys,who){
+  try{
+    var changed=false;
+    await Promise.all(keys.map(function(k){
+      return withKeyLock(k,async function(){
+        var row=await dbGetRow(k),st=syncState[k];
+        if(st&&st.exists===row.exists&&st.at===row.at)return;
+        if(applyRemoteRow(k,row))changed=true;
+      });
+    }));
+    if(changed){
+      var name=teamDisplayName(who);
+      showSyncBanner(name?('Mis à jour par '+name):'À jour ✓',true);
+      requestRender();
+    }
+  }catch(e){
+    showSyncBanner('Erreur sync');
+    console.error('Realtime reload error',e);
+  }
 }
 // Cache email -> prenom, pour afficher qui a fait une modification dans les
 // notifications de synchro. Charge au demarrage (accessible a tout membre
@@ -1855,77 +2021,154 @@ function teamDisplayName(email){
   return teamNames[email.toLowerCase()]||email;
 }
 
-// Fusion par ID pour les tableaux partages (concerts, tktasks, rsposts) :
-// si on vient de sauvegarder recemment, on garde nos elements locaux tels
-// quels (pour ne pas ecraser une saisie en cours) et on ajoute seulement
-// les elements distants qu'on n'a pas encore ; sinon on prend tout le distant.
-function mergeArrayById(remote,local){
-  if(!remote)return local;
-  if(Date.now()-_lastSaveTs<10000){
-    var localIds={};local.forEach(function(x){localIds[x.id]=true;});
-    remote.forEach(function(x){if(!localIds[x.id])local.push(x);});
-    return local;
-  }
-  return remote;
+// ── SYNCHRO : fusion a trois voies ───────────────────────────────────────
+// Chaque cle d'app_data est un seul document JSON (tous les concerts, toutes
+// les coches...). Pour que deux personnes travaillent en meme temps sans
+// s'ecraser, on garde pour chaque cle la derniere version connue du serveur
+// ("base", avec sa date updated_at). Quand une version plus recente arrive
+// (ecriture d'un collegue, ou conflit detecte a l'enregistrement), on compare
+// les trois versions element par element :
+//   - modifie ici seulement    -> on garde la version locale ;
+//   - modifie la-bas seulement -> on prend la version distante ;
+//   - modifie des deux cotes   -> on descend d'un niveau (champ par champ,
+//     element par element) ; sur une meme valeur, la locale l'emporte.
+// Les tableaux d'objets a "id" se fusionnent par id : ajouts et suppressions
+// des deux cotes sont respectes. Les objets gardent leur identite quand c'est
+// possible, pour qu'une fiche ouverte pointe toujours vers le bon concert.
+// Avant le 23/09 : une saisie faite pendant qu'une fiche etait ouverte, ou
+// dans les 3 s suivant une modification locale, reecrivait la cle entiere et
+// effacait en silence le travail d'un collegue.
+var syncState={}; // cle -> {exists, at (updated_at serveur), base (copie de la valeur serveur)}
+var SYNC_OBJECT_KEYS={taskstates:1,artist_photos:1};
+// JSON a cles triees : deux objets egaux donnent la meme chaine, quel que soit
+// l'ordre dans lequel leurs champs ont ete ajoutes.
+function stableStr(v){
+  return JSON.stringify(v,function(k,x){
+    if(x&&typeof x==='object'&&!Array.isArray(x)){var o={};Object.keys(x).sort().forEach(function(kk){o[kk]=x[kk];});return o;}
+    return x;
+  });
 }
-async function reloadFromRemote(changedKey,updatedBy){
-  var who=teamDisplayName(updatedBy);
-  showSyncBanner(who?('Mise à jour de '+who+'...'):'Synchronisation...');
-  try{
-    var keys=changedKey?[changedKey]:['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media','concert_tasks','artist_photos','city_groups'];
-    for(var i=0;i<keys.length;i++){
-      var k=keys[i];
-      if(k==='taskstates'){
-        // Fusion intelligente : on merge les clés distantes dans le local
-        // sans écraser les clés modifiées récemment (dans la fenêtre de save)
-        var remote=await dbGet('taskstates',{});
-        if(remote){
-          // Si on vient de sauvegarder, on garde nos valeurs locales et on ajoute les nouvelles clés distantes
-          if(Date.now()-_lastSaveTs<10000){
-            Object.keys(remote).forEach(function(key){
-              if(!(key in taskStates)) taskStates[key]=remote[key];
-            });
-          } else {
-            // Sinon on prend tout le distant
-            taskStates=remote;
-          }
-        }
-      }
-      else if(k==='concerts'){
-        var remote=await dbGet('concerts',[]);
-        concerts=mergeArrayById(remote,concerts);
-        concerts=concerts.map(function(c){return Object.assign({medias:'',jeux:'',budget:'',notes:'',ventes:0},c);});
-      }
-      else if(k==='process'){var raw=(await dbGet('process',null))||DEFAULT_PROCESS;process=raw.map(function(t){return Object.assign({prereq:null,cat:t.cat||'gen'},t);});}
-      else if(k==='tkcols')tkCols=(await dbGet('tkcols',[]))||[];
-      else if(k==='tktasks')tkTasks=mergeArrayById(await dbGet('tktasks',[]),tkTasks);
-      else if(k==='rsposts')rsPosts=mergeArrayById(await dbGet('rsposts',[]),rsPosts);
-      else if(k==='concert_media')concertMedia=mergeArrayById(await dbGet('concert_media',[]),concertMedia);
-      else if(k==='concert_tasks')customTasks=mergeArrayById(await dbGet('concert_tasks',[]),customTasks);
-      else if(k==='city_groups')cityGroups=mergeArrayById(await dbGet('city_groups',[]),cityGroups);
-      else if(k==='artist_photos'){
-        // Meme strategie de fusion "objet" que taskstates : mergeArrayById ne
-        // convient pas, artistPhotos n'est pas un tableau.
-        var remote=await dbGet('artist_photos',{});
-        if(remote){
-          if(Date.now()-_lastSaveTs<10000){
-            Object.keys(remote).forEach(function(key){
-              if(!(key in artistPhotos)) artistPhotos[key]=remote[key];
-            });
-          } else {
-            artistPhotos=remote;
-          }
-        }
-      }
-    }
-    render();
-    showSyncBanner(who?('Mis à jour par '+who):'À jour ✓',true);
-  }catch(e){
-    showSyncBanner('Erreur sync');
-    console.error('Realtime reload error',e);
-  }
+function syncSame(a,b){return stableStr(a)===stableStr(b);}
+function syncClone(v){return v===undefined?undefined:JSON.parse(JSON.stringify(v));}
+function syncIsPlain(o){return o!==null&&typeof o==='object'&&!Array.isArray(o);}
+function syncIsIdArray(a){return Array.isArray(a)&&a.every(function(x){return syncIsPlain(x)&&x.id!==undefined&&x.id!==null&&x.id!=='';});}
+function syncOwn(o,k){return Object.prototype.hasOwnProperty.call(o,k)?o[k]:undefined;}
+// b = base commune, l = local, r = distant. undefined = absent.
+function merge3(b,l,r){
+  if(syncIsIdArray(l)&&syncIsIdArray(r)&&(b===undefined||syncIsIdArray(b)))return mergeById(b||[],l,r);
+  if(syncIsPlain(l)&&syncIsPlain(r)&&(b===undefined||syncIsPlain(b)))return mergeFields(b||{},l,r);
+  if(syncSame(l,b))return r; // inchange ici : la version distante l'emporte
+  return l;                  // modifie ici : la version locale l'emporte
 }
-
+// Fusion champ par champ, ecrite DANS l'objet local (son identite est gardee).
+function mergeFields(b,l,r){
+  var keys={};
+  [b,l,r].forEach(function(o){Object.keys(o).forEach(function(k){keys[k]=1;});});
+  Object.keys(keys).forEach(function(k){
+    var v=merge3(syncOwn(b,k),syncOwn(l,k),syncOwn(r,k));
+    if(v===undefined)delete l[k];else l[k]=v;
+  });
+  return l;
+}
+function syncIndex(a){
+  var m=Object.create(null);
+  a.forEach(function(x){var id=String(x.id);if(!(id in m))m[id]=x;});
+  return m;
+}
+function mergeById(b,l,r){
+  var bm=syncIndex(b),lm=syncIndex(l),out=[],seen=Object.create(null);
+  r.forEach(function(ri){
+    var id=String(ri.id);if(seen[id])return;seen[id]=1;
+    if(lm[id])out.push(merge3(bm[id],lm[id],ri));
+    else if(!bm[id])out.push(ri); // ajoute la-bas
+    // sinon : supprime ici, la suppression est respectee
+  });
+  l.forEach(function(li){
+    var id=String(li.id);if(seen[id])return;seen[id]=1;
+    // Ajoute ici, ou modifie ici alors que supprime la-bas : on le garde plutot
+    // que de perdre la modification. Supprime la-bas et inchange ici : on suit.
+    if(!bm[id]||!syncSame(li,bm[id]))out.push(li);
+  });
+  // Ordre : celui du serveur, sauf si on a reordonne ici (glisser-deposer du
+  // process ou des colonnes de taches), auquel cas le notre.
+  function communs(a,m){return a.map(function(x){return String(x.id);}).filter(function(id){return !!m[id];}).join('\u0001');}
+  if(communs(l,bm)!==communs(b,lm)){
+    var rang=Object.create(null);
+    l.forEach(function(x,i){rang[String(x.id)]=i;});
+    out=out.map(function(x,i){return {x:x,i:i};}).sort(function(p,q){
+      var a=String(p.x.id) in rang?rang[String(p.x.id)]:Infinity;
+      var c=String(q.x.id) in rang?rang[String(q.x.id)]:Infinity;
+      return a!==c?(a<c?-1:1):p.i-q.i;
+    }).map(function(p){return p.x;});
+  }
+  return out;
+}
+// Mise en forme identique pour toute valeur lue en base, qu'elle serve de
+// reference ou de donnee locale. Sans ca, les champs par defaut ajoutes au
+// chargement (medias, jeux...) feraient croire a une modification locale et
+// masqueraient les changements distants.
+function normalizeSynced(key,v){
+  if(key==='process'){
+    var raw=Array.isArray(v)?v:DEFAULT_PROCESS;
+    return raw.map(function(t){return Object.assign({prereq:null,cat:t.cat||'gen'},t);});
+  }
+  if(SYNC_OBJECT_KEYS[key])return syncIsPlain(v)?v:{};
+  v=Array.isArray(v)?v:[];
+  if(key==='concerts')return v.map(function(c){return Object.assign({medias:'',jeux:'',budget:'',notes:'',ventes:0},c);});
+  return repairDuplicateIds(v);
+}
+// Deux elements ne doivent jamais partager un id, la fusion se faisant par id.
+// C'est arrive une fois (deux posts auto crees dans la meme milliseconde) :
+// le doublon recoit un id derive, le meme sur tous les postes puisqu'il ne
+// depend que de ce qui est lu en base. Il est enregistre a la prochaine
+// modification de la cle.
+function repairDuplicateIds(arr){
+  var seen=Object.create(null);
+  return arr.map(function(x,i){
+    if(!syncIsPlain(x)||x.id===undefined||x.id===null)return x;
+    var id=String(x.id);
+    if(!seen[id]){seen[id]=1;return x;}
+    var nid=id+'~'+i;
+    while(seen[nid])nid+='~';
+    seen[nid]=1;
+    return Object.assign({},x,{id:nid});
+  });
+}
+function setValueFor(key,v){
+  if(key==='concerts')concerts=v;
+  else if(key==='taskstates')taskStates=v;
+  else if(key==='process'){
+    process=v;
+    var maxId=process.reduce(function(m,t){return Math.max(m,+t.id||0);},0);
+    nextId=Math.max(nextId,maxId+1);
+  }
+  else if(key==='tkcols')tkCols=v;
+  else if(key==='tktasks')tkTasks=v;
+  else if(key==='rsposts')rsPosts=v;
+  else if(key==='concert_media')concertMedia=v;
+  else if(key==='concert_tasks')customTasks=v;
+  else if(key==='artist_photos')artistPhotos=v;
+  else if(key==='city_groups')cityGroups=v;
+}
+function syncRecord(key,exists,at,value){syncState[key]={exists:exists,at:at,base:syncClone(value)};}
+// Integre une version lue en base : fusion avec l'etat local, puis elle
+// devient la nouvelle reference. Renvoie true si les donnees locales changent.
+function applyRemoteRow(key,row){
+  var remote=normalizeSynced(key,row.exists?row.value:undefined);
+  var st=syncState[key],local=currentValueFor(key),avant=stableStr(local);
+  syncRecord(key,row.exists,row.at,remote); // copie, avant que la fusion ne reutilise ses objets
+  var merged=st?merge3(st.base,local,remote):remote;
+  setValueFor(key,merged);
+  return stableStr(merged)!==avant;
+}
+// Une seule operation a la fois par cle (enregistrement ou relecture) : sans
+// ca, un echo realtime pourrait etre traite avant la reponse de l'ecriture.
+var syncLocks={};
+function withKeyLock(key,fn){
+  var run=(syncLocks[key]||Promise.resolve()).then(fn);
+  syncLocks[key]=run.catch(function(){});
+  return run;
+}
 // Notification transitoire dans le style de l'appli (remplace alert()).
 // Duree proportionnelle a la longueur du message (2,5 s a 10 s).
 function showToast(msg,ms){
@@ -1944,11 +2187,13 @@ function showSyncBanner(msg,fadeOut){
   if(fadeOut){setTimeout(function(){el.classList.remove('show');},2000);}
 }
 
-// ── SAUVEGARDE : uniquement les domaines modifies (evite d'ecraser
-// les autres domaines avec une copie locale potentiellement perimee) ──
+// ── SAUVEGARDE : uniquement les cles modifiees, et jamais a l'aveugle ──
+// Une cle n'est ecrite que si sa version en base est toujours celle qu'on
+// connait (ecriture conditionnelle sur updated_at). Sinon, quelqu'un a ecrit
+// entre-temps : on relit, on fusionne (voir SYNCHRO), puis on reessaie.
 var ALL_SAVE_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media','concert_tasks','artist_photos','city_groups'];
-var pendingSaveKeys={};
-var saveRetryTimer=null;
+var pendingSaveKeys={}; // cle -> compteur de modifications en attente
+var saveRetryTimer=null,_restoring=false;
 function currentValueFor(key){
   return {concerts:concerts,taskstates:taskStates,process:process,tkcols:tkCols,tktasks:tkTasks,rsposts:rsPosts,concert_media:concertMedia,concert_tasks:customTasks,artist_photos:artistPhotos,city_groups:cityGroups}[key];
 }
@@ -1959,22 +2204,52 @@ function scheduleSave(){
     console.error('Sauvegarde bloquee : les donnees initiales n\'ont pas ete chargees.');
     return;
   }
+  if(_restoring)return; // la restauration recharge la page juste apres
   var keys=arguments.length?Array.prototype.slice.call(arguments):ALL_SAVE_KEYS;
-  keys.forEach(function(k){pendingSaveKeys[k]=true;});
-  var el=document.getElementById('saving');el.classList.add('show');_lastSaveTs=Date.now();
+  keys.forEach(function(k){pendingSaveKeys[k]=(pendingSaveKeys[k]||0)+1;});
+  var el=document.getElementById('saving');el.classList.add('show');
   clearTimeout(saveTimer);clearTimeout(saveRetryTimer);
   saveTimer=setTimeout(flushSave,1500);
 }
+// Enregistre une cle. Renvoie true si une fusion avec des modifications
+// distantes a eu lieu (il faut alors re-afficher).
+async function saveKey(key){
+  var fusion=false;
+  for(var essai=0;essai<5;essai++){
+    var st=syncState[key],val=currentValueFor(key);
+    if(val===undefined)return fusion;
+    if(st&&st.exists&&syncSame(val,st.base))return fusion; // rien de neuf a ecrire
+    var str=JSON.stringify(val);
+    var at=await dbWriteIfUnchanged(key,str,st?st.at:null,!!(st&&st.exists));
+    if(at){syncRecord(key,true,at,JSON.parse(str));return fusion;}
+    // Conflit : un collegue a ecrit entre-temps. On relit, on fusionne, on reessaie.
+    if(applyRemoteRow(key,await dbGetRow(key)))fusion=true;
+  }
+  throw new Error('Conflits d\'ecriture repetes sur "'+key+'"');
+}
 async function flushSave(){
+  if(_restoring)return;
   var el=document.getElementById('saving');
   var toSave=Object.keys(pendingSaveKeys);
   if(!toSave.length){el.classList.remove('show');return;}
+  var marques={};
+  toSave.forEach(function(k){marques[k]=pendingSaveKeys[k];});
   el.classList.add('show');
+  var fusion=false;
   try{
-    await Promise.all(toSave.map(function(k){return dbSet(k,currentValueFor(k));}));
-    toSave.forEach(function(k){delete pendingSaveKeys[k];});
-    el.classList.remove('show');
+    await Promise.all(toSave.map(function(k){
+      return withKeyLock(k,function(){return saveKey(k);}).then(function(f){if(f)fusion=true;});
+    }));
+    // Une modification faite PENDANT l'envoi a fait avancer le compteur : la
+    // cle reste en attente pour l'envoi suivant. Avant, elle etait retiree de
+    // la file et cette modification pouvait ne jamais etre enregistree.
+    toSave.forEach(function(k){if(pendingSaveKeys[k]===marques[k])delete pendingSaveKeys[k];});
+    if(!Object.keys(pendingSaveKeys).length)el.classList.remove('show');
     hideSaveError();
+    if(fusion){
+      showSyncBanner('Enregistré avec les modifications d\'un collègue',true);
+      requestRender();
+    }
   }catch(e){
     console.error('Echec de sauvegarde',e);
     el.classList.remove('show');
@@ -2036,30 +2311,45 @@ function archiveOldConcerts(){
   dismissArchiveSuggestion();
   render();
 }
+// Cles de taskStates d'un concert qui n'existe plus (supprime definitivement
+// avant le 23/09, quand la suppression les laissait derriere elle : 232 cles
+// sur 13 concerts au 22/09). Un concert cree il y a moins d'un jour est
+// epargne : ses coches peuvent arriver avant le concert lui-meme sur un poste
+// qui ne l'a pas encore recu. L'id d'un concert est sa date de creation.
+function purgeOrphanTaskStates(){
+  var ids={};concerts.forEach(function(c){ids[String(c.id)]=1;});
+  var limite=Date.now()-86400000,n=0;
+  Object.keys(taskStates).forEach(function(k){
+    var m=/^(?:annonce-|skip-|na-|datemod-|hl-)?(\d{10,})(?:-|$)/.exec(k);
+    if(!m||ids[m[1]]||+m[1]>limite)return;
+    delete taskStates[k];n++;
+  });
+  if(n)scheduleSave('taskstates');
+  return n;
+}
 async function init(){
   document.getElementById('load-error-overlay').style.display='none';
   document.getElementById('app').style.display='';
   try{
-    var res=await Promise.all([dbGet('concerts',[]),dbGet('taskstates',{}),dbGet('process',null)]);
+    var lignes=await Promise.all(ALL_SAVE_KEYS.map(function(k){return dbGetRow(k);}));
+    var rows={};
+    ALL_SAVE_KEYS.forEach(function(k,i){rows[k]=lignes[i];});
     // Garde-fou : une base qui repond "rien" sur les trois cles principales
     // signifie presque toujours un acces refuse (regles RLS) et non une base
     // vide. On refuse de demarrer plutot que de risquer d'ecraser les vraies
     // donnees avec un etat vide.
-    if(!(res[0]&&res[0].length)&&!(res[1]&&Object.keys(res[1]).length)&&!res[2]){
+    var r0=rows.concerts,r1=rows.taskstates,r2=rows.process;
+    if(!(r0.exists&&Array.isArray(r0.value)&&r0.value.length)&&!(r1.exists&&syncIsPlain(r1.value)&&Object.keys(r1.value).length)&&!r2.exists){
       throw new Error('Aucune donnée reçue : accès refusé ou base vide.');
     }
-    concerts=res[0]||[];taskStates=res[1]||{};
-    var raw=res[2]||DEFAULT_PROCESS;
-    process=raw.map(function(t){return Object.assign({prereq:null,cat:t.cat||'gen'},t);});
-    concerts=concerts.map(function(c){return Object.assign({medias:'',jeux:'',budget:'',notes:'',ventes:0},c);});
-    nextId=process.length?Math.max.apply(null,process.map(function(t){return t.id;}))+1:26;
-    rsPosts=(await dbGet('rsposts',[]))||[];
-    concertMedia=(await dbGet('concert_media',[]))||[];
-    artistPhotos=(await dbGet('artist_photos',{}))||{};
-    cityGroups=(await dbGet('city_groups',[]))||[];
-    customTasks=(await dbGet('concert_tasks',[]))||[];
-    var tkRes=await Promise.all([dbGet('tkcols',[]),dbGet('tktasks',[])]);
-    tkCols=tkRes[0]||[];tkTasks=tkRes[1]||[];
+    // Chaque cle devient a la fois la donnee locale et la reference de
+    // synchronisation (deux copies distinctes, voir SYNCHRO).
+    ALL_SAVE_KEYS.forEach(function(k){
+      var v=normalizeSynced(k,rows[k].exists?rows[k].value:undefined);
+      syncRecord(k,rows[k].exists,rows[k].at,v);
+      setValueFor(k,v);
+    });
+    nextId=process.length?Math.max.apply(null,process.map(function(t){return +t.id||0;}))+1:26;
     // Assurer les 4 colonnes projets avec leurs noms corrects
     var projDefs=[{id:'pp',nom:'Please Please'},{id:'gc',nom:'Golden Coast'},{id:'antdt',nom:'ANTDT'},{id:'sr',nom:'Saline Royale'}];
     if(!tkCols.length){
@@ -2075,6 +2365,7 @@ async function init(){
       });
     }
     appDataLoaded=true;
+    purgeOrphanTaskStates();
     render();
     applyRoute();
     initRealtime();
@@ -2281,7 +2572,11 @@ function isLate(d){if(!d)return false;var n=new Date();n.setHours(0,0,0,0);retur
 function isToday(d){if(!d)return false;var n=new Date();n.setHours(0,0,0,0);var e=new Date(n);e.setDate(e.getDate()+1);return d>=n&&d<e;}
 function isSoon(d){if(!d)return false;var n=new Date();n.setHours(0,0,0,0);var s=new Date(n);s.setDate(s.getDate()+7);return d>=n&&d<=s;}
 function tk(cid,tid){return cid+'-'+tid;}
-function tidLit(t){return t.isCustom?("'"+t.id+"'"):t.id;}
+// Litteral JS d'un identifiant de tache pour un onclick : nombre pour une tache du
+// process, chaine echappee (escJs) pour une tache manuelle. Une valeur non
+// numerique cote process devient null plutot que du code.
+function jsNum(v){var n=Number(v);return isFinite(n)?String(n):'null';}
+function tidLit(t){return t.isCustom?("'"+escJs(t.id)+"'"):jsNum(t.id);}
 function isUnlocked(c,t){if(!t.prereq)return true;return !!taskStates[tk(c.id,t.prereq)];}
 function isNA(c,t){return !!taskStates['na-'+c.id+'-'+t.id];}
 function sortedProcess(c){
@@ -2440,7 +2735,7 @@ function toggleFicheGroup(key){
 }
 function ficheGroupHtml(key,label,count,cls,itemsHtml){
   var open=!!ficheGroupsOpen[key];
-  return '<div class="group-title second fg-toggle '+cls+'" onclick="toggleFicheGroup(\''+key+'\')">'
+  return '<div class="group-title second fg-toggle '+cls+'" onclick="toggleFicheGroup(\''+escJs(key)+'\')">'
     +'<span class="fg-chev'+(open?' open':'')+'">'+icon('chevron-right')+'</span>'+label+' ('+count+')</div>'
     +'<div'+(open?'':' hidden')+'>'+itemsHtml+'</div>';
 }
@@ -2537,19 +2832,26 @@ function exportCampaignReport(id){
 }
 function updateFicheField(field,val){
   var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
+  var avant=c[field];
   c[field]=val;
-  if(field==='art')document.getElementById('fiche-title').textContent=val||'Concert';
+  if(field==='art'){
+    document.getElementById('fiche-title').textContent=val||'Concert';
+    moveArtistPhotoOnRename(c,avant);
+    renderFichePhoto(c);
+  }
   concerts.sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
   renderFicheTasks(c);scheduleSave('concerts');
 }
 async function resetFicheTasks(){
   var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
   if(!await customConfirm('Réinitialiser toutes les tâches de '+c.art+' ?'))return;
-  process.forEach(function(t){delete taskStates[tk(c.id,t.id)];delete taskStates['na-'+c.id+'-'+t.id];delete taskStates['datemod-'+c.id+'-'+t.id];});
+  // Taches du process ET taches ajoutees a la main sur ce concert (avant le
+  // 23/09, ces dernieres restaient cochees), surlignage compris.
+  sortedProcess(c).forEach(function(t){['','na-','datemod-','hl-'].forEach(function(pre){delete taskStates[pre?pre+c.id+'-'+t.id:tk(c.id,t.id)];});});
   scheduleSave('taskstates');renderFicheTasks(c);renderKanban();renderConcerts();
 }
 var customTaskEditCid=null,customTaskEditId=null;
-function customTaskGenId(){return 'ct'+Date.now()+Math.floor(Math.random()*999);}
+function customTaskGenId(){return uid('ct');}
 function openCustomTaskModal(cid,tid){
   if(!cid)return;
   customTaskEditCid=cid;
@@ -2657,14 +2959,14 @@ function renderFicheTasks(c){
     var actions='';
     if(!isBlocked&&!isDone){
       if(t.isCustom){
-        actions='<button class="ftask-na-btn" onclick="event.stopPropagation();openCustomTaskModal(\''+c.id+'\','+tidLit(t)+')">Modifier</button>'
-          +'<button class="ftask-na-btn" onclick="event.stopPropagation();deleteCustomTask(\''+c.id+'\','+tidLit(t)+')">Supprimer</button>';
+        actions='<button class="ftask-na-btn" onclick="event.stopPropagation();openCustomTaskModal(\''+escJs(c.id)+'\','+tidLit(t)+')">Modifier</button>'
+          +'<button class="ftask-na-btn" onclick="event.stopPropagation();deleteCustomTask(\''+escJs(c.id)+'\','+tidLit(t)+')">Supprimer</button>';
       } else {
-        actions='<button class="ftask-na-btn" title="Décaler l\'échéance pour ce concert" onclick="event.stopPropagation();openDateOverrideModal(\''+c.id+'\','+tidLit(t)+')">Décaler</button>'
-          +'<button class="ftask-na-btn" title="Marquer inutile pour ce concert" onclick="event.stopPropagation();toggleTaskNA(\''+c.id+'\','+tidLit(t)+')">Inutile</button>';
+        actions='<button class="ftask-na-btn" title="Décaler l\'échéance pour ce concert" onclick="event.stopPropagation();openDateOverrideModal(\''+escJs(c.id)+'\','+tidLit(t)+')">Décaler</button>'
+          +'<button class="ftask-na-btn" title="Marquer inutile pour ce concert" onclick="event.stopPropagation();toggleTaskNA(\''+escJs(c.id)+'\','+tidLit(t)+')">Inutile</button>';
       }
     }
-    return '<div class="ftask'+(isDone?' done':isBlocked?' blocked':'')+'"'+(clickable?' onclick="toggleFicheTask(\''+c.id+'\','+tidLit(t)+')"':'')+'>'+
+    return '<div class="ftask'+(isDone?' done':isBlocked?' blocked':'')+'"'+(clickable?' onclick="toggleFicheTask(\''+escJs(c.id)+'\','+tidLit(t)+')"':'')+'>'+
       '<div class="ftask-chk'+(isDone?' on':isBlocked?' blocked':'')+'">'+(isDone?icon('check'):isBlocked?icon('hourglass'):'')+'</div>'+
       '<div class="ftask-body"><div class="ftask-name">'+esc(t.nom)+(t.isCustom?' <span class="ftask-custom">(manuelle)</span>':'')+'</div>'+
       '<div class="ftask-meta">'+
@@ -2679,7 +2981,7 @@ function renderFicheTasks(c){
       '<div class="ftask-meta">'+
       '<span class="pill '+cat.cls+'">'+cat.label+'</span>'+
       '<span class="ftask-date">Marquée inutile</span></div></div>'+
-      '<button class="ftask-na-btn always" onclick="event.stopPropagation();toggleTaskNA(\''+c.id+'\','+tidLit(t)+')">'+icon('rotate')+' Réactiver</button></div>';
+      '<button class="ftask-na-btn always" onclick="event.stopPropagation();toggleTaskNA(\''+escJs(c.id)+'\','+tidLit(t)+')">'+icon('rotate')+' Réactiver</button></div>';
   }
   var html='';
   if(late.length)html+='<div class="group-title late">En retard ('+late.length+')</div>'+late.map(function(t){return taskHtml(t,false);}).join('');
@@ -2741,8 +3043,12 @@ async function permanentlyDeleteConcert(id){
   var orphanMedia=concertMedia.filter(function(m){return m.concertId===id;});
   concertMedia=concertMedia.filter(function(m){return m.concertId!==id;});
   customTasks=customTasks.filter(function(t){return t.concertId!==id;});
+  // Ses coches, surlignages, dates decalees... (avant le 23/09 ces cles
+  // restaient orphelines dans taskStates, voir purgeOrphanTaskStates).
+  var motif=new RegExp('^(?:annonce-|skip-|na-|datemod-|hl-)?'+String(id).replace(/[^0-9a-zA-Z]/g,'\\$&')+'(?:-|$)');
+  Object.keys(taskStates).forEach(function(k){if(motif.test(k))delete taskStates[k];});
   cleanupArtistPhotoIfOrphan(c.art);
-  scheduleSave('concerts','concert_media','concert_tasks');
+  scheduleSave('concerts','concert_media','concert_tasks','taskstates');
   orphanMedia.forEach(function(m){if(m.type==='image'&&m.path)storageDelete(m.path);});
   if(currentFicheId===id)closeFicheBtn();else render();
 }
@@ -2812,12 +3118,12 @@ function renderAnnonces(){
     else if(diff===0){tag="Aujourd'hui";tagCls='tag-amber';}
     else if(diff===1){tag='Demain';tagCls='tag-amber';}
     else {tag='Dans '+diff+' jours';tagCls=diff<=7?'tag-amber':'tag-neutral';}
-    return '<div class="'+cls+'" onclick="openFiche(\''+c.id+'\')" title="'+esc(c.art)+'">'
+    return '<div class="'+cls+'" onclick="openFiche(\''+escJs(c.id)+'\')" title="'+esc(c.art)+'">'
       +'<div class="ann-date"><span class="ann-day">'+(hasDate?da.getDate():'?')+'</span><span class="ann-month">'+(hasDate?da.toLocaleDateString('fr-FR',{month:'short'}):'—')+'</span></div>'
       +'<div class="ann-body"><span class="ann-art">'+esc(c.art)+cancelBadge(c)+'</span>'
       +(c.ville?'<span class="ann-lieu">'+esc(formatLieu(c.ville))+'</span>':'')
       +'<span class="tag '+tagCls+'">'+tag+'</span></div>'
-      +'<button class="ann-done" onclick="event.stopPropagation();annonceDone(\''+c.id+'\')" title="Marquer comme annoncé" aria-label="Marquer comme annoncé">'+icon('check')+'</button>'
+      +'<button class="ann-done" onclick="event.stopPropagation();annonceDone(\''+escJs(c.id)+'\')" title="Marquer comme annoncé" aria-label="Marquer comme annoncé">'+icon('check')+'</button>'
       +'</div>';
   }).join('');
   wrap.innerHTML='<div class="ann-grid">'+cards+'</div>';
@@ -2844,7 +3150,7 @@ function renderDashLine(today){
     var diff=Math.round((d-today)/86400000);
     var cnt=diff===0?"Aujourd'hui":diff===1?'Demain':'J-'+diff;
     groups.push('<span class="dash-line-group"><span class="dash-line-label">Prochain concert</span>'
-      +'<a href="#" class="crow-name dash-line-art" onclick="event.preventDefault();openFiche(\''+nextC.id+'\')">'+esc(nextC.art)+cancelBadge(nextC)+'</a>'
+      +'<a href="#" class="crow-name dash-line-art" onclick="event.preventDefault();openFiche(\''+escJs(nextC.id)+'\')">'+esc(nextC.art)+cancelBadge(nextC)+'</a>'
       +'<span class="dash-line-sub">'+(nextC.ville?esc(formatLieu(nextC.ville))+' · ':'')+d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+'</span>'
       +'<span class="tag '+(diff<=7?'tag-red':diff<=30?'tag-amber':'tag-neutral')+'">'+cnt+'</span></span>');
   }
@@ -2900,20 +3206,20 @@ function renderKanban(){
         var cat=CATS[t.cat]||{cls:'p-gen',label:'?'};
         var d=calcDate(c,t);var isHl=!!taskStates['hl-'+c.id+'-'+t.id];
         var isNew=d?Math.floor((today-d)/86400000)<3:false;
-        return '<div class="kb-task'+(isHl?' hl':'')+'" title="Surligner (la tâche remonte dans les tâches Please Please)" onclick="event.stopPropagation();toggleHighlight(\''+c.id+'\','+tidLit(t)+')">'
-          +'<button type="button" class="kb-chk" aria-label="Marquer comme fait" onclick="event.stopPropagation();toggleTask(\''+c.id+'\','+tidLit(t)+')"></button>'
+        return '<div class="kb-task'+(isHl?' hl':'')+'" title="Surligner (la tâche remonte dans les tâches Please Please)" onclick="event.stopPropagation();toggleHighlight(\''+escJs(c.id)+'\','+tidLit(t)+')">'
+          +'<button type="button" class="kb-chk" aria-label="Marquer comme fait" onclick="event.stopPropagation();toggleTask(\''+escJs(c.id)+'\','+tidLit(t)+')"></button>'
           +'<span class="kb-task-body"><span class="kb-task-name">'+esc(t.nom)+'</span><span class="pill '+cat.cls+'">'+cat.label+'</span></span>'
           +(isNew?'<span class="tag tag-amber">Nouveau</span>':'')
           +'</div>';
       }).join('')
-      +(lateTasks.length>shown.length?'<a href="#" class="kb-more" onclick="event.preventDefault();openFiche(\''+c.id+'\',\'plan\')">+ '+(lateTasks.length-shown.length)+' autres tâches</a>':'')
+      +(lateTasks.length>shown.length?'<a href="#" class="kb-more" onclick="event.preventDefault();openFiche(\''+escJs(c.id)+'\',\'plan\')">+ '+(lateTasks.length-shown.length)+' autres tâches</a>':'')
       +'</div>';
     }
     var html='<div class="kb-card'+(c.annule?' is-cancelled':'')+'">'
-      +'<div class="kb-head'+(hasLate?'':' only')+'" onclick="openFiche(\''+c.id+'\')">'
+      +'<div class="kb-head'+(hasLate?'':' only')+'" onclick="openFiche(\''+escJs(c.id)+'\')">'
       +'<span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>'
       +'<span class="kb-sub">'+(c.ville?esc(formatLieu(c.ville))+' · ':'')+ds+'</span>'
-      +ventesHtml(c,'toggleVentes(event,\''+c.id+'\')')
+      +ventesHtml(c,'toggleVentes(event,\''+escJs(c.id)+'\')')
       +'</div>'+body+'</div>';
     return {hasLate:hasLate,html:html};
   });
@@ -2982,27 +3288,30 @@ function renderConcerts(){
         else if(pending)annonce='<span class="tag tag-amber">Annonce le '+daFmt+'</span>';
         else annonce='<span class="crow-meta">Annoncé le '+daFmt+'</span>';
       }
-      var flags=(skipSp?'<button class="tag tag-neutral on" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'sp\')" title="Sponso gérée par la prod : cliquer pour retirer">'+icon('circle-check')+' Sponso prod</button>':'')
-        +(skipCol?'<button class="tag tag-neutral on" onclick="event.stopPropagation();toggleSkipFromList(\''+c.id+'\',\'col\')" title="Pas d\'affiche disponible : cliquer pour retirer">'+icon('circle-check')+' Pas d\'affiche</button>':'');
+      var flags=(skipSp?'<button class="tag tag-neutral on" onclick="event.stopPropagation();toggleSkipFromList(\''+escJs(c.id)+'\',\'sp\')" title="Sponso gérée par la prod : cliquer pour retirer">'+icon('circle-check')+' Sponso prod</button>':'')
+        +(skipCol?'<button class="tag tag-neutral on" onclick="event.stopPropagation();toggleSkipFromList(\''+escJs(c.id)+'\',\'col\')" title="Pas d\'affiche disponible : cliquer pour retirer">'+icon('circle-check')+' Pas d\'affiche</button>':'');
 
       function cell(field,label,valueHtml){
-        return '<div class="crow-cell" onclick="startCellEdit(event,\''+c.id+'\',\''+field+'\')">'
+        return '<div class="crow-cell" onclick="startCellEdit(event,\''+escJs(c.id)+'\',\''+escJs(field)+'\')">'
           +(valueHtml||'<span class="crow-cell-hint">+ '+label+'</span>')+'</div>';
       }
-      var budHtml=hasBud?'<a class="crow-budget-link" href="'+escUrl(bud)+'" target="_blank" title="Ouvrir le budget dans un nouvel onglet" onclick="event.stopPropagation()">Sheet '+icon('arrow-up-right')+'</a>':'';
+      var budHtml=hasBud?'<a class="crow-budget-link" href="'+escUrl(bud)+'" target="_blank" title="Ouvrir le budget dans un nouvel onglet" onclick="event.stopPropagation()">Sheet '+icon('arrow-up-right')+'</a>'
+        // Texte qui n'est pas un lien (ex. un montant) : on l'affiche tel quel
+        // plutot que de laisser croire que la case est vide.
+        :(bud?esc(bud):'');
 
       var sp=spRead(c),spTot=spTotal(c);
       var spDots=spVaguesTriees(c).map(function(v,i){
         var st=spStatut(v);
         return '<i class="sp-dot" title="'+esc('Vague '+(i+1)+' · '+SP_STATUTS[st].label+(v.debut&&v.fin?' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin):'')+(spNonTransmise(v)?' · prestataire pas encore informé':''))+'"></i>';
       }).join('');
-      var spCell='<div class="crow-cell" onclick="event.stopPropagation();spOpenConcert(\''+c.id+'\')">'
+      var spCell='<div class="crow-cell" onclick="event.stopPropagation();spOpenConcert(\''+escJs(c.id)+'\')">'
         +(sp.vagues.length
           ?'<div class="sp-mini">'+(spTot?'<span class="sp-mini-tot">'+esc(spEuro(spTot))+'</span>':'')+'<span class="sp-mini-dots">'+spDots+'</span></div>'
           :'<span class="crow-cell-hint">+ Sponso</span>')
         +'</div>';
 
-      return '<div class="crow crow-grid'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')">'
+      return '<div class="crow crow-grid'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+escJs(c.id)+'\')">'
         +'<div class="crow-info">'
         +'<span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>'
         +'<span class="crow-sub">'+(c.ville?esc(formatLieu(c.ville))+' · ':'')+ds+'</span>'
@@ -3014,7 +3323,7 @@ function renderConcerts(){
         +cell('notes','Notes',c.notes?esc(c.notes):'')
         +cell('budget','Budget',budHtml)
         +spCell
-        +'<div>'+ventesHtml(c,'toggleVentes(event,\''+c.id+'\')')+'</div>'
+        +'<div>'+ventesHtml(c,'toggleVentes(event,\''+escJs(c.id)+'\')')+'</div>'
         +'<span class="crow-chevron">'+icon('chevron-right')+'</span>'
         +'</div>';
     }).join('')+'</div>';
@@ -3035,9 +3344,9 @@ function renderConcertsGrouped(liste,el){
       +'<div class="list-head"><h2>'+esc(key)+'</h2><span class="list-head-sub">'+rows.length+' concert'+(rows.length>1?'s':'')+'</span></div>'
       +rows.map(function(c){
         var ds=c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
-        return '<div class="crow crow-simple'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')">'
+        return '<div class="crow crow-simple'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+escJs(c.id)+'\')">'
           +'<div class="crow-info"><span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span><span class="crow-sub">'+ds+'</span></div>'
-          +ventesHtml(c,'toggleVentes(event,\''+c.id+'\')')
+          +ventesHtml(c,'toggleVentes(event,\''+escJs(c.id)+'\')')
           +'<span class="crow-chevron">'+icon('chevron-right')+'</span>'
           +'</div>';
       }).join('')
@@ -3072,7 +3381,7 @@ function renderConcertsCalendar(liste,el){
     cells+='<div class="cal-cell'+(isToday?' today':'')+'"><div class="cal-day">'+day+'</div>'
       +evs.slice(0,3).map(function(c){
         var lieu=formatLieu(c.ville);
-        return '<div class="cal-ev'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+c.id+'\')" title="'+esc(c.art)+(lieu?' - '+esc(lieu):'')+'">'
+        return '<div class="cal-ev'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+escJs(c.id)+'\')" title="'+esc(c.art)+(lieu?' - '+esc(lieu):'')+'">'
           +'<div class="cal-art">'+esc(c.art)+cancelBadge(c)+'</div>'
           +(lieu?'<div class="cal-ev-lieu">'+esc(lieu)+'</div>':'')
           +'</div>';
@@ -3117,12 +3426,12 @@ function renderPastConcerts(){
     +'<div class="list-head"><h2>'+liste.length+' concert'+(liste.length>1?'s':'')+' passé'+(liste.length>1?'s':'')+'</h2></div>'
     +liste.map(function(c){
       var ds=c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
-      return '<div class="crow crow-simple" onclick="openFiche(\''+c.id+'\')">'
+      return '<div class="crow crow-simple" onclick="openFiche(\''+escJs(c.id)+'\')">'
         +'<div class="crow-info"><span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>'
         +'<span class="crow-sub">'+(c.ville?esc(formatLieu(c.ville))+' · ':'')+ds+'</span></div>'
         +'<div class="crow-actions">'
-        +'<button class="btn btn-sm" onclick="event.stopPropagation();restoreConcert(\''+c.id+'\')">'+icon('rotate')+' Remettre en actif</button>'
-        +'<button class="btn btn-sm btn-danger" onclick="event.stopPropagation();permanentlyDeleteConcert(\''+c.id+'\')">Supprimer définitivement</button>'
+        +'<button class="btn btn-sm" onclick="event.stopPropagation();restoreConcert(\''+escJs(c.id)+'\')">'+icon('rotate')+' Remettre en actif</button>'
+        +'<button class="btn btn-sm btn-danger" onclick="event.stopPropagation();permanentlyDeleteConcert(\''+escJs(c.id)+'\')">Supprimer définitivement</button>'
         +'</div></div>';
     }).join('')+'</div>';
 }
@@ -3132,28 +3441,28 @@ function renderProcess(){
   function catSelect(t){
     var opts='';
     Object.keys(CATS).forEach(function(k){opts+='<option value="'+k+'"'+(t.cat===k?' selected':'')+'>'+CATS[k].label+'</option>';});
-    return '<select onchange="updTask('+t.id+',\'cat\',this.value)">'+opts+'</select>';
+    return '<select onchange="updTask('+jsNum(t.id)+',\'cat\',this.value)">'+opts+'</select>';
   }
   function prereqSelect(t){
     var opts='<option value="">Aucun</option>';
-    process.filter(function(p){return p.id!==t.id;}).forEach(function(p){opts+='<option value="'+p.id+'"'+(t.prereq===p.id?' selected':'')+'>'+esc(p.nom)+'</option>';});
-    return '<select onchange="updTask('+t.id+',\'prereq\',this.value)">'+opts+'</select>';
+    process.filter(function(p){return p.id!==t.id;}).forEach(function(p){opts+='<option value="'+jsNum(p.id)+'"'+(t.prereq===p.id?' selected':'')+'>'+esc(p.nom)+'</option>';});
+    return '<select onchange="updTask('+jsNum(t.id)+',\'prereq\',this.value)">'+opts+'</select>';
   }
   function renderGroup(tasks,title,second){
     return '<div class="group-title'+(second?' second':'')+'">'+title+'</div>'+
       tasks.map(function(t){
-        return '<div class="prow" draggable="true" data-id="'+t.id+'"'+
-          ' ondragstart="dragStart(event,'+t.id+')" ondragover="dragOver(event)"'+
-          ' ondrop="dragDrop(event,'+t.id+')" ondragleave="dragLeave(event)">'+
+        return '<div class="prow" draggable="true" data-id="'+jsNum(t.id)+'"'+
+          ' ondragstart="dragStart(event,'+jsNum(t.id)+')" ondragover="dragOver(event)"'+
+          ' ondrop="dragDrop(event,'+jsNum(t.id)+')" ondragleave="dragLeave(event)">'+
           '<span class="drag">'+icon('grip')+'</span>'+
-          '<input type="text" value="'+esc(t.nom)+'" onchange="updTask('+t.id+',\'nom\',this.value)">'+
-          '<input type="number" value="'+esc(t.jours)+'" onchange="updTask('+t.id+',\'jours\',this.value)">'+
-          '<select onchange="updTask('+t.id+',\'ref\',this.value)">'+
+          '<input type="text" value="'+esc(t.nom)+'" onchange="updTask('+jsNum(t.id)+',\'nom\',this.value)">'+
+          '<input type="number" value="'+esc(t.jours)+'" onchange="updTask('+jsNum(t.id)+',\'jours\',this.value)">'+
+          '<select onchange="updTask('+jsNum(t.id)+',\'ref\',this.value)">'+
           '<option value="concert"'+(t.ref==='concert'?' selected':'')+'>J avant concert</option>'+
           '<option value="annonce"'+(t.ref==='annonce'?' selected':'')+'>J après annonce</option>'+
           '</select>'+
           catSelect(t)+prereqSelect(t)+
-          '<button class="dbtn" title="Supprimer" onclick="delTask('+t.id+')">'+icon('x')+'</button></div>';
+          '<button class="dbtn" title="Supprimer" onclick="delTask('+jsNum(t.id)+')">'+icon('x')+'</button></div>';
       }).join('');
   }
   document.getElementById('plist').innerHTML=
@@ -3197,7 +3506,7 @@ function toggleFicheSec(key){
   var head=sec.querySelector('.fiche-sec-head');if(head)head.setAttribute('aria-expanded',open?'true':'false');
 }
 var MEDIA_RETENTION_DAYS=7;
-function mediaGenId(){return 'md'+Date.now()+Math.floor(Math.random()*999);}
+function mediaGenId(){return uid('md');}
 function mediaExpiryDate(){var d=new Date();d.setDate(d.getDate()+MEDIA_RETENTION_DAYS);return d.toISOString();}
 // Purge les medias temporaires (photos/liens du questionnaire) expires depuis
 // plus de MEDIA_RETENTION_DAYS jours. Execute a chaque ouverture de l'app par
@@ -3234,11 +3543,11 @@ function renderWizardStep(){
       if(m.type==='image'){
         return '<div class="media-card"><img src="'+escUrl(m.url)+'" onclick="window.open(\''+escJs(safeUrl(m.url))+'\',\'_blank\')">'
           +(m.caption?'<div class="media-caption">'+esc(m.caption)+'</div>':'')
-          +'<button class="media-del" onclick="event.stopPropagation();wizardDeleteItem(\''+m.id+'\')" title="Supprimer">'+icon('x')+'</button></div>';
+          +'<button class="media-del" onclick="event.stopPropagation();wizardDeleteItem(\''+escJs(m.id)+'\')" title="Supprimer">'+icon('x')+'</button></div>';
       }
       return '<div class="media-card media-link" onclick="window.open(\''+escJs(safeUrl(m.url))+'\',\'_blank\')">'
         +'<div class="media-link-icon">'+icon('link')+'</div><div class="media-link-url">'+esc(m.caption||m.url)+'</div>'
-        +'<button class="media-del" onclick="event.stopPropagation();wizardDeleteItem(\''+m.id+'\')" title="Supprimer">'+icon('x')+'</button></div>';
+        +'<button class="media-del" onclick="event.stopPropagation();wizardDeleteItem(\''+escJs(m.id)+'\')" title="Supprimer">'+icon('x')+'</button></div>';
     }).join('');
   }
   document.getElementById('wizard-prev-btn').style.visibility=wizardStepIdx===0?'hidden':'visible';
@@ -3345,11 +3654,19 @@ function startCellEdit(e,cid,field){
   cell.innerHTML='';
   cell.appendChild(inp);
   inp.focus();inp.select();
-  function save(){c[field]=inp.value.trim();scheduleSave('concerts');renderConcerts();}
+  // Le concert est relu par son id au moment d'enregistrer : une synchro
+  // arrivee pendant la saisie a pu remplacer l'objet.
+  function save(){
+    var cc=concerts.find(function(x){return x.id===cid;});
+    if(cc&&(cc[field]||'')!==inp.value.trim()){cc[field]=inp.value.trim();scheduleSave('concerts');}
+    renderConcerts();
+  }
   inp.addEventListener('blur',save);
   inp.addEventListener('keydown',function(ev){
     if(ev.key==='Enter')inp.blur();
-    if(ev.key==='Escape'){c[field]=cur;renderConcerts();}
+    // Echap annule : on retire d'abord l'enregistrement a la sortie du champ,
+    // sinon le re-affichage (qui fait perdre le focus) enregistrait quand meme.
+    if(ev.key==='Escape'){inp.removeEventListener('blur',save);renderConcerts();}
   });
 }
 function toggleNewConcert(){
@@ -3367,7 +3684,7 @@ function toggleNewConcert(){
 }
 
 // ── GESTIONNAIRE DE TACHES MANUEL ────────────────────────
-function tkNewId(){return 'tk'+Date.now()+Math.floor(Math.random()*1000);}
+function tkNewId(){return uid('tk');}
 function tkFmtDate(d){
   if(!d)return null;
   var dt=new Date(d);dt.setHours(0,0,0,0);
@@ -3656,7 +3973,7 @@ function renderTkWidget(){
       if(t.delegue)meta+='<span class="tag tag-accent tkw-tag">'+icon('user')+' Délégué</span>';
       if(meta)meta='<span class="tkw-meta">'+meta+'</span>';
       var onChk=t.isPinned
-        ?"toggleTask('"+t.concertId+"',"+tidLit({id:t.taskId})+");toggleHighlight('"+t.concertId+"',"+tidLit({id:t.taskId})+")"
+        ?"toggleTask('"+escJs(t.concertId)+"',"+tidLit({id:t.taskId})+");toggleHighlight('"+escJs(t.concertId)+"',"+tidLit({id:t.taskId})+")"
         :"tkToggleDone('"+escJs(t.id)+"')";
       html+='<div class="tkw-task'+(t.delegue?' delegue':'')+(t.isPinned?' pinned':'')+'"'+(t.isPinned?'':' onclick="tkEditTask(\''+escJs(t.id)+'\')"')+'>'
         +'<button type="button" class="kb-chk" aria-label="Marquer comme fait" onclick="event.stopPropagation();'+onChk+'"></button>'
@@ -3686,7 +4003,7 @@ var RS_TYPES={
   autre:{label:'Autre',cls:'rs-t-autre'}
 };
 
-function rsNewId(){return 'rs'+Date.now()+Math.floor(Math.random()*999);}
+function rsNewId(){return uid('rs');}
 
 function renderRS(){
   var wrap=document.getElementById('rs-wrap');
@@ -3703,7 +4020,7 @@ function renderRS(){
     +'<button class="view-toggle-btn'+(rsCurrentProj==='antdt'?' active':'')+'" onclick="rsSetProj(\'antdt\')">ANTDT</button>'
     +'</div>'
     +'<span class="grow"></span>'
-    +'<button class="btn btn-primary" onclick="rsOpenModal(\''+todayStr+'\')">+ Ajouter un contenu</button>'
+    +'<button class="btn btn-primary" onclick="rsOpenModal(\''+escJs(todayStr)+'\')">+ Ajouter un contenu</button>'
     +'</div>';
 
   // Fenetre de 3 semaines calee sur aujourd'hui, qu'on decale de 2 semaines a
@@ -3744,6 +4061,19 @@ function renderRS(){
       toRemove.forEach(function(p){rsPosts=rsPosts.filter(function(x){return x.id!==p.id;});});
       scheduleSave('rsposts');
     }
+    // Deux postes ouverts en meme temps peuvent creer chacun le post auto d'un
+    // meme concert, avec deux ids differents, que la synchro conserve tous les
+    // deux. On n'en garde qu'un, choisi de la meme facon partout (le plus
+    // avance, puis le plus petit id) pour que tous les postes convergent.
+    var parConcert={};
+    rsPosts.forEach(function(p){if(p.autoRef&&p.proj==='pp')(parConcert[p.autoRef]=parConcert[p.autoRef]||[]).push(p);});
+    var doublons={},nbDoublons=0;
+    Object.keys(parConcert).forEach(function(ref){
+      var l=parConcert[ref];if(l.length<2)return;
+      l.sort(function(a,b){var d=rsAutoScore(b)-rsAutoScore(a);return d||(String(a.id)<String(b.id)?-1:1);});
+      l.slice(1).forEach(function(p){doublons[p.id]=1;nbDoublons++;});
+    });
+    if(nbDoublons){rsPosts=rsPosts.filter(function(p){return !doublons[p.id];});scheduleSave('rsposts');}
   }
 
   // Générer les jours de la plage
@@ -3776,14 +4106,14 @@ function renderRS(){
       chips+='<span class="rs-chip'+(p.status==='posted'?' posted':p.ready?' ready':'')+(p.format==='story'?' story':'')+'">'+lbl+'</span>';
     });
 
-    var rowClick=hasContent?'rsToggleDay(\''+dateStr+'\')':'rsOpenModal(\''+dateStr+'\')';
+    var rowClick=hasContent?'rsToggleDay(\''+escJs(dateStr)+'\')':'rsOpenModal(\''+escJs(dateStr)+'\')';
 
     daysHtml+='<div class="rs-day" id="rsday-wrap-'+dateStr+'">'
       +'<div class="'+headCls+'" id="rsday-'+dateStr+'" onclick="'+rowClick+'">'
       +'<span class="rs-day-date"><span class="rs-day-num">'+dayNum+'</span><span class="rs-day-month">'+monthName+'</span></span>'
       +'<span class="rs-day-weekname">'+dayName+'</span>'
       +'<div class="rs-chips">'+chips+'</div>'
-      +'<button class="rs-add-day-btn" onclick="event.stopPropagation();rsOpenModal(\''+dateStr+'\')">+ Ajouter</button>'
+      +'<button class="rs-add-day-btn" onclick="event.stopPropagation();rsOpenModal(\''+escJs(dateStr)+'\')">+ Ajouter</button>'
       +'</div>'
       +'<div id="rslist-'+dateStr+'" style="display:none">';
 
@@ -3803,18 +4133,18 @@ function renderRS(){
           +(p.note&&!pcLabel?'<span class="rs-post-note">'+esc(p.note)+'</span>':'')
           +(p.validated?'<span class="rs-post-validated" title="Validé">'+icon('check')+'</span>':'')
           +'</div>'
-          +(p.legend?'<div class="rs-post-legend-wrap"><div class="rs-post-legend">'+esc(p.legend)+'</div><button class="rs-copy-btn" onclick="rsCopyLegend(\''+p.id+'\')" title="Copier la légende">'+icon('copy')+' Copier</button></div>':'')
+          +(p.legend?'<div class="rs-post-legend-wrap"><div class="rs-post-legend">'+esc(p.legend)+'</div><button class="rs-copy-btn" onclick="rsCopyLegend(\''+escJs(p.id)+'\')" title="Copier la légende">'+icon('copy')+' Copier</button></div>':'')
           +(p.link&&escUrl(p.link)?'<div class="rs-post-link"><a href="'+escUrl(p.link)+'" target="_blank">'+esc(p.link)+'</a></div>':'')
           +'<div class="rs-post-row2">'
           +(p.fb?'<span class="rs-net-badge">Facebook</span>':'')
           +(p.insta?'<span class="rs-net-badge">Instagram</span>':'')
           +(p.tiktok?'<span class="rs-net-badge">TikTok</span>':'')
           +(p.linkedin?'<span class="rs-net-badge">LinkedIn</span>':'')
-          +'<button class="rs-ready-btn'+(p.status==='posted'?' on posted':p.status==='ready'?' on':'')+'" onclick="rsToggleReady(\''+p.id+'\')">'          +(p.status==='posted'?icon('send')+' Posté':p.status==='ready'?icon('check')+' Prêt':icon('circle')+' Prêt')+'</button>'
-          +'<button class="rs-validate-btn'+(p.validated?' on':'')+'" onclick="rsToggleValidated(\''+p.id+'\')" title="Validé">'+icon('check')+' Validé</button>'
+          +'<button class="rs-ready-btn'+(p.status==='posted'?' on posted':p.status==='ready'?' on':'')+'" onclick="rsToggleReady(\''+escJs(p.id)+'\')">'          +(p.status==='posted'?icon('send')+' Posté':p.status==='ready'?icon('check')+' Prêt':icon('circle')+' Prêt')+'</button>'
+          +'<button class="rs-validate-btn'+(p.validated?' on':'')+'" onclick="rsToggleValidated(\''+escJs(p.id)+'\')" title="Validé">'+icon('check')+' Validé</button>'
           +'<div class="rs-post-btns">'
-          +'<button class="rs-post-btn" onclick="rsEditPost(\''+p.id+'\')" title="Modifier">'+icon('pencil')+'</button>'
-          +(isAuto?'':'<button class="rs-post-btn del" onclick="rsDelPost(\''+p.id+'\')" title="Supprimer">'+icon('x')+'</button>')
+          +'<button class="rs-post-btn" onclick="rsEditPost(\''+escJs(p.id)+'\')" title="Modifier">'+icon('pencil')+'</button>'
+          +(isAuto?'':'<button class="rs-post-btn del" onclick="rsDelPost(\''+escJs(p.id)+'\')" title="Supprimer">'+icon('x')+'</button>')
           +'</div></div></div>';
       })
       daysHtml+='</div>';
@@ -3836,6 +4166,10 @@ function renderRS(){
 
 }
 
+// Avancement d'un post auto, pour choisir lequel garder entre deux doublons.
+function rsAutoScore(p){
+  return (p.status==='posted'?8:p.status==='ready'?4:0)+(p.validated?2:0)+((p.legend||p.note||p.link)?1:0);
+}
 function rsShift(sens){rsWindowOffset+=sens*RS_PAS;renderRS();window.scrollTo(0,0);}
 function rsResetWindow(){rsWindowOffset=0;renderRS();window.scrollTo(0,0);}
 // "17 sept. – 8 oct." ; l'annee n'apparait que si la plage en change.
@@ -4086,7 +4420,7 @@ var SP_STATUTS={
   terminee:{label:'Terminée',cls:'sp-terminee'}
 };
 
-function spNewId(){return 'sp'+Date.now()+Math.floor(Math.random()*999);}
+function spNewId(){return uid('sp');}
 function spRead(c){return c&&c.sponso?c.sponso:SP_VIDE;}
 function spWrite(c){
   if(!c.sponso)c.sponso={billet:'',legende:'',crea:'',ville:'',rayon:'',vagues:[]};
@@ -4202,27 +4536,27 @@ function spBlockHtml(c){
         +'<span class="sp-badge '+m.cls+'" id="sp-st-'+v.id+'">'+m.label+'</span>'
         +'<span class="grow"></span>'
         +'<label class="sp-tr" id="sp-tr-'+v.id+'"'+(st==='programmee'?'':' style="display:none"')+'>'
-        +'<input type="checkbox"'+(v.transmise?' checked':'')+' onchange="spSetVague(\''+c.id+'\',\''+v.id+'\',\'transmise\',this.checked)"> Prestataire informé</label>'
-        +'<button class="rs-post-btn del" title="Supprimer la vague" onclick="spDelVague(\''+c.id+'\',\''+v.id+'\')">'+icon('x')+'</button>'
+        +'<input type="checkbox"'+(v.transmise?' checked':'')+' onchange="spSetVague(\''+escJs(c.id)+'\',\''+escJs(v.id)+'\',\'transmise\',this.checked)"> Prestataire informé</label>'
+        +'<button class="rs-post-btn del" title="Supprimer la vague" onclick="spDelVague(\''+escJs(c.id)+'\',\''+escJs(v.id)+'\')">'+icon('x')+'</button>'
         +'</div>'
         +'<div class="sp-vague-fields">'
-        +'<label class="sp-f"><span>Budget</span><input type="number" min="0" step="50" placeholder="0" value="'+esc(v.budget||'')+'" onchange="spSetVague(\''+c.id+'\',\''+v.id+'\',\'budget\',this.value)"></label>'
-        +'<label class="sp-f"><span>Début</span><input type="date" value="'+esc(v.debut||'')+'" onchange="spSetVague(\''+c.id+'\',\''+v.id+'\',\'debut\',this.value)"></label>'
-        +'<label class="sp-f"><span>Fin</span><input type="date" value="'+esc(v.fin||'')+'" onchange="spSetVague(\''+c.id+'\',\''+v.id+'\',\'fin\',this.value)"></label>'
+        +'<label class="sp-f"><span>Budget</span><input type="number" min="0" step="50" placeholder="0" value="'+esc(v.budget||'')+'" onchange="spSetVague(\''+escJs(c.id)+'\',\''+escJs(v.id)+'\',\'budget\',this.value)"></label>'
+        +'<label class="sp-f"><span>Début</span><input type="date" value="'+esc(v.debut||'')+'" onchange="spSetVague(\''+escJs(c.id)+'\',\''+escJs(v.id)+'\',\'debut\',this.value)"></label>'
+        +'<label class="sp-f"><span>Fin</span><input type="date" value="'+esc(v.fin||'')+'" onchange="spSetVague(\''+escJs(c.id)+'\',\''+escJs(v.id)+'\',\'fin\',this.value)"></label>'
         +'</div></div>';
     });
     h+='</div>';
   } else {
     h+='<div class="sp-empty">Aucune vague. Une vague sans dates reste visible en « à programmer ».</div>';
   }
-  h+='<button class="sp-add-btn" onclick="spAddVague(\''+c.id+'\')">+ Ajouter une vague</button>';
+  h+='<button class="sp-add-btn" onclick="spAddVague(\''+escJs(c.id)+'\')">+ Ajouter une vague</button>';
   h+='<div class="sp-brief">'
-    +'<label class="sp-f wide"><span>Lien billetterie</span><input type="text" placeholder="https://..." value="'+esc(s.billet||'')+'" onchange="spSetField(\''+c.id+'\',\'billet\',this.value)"></label>'
-    +'<label class="sp-f wide"><span>Lien de la créa</span><input type="text" placeholder="https://..." value="'+esc(s.crea||'')+'" onchange="spSetField(\''+c.id+'\',\'crea\',this.value)"></label>'
-    +'<label class="sp-f"><span>Ville ciblée</span><input type="text" placeholder="Lyon" value="'+esc(s.ville||'')+'" onchange="spSetField(\''+c.id+'\',\'ville\',this.value)"></label>'
-    +'<label class="sp-f"><span>Rayon (km)</span><input type="number" min="0" step="5" placeholder="30" value="'+esc(s.rayon||'')+'" onchange="spSetField(\''+c.id+'\',\'rayon\',this.value)"></label>'
-    +'<label class="sp-f wide"><span>Légende<button class="rs-copy-btn" onclick="event.preventDefault();spCopyLegende(\''+c.id+'\')" title="Copier la légende">'+icon('copy')+' Copier</button></span>'
-    +'<textarea rows="3" placeholder="Texte de la légende..." onchange="spSetField(\''+c.id+'\',\'legende\',this.value)">'+esc(s.legende||'')+'</textarea></label>'
+    +'<label class="sp-f wide"><span>Lien billetterie</span><input type="text" placeholder="https://..." value="'+esc(s.billet||'')+'" onchange="spSetField(\''+escJs(c.id)+'\',\'billet\',this.value)"></label>'
+    +'<label class="sp-f wide"><span>Lien de la créa</span><input type="text" placeholder="https://..." value="'+esc(s.crea||'')+'" onchange="spSetField(\''+escJs(c.id)+'\',\'crea\',this.value)"></label>'
+    +'<label class="sp-f"><span>Ville ciblée</span><input type="text" placeholder="Lyon" value="'+esc(s.ville||'')+'" onchange="spSetField(\''+escJs(c.id)+'\',\'ville\',this.value)"></label>'
+    +'<label class="sp-f"><span>Rayon (km)</span><input type="number" min="0" step="5" placeholder="30" value="'+esc(s.rayon||'')+'" onchange="spSetField(\''+escJs(c.id)+'\',\'rayon\',this.value)"></label>'
+    +'<label class="sp-f wide"><span>Légende<button class="rs-copy-btn" onclick="event.preventDefault();spCopyLegende(\''+escJs(c.id)+'\')" title="Copier la légende">'+icon('copy')+' Copier</button></span>'
+    +'<textarea rows="3" placeholder="Texte de la légende..." onchange="spSetField(\''+escJs(c.id)+'\',\'legende\',this.value)">'+esc(s.legende||'')+'</textarea></label>'
     +'</div>';
   h+='</div>';
   return h;
@@ -4380,7 +4714,7 @@ function renderSponso(){
     return va<vb?-1:va>vb?1:new Date(a.dc||'2100-01-01')-new Date(b.dc||'2100-01-01');
   });
 
-  function pill(id,label,n,cur,fn){return '<button class="view-toggle-btn'+(cur===id?' active':'')+'" onclick="'+fn+'(\''+id+'\')">'+label+(n!==null?' <span class="sp-pill-n">'+n+'</span>':'')+'</button>';}
+  function pill(id,label,n,cur,fn){return '<button class="view-toggle-btn'+(cur===id?' active':'')+'" onclick="'+fn+'(\''+escJs(id)+'\')">'+label+(n!==null?' <span class="sp-pill-n">'+n+'</span>':'')+'</button>';}
   var toolbar='<div class="filters">'
     +'<div class="view-toggle">'+pill('tous','Toutes',actifs.length,spFiltre,'spSetFiltre')+pill('encours','En cours',enCours.length,spFiltre,'spSetFiltre')+pill('avenir','À venir',aVenir.length,spFiltre,'spSetFiltre')+'</div>'
     +'<div class="view-toggle">'+pill('date','Par date',null,spVue,'spSetVue')+pill('ville','Par ville',null,spVue,'spSetVue')+'</div>'
@@ -4438,7 +4772,7 @@ function renderSponso(){
       // que si aucun budget n'a ete saisi - ce n'est pas un repli faute de
       // place, c'est qu'il n'y a rien a afficher.
       var lbl=v.budget?spEuroCourt(v.budget):'V'+n;
-      bars+='<div class="sp-bar '+SP_STATUTS[st].cls+(nt?' sp-nontransmise':'')+'" style="left:'+l+'%;width:'+w+'%" title="'+esc(tip)+'" onclick="spOpenConcert(\''+c.id+'\')">'
+      bars+='<div class="sp-bar '+SP_STATUTS[st].cls+(nt?' sp-nontransmise':'')+'" style="left:'+l+'%;width:'+w+'%" title="'+esc(tip)+'" onclick="spOpenConcert(\''+escJs(c.id)+'\')">'
         +(lbl?'<span>'+esc(lbl)+'</span>':'')+'</div>';
     });
     // Repere de la date du concert : on voit d'un coup d'oeil si les vagues
@@ -4449,20 +4783,20 @@ function renderSponso(){
 
     var chips='';
     undated.forEach(function(u){
-      chips+='<button class="sp-chip" onclick="spOpenConcert(\''+c.id+'\')">V'+u.n+(u.v.budget?' · '+esc(spEuro(u.v.budget)):'')+' · à programmer</button>';
+      chips+='<button class="sp-chip" onclick="spOpenConcert(\''+escJs(c.id)+'\')">V'+u.n+(u.v.budget?' · '+esc(spEuro(u.v.budget)):'')+' · à programmer</button>';
     });
 
     var cible=spCible(s);
     var tot=spTotal(c);
     body+='<div class="sp-row'+(chips?' has-chips':'')+'">'
-      +'<div class="sp-row-info" onclick="spOpenConcert(\''+c.id+'\')" title="Ouvrir la sponso de ce concert">'
+      +'<div class="sp-row-info" onclick="spOpenConcert(\''+escJs(c.id)+'\')" title="Ouvrir la sponso de ce concert">'
       +'<div class="sp-row-top"><div class="sp-row-art">'+esc(c.art||'Concert')+'</div>'
       +(tot?'<div class="sp-row-tot" title="Budget sponso de ce concert">'+esc(spEuro(tot))+'</div>':'')+'</div>'
       +'<div class="sp-row-sub">'+esc([c.ville,c.dc?spFmtDate(c.dc):''].filter(Boolean).join(' · '))+'</div>'
       +(cible?'<div class="sp-row-cible">'+icon('map-pin')+' '+esc(cible)+'</div>':'')
       +(spSkipProd(c.id)?'<div class="sp-row-prod">'+icon('alert')+' Sponso prod</div>':'')
       +'</div>'
-      +'<div class="sp-row-track" onclick="spOpenConcert(\''+c.id+'\')">'+bars+'</div>'
+      +'<div class="sp-row-track" onclick="spOpenConcert(\''+escJs(c.id)+'\')">'+bars+'</div>'
       +'</div>'
       +(chips?'<div class="sp-row-chips"><div class="sp-row-chips-in">'+chips+'</div></div>':'');
   });
@@ -4482,7 +4816,7 @@ function renderSponso(){
       +'<div id="sp-done-list" style="display:'+(spTerminesOuvert?'block':'none')+'">'
       +finis.map(function(c){
         var nb=spRead(c).vagues.length,t=spTotal(c);
-        return '<div class="sp-done-row" onclick="spOpenConcert(\''+c.id+'\')">'
+        return '<div class="sp-done-row" onclick="spOpenConcert(\''+escJs(c.id)+'\')">'
           +'<span class="sp-done-art">'+esc(c.art||'Concert')+'</span>'
           +'<span class="sp-done-sub">'+esc([c.ville,c.dc?spFmtDate(c.dc):''].filter(Boolean).join(' · '))+'</span>'
           +'<span class="sp-done-meta">'+nb+' vague'+(nb>1?'s':'')+(t?' · '+esc(spEuro(t)):'')+'</span>'
@@ -4648,7 +4982,7 @@ function renderBcTemplateEditor() {
     html += '<div style="margin-bottom:20px">';
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
     html += '<span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-3);letter-spacing:.05em">'+s.label+'</span>';
-    html += '<button onclick="bcAddRow(\''+s.key+'\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">+ Ligne</button></div>';
+    html += '<button onclick="bcAddRow(\''+escJs(s.key)+'\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">+ Ligne</button></div>';
     html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
     if (s.showStreet) {
       html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;gap:0;background:var(--bg);padding:6px 10px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>Qté</span><span>PU €</span><span>Total €</span><span></span></div>';
@@ -4664,18 +4998,18 @@ function renderBcTemplateEditor() {
         html += '<input value="'+(r.total||'')+'" type="number" placeholder="auto" onchange="bcUpdateRow(\'street\','+i+',\'total\',+this.value||null)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
       } else {
         html += '<div style="display:grid;grid-template-columns:1fr '+(s.showTarif?'80px':'100px')+' 90px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
-        html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateRow(\''+s.key+'\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateRow(\''+escJs(s.key)+'\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
         if (s.showTarif) {
-          html += '<input value="'+(r.total||'')+'" type="number" placeholder="€" onchange="bcUpdateRow(\''+s.key+'\','+i+',\'total\',+this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+          html += '<input value="'+(r.total||'')+'" type="number" placeholder="€" onchange="bcUpdateRow(\''+escJs(s.key)+'\','+i+',\'total\',+this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
         } else {
-          html += '<input value="'+escHtml(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateRow(\''+s.key+'\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+          html += '<input value="'+escHtml(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateRow(\''+escJs(s.key)+'\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
         }
-        html += '<select onchange="bcUpdateRow(\''+s.key+'\','+i+',\'statut\',this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px">';
+        html += '<select onchange="bcUpdateRow(\''+escJs(s.key)+'\','+i+',\'statut\',this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px">';
         html += '<option value="Pr\u00e9visionnel"'+(r.statut!=='Engag\u00e9'?' selected':'')+'>Prévisionnel</option>';
         html += '<option value="Engag\u00e9"'+(r.statut==='Engag\u00e9'?' selected':'')+'>Engagé</option>';
         html += '</select>';
       }
-      html += '<button onclick="bcDeleteRow(\''+s.key+'\','+i+')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>';
+      html += '<button onclick="bcDeleteRow(\''+escJs(s.key)+'\','+i+')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>';
       html += '</div>';
     });
     if (!rows.length) html += '<div style="padding:12px;font-size:12px;color:var(--text-3);text-align:center;font-style:italic">Aucune ligne</div>';
@@ -4695,18 +5029,18 @@ function renderBcStyleEditor() {
     html += '<div style="margin-bottom:20px">';
     html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
     html += '<span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-3)">'+s.label+'</span>';
-    html += '<button onclick="bcAddStyleRow(\''+s.key+'\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">+ Ligne</button></div>';
+    html += '<button onclick="bcAddStyleRow(\''+escJs(s.key)+'\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">+ Ligne</button></div>';
     html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
     html += '<div style="display:grid;grid-template-columns:1fr 100px 24px;background:var(--bg);padding:6px 10px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>'+(s.showTarif?'Total €':'Type')+'</span><span></span></div>';
     s.rows.forEach(function(r,i){
       html += '<div style="display:grid;grid-template-columns:1fr 100px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
-      html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateStyleRow(\''+s.key+'\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+      html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateStyleRow(\''+escJs(s.key)+'\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
       if (s.showTarif) {
-        html += '<input value="'+(r.total||'')+'" type="number" placeholder="€" onchange="bcUpdateStyleRow(\''+s.key+'\','+i+',\'total\',+this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        html += '<input value="'+(r.total||'')+'" type="number" placeholder="€" onchange="bcUpdateStyleRow(\''+escJs(s.key)+'\','+i+',\'total\',+this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
       } else {
-        html += '<input value="'+escHtml(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateStyleRow(\''+s.key+'\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        html += '<input value="'+escHtml(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateStyleRow(\''+escJs(s.key)+'\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
       }
-      html += '<button onclick="bcDeleteStyleRow(\''+s.key+'\','+i+')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>';
+      html += '<button onclick="bcDeleteStyleRow(\''+escJs(s.key)+'\','+i+')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>';
       html += '</div>';
     });
     if (!s.rows.length) html += '<div style="padding:12px;font-size:12px;color:var(--text-3);text-align:center;font-style:italic">Aucune ligne spécifique</div>';
@@ -4751,6 +5085,12 @@ function bcAddStyleRow(section) {
 }
 
 async function saveBudgetConfig() {
+  // Si la configuration n'a jamais ete lue en base, l'editeur montre les
+  // valeurs par defaut du code : les enregistrer ecraserait la vraie config.
+  if (!budgetConfigLoaded) {
+    showToast('La configuration Budget n\'a pas pu être chargée depuis la base : enregistrement refusé pour ne pas écraser la version existante. Recharge la page.', 9000);
+    return;
+  }
   var btn = document.querySelector('#tab-budgetconfig .btn-primary');
   if (btn) { btn.textContent='⏳ Sauvegarde...'; btn.disabled=true; }
   try {
@@ -4759,33 +5099,44 @@ async function saveBudgetConfig() {
     await supaSet('regles_salles', REGLES_SALLES);
     if (btn) { btn.textContent='Sauvegardé ✓'; setTimeout(function(){ btn.textContent='Sauvegarder'; btn.disabled=false; }, 2000); }
   } catch(e) {
-    if (btn) { btn.textContent='Erreur'; btn.disabled=false; }
+    if (btn) { btn.textContent='Sauvegarder'; btn.disabled=false; }
+    showToast('Échec de l\'enregistrement de la configuration Budget : '+e.message, 8000);
     console.error(e);
   }
 }
 
+var budgetConfigLoaded = false;
 async function loadBudgetConfig() {
   try {
     var tpls = await supaGet('budget_templates');
-    if (tpls) BUDGET_TEMPLATES = tpls;
     var adjs = await supaGet('style_adjustments');
-    if (adjs) STYLE_ADJUSTMENTS = adjs;
     var salles = await supaGet('regles_salles');
+    if (tpls) BUDGET_TEMPLATES = tpls;
+    if (adjs) STYLE_ADJUSTMENTS = adjs;
     if (salles) REGLES_SALLES = salles;
+    budgetConfigLoaded = true;
+    if (currentTab === 'budgetconfig') { renderBcTemplateEditor(); renderBcStyleEditor(); renderBcSalleEditor(); }
   } catch(e) { console.warn('Budget config non chargé:', e); }
 }
 
+// Avant le 23/09, une lecture en echec passait pour "pas de config" et une
+// ecriture en echec affichait "Sauvegardé ✓" : les deux levent maintenant.
 async function supaGet(key) {
-  var r = await fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.'+key+'&select=value',{ headers: await authHeaders() });
+  var r = await fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.'+encodeURIComponent(key)+'&select=value',{ headers: await authHeaders() });
+  if (r.status===401) handleUnauthorized();
+  if (!r.ok) throw new Error('Lecture "'+key+'" impossible (HTTP '+r.status+')');
   var d = await r.json();
-  return d&&d[0] ? JSON.parse(d[0].value) : null;
+  if (!Array.isArray(d)) throw new Error('Réponse inattendue pour "'+key+'"');
+  return d[0] ? JSON.parse(d[0].value) : null;
 }
 async function supaSet(key, value) {
-  return fetch(SUPABASE_URL+'/rest/v1/app_data',{
+  var r = await fetch(SUPABASE_URL+'/rest/v1/app_data',{
     method:'POST',
     headers:Object.assign(await authHeaders(),{'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'}),
     body:JSON.stringify({key:key, value:JSON.stringify(value)})
   });
+  if (r.status===401) handleUnauthorized();
+  if (!r.ok) throw new Error('Écriture "'+key+'" refusée (HTTP '+r.status+')');
 }
 
 function renderBudgetConfig() {
@@ -5128,58 +5479,6 @@ function getBudgetTemplate(montant, style, ville, skipAffichage, skipSp) {
   };
 }
 
-var BUDGET_TEMPLATES = {
-  small: {
-    label: 'Template Petit budget (< 1 500€)',
-    color: '#93c47d',
-    digital: [
-      {nom:'Sponsorisation Instagram / Facebook vague 1', total:100},
-      {nom:'Sponsorisation Instagram / Facebook vague 2', total:100}
-    ],
-    radio: []
-  },
-  standard: {
-    label: 'Template Standard (1 500–4 000€)',
-    color: '#6fa8dc',
-    espaces: [
-      {nom:'Campagne DOOH', presta:'JC Decaux', total:1400}
-    ],
-    digital: [
-      {nom:'Sponsorisation Instagram / Facebook vague 1', total:200},
-      {nom:'Sponsorisation Instagram / Facebook vague 2', total:200},
-      {nom:'Sponsorisation Instagram / Facebook vague 3', total:200}
-    ],
-    radio: [
-      {nom:'Jeu concours Bien Public', type:'2x2 places'},
-      {nom:'OP Speak + Spot radio locale', type:'5x2 places'},
-      {nom:'Jeu concours web local', type:'1x2 places'}
-    ]
-  },
-  large: {
-    label: 'Template Grand budget (> 4 000€)',
-    color: '#e06666',
-    espaces: [
-      {nom:'Campagne DOOH', presta:'JC Decaux', total:2000},
-      {nom:'Encart presse', presta:'Bien Public', total:500}
-    ],
-    digital: [
-      {nom:'Sponsorisation Instagram / Facebook vague 1', total:300},
-      {nom:'Sponsorisation Instagram / Facebook vague 2', total:300},
-      {nom:'Sponsorisation Instagram / Facebook vague 3', total:300},
-      {nom:'Sponsorisation TikTok', total:200},
-      {nom:'Partenariat influenceur(s)', total:500}
-    ],
-    radio: [
-      {nom:'Jeu concours Bien Public', type:'2x2 places'},
-      {nom:'OP Speak + Spot Cherie FM', type:'5x2 places'},
-      {nom:'OP Speak + Spot K6FM', type:'5x2 places'},
-      {nom:'OP Speak + Spot Ici Bourgogne', type:'5x2 places'},
-      {nom:"OP McDonald's", type:'2x2 places'},
-      {nom:"Jeu concours J'aime Dijon", type:'1x2 places'}
-    ]
-  }
-};
-
 // ── Templates budget selon montant ────────────────────────────────────────
 var BUDGET_TEMPLATES = {
   small: {
@@ -5242,11 +5541,17 @@ var STYLE_ADJUSTMENTS = {
 };
 
 
-function openBudgetModal() {
+async function openBudgetModal() {
   if (!currentFicheId) return;
   var c = concerts.find(function(x){return x.id===currentFicheId;});
   if (!c) return;
-  if (c.budget) { window.open(c.budget, '_blank'); return; }
+  if (c.budget) {
+    // Seuls les liens http(s) s'ouvrent : un "javascript:..." saisi dans le
+    // champ s'executerait sinon dans la page de celui qui clique.
+    var lien = safeUrl(c.budget);
+    if (lien) { window.open(lien, '_blank', 'noopener'); return; }
+    if (!await customConfirm('Le champ « Lien budget » contient « '+c.budget+' », qui n\'est pas un lien. Créer le Google Sheet remplacera ce texte par le lien du Sheet.', 'Continuer')) return;
+  }
 
   // Remplir les infos fiche
   document.getElementById('bud-info-art').textContent = c.art || '—';
@@ -5497,7 +5802,10 @@ function budgetCreateSheet() {
     })
     .then(function(){
       var url = 'https://docs.google.com/spreadsheets/d/'+sid+'/edit';
-      c.budget = url;
+      // Concert relu par son id : une synchro pendant la creation (plusieurs
+      // secondes) a pu remplacer l'objet charge au debut.
+      var cBud = concerts.find(function(x){return x.id===c.id;}) || c;
+      cBud.budget = url;
       scheduleSave('concerts');
       if (document.getElementById('fi-budget')) document.getElementById('fi-budget').value = url;
       renderConcerts();

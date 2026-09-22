@@ -7,12 +7,14 @@
  * qu'une page blanche en production. Contrairement a un hook Git, ca ne se
  * contourne pas avec --no-verify.
  *
- * Les quatre controles correspondent a des bugs reellement rencontres :
+ * Les cinq controles correspondent a des bugs reellement rencontres :
  *  1. un bloc <script> qui ne compile plus  -> appli entierement blanche ;
  *  2. un getElementById() qui pointe dans le vide (btn-taches, 20/09) ;
  *  3. un id HTML en double -> le second devient inatteignable ;
  *  4. esc() dans un litteral JS d'attribut -> injection (voir §6.6 de la
- *     passation) : le navigateur decode &#39; avant de lire le JavaScript.
+ *     passation) : le navigateur decode &#39; avant de lire le JavaScript ;
+ *  5. une valeur interpolee sans escJs() dans ce meme type de litteral
+ *     (revue du 22/09).
  *
  * Usage : node check.js
  */
@@ -93,6 +95,16 @@ for (const { motif, conseil } of MOTIFS) {
     signaler(ligneDe(i), `${motif.trim()} — echappement HTML dans un litteral JavaScript : ${conseil}`);
     i = src.indexOf(motif, i + 1);
   }
+}
+
+// ── 5. Toute valeur placee dans un litteral JS d'attribut passe par escJs ───
+// Motif recherche : onclick="fn(\''+valeur+'\')" sans escJs(). Un identifiant
+// "sur" en apparence (Date.now()) ne l'est pas : tout membre de l'equipe peut
+// reecrire les donnees via l'API, et un id contenant une apostrophe
+// executerait du code chez les autres (dont les administrateurs). Revue du
+// 22/09 : 74 interpolations de ce type, toutes passees a escJs().
+for (const m of src.matchAll(/\\''\+(?!escJs\()/g)) {
+  signaler(ligneDe(m.index), "\\''+ sans escJs() — valeur non echappee dans un litteral JavaScript d'attribut");
 }
 
 // ── Verdict ─────────────────────────────────────────────────────────────────

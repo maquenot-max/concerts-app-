@@ -2,6 +2,8 @@
 # - frame-ancestors / X-Frame-Options : la page ne peut pas être incluse dans un autre site (clickjacking).
 # - Content-Security-Policy : seuls les scripts, styles, polices, images et connexions listés sont autorisés.
 #   'unsafe-inline' est nécessaire car l'application est écrite en scripts et gestionnaires inline.
+#   Seul le fichier supabase-js épinglé est autorisé sur jsdelivr (pas tout le CDN, qui sert n'importe quel paquet npm).
+#   Changer de version = modifier ce chemin ET la balise <script> (et son integrity) dans index.html.
 # - HSTS : le navigateur n'utilise plus jamais http:// pour ce site.
 /*
   X-Frame-Options: DENY
@@ -9,4 +11,4 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://vkehaerkbvfxlyjvrpzi.supabase.co; connect-src 'self' https://vkehaerkbvfxlyjvrpzi.supabase.co wss://vkehaerkbvfxlyjvrpzi.supabase.co https://sheets.googleapis.com https://www.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://vkehaerkbvfxlyjvrpzi.supabase.co; connect-src 'self' https://vkehaerkbvfxlyjvrpzi.supabase.co wss://vkehaerkbvfxlyjvrpzi.supabase.co https://sheets.googleapis.com https://www.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
