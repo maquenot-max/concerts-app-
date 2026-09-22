@@ -412,10 +412,7 @@
       <div id="nl-section-order"></div>
     </div>
 
-    <div class="nl-fields-2col">
-      <div class="field"><label>Édition</label><input type="text" id="nl-edition" placeholder="Édition · Septembre 2026"></div>
-      <div class="field"><label>Lien "voir en ligne"</label><input type="text" id="nl-online-link" placeholder="https://..."></div>
-    </div>
+    <div class="field"><label>Édition</label><input type="text" id="nl-edition" placeholder="Édition · Septembre 2026"></div>
     <div class="field"><label>Texte d'aperçu (preheader)</label><textarea id="nl-preheader" rows="2" placeholder="Phrase affichée sous l'objet dans la boîte de réception…"></textarea></div>
 
     <div class="modal-sep">
@@ -425,7 +422,7 @@
       <div class="field"><label>Texte</label><textarea id="nl-hero-text" rows="2" placeholder="Deux phrases maximum : quoi, où, quand."></textarea></div>
       <div class="nl-fields-2col">
         <div class="field"><label>Lien du bouton</label><input type="text" id="nl-hero-link" placeholder="https://..."></div>
-        <div class="field"><label>Texte du bouton</label><input type="text" id="nl-hero-btn" placeholder="Découvrir"></div>
+        <div class="field"><label>Texte du bouton</label><input type="text" id="nl-hero-btn" value="Découvrir"></div>
       </div>
       <div class="nl-label" style="margin-top:12px">Photo de l'article</div>
       <div class="photo-widget" id="nl-oneoff-photo" style="display:none">
@@ -470,7 +467,7 @@
       <div class="field"><label>Titre</label><input type="text" id="nl-cta-title" value="Envie de voir la suite ?"></div>
       <div class="field"><label>Sous-titre</label><input type="text" id="nl-cta-sub" value="Retrouvez tous nos concerts et festivals à venir."></div>
       <div class="nl-fields-2col">
-        <div class="field"><label>Lien du bouton</label><input type="text" id="nl-cta-link" placeholder="https://..."></div>
+        <div class="field"><label>Lien du bouton</label><input type="text" id="nl-cta-link" value="https://pleasepleasefamilyy.fr/"></div>
         <div class="field"><label>Texte du bouton</label><input type="text" id="nl-cta-btn" value="Toutes nos dates"></div>
       </div>
     </div>
@@ -1142,7 +1139,8 @@ var NL_ICON_TIKTOK='https://pleasepleasefamilyy.fr/sites/default/files/2026-09/l
 var NL_LINK_INSTA='https://www.instagram.com/pleasepleaselive/';
 var NL_LINK_FB='https://www.facebook.com/pleasepleaselive/';
 var NL_LINK_TIKTOK='https://www.tiktok.com/@pleasepleaselive';
-var NL_ADDRESS='Please Please Familyy — Dijon, France';
+var NL_SITE_URL='https://pleasepleasefamilyy.fr/';
+var NL_ADDRESS='Please Please Familyy - Dijon, France';
 var NL_UNSUB='https://backstage.gigz.fr/__unsubscribe?email={{ userEmail }}&sid=157&campaignId={{ campaignId }}';
 // Concatenation deliberee : un marqueur de commentaire HTML (utilise plus
 // bas pour les alternatives Outlook) ne doit jamais apparaitre tel quel
@@ -1162,8 +1160,12 @@ function nlValUrl(id,placeholder){
 // Bouton plein avec repli VML (angles arrondis sous Outlook) : memes gabarits
 // que ceux deja donnes a la main plus haut dans la conversation.
 function nlSolidButton(href,label,opts){
+  // text-decoration:none ajoute ici, une fois pour toutes les utilisations,
+  // plutot que dans le style de chaque appelant : certains clients mail et
+  // editeurs (copier-coller dans une plateforme d'envoi) ignorent le bloc
+  // <style> du <head> et ne respectent que les styles inline.
   return NL_CM+'[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="'+href+'" style="height:'+opts.h+'px;v-text-anchor:middle;width:'+opts.w+'px;" arcsize="'+opts.arc+'" stroke="f" fillcolor="'+opts.fill+'"><center style="color:'+opts.msoColor+';font-family:Arial,sans-serif;font-size:'+opts.msoSize+'px;font-weight:bold;">'+opts.msoLabel+'</center></v:roundrect><![endif]-->'
-    +NL_CM+'[if !mso]>'+NL_CM+'><a href="'+href+'" target="_blank" style="'+opts.style+'">'+label+'</a>'+NL_CM+'<![endif]-->';
+    +NL_CM+'[if !mso]>'+NL_CM+'><a href="'+href+'" target="_blank" style="'+opts.style+'text-decoration:none;">'+label+'</a>'+NL_CM+'<![endif]-->';
 }
 // Genere le code HTML d'une carte de la grille "Nos prochains concerts",
 // meme gabarit que le template de newsletter (Poppins/Fraunces, 3 colonnes).
@@ -1236,7 +1238,7 @@ function nlBuildAnnouncementsHtml(list){
 function nlHeroSectionHtml(heroLabel,heroTitle,heroText,heroLink,heroBtn,heroImg){
   return ''
     +'<tr><td class="px" style="padding:0 32px;">'
-    +'<img class="fluid-img" src="'+heroImg+'" width="576" alt="'+heroTitle+'" style="display:block;width:100%;border-radius:14px;">'
+    +'<a href="'+heroLink+'" target="_blank"><img class="fluid-img" src="'+heroImg+'" width="576" alt="'+heroTitle+'" style="display:block;width:100%;border-radius:14px;"></a>'
     +'<table role="presentation" width="100%" cellpadding="0" cellspacing="0">'
     +'<tr><td align="center" style="padding:20px 0 0;"><span style="background-color:#EFE7F7;color:#6C4E96;font-family:Arial, Helvetica, sans-serif;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;border-radius:20px;padding:6px 14px;display:inline-block;">'+heroLabel+'</span></td></tr>'
     +'<tr><td align="center" class="h1" style="padding:16px 0 0;font-family:\'Poppins\', Arial, Helvetica, sans-serif;font-size:32px;line-height:40px;font-weight:800;color:#16171F;">'+heroTitle+'</td></tr>'
@@ -1249,7 +1251,7 @@ function nlHeroSectionHtml(heroLabel,heroTitle,heroText,heroLink,heroBtn,heroImg
 // (au lieu de 24px) sur une copie de ce bloc ait colle le filet "Dernieres
 // annonces" aux cartes en dessous - une seule version a tenir a jour.
 function nlSectionDivider(label){
-  return '<tr><td style="padding:40px 32px 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'
+  return '<tr><td style="padding:20px 32px 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'
     +'<td width="38%" valign="middle"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #ECEAE5;font-size:0;line-height:0;">&nbsp;</td></tr></table></td>'
     +'<td align="center" valign="middle" style="padding:0 12px;font-family:Arial, Helvetica, sans-serif;font-size:12px;font-weight:bold;letter-spacing:1.5px;color:#9C9891;text-transform:uppercase;white-space:nowrap;">'+label+'</td>'
     +'<td width="38%" valign="middle"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #ECEAE5;font-size:0;line-height:0;">&nbsp;</td></tr></table></td>'
@@ -1278,7 +1280,6 @@ function nlCtaSectionHtml(ctaTitle,ctaSub,ctaLink,ctaBtn){
 function nlBuildFullHtml(included){
   var edition=nlVal('nl-edition','Édition · Mois Année');
   var preheader=nlVal('nl-preheader',"Phrase d'accroche");
-  var onlineLink=nlValUrl('nl-online-link','LIEN_VERSION_EN_LIGNE');
   var heroLabel=nlVal('nl-hero-label','ÉTIQUETTE');
   var heroTitle=nlVal('nl-hero-title',"Titre accrocheur de l'article");
   var heroText=nlVal('nl-hero-text',"Paragraphe d'introduction");
@@ -1323,8 +1324,6 @@ function nlBuildFullHtml(included){
 +'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F3F1ED;"><tr><td align="center" style="padding:32px 14px;">'
 +'<table role="presentation" class="container" width="640" cellpadding="0" cellspacing="0" style="width:640px;max-width:640px;">'
 
-+'<tr><td align="center" style="padding:0 0 16px;font-family:Arial, Helvetica, sans-serif;font-size:12px;color:#9C9891;"><a href="'+onlineLink+'" target="_blank" style="color:#9C9891;text-decoration:underline;">Voir la version en ligne</a></td></tr>'
-
 +'<tr><td style="background-color:#FFFFFF;border-radius:20px;box-shadow:0 16px 40px rgba(35,32,58,0.10);overflow:hidden;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">'
 
 +'<tr><td style="height:5px;line-height:5px;font-size:0;background-color:#324288;background-image:linear-gradient(90deg,#324288,#7A5FB0,#D8C7E9);">&nbsp;</td></tr>'
@@ -1339,7 +1338,7 @@ function nlBuildFullHtml(included){
 +'</table></td></tr>'
 
 +'<tr><td style="padding:20px 0 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#16171F;border-radius:20px;overflow:hidden;">'
-+'<tr><td align="center" style="padding:34px 32px 6px;"><img src="'+escUrl(NL_LOGO_WHITE)+'" width="120" alt="Please Please Familyy" style="display:block;width:120px;height:auto;margin:0 auto;"></td></tr>'
++'<tr><td align="center" style="padding:34px 32px 6px;"><a href="'+escUrl(NL_SITE_URL)+'" target="_blank"><img src="'+escUrl(NL_LOGO_WHITE)+'" width="120" alt="Please Please Familyy" style="display:block;width:120px;height:auto;margin:0 auto;"></a></td></tr>'
 +'<tr><td align="center" style="padding:16px 32px 26px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr>'
 +'<td style="padding:0 6px;"><a href="'+escUrl(NL_LINK_INSTA)+'" target="_blank"><img src="'+escUrl(NL_ICON_INSTA)+'" width="30" height="30" alt="Instagram" style="display:block;width:30px;height:30px;"></a></td>'
 +'<td style="padding:0 6px;"><a href="'+escUrl(NL_LINK_FB)+'" target="_blank"><img src="'+escUrl(NL_ICON_FB)+'" width="30" height="30" alt="Facebook" style="display:block;width:30px;height:30px;"></a></td>'
