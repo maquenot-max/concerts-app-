@@ -2430,8 +2430,8 @@ function showTab(id,btn){
   if(btn)btn.classList.add('active');panel.classList.add('active');
   currentTab=id;
   if(id==='budgetconfig'){ renderBcTemplateEditor(); renderBcStyleEditor(); renderBcSalleEditor(); }
-  if(id==='sponso')renderSponso();
-  if(id==='team')renderTeam();
+  else if(id==='team')renderTeam();
+  else renderTab(id); // render() ne dessine que l'onglet visible : on dessine celui qu'on ouvre
   pushRoute(id,null);
   window.scrollTo(0,0);
 }
@@ -2611,8 +2611,7 @@ function sortedProcess(c){
 function fillFilterSelect(el,opts,emptyLabel){
   if(!el)return;
   var sel=el.value;
-  el.innerHTML='<option value="">'+emptyLabel+'</option>';
-  opts.forEach(function(o){el.innerHTML+='<option value="'+esc(o.value)+'"'+(o.value===sel?' selected':'')+'>'+esc(o.label)+'</option>';});
+  el.innerHTML='<option value="">'+emptyLabel+'</option>'+opts.map(function(o){return '<option value="'+esc(o.value)+'"'+(o.value===sel?' selected':'')+'>'+esc(o.label)+'</option>';}).join('');
 }
 function filtered(){
   var s=(document.getElementById('search')||{value:''}).value.toLowerCase();
@@ -3073,7 +3072,10 @@ async function permanentlyDeleteConcert(id){
   var motif=new RegExp('^(?:annonce-|skip-|na-|datemod-|hl-)?'+String(id).replace(/[^0-9a-zA-Z]/g,'\\$&')+'(?:-|$)');
   Object.keys(taskStates).forEach(function(k){if(motif.test(k))delete taskStates[k];});
   cleanupArtistPhotoIfOrphan(c.art);
-  scheduleSave('concerts','concert_media','concert_tasks','taskstates');
+  // Son post automatique du planning RS (majPostsAuto() epargne un jour les
+  // posts des concerts recents introuvables, qui peuvent etre en transit).
+  rsPosts=rsPosts.filter(function(p){return !(p.autoRef===id&&p.proj==='pp');});
+  scheduleSave('concerts','concert_media','concert_tasks','taskstates','rsposts');
   orphanMedia.forEach(function(m){if(m.type==='image'&&m.path)storageDelete(m.path);});
   if(currentFicheId===id)closeFicheBtn();else render();
 }
@@ -3433,6 +3435,7 @@ function renderConcertsCalendar(liste,el){
 function renderPastConcerts(){
   var el=document.getElementById('past-list');
   if(!el)return;
+  updateFilters(); // ses listes Ville/Periode/Categorie ne sont plus remplies par les autres onglets
   updateFiltersBadge('pfilters-badge',['pastville','pastperiode','pastcat']);
   var ps=(document.getElementById('pastsearch')||{value:''}).value.toLowerCase();
   var pv=(document.getElementById('pastville')||{value:''}).value;
@@ -4037,6 +4040,60 @@ var RS_TYPES={
 
 function rsNewId(){return uid('rs');}
 
+// Posts automatiques du planning Please Please : un par concert ayant une date
+// d'annonce, cree, date et marque "poste" ici. Avant le 23/09 ce travail se
+// faisait dans renderRS(), donc a chaque affichage, y compris celui qui suit
+// une synchro partielle : les cles concerts et rsposts d'un collegue arrivent
+// en deux evenements separes, et si rsposts arrivait en premier, le post auto
+// de son nouveau concert passait pour orphelin, etait supprime puis recree
+// sous un autre id (reproduit au banc). Appele par render(), donc apres chaque
+// chargement, synchro ou modification, quel que soit l'onglet affiche.
+function majPostsAuto(){
+  var change=false;
+  concerts.forEach(function(c){
+    if(!c.da)return; // pas de date d'annonce = pas de post auto
+    if(c.supprime||c.annule)return; // concert archive ou annule : on arrete de le synchroniser (sans toucher au post deja existant)
+    var ds=c.da.substring(0,10);
+    var existing=rsPosts.find(function(p){return p.autoRef===c.id&&p.proj==='pp';});
+    if(!existing){
+      rsPosts.push({id:rsNewId(),proj:'pp',date:ds,type:'annonce',format:'post',
+        concert:c.art,concertId:c.id,note:'',legend:'',link:'',fb:false,insta:false,tiktok:false,
+        status:'',ready:false,autoRef:c.id});
+      change=true;
+    } else {
+      // Mettre à jour la date si elle a changé
+      if(existing.date!==ds){existing.date=ds;change=true;}
+      // Si l'annonce est cochée ET le post n'est pas encore "posté", le marquer posté
+      if(taskStates['annonce-'+c.id]&&existing.status!=='posted'){existing.status='posted';existing.ready=true;change=true;}
+    }
+  });
+  // Posts auto dont le concert n'existe plus. Un concert cree il y a moins d'un
+  // jour est epargne, comme dans purgeOrphanTaskStates() : son post peut
+  // arriver avant le concert lui-meme. L'id d'un concert est sa date de
+  // creation. La suppression definitive, elle, retire son post tout de suite.
+  var limite=Date.now()-86400000,avant=rsPosts.length;
+  rsPosts=rsPosts.filter(function(p){
+    if(!p.autoRef||p.proj!=='pp')return true;
+    if(concerts.some(function(x){return x.id===p.autoRef;}))return true;
+    return +p.autoRef>limite;
+  });
+  if(rsPosts.length!==avant)change=true;
+  // Deux postes ouverts en meme temps peuvent creer chacun le post auto d'un
+  // meme concert, avec deux ids differents, que la synchro conserve tous les
+  // deux. On n'en garde qu'un, choisi de la meme facon partout (le plus
+  // avance, puis le plus petit id) pour que tous les postes convergent.
+  var parConcert={};
+  rsPosts.forEach(function(p){if(p.autoRef&&p.proj==='pp')(parConcert[p.autoRef]=parConcert[p.autoRef]||[]).push(p);});
+  var doublons={},nbDoublons=0;
+  Object.keys(parConcert).forEach(function(ref){
+    var l=parConcert[ref];if(l.length<2)return;
+    l.sort(function(a,b){var d=rsAutoScore(b)-rsAutoScore(a);return d||(String(a.id)<String(b.id)?-1:1);});
+    l.slice(1).forEach(function(p){doublons[p.id]=1;nbDoublons++;});
+  });
+  if(nbDoublons){rsPosts=rsPosts.filter(function(p){return !doublons[p.id];});change=true;}
+  if(change)scheduleSave('rsposts');
+}
+
 function renderRS(){
   var wrap=document.getElementById('rs-wrap');
   if(!wrap)return;
@@ -4061,52 +4118,6 @@ function renderRS(){
   // avec le meme bandeau de navigation que les autres calendriers.
   var winStart=new Date(today);winStart.setDate(winStart.getDate()-RS_JOURS_AVANT+rsWindowOffset);
   var winEnd=new Date(today);winEnd.setDate(winEnd.getDate()+RS_JOURS_APRES+rsWindowOffset);
-
-  // Annonces auto PP : créer/maintenir un post auto par concert PP non encore annoncé
-  if(rsCurrentProj==='pp'){
-    concerts.forEach(function(c){
-      if(!c.da)return; // pas de date d'annonce = pas de post auto
-      if(c.supprime||c.annule)return; // concert archive ou annule : on arrete de le synchroniser (sans toucher au post deja existant)
-      var ds=c.da.substring(0,10);
-      var existing=rsPosts.find(function(p){return p.autoRef===c.id&&p.proj==='pp';});
-      if(!existing){
-        // Créer le post auto
-        rsPosts.push({id:rsNewId(),proj:'pp',date:ds,type:'annonce',format:'post',
-          concert:c.art,concertId:c.id,note:'',legend:'',link:'',fb:false,insta:false,tiktok:false,
-          status:'',ready:false,autoRef:c.id});
-        scheduleSave('rsposts');
-      } else {
-        // Mettre à jour la date si elle a changé
-        if(existing.date!==ds){existing.date=ds;scheduleSave('rsposts');}
-        // Si l'annonce est cochée ET le post n'est pas encore "posté", le marquer posté
-        if(taskStates['annonce-'+c.id]&&existing.status!=='posted'){
-          existing.status='posted';existing.ready=true;scheduleSave('rsposts');
-        }
-      }
-    });
-    // Nettoyer les posts auto des concerts supprimés
-    var toRemove=rsPosts.filter(function(p){
-      if(!p.autoRef||p.proj!=='pp')return false;
-      return !concerts.find(function(x){return x.id===p.autoRef;});
-    });
-    if(toRemove.length){
-      toRemove.forEach(function(p){rsPosts=rsPosts.filter(function(x){return x.id!==p.id;});});
-      scheduleSave('rsposts');
-    }
-    // Deux postes ouverts en meme temps peuvent creer chacun le post auto d'un
-    // meme concert, avec deux ids differents, que la synchro conserve tous les
-    // deux. On n'en garde qu'un, choisi de la meme facon partout (le plus
-    // avance, puis le plus petit id) pour que tous les postes convergent.
-    var parConcert={};
-    rsPosts.forEach(function(p){if(p.autoRef&&p.proj==='pp')(parConcert[p.autoRef]=parConcert[p.autoRef]||[]).push(p);});
-    var doublons={},nbDoublons=0;
-    Object.keys(parConcert).forEach(function(ref){
-      var l=parConcert[ref];if(l.length<2)return;
-      l.sort(function(a,b){var d=rsAutoScore(b)-rsAutoScore(a);return d||(String(a.id)<String(b.id)?-1:1);});
-      l.slice(1).forEach(function(p){doublons[p.id]=1;nbDoublons++;});
-    });
-    if(nbDoublons){rsPosts=rsPosts.filter(function(p){return !doublons[p.id];});scheduleSave('rsposts');}
-  }
 
   // Générer les jours de la plage
   var daysHtml='';
@@ -5162,7 +5173,17 @@ function renderBudgetConfig() {
   renderBcStyleEditor();
 }
 
-function render(){tkAdvanceRecurringTasks();renderKanban();renderConcerts();renderPastConcerts();renderProcess();renderTaches();renderTkWidget();renderRS();renderSponso();}
+// render() ne dessine plus que l'onglet visible, les autres le sont a leur
+// ouverture (showTab). Avant le 23/09, chaque synchro et chaque fermeture de
+// fiche redessinaient les huit vues, onglets masques compris, et le widget
+// Taches et les filtres deux fois chacun. Le travail sur les donnees (taches
+// recurrentes, posts auto) reste fait a chaque fois, quel que soit l'onglet.
+var TAB_RENDER={kanban:renderKanban,concerts:renderConcerts,past:renderPastConcerts,process:renderProcess,taches:renderTaches,rs:renderRS,sponso:renderSponso};
+function renderTab(id){
+  if(!appDataLoaded)return; // avant le chargement, on garde les squelettes
+  var f=TAB_RENDER[id];if(f)f();
+}
+function render(){tkAdvanceRecurringTasks();majPostsAuto();renderTab(currentTab);}
 // ── RECHERCHE GLOBALE (⌘K / Ctrl+K / "/") ──────────────────────────
 var cmdkItems=[],cmdkIdx=0;
 var CMDK_TABS=[{id:'kanban',label:'Tableau de bord'},{id:'concerts',label:'Concerts'},{id:'past',label:'Concerts passés'},{id:'taches',label:'Tâches'},{id:'rs',label:'Plannings RS'},{id:'sponso',label:'Sponso'},{id:'process',label:'Process'}];
