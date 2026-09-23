@@ -7,14 +7,16 @@
  * qu'une page blanche en production. Contrairement a un hook Git, ca ne se
  * contourne pas avec --no-verify.
  *
- * Les cinq controles correspondent a des bugs reellement rencontres :
+ * Les six controles correspondent a des bugs reellement rencontres :
  *  1. un bloc <script> qui ne compile plus  -> appli entierement blanche ;
  *  2. un getElementById() qui pointe dans le vide (btn-taches, 20/09) ;
  *  3. un id HTML en double -> le second devient inatteignable ;
  *  4. esc() dans un litteral JS d'attribut -> injection (voir §6.6 de la
  *     passation) : le navigateur decode &#39; avant de lire le JavaScript ;
  *  5. une valeur interpolee sans escJs() dans ce meme type de litteral
- *     (revue du 22/09).
+ *     (revue du 22/09) ;
+ *  6. une donnee inseree sans esc() dans un attribut HTML ordinaire
+ *     (revue du 23/09).
  *
  * Usage : node check.js
  */
@@ -105,6 +107,26 @@ for (const { motif, conseil } of MOTIFS) {
 // 22/09 : 74 interpolations de ce type, toutes passees a escJs().
 for (const m of src.matchAll(/\\''\+(?!escJs\()/g)) {
   signaler(ligneDe(m.index), "\\''+ sans escJs() — valeur non echappee dans un litteral JavaScript d'attribut");
+}
+
+// ── 6. Une donnee placee dans un attribut HTML passe par esc() ──────────────
+// Motif recherche : attribut="...'+x.y+'..." ou une propriete d'objet (donc a
+// priori une donnee lue en base) est inseree sans esc/escUrl/escJs/jsNum.
+// Revue du 23/09 : l'id d'une vague sponso (id="sp-st-'+v.id+'") et les champs
+// de la config Budget (value="'+(r.qte||'')+'") etaient inseres bruts. Tout
+// membre peut les reecrire via l'API : un guillemet suivi de
+// autofocus onfocus=... s'executait a l'affichage, y compris chez un admin.
+// Ne sont pas signales : les valeurs sans point (variables locales, nombres,
+// chaines deja echappees plus haut), les ternaires (ils choisissent entre des
+// litteraux) et quelques proprietes de constantes du code (classes CSS...).
+const SURES = /^(esc|escUrl|escJs|jsNum|tidLit|icon|pct)\(/;
+const CONSTANTES = [/\.cls$/, /^opts\.\w+$/, /^p\.val$/, /^TAB_PARENT\[\w+\]$/];
+for (const m of src.matchAll(/([a-zA-Z][\w:-]*)="[^"<>]*?'\+(.+?)\+'/g)) {
+  const expr = m[2].trim();
+  if (SURES.test(expr) || expr.includes('?')) continue;
+  if (!/[A-Za-z_$][\w$]*(\.|\[)/.test(expr)) continue;
+  if (CONSTANTES.some((re) => re.test(expr))) continue;
+  signaler(ligneDe(m.index), `${m[1]}="...'+${expr}+'..." — donnee inseree sans esc() dans un attribut HTML`);
 }
 
 // ── Verdict ─────────────────────────────────────────────────────────────────

@@ -4540,9 +4540,9 @@ function spBlockHtml(c){
       h+='<div class="sp-vague">'
         +'<div class="sp-vague-head">'
         +'<span class="sp-vague-num">Vague '+(i+1)+'</span>'
-        +'<span class="sp-badge '+m.cls+'" id="sp-st-'+v.id+'">'+m.label+'</span>'
+        +'<span class="sp-badge '+m.cls+'" id="sp-st-'+esc(v.id)+'">'+m.label+'</span>'
         +'<span class="grow"></span>'
-        +'<label class="sp-tr" id="sp-tr-'+v.id+'"'+(st==='programmee'?'':' style="display:none"')+'>'
+        +'<label class="sp-tr" id="sp-tr-'+esc(v.id)+'"'+(st==='programmee'?'':' style="display:none"')+'>'
         +'<input type="checkbox"'+(v.transmise?' checked':'')+' onchange="spSetVague(\''+escJs(c.id)+'\',\''+escJs(v.id)+'\',\'transmise\',this.checked)"> Prestataire informé</label>'
         +'<button class="rs-post-btn del" title="Supprimer la vague" onclick="spDelVague(\''+escJs(c.id)+'\',\''+escJs(v.id)+'\')">'+icon('x')+'</button>'
         +'</div>'
@@ -4911,10 +4911,10 @@ function renderBcSalleEditor() {
   html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;background:var(--bg);padding:6px 10px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>Qté</span><span>PU €</span><span>Total €</span><span></span></div>';
   affichage.forEach(function(r,i){
     html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
-    html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-    html += '<input value="'+(r.qte||'')+'" type="number" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'qte\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-    html += '<input value="'+(r.pu||'')+'" type="number" step="0.01" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'pu\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-    html += '<input value="'+(r.total||'')+'" type="number" placeholder="auto" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'total\',this.value?+this.value:undefined)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+    html += '<input value="'+esc(r.nom)+'" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+    html += '<input value="'+esc(r.qte||'')+'" type="number" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'qte\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+    html += '<input value="'+esc(r.pu||'')+'" type="number" step="0.01" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'pu\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+    html += '<input value="'+esc(r.total||'')+'" type="number" placeholder="auto" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'total\',this.value?+this.value:undefined)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
     html += '<button onclick="bcDeleteSalleRow(\'affichage\','+i+')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px;padding:0">×</button>';
     html += '</div>';
   });
@@ -4928,8 +4928,8 @@ function renderBcSalleEditor() {
   html += '<div style="display:grid;grid-template-columns:1fr 120px 24px;background:var(--bg);padding:6px 10px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>Type</span><span></span></div>';
   radio.forEach(function(r,i){
     html += '<div style="display:grid;grid-template-columns:1fr 120px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
-    html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateSalleRow(\'radio\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-    html += '<input value="'+escHtml(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateSalleRow(\'radio\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+    html += '<input value="'+esc(r.nom)+'" onchange="bcUpdateSalleRow(\'radio\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+    html += '<input value="'+esc(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateSalleRow(\'radio\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
     html += '<button onclick="bcDeleteSalleRow(\'radio\','+i+')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px;padding:0">×</button>';
     html += '</div>';
   });
@@ -4973,8 +4973,6 @@ function showBcStyle(style, btn) {
   renderBcStyleEditor();
 }
 
-function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
-
 function renderBcTemplateEditor() {
   var tpl = BUDGET_TEMPLATES[_bcCurrentTpl];
   var sections = [
@@ -4999,17 +4997,17 @@ function renderBcTemplateEditor() {
     rows.forEach(function(r,i){
       if (s.showStreet) {
         html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
-        html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateRow(\'street\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-        html += '<input value="'+(r.qte||'')+'" type="number" onchange="bcUpdateRow(\'street\','+i+',\'qte\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-        html += '<input value="'+(r.pu||'')+'" type="number" step="0.01" onchange="bcUpdateRow(\'street\','+i+',\'pu\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-        html += '<input value="'+(r.total||'')+'" type="number" placeholder="auto" onchange="bcUpdateRow(\'street\','+i+',\'total\',+this.value||null)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        html += '<input value="'+esc(r.nom)+'" onchange="bcUpdateRow(\'street\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        html += '<input value="'+esc(r.qte||'')+'" type="number" onchange="bcUpdateRow(\'street\','+i+',\'qte\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        html += '<input value="'+esc(r.pu||'')+'" type="number" step="0.01" onchange="bcUpdateRow(\'street\','+i+',\'pu\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        html += '<input value="'+esc(r.total||'')+'" type="number" placeholder="auto" onchange="bcUpdateRow(\'street\','+i+',\'total\',+this.value||null)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
       } else {
         html += '<div style="display:grid;grid-template-columns:1fr '+(s.showTarif?'80px':'100px')+' 90px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
-        html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateRow(\''+escJs(s.key)+'\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        html += '<input value="'+esc(r.nom)+'" onchange="bcUpdateRow(\''+escJs(s.key)+'\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
         if (s.showTarif) {
-          html += '<input value="'+(r.total||'')+'" type="number" placeholder="€" onchange="bcUpdateRow(\''+escJs(s.key)+'\','+i+',\'total\',+this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+          html += '<input value="'+esc(r.total||'')+'" type="number" placeholder="€" onchange="bcUpdateRow(\''+escJs(s.key)+'\','+i+',\'total\',+this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
         } else {
-          html += '<input value="'+escHtml(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateRow(\''+escJs(s.key)+'\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+          html += '<input value="'+esc(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateRow(\''+escJs(s.key)+'\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
         }
         html += '<select onchange="bcUpdateRow(\''+escJs(s.key)+'\','+i+',\'statut\',this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px">';
         html += '<option value="Pr\u00e9visionnel"'+(r.statut!=='Engag\u00e9'?' selected':'')+'>Prévisionnel</option>';
@@ -5041,11 +5039,11 @@ function renderBcStyleEditor() {
     html += '<div style="display:grid;grid-template-columns:1fr 100px 24px;background:var(--bg);padding:6px 10px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>'+(s.showTarif?'Total €':'Type')+'</span><span></span></div>';
     s.rows.forEach(function(r,i){
       html += '<div style="display:grid;grid-template-columns:1fr 100px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
-      html += '<input value="'+escHtml(r.nom)+'" onchange="bcUpdateStyleRow(\''+escJs(s.key)+'\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+      html += '<input value="'+esc(r.nom)+'" onchange="bcUpdateStyleRow(\''+escJs(s.key)+'\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
       if (s.showTarif) {
-        html += '<input value="'+(r.total||'')+'" type="number" placeholder="€" onchange="bcUpdateStyleRow(\''+escJs(s.key)+'\','+i+',\'total\',+this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        html += '<input value="'+esc(r.total||'')+'" type="number" placeholder="€" onchange="bcUpdateStyleRow(\''+escJs(s.key)+'\','+i+',\'total\',+this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
       } else {
-        html += '<input value="'+escHtml(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateStyleRow(\''+escJs(s.key)+'\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
+        html += '<input value="'+esc(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateStyleRow(\''+escJs(s.key)+'\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
       }
       html += '<button onclick="bcDeleteStyleRow(\''+escJs(s.key)+'\','+i+')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>';
       html += '</div>';
@@ -5629,7 +5627,7 @@ function budUpdatePreview() {
       var price = r.total ? r.total+'€' : (r.qte && r.pu ? (r.qte*r.pu).toFixed(0)+'€' : '—');
       html += '<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border-light)">'
         +'<span style="color:var(--text-2)">'+esc(r.nom)+'</span>'
-        +'<span style="font-weight:600;color:var(--text);min-width:40px;text-align:right">'+price+'</span></div>';
+        +'<span style="font-weight:600;color:var(--text);min-width:40px;text-align:right">'+esc(price)+'</span></div>';
     });
   });
   lines.innerHTML = html;
