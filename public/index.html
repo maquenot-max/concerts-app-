@@ -4428,9 +4428,16 @@ function spWrite(c){
   return c.sponso;
 }
 function spConcert(cid){return concerts.find(function(x){return x.id===cid;});}
-function spHasData(c){
+// Seules les vagues font entrer un concert dans l'onglet Sponso, quel que soit
+// leur statut (terminee, en cours, programmee, ou "a programmer" faute de
+// dates). Le lien billetterie ne compte pas : il est saisi sur TOUTES les
+// dates parce qu'il sert aussi au generateur de newsletter, et le prendre pour
+// une sponso remplissait la frise de concerts sur lesquels on n'achete aucune
+// publicite. Legende, crea et ville de ciblage ne se saisissent qu'en
+// accompagnement d'une vague, elles ne comptent pas davantage.
+function spAVagues(c){
   var s=spRead(c);
-  return (s.vagues&&s.vagues.length>0)||!!s.billet||!!s.legende||!!s.crea||!!s.ville;
+  return !!(s.vagues&&s.vagues.length);
 }
 function spTodayStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function spStatut(v){
@@ -4689,7 +4696,7 @@ function spMonths(actifs){
 function renderSponso(){
   var wrap=document.getElementById('sponso-wrap');
   if(!wrap)return;
-  var tous=concerts.filter(function(c){return !c.supprime&&spHasData(c);})
+  var tous=concerts.filter(function(c){return !c.supprime&&spAVagues(c);})
     .sort(function(a,b){return new Date(a.dc||'2100-01-01')-new Date(b.dc||'2100-01-01');});
   var actifs=tous.filter(function(c){return !spEstTermine(c);});
   var finis=tous.filter(spEstTermine);
@@ -4851,7 +4858,7 @@ function spOpenPicker(){
   spModalCid=null;
   var opts=concerts.filter(function(c){return !c.supprime;})
     .sort(function(a,b){return new Date(a.dc||'2100-01-01')-new Date(b.dc||'2100-01-01');})
-    .map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.art||'Concert')+(c.dc?' · '+spFmtDate(c.dc):'')+(spHasData(c)?' · déjà une sponso':'')+'</option>';}).join('');
+    .map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.art||'Concert')+(c.dc?' · '+spFmtDate(c.dc):'')+(spAVagues(c)?' · déjà une sponso':'')+'</option>';}).join('');
   document.getElementById('sp-modal-title').textContent='Ajouter une sponso';
   document.getElementById('sp-modal-body').innerHTML='<label class="sp-f wide"><span>Concert</span>'
     +'<select id="sp-picker" onchange="if(this.value)spOpenConcert(this.value)"><option value="">Choisir un concert…</option>'+opts+'</select></label>';
