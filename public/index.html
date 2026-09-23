@@ -764,9 +764,9 @@ async function authHeaders(){
   try{var r=await getSupabase().auth.getSession();if(r.data.session)token=r.data.session.access_token;}catch(e){}
   return {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+token};
 }
-function handleUnauthorized(){
+function handleUnauthorized(msg){
   if(_unauthorized)return;_unauthorized=true;
-  showToast('Session expirée, reconnecte-toi.');
+  showToast(msg||'Session expirée, reconnecte-toi.');
   getSupabase().auth.signOut().then(function(){location.reload();},function(){location.reload();});
 }
 function authError(id,msg){var el=document.getElementById(id);if(!el)return;el.textContent=msg||'';el.style.display=msg?'block':'none';}
@@ -2154,8 +2154,22 @@ function syncRecord(key,exists,at,value){syncState[key]={exists:exists,at:at,bas
 // Integre une version lue en base : fusion avec l'etat local, puis elle
 // devient la nouvelle reference. Renvoie true si les donnees locales changent.
 function applyRemoteRow(key,row){
+  var st=syncState[key];
+  // Une cle deja lue ne disparait jamais : aucune regle n'autorise a supprimer
+  // une ligne d'app_data. Si elle revient absente, c'est la session qui a perdu
+  // l'acces (membre retire, ou 2FA activee depuis un autre appareil : une
+  // session de niveau aal1 ne passe plus is_team_member()). Les regles RLS
+  // masquent alors les lignes au lieu de repondre 401. Fusionner cette reponse
+  // vide ferait passer tout ce qui n'a pas change ici pour supprime a distance :
+  // constate au banc le 23/09, l'ecran se vidait (0 concert, process par
+  // defaut) en affichant "A jour". Rien n'etait ecrit en base, mais on ne
+  // fusionne plus : on renvoie a la connexion.
+  if(st&&st.exists&&!row.exists){
+    handleUnauthorized('Ton accès a changé (double authentification activée ailleurs ?) : reconnecte-toi.');
+    throw new Error('Acces perdu a "'+key+'"');
+  }
   var remote=normalizeSynced(key,row.exists?row.value:undefined);
-  var st=syncState[key],local=currentValueFor(key),avant=stableStr(local);
+  var local=currentValueFor(key),avant=stableStr(local);
   syncRecord(key,row.exists,row.at,remote); // copie, avant que la fusion ne reutilise ses objets
   var merged=st?merge3(st.base,local,remote):remote;
   setValueFor(key,merged);
