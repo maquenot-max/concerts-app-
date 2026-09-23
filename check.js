@@ -16,7 +16,10 @@
  *  5. une valeur interpolee sans escJs() dans ce meme type de litteral
  *     (revue du 22/09) ;
  *  6. une donnee inseree sans esc() dans un attribut HTML ordinaire
- *     (revue du 23/09).
+ *     (revue du 23/09) ;
+ *  7. des listes de cles d'app_data qui divergent entre l'appli et la
+ *     sauvegarde nocturne (artist_photos et city_groups non sauvegardees
+ *     du 22 au 23/09).
  *
  * Usage : node check.js
  */
@@ -127,6 +130,37 @@ for (const m of src.matchAll(/([a-zA-Z][\w:-]*)="[^"<>]*?'\+(.+?)\+'/g)) {
   if (!/[A-Za-z_$][\w$]*(\.|\[)/.test(expr)) continue;
   if (CONSTANTES.some((re) => re.test(expr))) continue;
   signaler(ligneDe(m.index), `${m[1]}="...'+${expr}+'..." — donnee inseree sans esc() dans un attribut HTML`);
+}
+
+// ── 7. Les listes de cles d'app_data concordent ─────────────────────────────
+// Ajouter une cle demande de toucher cinq endroits (§2 de la passation), dont
+// trois dans ce depot. L'oubli de CLES dans backup-daily a laisse
+// artist_photos et city_groups hors des sauvegardes nocturnes du 22 au 23/09.
+// On verifie que BACKUP_KEYS (export et restauration) et CLES (sauvegarde
+// nocturne) sont identiques, et que toute cle synchronisee (ALL_SAVE_KEYS) est
+// sauvegardee. La contrainte CHECK et les policies, en base, restent a tenir a
+// la main (voir supabase/migrations/).
+// Attention : Netlify ne relance pas ce script quand seul supabase/ change
+// (voir netlify.toml). Apres une modification de backup-daily, le lancer en
+// local.
+const FICHIER_BACKUP = path.join(__dirname, 'supabase', 'functions', 'backup-daily', 'index.ts');
+function listeDe(texte, nom, fichier) {
+  const m = texte.match(new RegExp('\\b' + nom + '\\s*=\\s*\\[([^\\]]*)\\]'));
+  if (!m) { erreurs.push(`${fichier} : liste ${nom} introuvable`); return null; }
+  return [...m[1].matchAll(/['"]([\w-]+)['"]/g)].map((x) => x[1]);
+}
+const manquantes = (a, b) => a.filter((k) => !b.includes(k));
+const backupKeys = listeDe(src, 'BACKUP_KEYS', 'public/index.html');
+const saveKeys = listeDe(src, 'ALL_SAVE_KEYS', 'public/index.html');
+const cles = fs.existsSync(FICHIER_BACKUP)
+  ? listeDe(fs.readFileSync(FICHIER_BACKUP, 'utf8'), 'CLES', 'supabase/functions/backup-daily/index.ts')
+  : (erreurs.push('supabase/functions/backup-daily/index.ts introuvable'), null);
+if (backupKeys && cles) {
+  manquantes(backupKeys, cles).forEach((k) => erreurs.push(`cle "${k}" dans BACKUP_KEYS mais pas dans CLES de backup-daily : elle ne serait pas sauvegardee la nuit`));
+  manquantes(cles, backupKeys).forEach((k) => erreurs.push(`cle "${k}" dans CLES de backup-daily mais pas dans BACKUP_KEYS : l'export et la restauration l'ignoreraient`));
+}
+if (backupKeys && saveKeys) {
+  manquantes(saveKeys, backupKeys).forEach((k) => erreurs.push(`cle "${k}" synchronisee (ALL_SAVE_KEYS) mais absente de BACKUP_KEYS : ni exportee ni restauree`));
 }
 
 // ── Verdict ─────────────────────────────────────────────────────────────────

@@ -1,0 +1,2 @@
+alter table public.app_data drop constraint app_data_key_allowlist;
+alter table public.app_data add constraint app_data_key_allowlist check (key = any (array['concerts','taskstates','process','tkcols','tktasks','rsposts','budget_templates','style_adjustments','regles_salles','concert_media']));

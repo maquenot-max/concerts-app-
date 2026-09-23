@@ -4,3 +4,9 @@
   # annule le deploiement : mieux vaut refuser une mise en ligne que servir une
   # page blanche. Aucune dependance, aucun npm install.
   command = "node check.js"
+  # Un deploiement de production coute 15 credits : 300 par mois sur l'offre
+  # gratuite, et au-dela le site est suspendu. Un build ignore ne coute rien.
+  # On ne construit donc que si ce qui est publie, ou sa verification, a
+  # change : un push qui ne touche que supabase/ (fonctions, migrations) ne
+  # declenche pas de deploiement. Code de sortie 0 = ignorer le build.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- public/ check.js netlify.toml"
