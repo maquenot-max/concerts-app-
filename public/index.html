@@ -3478,7 +3478,7 @@ function renderProcess(){
       tasks.map(function(t){
         return '<div class="prow" draggable="true" data-id="'+jsNum(t.id)+'"'+
           ' ondragstart="dragStart(event,'+jsNum(t.id)+')" ondragover="dragOver(event)"'+
-          ' ondrop="dragDrop(event,'+jsNum(t.id)+')" ondragleave="dragLeave(event)">'+
+          ' ondrop="dragDrop(event,'+jsNum(t.id)+')">'+
           '<span class="drag">'+icon('grip')+'</span>'+
           '<input type="text" value="'+esc(t.nom)+'" onchange="updTask('+jsNum(t.id)+',\'nom\',this.value)">'+
           '<input type="number" value="'+esc(t.jours)+'" onchange="updTask('+jsNum(t.id)+',\'jours\',this.value)">'+
@@ -3496,7 +3496,6 @@ function renderProcess(){
 }
 function dragStart(e,id){dragSrcId=id;}
 function dragOver(e){e.preventDefault();}
-function dragLeave(e){}
 // La liste est affichee triee par "jours" : le glisser-deposer ne deplace donc
 // visiblement une tache que parmi celles qui tombent le meme jour (le tri est
 // stable, il conserve l'ordre du tableau a valeur egale). Vers un autre jour,
@@ -4347,9 +4346,7 @@ function rsSavePost(){
     var p=rsPosts.find(function(x){return x.id===rsEditId;});
     if(p){p.note=note;p.legend=legend;p.link=link;p.type=type;p.concert=concertLabel;p.concertId=concertId;p.format=rsFmt;p.fb=rsNetState.fb;p.insta=rsNetState.insta;p.tiktok=rsNetState.tiktok;p.linkedin=rsNetState.linkedin;}
   } else {
-    var autoRef=document.getElementById('rs-modal-save').dataset.autoref||null;
-    rsPosts.push({id:rsNewId(),proj:rsCurrentProj,date:rsCurrentDate,type:type,format:rsFmt,concert:concertLabel,concertId:concertId||(autoRef||undefined),note:note,legend:legend,link:link,fb:rsNetState.fb,insta:rsNetState.insta,tiktok:rsNetState.tiktok,linkedin:rsNetState.linkedin,ready:false,autoRef:autoRef||undefined});
-    delete document.getElementById('rs-modal-save').dataset.autoref;
+    rsPosts.push({id:rsNewId(),proj:rsCurrentProj,date:rsCurrentDate,type:type,format:rsFmt,concert:concertLabel,concertId:concertId||undefined,note:note,legend:legend,link:link,fb:rsNetState.fb,insta:rsNetState.insta,tiktok:rsNetState.tiktok,linkedin:rsNetState.linkedin,ready:false});
   }
   scheduleSave('rsposts');rsCloseModal();renderRS();
   setTimeout(function(){
@@ -4359,23 +4356,6 @@ function rsSavePost(){
 }
 
 function rsCloseModal(){document.getElementById('rs-modal').classList.remove('open');}
-function rsEnrichAuto(dateStr,concertId,concertArt){
-  rsCurrentDate=dateStr;rsEditId=null;
-  document.getElementById('rs-modal-title').textContent='Enrichir annonce — '+concertArt;
-  document.getElementById('rs-modal-save').textContent='Enregistrer';
-  document.getElementById('rs-note').value='';
-  document.getElementById('rs-legend').value='';
-  document.getElementById('rs-link').value='';
-  document.getElementById('rs-type').value='annonce';
-  rsFmt='post';rsNetState={fb:false,insta:false,tiktok:false,linkedin:false};
-  rsUpdateFmt();rsUpdateNets();
-  var sel=document.getElementById('rs-concert');
-  rsFillConcertSelect(sel,concertId);
-  // Stocker la ref auto pour liaison
-  document.getElementById('rs-modal-save').dataset.autoref=concertId;
-  document.getElementById('rs-modal').classList.add('open');
-  setTimeout(function(){document.getElementById('rs-legend').focus();},50);
-}
 
 function rsToggleReady(id){
   var p=rsPosts.find(function(x){return x.id===id;});

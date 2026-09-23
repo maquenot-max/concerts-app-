@@ -188,8 +188,6 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .help-grid kbd{font-family:inherit;font-size:12px;padding:2px 7px;border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;background:var(--bg);color:var(--text);line-height:1.4;white-space:nowrap}
 .fiche-body{padding:8px 24px 8px;flex:1}
 .grow{flex:1}
-.fiche-section{margin-bottom:1.5rem}
-.fiche-section-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px}
 .fiche-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
 .fiche-field.wide{grid-column:1/-1}
 .fiche-field label{font-size:12px;color:var(--text-2);display:flex;align-items:center;gap:5px;margin-bottom:4px;font-weight:500}
@@ -233,13 +231,8 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .badge-done{background:var(--green-bg);color:var(--green)}
 .badge-blocked{background:var(--bg);color:var(--text-3)}
 .fiche-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;position:sticky;bottom:0;background:rgba(255,255,255,.95);backdrop-filter:blur(8px)}
-.section-sep{height:1px;background:var(--border-light);margin:1.25rem 0}
 
 /* ── MISC ─────────────────────────────────────────────── */
-.loading-full{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:50vh;gap:16px;color:var(--text-3)}
-.loading-full p{font-size:13px;font-weight:500}
-.spin{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--text-3);border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
 /* Notifications transitoires (sauvegarde, synchro, messages) : empilees en
    bas a droite. Le conteneur laisse passer les clics (pointer-events:none),
    donc meme si une tuile chevauche un bouton, elle ne genera jamais un clic. */
@@ -255,7 +248,6 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .empty-state.compact{padding:1.5rem 0}
 
 /* ── CELLULES INLINE EDITABLES (liste Concerts) ──────── */
-.crow-cell-label{font-size:12px;color:var(--text-4);font-weight:500;margin-bottom:2px}
 /* Invitation a remplir une cellule vide : visible seulement au survol de la ligne */
 .crow-cell-hint{font-size:12px;color:var(--text-3);opacity:0;transition:opacity .15s;white-space:nowrap}
 .crow:hover .crow-cell-hint{opacity:1}
@@ -304,8 +296,6 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .tk-task-btn.deleg-active{color:var(--accent)}
 .tk-add-task-btn{width:calc(100% - 16px);margin:0 8px 8px;padding:6px 8px;font-size:12px;color:var(--text-3);background:none;border:1px dashed var(--border);border-radius:var(--radius-sm);cursor:pointer;text-align:left;transition:all .15s}
 .tk-add-task-btn:hover{background:var(--bg);color:var(--text);border-color:var(--text-3)}
-.tk-add-col-btn{background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius);min-width:200px;padding:12px;cursor:pointer;color:var(--text-3);font-size:12px;text-align:center;transition:all .15s;align-self:flex-start}
-.tk-add-col-btn:hover{background:var(--bg);color:var(--text);border-color:var(--text-3)}
 .tk-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .tk-modal.open{display:flex}
 .tk-modal-box{background:var(--surface);border-radius:var(--radius);padding:1.5rem;width:400px;max-width:90vw;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-md);display:flex;flex-direction:column;gap:12px}
@@ -342,7 +332,6 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .dash-top{display:grid;grid-template-columns:1fr 2fr;gap:16px;margin-bottom:16px}
 .list-head .btn-link{margin-left:auto}
 .dash-card{margin-bottom:0}
-.dash-body{padding:4px 20px 8px}
 .dash-empty{padding:14px 20px;font-size:13px;color:var(--text-3)}
 .skel-lines{padding:12px 0;display:flex;flex-direction:column;gap:8px}
 .skel-ann{height:72px}
@@ -466,7 +455,6 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 
 /* ── TACHES DELEGUES ─────────────────────────────────── */
 .tk-task.delegue{background:var(--accent-soft);border-radius:var(--radius-xs);padding-left:8px;padding-right:8px;margin:0 -4px}
-.tk-delegue-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:4px;vertical-align:middle;flex-shrink:0}
 .ftask.delegue .ftask-name{color:var(--text-2)}
 .ftask.delegue{background:var(--accent-soft);border-left:3px solid var(--accent)}
 
@@ -851,7 +839,6 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .rpt-divider{break-before:page;padding:90px 20px 0;text-align:center}
 .rpt-divider h2{font-size:30px;color:#ff4b4b;text-transform:uppercase;letter-spacing:.02em;margin:0}
 .rpt-section{margin-top:24px}
-.rpt-section-title{font-size:16px;font-weight:700;color:#0d2b5e;margin:0 0 12px}
 .rpt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:10px}
 .rpt-card{border:1px solid #ddd;border-radius:6px;overflow:hidden;background:#fff;break-inside:avoid}
 .rpt-card img{width:100%;height:130px;object-fit:cover;display:block}
