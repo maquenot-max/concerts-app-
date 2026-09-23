@@ -1644,24 +1644,32 @@ function copyTempPassword(){
   var t=document.getElementById('tp-pwd').textContent;
   try{navigator.clipboard.writeText(t).then(function(){showToast('Copié.');},function(){showToast('Sélectionne et copie le mot de passe.');});}catch(e){showToast('Sélectionne et copie le mot de passe.');}
 }
-// Lecture d'une cle avec sa date de derniere modification (updated_at, posee
+// Lecture de cles avec leur date de derniere modification (updated_at, posee
 // par le trigger serveur). Cette date sert de numero de version : une
 // ecriture n'est acceptee que si elle n'a pas bouge depuis (voir SYNCHRO).
-async function dbGetRow(key){
-  var r=await fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.'+encodeURIComponent(key)+'&select=value,updated_at',{headers:await authHeaders()});
+// Une seule requete pour toutes les cles demandees (le demarrage en faisait
+// une par cle, dix en tout). Renvoie {cle: {exists, value, at}}.
+async function dbGetRows(keys){
+  var r=await fetch(SUPABASE_URL+'/rest/v1/app_data?key=in.('+keys.map(encodeURIComponent).join(',')+')&select=key,value,updated_at',{headers:await authHeaders()});
   if(r.status===401)handleUnauthorized();
-  if(!r.ok)throw new Error('Lecture Supabase echouee pour "'+key+'" (HTTP '+r.status+')');
+  if(!r.ok)throw new Error('Lecture Supabase echouee pour "'+keys.join(', ')+'" (HTTP '+r.status+')');
   var rows=await r.json();
-  // Un tableau vide est un etat valide (cle jamais ecrite) ; toute autre forme
-  // de reponse (objet d'erreur, null...) signale un vrai probleme de lecture.
-  if(!Array.isArray(rows))throw new Error('Reponse Supabase inattendue pour "'+key+'"');
-  if(!rows.length)return {exists:false,value:undefined,at:null};
-  // Une valeur illisible n'est jamais remplacee par une valeur par defaut : la
-  // sauvegarde suivante ecraserait alors les vraies donnees.
-  var value;
-  try{value=JSON.parse(rows[0].value);}catch(e){throw new Error('Valeur illisible en base pour "'+key+'"');}
-  return {exists:true,value:value,at:rows[0].updated_at};
+  // Une cle absente de la reponse est un etat valide (jamais ecrite) ; toute
+  // autre forme de reponse (objet d'erreur, null...) signale un vrai probleme.
+  if(!Array.isArray(rows))throw new Error('Reponse Supabase inattendue pour "'+keys.join(', ')+'"');
+  var out={};
+  keys.forEach(function(k){out[k]={exists:false,value:undefined,at:null};});
+  rows.forEach(function(x){
+    if(!(x.key in out))return;
+    // Une valeur illisible n'est jamais remplacee par une valeur par defaut : la
+    // sauvegarde suivante ecraserait alors les vraies donnees.
+    var value;
+    try{value=JSON.parse(x.value);}catch(e){throw new Error('Valeur illisible en base pour "'+x.key+'"');}
+    out[x.key]={exists:true,value:value,at:x.updated_at};
+  });
+  return out;
 }
+async function dbGetRow(key){return (await dbGetRows([key]))[key];}
 // Ecriture conditionnelle : la valeur n'est remplacee que si personne ne l'a
 // modifiee depuis notre derniere lecture (meme updated_at). Renvoie la
 // nouvelle date de version, ou null en cas de conflit.
@@ -2356,9 +2364,7 @@ async function init(){
   document.getElementById('load-error-overlay').style.display='none';
   document.getElementById('app').style.display='';
   try{
-    var lignes=await Promise.all(ALL_SAVE_KEYS.map(function(k){return dbGetRow(k);}));
-    var rows={};
-    ALL_SAVE_KEYS.forEach(function(k,i){rows[k]=lignes[i];});
+    var rows=await dbGetRows(ALL_SAVE_KEYS);
     // Garde-fou : une base qui repond "rien" sur les trois cles principales
     // signifie presque toujours un acces refuse (regles RLS) et non une base
     // vide. On refuse de demarrer plutot que de risquer d'ecraser les vraies
