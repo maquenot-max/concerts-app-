@@ -1705,8 +1705,10 @@ var CROP_VP_W=320,CROP_VP_H=180,CROP_OUT_W=640,CROP_OUT_H=360;
 // tard (reduite a l'arrivee : une photo de telephone depasse souvent 5 Mo).
 var CROP_ORIG_MAX=2400;
 var cropState=null,cropDrag=null;
-// Reduit une image a CROP_ORIG_MAX px de cote au plus, en JPEG sur fond blanc
+// Reduit une image a maxDim px de cote au plus, en JPEG sur fond blanc
 // (un PNG transparent ressortait sur fond noir). Renvoie null si illisible.
+// Sert aux photos de la newsletter et a celles du rapport de campagne.
+var IMAGE_ILLISIBLE='Image illisible (format non pris en charge ? Les photos HEIC d\'iPhone doivent être converties en JPEG).';
 function downscaleImage(file,maxDim){
   return new Promise(function(resolve){
     var url=URL.createObjectURL(file),img=new Image();
@@ -1726,7 +1728,7 @@ function downscaleImage(file,maxDim){
 // a partir d'elle. onDone(blobRecadre, original).
 function cropFromFile(file,opts,onDone){
   downscaleImage(file,CROP_ORIG_MAX).then(function(orig){
-    if(!orig){showToast('Image illisible (format non pris en charge ? Les photos HEIC d\'iPhone doivent être converties en JPEG).',8000);return;}
+    if(!orig){showToast(IMAGE_ILLISIBLE,8000);return;}
     startCrop(orig,function(blob){onDone(blob,orig);},opts);
   });
 }
@@ -3581,24 +3583,32 @@ function wizardNext(){
   if(wizardStepIdx<REPORT_SECTIONS.length-1){wizardStepIdx++;renderWizardStep();}
   else{closeCampaignWizard();exportCampaignReport(wizardConcertId);}
 }
+// Les photos du rapport sont reduites avant l'envoi, comme celles de la
+// newsletter : une photo de telephone depasse souvent 5 Mo (5,7 Mo constates
+// le 13/09), inutile pour un PDF, lente a envoyer, et le bucket refusait
+// au-dela de 10 Mo avec une erreur HTTP brute. 1600 px suffisent a l'impression.
+var MEDIA_MAX_PX=1600;
 async function wizardUploadFile(input){
   var file=input.files&&input.files[0];
   if(!file)return;
   var cat=REPORT_SECTIONS[wizardStepIdx].cats[0];
-  var ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
-  var path=wizardConcertId+'/'+cat+'/'+Date.now()+'.'+ext;
+  var cid=wizardConcertId; // le questionnaire a pu changer de concert pendant l'envoi
   input.disabled=true;
   try{
-    var url=await storageUpload(path,file);
-    concertMedia.push({id:mediaGenId(),concertId:wizardConcertId,cat:cat,type:'image',url:url,path:path,caption:'',addedAt:new Date().toISOString(),expiresAt:mediaExpiryDate()});
+    var blob=await downscaleImage(file,MEDIA_MAX_PX);
+    if(!blob){showToast(IMAGE_ILLISIBLE,8000);return;}
+    var path=cid+'/'+cat+'/'+Date.now()+'.jpg';
+    var url=await storageUpload(path,blob);
+    concertMedia.push({id:mediaGenId(),concertId:cid,cat:cat,type:'image',url:url,path:path,caption:'',addedAt:new Date().toISOString(),expiresAt:mediaExpiryDate()});
     scheduleSave('concert_media');
     renderWizardStep();
   }catch(e){
     console.error(e);
     showToast('Échec de l\'envoi de la photo : '+e.message);
+  }finally{
+    input.disabled=false;
+    input.value='';
   }
-  input.disabled=false;
-  input.value='';
 }
 function wizardAddLinkPrompt(){
   document.getElementById('media-link-url').value='';
