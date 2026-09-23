@@ -13,7 +13,7 @@ rien ne synchronise les deux automatiquement.
 |---|---|---|
 | `backup-daily` | Sauvegarde quotidienne de `app_data` dans le bucket privé `backups`, rétention 30 jours | la tâche `pg_cron` `sauvegarde-app`, chaque nuit à 03h15 UTC |
 | `team-admin` | Gestion de l'équipe (ajout, mot de passe, rôle, 2FA) | la page *Équipe* de l'application |
-| `purge-media` | Supprime du bucket public `concert-media` les photos de rapport expirées ou plus référencées (jamais `artist-photos/` ni `newsletter-photos/`) | **pas encore déployée** — voir ci-dessous |
+| `purge-media` | Supprime du bucket public `concert-media` les photos de rapport expirées ou plus référencées, et les photos de newsletter de plus de 6 mois (jamais `artist-photos/`) | **pas encore déployée** — voir ci-dessous |
 
 **`purge-media` n'est pas déployée.** Le code est prêt (23/09) ; l'IA n'a pas
 le droit de déployer une fonction qui supprime des fichiers en masse, même
@@ -28,7 +28,9 @@ avec l'accord de Mathieu. Marche à suivre, à faire soi-même :
    Editor*, nommer la fonction `purge-media`, coller le contenu de
    `purge-media/index.ts`, laisser *Verify JWT* activé.
 2. Simulation, dans Supabase → SQL Editor (rien n'est supprimé, la réponse
-   liste ce qui le serait ; au 23/09 : la seule photo de rapport du 13/09) :
+   liste ce qui le serait, avec le détail `rapports` / `newsletter` ; au 23/09 :
+   la seule photo de rapport du 13/09, aucune photo de newsletter n'ayant
+   encore six mois) :
    ```sql
    select net.http_post(
      url := 'https://vkehaerkbvfxlyjvrpzi.supabase.co/functions/v1/purge-media',
@@ -48,7 +50,13 @@ avec l'accord de Mathieu. Marche à suivre, à faire soi-même :
              '/functions/v1/backup-daily', '/functions/v1/purge-media'));
    ```
    Contrôle : `net._http_response` le lendemain matin, comme pour la
-   sauvegarde (`supprimes` et la liste `fichiers`).
+   sauvegarde (`supprimes`, `rapports`, `newsletter` et la liste `fichiers`).
+
+**Photos de newsletter, 6 mois (23/09)** : elles ne sont référencées nulle
+part en base, mais les e-mails envoyés pointent vers elles ; on les garde le
+temps qu'une newsletter soit lue, puis `purge-media` les supprime. Les photos
+d'artistes restent intouchées : l'âge du fichier ne dit pas quand la photo a
+servi pour la dernière fois (voir l'en-tête de `purge-media/index.ts`).
 
 **`team-admin`, version 3 (23/09)** : l'action `add` refuse désormais (409) un
 e-mail déjà présent dans `team_members`, au lieu de réinitialiser son mot de

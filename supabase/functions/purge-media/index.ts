@@ -9,12 +9,21 @@
 // Cette fonction rattrape ces oublis ; elle ne remplace pas la purge cliente,
 // qui reste la seule a nettoyer les LIGNES de concert_media.
 //
-// Ce qui est supprime : tout fichier du bucket qui n'est reference par aucune
-// entree NON expiree de concert_media, et qui a plus de GRACE_HEURES (un envoi
-// en cours ecrit le fichier avant la ligne de donnees).
-// Ce qui n'est JAMAIS touche : les prefixes permanents ci-dessous. Les photos
-// d'artistes et de newsletter peuvent figurer dans des e-mails deja envoyes :
-// les supprimer casserait ces e-mails.
+// Ce qui est supprime :
+// - photos de rapport : tout fichier qui n'est reference par aucune entree NON
+//   expiree de concert_media, et qui a plus de GRACE_HEURES (un envoi en cours
+//   ecrit le fichier avant la ligne de donnees) ;
+// - photos de newsletter (article, annonces) : apres NEWSLETTER_JOURS. Elles ne
+//   sont referencees nulle part en base (le formulaire n'est pas sauvegarde),
+//   mais les newsletters envoyees pointent vers elles : les supprimer tout de
+//   suite casserait ces e-mails. Une newsletter se lit dans les jours qui
+//   suivent son envoi ; au-dela de six mois, une image manquante dans un vieil
+//   e-mail est acceptee (decision du 23/09). Une photo est envoyee pour une
+//   edition precise : son age est, a quelques jours pres, celui de l'e-mail.
+// Ce qui n'est JAMAIS touche : les photos d'artistes. Elles aussi peuvent
+// figurer dans des e-mails envoyes, mais l'age du fichier ne dit pas quand la
+// photo a servi pour la derniere fois : une photo de sept mois, remplacee
+// hier, etait encore dans la newsletter de la semaine derniere.
 //
 // Authentification : meme secret partage que backup-daily (public.backup_config,
 // lu avec la cle de service). Corps {"dry": true} : simulation, rien n'est
@@ -22,8 +31,10 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const BUCKET = "concert-media";
-const PREFIXES_PERMANENTS = ["artist-photos/", "newsletter-photos/"];
+const PREFIXES_PERMANENTS = ["artist-photos/"];
+const PREFIXE_NEWSLETTER = "newsletter-photos/";
 const GRACE_HEURES = 24;
+const NEWSLETTER_JOURS = 180;
 const PROFONDEUR_MAX = 4; // idConcert/categorie/fichier : 3 niveaux attendus
 
 function json(body: unknown, status = 200) {
@@ -94,12 +105,18 @@ Deno.serve(async (req: Request) => {
     }
     await parcourir("", 1);
 
-    // 4. Selection et suppression
-    const limite = maintenant - GRACE_HEURES * 3600000;
-    const aSupprimer = fichiers
-      .filter((f) => !references.has(f.name))
-      .filter((f) => f.created_at && Date.parse(f.created_at) < limite)
+    // 4. Selection et suppression. Un fichier sans date n'est jamais supprime.
+    const plusVieuxQue = (f: Fichier, ms: number) =>
+      !!f.created_at && Date.parse(f.created_at) < maintenant - ms;
+    const estNewsletter = (f: Fichier) => f.name.startsWith(PREFIXE_NEWSLETTER);
+    const rapports = fichiers
+      .filter((f) => !estNewsletter(f) && !references.has(f.name))
+      .filter((f) => plusVieuxQue(f, GRACE_HEURES * 3600000))
       .map((f) => f.name);
+    const newsletter = fichiers
+      .filter((f) => estNewsletter(f) && plusVieuxQue(f, NEWSLETTER_JOURS * 86400000))
+      .map((f) => f.name);
+    const aSupprimer = rapports.concat(newsletter);
     if (!simulation && aSupprimer.length) {
       const { error: delErr } = await admin.storage.from(BUCKET).remove(aSupprimer);
       if (delErr) throw delErr;
@@ -111,6 +128,8 @@ Deno.serve(async (req: Request) => {
       examines: fichiers.length,
       references: references.size,
       supprimes: simulation ? 0 : aSupprimer.length,
+      rapports: rapports.length,
+      newsletter: newsletter.length,
       fichiers: aSupprimer,
     });
   } catch (e) {
