@@ -15,12 +15,40 @@ rien ne synchronise les deux automatiquement.
 | `team-admin` | Gestion de l'équipe (ajout, mot de passe, rôle, 2FA) | la page *Équipe* de l'application |
 | `purge-media` | Supprime du bucket public `concert-media` les photos de rapport expirées ou plus référencées (jamais `artist-photos/` ni `newsletter-photos/`) | **pas encore déployée** — voir ci-dessous |
 
-**`purge-media` n'est pas déployée.** Le code est prêt (23/09) mais son
-déploiement et sa tâche `pg_cron` attendent un feu vert explicite, puisqu'elle
-supprime des fichiers. Une fois déployée : l'appeler d'abord en simulation
-(corps `{"dry": true}`, même secret `x-backup-secret` que `backup-daily`) pour
-lire la liste de ce qu'elle supprimerait, puis planifier une tâche
-`purge-medias` calquée sur `sauvegarde-app` (par exemple à 03h30 UTC).
+**`purge-media` n'est pas déployée.** Le code est prêt (23/09) ; l'IA n'a pas
+le droit de déployer une fonction qui supprime des fichiers en masse, même
+avec l'accord de Mathieu. Marche à suivre, à faire soi-même :
+
+1. Déployer, depuis la racine du dépôt (une connexion `npx supabase login` est
+   demandée la première fois) :
+   ```bash
+   npx supabase functions deploy purge-media --project-ref vkehaerkbvfxlyjvrpzi
+   ```
+   Sans la CLI : Supabase → Edge Functions → *Deploy a new function* → *Via
+   Editor*, nommer la fonction `purge-media`, coller le contenu de
+   `purge-media/index.ts`, laisser *Verify JWT* activé.
+2. Simulation, dans Supabase → SQL Editor (rien n'est supprimé, la réponse
+   liste ce qui le serait ; au 23/09 : la seule photo de rapport du 13/09) :
+   ```sql
+   select net.http_post(
+     url := 'https://vkehaerkbvfxlyjvrpzi.supabase.co/functions/v1/purge-media',
+     headers := jsonb_build_object(
+       'Content-Type', 'application/json',
+       'Authorization', 'Bearer ' || (select regexp_replace(command, '.*Bearer ([^'']+)''.*', '\1') from cron.job where jobname = 'sauvegarde-app'),
+       'x-backup-secret', (select secret from public.backup_config)),
+     body := '{"dry": true}'::jsonb);
+   -- quelques secondes plus tard :
+   select status_code, content from net._http_response order by created desc limit 1;
+   ```
+3. Si la liste convient, planifier la purge chaque nuit à 03h30 UTC (même
+   commande que la tâche `sauvegarde-app`, seule l'URL change) :
+   ```sql
+   select cron.schedule('purge-medias', '30 3 * * *',
+     replace((select command from cron.job where jobname = 'sauvegarde-app'),
+             '/functions/v1/backup-daily', '/functions/v1/purge-media'));
+   ```
+   Contrôle : `net._http_response` le lendemain matin, comme pour la
+   sauvegarde (`supprimes` et la liste `fichiers`).
 
 **`team-admin`, version 3 (23/09)** : l'action `add` refuse désormais (409) un
 e-mail déjà présent dans `team_members`, au lieu de réinitialiser son mot de
