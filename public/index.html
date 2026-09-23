@@ -2291,6 +2291,15 @@ window.addEventListener('beforeunload',function(e){
     return '';
   }
 });
+// Sur telephone, la page peut etre gelee des qu'elle passe en arriere-plan, et
+// beforeunload n'y est pas fiable : une case cochee juste avant de changer
+// d'appli attendait la fin du delai de 1,5 s, qui pouvait ne jamais venir. On
+// envoie donc tout de suite ce qui est en attente.
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState!=='hidden'||!Object.keys(pendingSaveKeys).length)return;
+  clearTimeout(saveTimer);clearTimeout(saveRetryTimer);
+  flushSave();
+});
 var appDataLoaded=false;
 // Le rappel "taches a echeance demain", qui s'ouvrait en bas a droite au
 // chargement, a ete retire le 20 septembre : trop intrusif pour ce qu'il
