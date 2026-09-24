@@ -4099,7 +4099,7 @@ function renderConcerts(){
           :'<span class="crow-cell-hint">+ Sponso</span>')
         +'</div>';
 
-      return '<div class="crow crow-grid'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+escJs(c.id)+'\')">'
+      return '<div class="crow crow-grid'+(c.annule?' is-cancelled':'')+(c.medias||c.jeux||c.notes?'':' crow-sans-texte')+'" onclick="openFiche(\''+escJs(c.id)+'\')">'
         +'<div class="crow-info">'
         +'<span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>'
         +'<span class="crow-sub">'+(c.ville?esc(formatLieu(c.ville))+' · ':'')+ds+'</span>'
