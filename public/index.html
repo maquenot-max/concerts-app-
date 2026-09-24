@@ -539,6 +539,17 @@
 <div class="rs-modal" id="rs-modal">
   <div class="rs-modal-box">
     <div class="rs-modal-title" id="rs-modal-title">Nouveau contenu</div>
+    <div class="rs-modal-row">
+      <div class="rs-modal-date"><label for="rs-date">Date</label><input type="date" id="rs-date"></div>
+      <div>
+        <label>Planning</label>
+        <div class="rs-modal-nets">
+          <button type="button" class="rs-modal-net" id="rs-plan-pp" onclick="rsTogglePlanning('pp')">Please Please</button>
+          <button type="button" class="rs-modal-net" id="rs-plan-antdt" onclick="rsTogglePlanning('antdt')">ANTDT</button>
+        </div>
+      </div>
+    </div>
+    <div class="rs-modal-hint" id="rs-auto-hint" hidden>Post automatique : sa date est celle de l'annonce du concert, à changer dans sa fiche. Il reste sur le planning Please Please.</div>
     <div>
       <label>Format</label>
       <div class="rs-modal-fmt">
@@ -649,7 +660,7 @@ function uid(prefix){
   return prefix+Date.now()+r;
 }
 var tkCols=[],tkTasks=[],tkEditId=null,tkAddColId=null;
-var rsPosts=[],rsEditId=null,rsCurrentProj="pp",rsCurrentDate=null,rsFmt="post",rsNetState={fb:false,insta:false,tiktok:false};
+var rsPosts=[],rsEditId=null,rsCurrentProj="pp",rsCurrentDate=null,rsFmt="post",rsNetState={fb:false,insta:false,tiktok:false},rsPlanState={pp:true,antdt:false};
 // Planning RS : fenetre de 3 semaines (3 jours en arriere, 17 en avant),
 // decalee de 2 semaines a la fois par les fleches du bandeau.
 var RS_JOURS_AVANT=3,RS_JOURS_APRES=17,RS_PAS=14,rsWindowOffset=0;
@@ -4791,6 +4802,29 @@ var RS_TYPES={
 
 function rsNewId(){return uid('rs');}
 
+// Un post peut figurer sur les deux plannings a la fois (meme contenu publie
+// par Please Please et par ANTDT) : c'est alors un seul post, avec un seul
+// statut, pas une copie a tenir a jour de chaque cote. p.proj reste le
+// planning principal : c'est lui que lisent les versions precedentes de
+// l'appli et lui qui identifie un post automatique (toujours 'pp'). p.projs
+// n'existe que pour un post partage, et liste tous ses plannings.
+var RS_PLANNINGS=[{id:'pp',nom:'Please Please',court:'PP'},{id:'antdt',nom:'ANTDT',court:'ANTDT'}];
+function rsPlanning(id){return RS_PLANNINGS.find(function(x){return x.id===id;})||{id:id,nom:String(id),court:String(id)};}
+// Union de p.proj et p.projs : si deux modifications simultanees les rendent
+// incoherents, le post s'affiche en trop plutot que de disparaitre.
+function rsPlanningsDe(p){
+  var l=[p.proj];
+  if(Array.isArray(p.projs))p.projs.forEach(function(k){if(l.indexOf(k)<0)l.push(k);});
+  return l;
+}
+function rsSurPlanning(p,proj){return rsPlanningsDe(p).indexOf(proj)>=0;}
+function rsAffecter(p,plans){
+  plans=RS_PLANNINGS.map(function(x){return x.id;}).filter(function(k){return plans.indexOf(k)>=0;});
+  if(!plans.length)return;
+  if(plans.indexOf(p.proj)<0)p.proj=plans[0];
+  if(plans.length>1)p.projs=plans;else delete p.projs;
+}
+
 // Posts automatiques du planning Please Please : un par concert ayant une date
 // d'annonce, cree, date et marque "poste" ici. Avant le 23/09 ce travail se
 // faisait dans renderRS(), donc a chaque affichage, y compris celui qui suit
@@ -4867,8 +4901,8 @@ function renderRS(){
   // la fois. On garde la continuite d'un mois a l'autre (un planning de
   // publications se lit sur les prochaines semaines, pas sur un mois civil),
   // avec le meme bandeau de navigation que les autres calendriers.
-  var winStart=new Date(today);winStart.setDate(winStart.getDate()-RS_JOURS_AVANT+rsWindowOffset);
-  var winEnd=new Date(today);winEnd.setDate(winEnd.getDate()+RS_JOURS_APRES+rsWindowOffset);
+  var fen=rsFenetre(),winStart=fen.debut,winEnd=fen.fin;
+  rsGlisse=null; // un glisser en cours perd sa tuile d'origine : on l'abandonne
 
   // Générer les jours de la plage
   var daysHtml='';
@@ -4885,7 +4919,7 @@ function renderRS(){
     var isPast=dateObj<today;
     var isWE=dow===0||dow===6;
 
-    var dayPosts=rsPosts.filter(function(p){return p.date===dateStr&&p.proj===rsCurrentProj;});
+    var dayPosts=rsPosts.filter(function(p){return p.date===dateStr&&rsSurPlanning(p,rsCurrentProj);});
     var hasContent=dayPosts.length>0;
 
     var hasUnposted=isPast&&dayPosts.some(function(p){return p.status!=='posted';});
@@ -4897,12 +4931,14 @@ function renderRS(){
       var t=RS_TYPES[p.type]||RS_TYPES.autre;
       var pcLabel=rsResolveConcertLabel(p);
       var lbl=(p.autoRef?icon('megaphone'):(p.format==='story'?icon('smartphone'):p.format==='tirage'?icon('dice'):icon('file')))+' '+t.label+(pcLabel?' · '+esc(pcLabel.substring(0,12)):p.note?' · '+esc(p.note.substring(0,15)):'')+(p.validated?'<span class="rs-chip-validated" title="Validé">'+icon('check')+'</span>':'');
-      chips+='<span class="rs-chip'+(p.status==='posted'?' posted':p.ready?' ready':'')+(p.format==='story'?' story':'')+'">'+lbl+'</span>';
+      var aussi=rsAutresPlannings(p);
+      if(aussi.length)lbl+='<span class="rs-chip-aussi" title="Aussi sur le planning '+esc(aussi.map(function(x){return x.nom;}).join(', '))+'">+ '+esc(aussi.map(function(x){return x.court;}).join(' + '))+'</span>';
+      chips+='<span class="rs-chip'+(p.status==='posted'?' posted':p.ready?' ready':'')+(p.format==='story'?' story':'')+'" draggable="true" data-post="'+esc(p.id)+'">'+lbl+'</span>';
     });
 
     var rowClick=hasContent?'rsToggleDay(\''+escJs(dateStr)+'\')':'rsOpenModal(\''+escJs(dateStr)+'\')';
 
-    daysHtml+='<div class="rs-day" id="rsday-wrap-'+dateStr+'">'
+    daysHtml+='<div class="rs-day" id="rsday-wrap-'+dateStr+'" data-date="'+esc(dateStr)+'">'
       +'<div class="'+headCls+'" id="rsday-'+dateStr+'" onclick="'+rowClick+'">'
       +'<span class="rs-day-date"><span class="rs-day-num">'+dayNum+'</span><span class="rs-day-month">'+monthName+'</span></span>'
       +'<span class="rs-day-weekname">'+dayName+'</span>'
@@ -4919,8 +4955,12 @@ function renderRS(){
         var fmtLbl=p.format==='story'?'Story':p.format==='tirage'?'Tirage au sort':'Post';
         var isAuto=!!p.autoRef;
         var pcLabel=rsResolveConcertLabel(p);
-        daysHtml+='<div class="rs-post'+(p.status==='posted'?' posted':'')+(isAuto?' auto':'')+'">'
+        var aussi=rsAutresPlannings(p);
+        daysHtml+='<div class="rs-post'+(p.status==='posted'?' posted':'')+(isAuto?' auto':'')+'" data-post="'+esc(p.id)+'">'
           +'<div class="rs-post-row1">'
+          // La carte ne se saisit que par sa poignee : la legende doit rester
+          // selectionnable (copie a la main quand le presse-papiers est refuse).
+          +(isAuto?'':'<span class="rs-poignee" title="Glisser vers un autre jour">'+icon('grip')+'</span>')
           +'<span class="rs-post-format '+fmtCls+'">'+fmtLbl+'</span>'
           +'<span class="rs-post-type '+t.cls+'">'+t.label+'</span>'
           +(pcLabel?'<span class="rs-post-concert">'+(isAuto?icon('megaphone')+' ':'')+esc(pcLabel)+'</span>':'')
@@ -4930,6 +4970,7 @@ function renderRS(){
           +(p.legend?'<div class="rs-post-legend-wrap"><div class="rs-post-legend">'+esc(p.legend)+'</div><button class="rs-copy-btn" onclick="rsCopyLegend(\''+escJs(p.id)+'\')" title="Copier la légende">'+icon('copy')+' Copier</button></div>':'')
           +(p.link&&escUrl(p.link)?'<div class="rs-post-link"><a href="'+escUrl(p.link)+'" target="_blank">'+esc(p.link)+'</a></div>':'')
           +'<div class="rs-post-row2">'
+          +(aussi.length?'<span class="tag tag-neutral rs-post-aussi">Aussi sur '+esc(aussi.map(function(x){return x.nom;}).join(', '))+'</span>':'')
           +(p.fb?'<span class="rs-net-badge">Facebook</span>':'')
           +(p.insta?'<span class="rs-net-badge">Instagram</span>':'')
           +(p.tiktok?'<span class="rs-net-badge">TikTok</span>':'')
@@ -4938,7 +4979,9 @@ function renderRS(){
           +'<button class="rs-validate-btn'+(p.validated?' on':'')+'" onclick="rsToggleValidated(\''+escJs(p.id)+'\')" title="Validé">'+icon('check')+' Validé</button>'
           +'<div class="rs-post-btns">'
           +'<button class="rs-post-btn" onclick="rsEditPost(\''+escJs(p.id)+'\')" title="Modifier">'+icon('pencil')+'</button>'
-          +(isAuto?'':'<button class="rs-post-btn del" onclick="rsDelPost(\''+escJs(p.id)+'\')" title="Supprimer">'+icon('x')+'</button>')
+          // Un post partage se retire du planning affiche, sans quitter l'autre.
+          // Le post automatique, lui, reste toujours sur Please Please.
+          +(isAuto&&rsCurrentProj==='pp'?'':'<button class="rs-post-btn del" onclick="rsDelPost(\''+escJs(p.id)+'\')" title="'+(aussi.length?'Retirer de ce planning':'Supprimer')+'">'+icon('x')+'</button>')
           +'</div></div></div>';
       })
       daysHtml+='</div>';
@@ -4958,6 +5001,28 @@ function renderRS(){
   wrap.innerHTML=tabsHtml+'<div class="rs-card">'+navHtml+daysHtml+'</div>';
   rsSetupModal();
 
+}
+
+// Autres plannings d'un post partage, vus depuis le planning affiche.
+function rsAutresPlannings(p){
+  return rsPlanningsDe(p).filter(function(k){return k!==rsCurrentProj;}).map(rsPlanning);
+}
+// Premier et dernier jour affiches : fenetre glissante calee sur aujourd'hui.
+function rsFenetre(){
+  var t=new Date();t.setHours(0,0,0,0);
+  var debut=new Date(t);debut.setDate(debut.getDate()-RS_JOURS_AVANT+rsWindowOffset);
+  var fin=new Date(t);fin.setDate(fin.getDate()+RS_JOURS_APRES+rsWindowOffset);
+  return {debut:debut,fin:fin};
+}
+function rsJourIso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function rsJourLabel(ds){return new Date(ds+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});}
+// Jours depliés, a rouvrir apres un redessin (renderRS() replie tout).
+function rsJoursOuverts(){
+  return [].filter.call(document.querySelectorAll('#rs-wrap [id^="rslist-"]'),function(el){return el.style.display!=='none';})
+    .map(function(el){return el.id.slice(7);});
+}
+function rsRouvrir(jours){
+  jours.forEach(function(ds){var el=document.getElementById('rslist-'+ds);if(el)el.style.display='block';});
 }
 
 // Avancement d'un post auto, pour choisir lequel garder entre deux doublons.
@@ -5021,7 +5086,7 @@ function rsFillConcertSelect(sel, selectedVal){
 }
 function rsOpenModal(dateStr){
   rsCurrentDate=dateStr;rsEditId=null;
-  document.getElementById('rs-modal-title').textContent='Ajouter un contenu — '+dateStr;
+  document.getElementById('rs-modal-title').textContent='Ajouter un contenu';
   document.getElementById('rs-modal-save').textContent='Ajouter';
   document.getElementById('rs-note').value='';
   document.getElementById('rs-legend').value='';
@@ -5029,6 +5094,7 @@ function rsOpenModal(dateStr){
   document.getElementById('rs-type').value='annonce';
   rsFmt='post';rsNetState={fb:false,insta:false,tiktok:false,linkedin:false};
   rsUpdateFmt();rsUpdateNets();
+  rsModalPlace(dateStr,[rsCurrentProj],false);
   // Concerts dans le select
   var sel=document.getElementById('rs-concert');
   rsFillConcertSelect(sel,'');
@@ -5047,6 +5113,7 @@ function rsEditPost(id){
   document.getElementById('rs-type').value=p.type||'annonce';
   rsFmt=p.format||'post';rsNetState={fb:!!p.fb,insta:!!p.insta,tiktok:!!p.tiktok,linkedin:!!p.linkedin};
   rsUpdateFmt();rsUpdateNets();
+  rsModalPlace(p.date,rsPlanningsDe(p),!!p.autoRef);
   var sel=document.getElementById('rs-concert');
   // Retro-compatibilite : les posts crees avant concertId ne stockaient que le
   // nom de l'artiste (p.concert). On tente de le faire correspondre a un
@@ -5078,6 +5145,32 @@ function rsUpdateFmt(){
   if(bt){bt.classList.toggle('on',rsFmt==='tirage');}
 }
 
+// Date et plannings du post. Un post automatique garde la date d'annonce de
+// son concert (majPostsAuto() la lui remettrait) et reste sur Please Please,
+// ou majPostsAuto() le cherche : ces deux reglages sont figes.
+var rsPlanAuto=false;
+function rsModalPlace(date,plans,auto){
+  var d=document.getElementById('rs-date');
+  d.value=date||'';d.disabled=!!auto;
+  document.getElementById('rs-auto-hint').hidden=!auto;
+  rsPlanAuto=!!auto;rsPlanState={};
+  plans.forEach(function(k){rsPlanState[k]=true;});
+  rsUpdatePlannings();
+}
+function rsTogglePlanning(k){
+  if(rsPlanAuto&&k==='pp')return;
+  // Un post reste au moins sur un planning.
+  if(rsPlanState[k]&&RS_PLANNINGS.filter(function(x){return rsPlanState[x.id];}).length<2)return;
+  rsPlanState[k]=!rsPlanState[k];rsUpdatePlannings();
+}
+function rsUpdatePlannings(){
+  RS_PLANNINGS.forEach(function(x){
+    var el=document.getElementById('rs-plan-'+x.id);if(!el)return;
+    el.classList.toggle('on',!!rsPlanState[x.id]);
+    el.disabled=rsPlanAuto&&x.id==='pp';
+  });
+}
+
 function rsToggleNet(net){rsNetState[net]=!rsNetState[net];rsUpdateNets();}
 function rsUpdateNets(){
   ['fb','insta','tiktok','linkedin'].forEach(function(n){
@@ -5104,17 +5197,27 @@ function rsSavePost(){
     if(cc){concertId=cc.id;concertLabel=cc.art;}
   }
   if(!note&&!concertLabel)return;
+  var date=document.getElementById('rs-date').value;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))date=''; // champ vide : la date ne change pas
+  var plans=RS_PLANNINGS.map(function(x){return x.id;}).filter(function(k){return rsPlanState[k];});
+  var p;
   if(rsEditId){
-    var p=rsPosts.find(function(x){return x.id===rsEditId;});
-    if(p){p.note=note;p.legend=legend;p.link=link;p.type=type;p.concert=concertLabel;p.concertId=concertId;p.format=rsFmt;p.fb=rsNetState.fb;p.insta=rsNetState.insta;p.tiktok=rsNetState.tiktok;p.linkedin=rsNetState.linkedin;}
+    p=rsPosts.find(function(x){return x.id===rsEditId;});
+    if(p){p.note=note;p.legend=legend;p.link=link;p.type=type;p.concert=concertLabel;p.concertId=concertId;p.format=rsFmt;p.fb=rsNetState.fb;p.insta=rsNetState.insta;p.tiktok=rsNetState.tiktok;p.linkedin=rsNetState.linkedin;
+      if(date&&!p.autoRef)p.date=date;}
   } else {
-    rsPosts.push({id:rsNewId(),proj:rsCurrentProj,date:rsCurrentDate,type:type,format:rsFmt,concert:concertLabel,concertId:concertId||undefined,note:note,legend:legend,link:link,fb:rsNetState.fb,insta:rsNetState.insta,tiktok:rsNetState.tiktok,linkedin:rsNetState.linkedin,ready:false});
+    p={id:rsNewId(),proj:rsCurrentProj,date:date||rsCurrentDate,type:type,format:rsFmt,concert:concertLabel,concertId:concertId||undefined,note:note,legend:legend,link:link,fb:rsNetState.fb,insta:rsNetState.insta,tiktok:rsNetState.tiktok,linkedin:rsNetState.linkedin,ready:false};
+    rsPosts.push(p);
   }
+  if(p)rsAffecter(p,plans);
+  var ouverts=rsJoursOuverts();
   scheduleSave('rsposts');rsCloseModal();renderRS();
-  setTimeout(function(){
-    var el=document.getElementById('rslist-'+rsCurrentDate);
-    if(el)el.style.display='block';
-  },40);
+  if(!p)return;
+  rsRouvrir(ouverts.concat([p.date]));
+  // Un post enregistre hors de la vue ne doit pas sembler perdu.
+  var fen=rsFenetre();
+  if(!rsSurPlanning(p,rsCurrentProj))showToast('Enregistré sur le planning '+rsPlanning(p.proj).nom+'.');
+  else if(p.date<rsJourIso(fen.debut)||p.date>rsJourIso(fen.fin))showToast('Enregistré au '+rsJourLabel(p.date)+', en dehors des dates affichées.');
 }
 
 function rsCloseModal(){document.getElementById('rs-modal').classList.remove('open');}
@@ -5154,14 +5257,81 @@ function rsCopyLegend(id){
 
 function rsDelPost(id){
   var p=rsPosts.find(function(x){return x.id===id;});
-  var date=p?p.date:null;
-  rsPosts=rsPosts.filter(function(x){return x.id!==id;});
+  var date=p?p.date:null,plans=p?rsPlanningsDe(p):[];
+  // Post partage : il ne quitte que le planning affiche.
+  if(plans.length>1&&plans.indexOf(rsCurrentProj)>=0){
+    rsAffecter(p,plans.filter(function(k){return k!==rsCurrentProj;}));
+    showToast('Retiré de ce planning, toujours sur '+rsPlanningsDe(p).map(function(k){return rsPlanning(k).nom;}).join(', ')+'.');
+  } else rsPosts=rsPosts.filter(function(x){return x.id!==id;});
   scheduleSave('rsposts');renderRS();
   if(date)setTimeout(function(){
     var el=document.getElementById('rslist-'+date);
-    if(el&&rsPosts.some(function(x){return x.date===date;}))el.style.display='block';
+    if(el&&rsPosts.some(function(x){return x.date===date&&rsSurPlanning(x,rsCurrentProj);}))el.style.display='block';
   },40);
 }
+
+// Glisser-deposer d'un post vers un autre jour : sa tuile (jour replie) ou sa
+// carte (jour deplie), saisie par la poignee. Sur telephone, ou au-dela des
+// trois semaines affichees, c'est le champ Date de la fenetre qui deplace un
+// post. Un post automatique ne se deplace pas : sa date est celle de
+// l'annonce du concert, que majPostsAuto() lui remettrait aussitot.
+var rsGlisse=null; // {id, date, carte} du post en cours de deplacement
+function rsDeplacer(id,date,ouvrir){
+  var p=rsPosts.find(function(x){return x.id===id;});
+  if(!p||p.autoRef||p.date===date||!/^\d{4}-\d{2}-\d{2}$/.test(date))return;
+  var ouverts=rsJoursOuverts();
+  p.date=date;
+  scheduleSave('rsposts');renderRS();
+  rsRouvrir(ouvrir?ouverts.concat([date]):ouverts);
+}
+(function(){
+  var wrap=document.getElementById('rs-wrap');
+  function marque(jour){
+    wrap.querySelectorAll('.rs-day.depot').forEach(function(x){if(x!==jour)x.classList.remove('depot');});
+    if(jour)jour.classList.add('depot');
+  }
+  function fin(){
+    rsGlisse=null;marque(null);
+    wrap.querySelectorAll('.glisse').forEach(function(x){x.classList.remove('glisse');});
+    wrap.querySelectorAll('.rs-post[draggable]').forEach(function(x){x.removeAttribute('draggable');});
+  }
+  wrap.addEventListener('pointerdown',function(e){
+    var c=e.target.closest('.rs-poignee')&&e.target.closest('.rs-post');
+    if(c)c.setAttribute('draggable','true');
+  });
+  wrap.addEventListener('pointerup',function(){if(!rsGlisse)wrap.querySelectorAll('.rs-post[draggable]').forEach(function(x){x.removeAttribute('draggable');});});
+  wrap.addEventListener('dragstart',function(e){
+    var t=e.target.closest&&e.target.closest('[data-post][draggable="true"]');if(!t)return;
+    var p=rsPosts.find(function(x){return x.id===t.getAttribute('data-post');});
+    if(!p||p.autoRef){
+      e.preventDefault();
+      if(p)showToast('Post automatique : sa date est celle de l\'annonce du concert, à changer dans sa fiche.');
+      return;
+    }
+    rsGlisse={id:p.id,date:p.date,carte:t.classList.contains('rs-post')};
+    e.dataTransfer.effectAllowed='move';
+    try{e.dataTransfer.setData('application/x-rs-post',p.id);}catch(x){} // sans donnee, Firefox ne lance pas le glisser
+    setTimeout(function(){t.classList.add('glisse');},0);
+  });
+  wrap.addEventListener('dragover',function(e){
+    if(!rsGlisse)return;
+    var jour=e.target.closest&&e.target.closest('.rs-day[data-date]');
+    if(!jour||jour.getAttribute('data-date')===rsGlisse.date){marque(null);return;}
+    e.preventDefault();e.dataTransfer.dropEffect='move';marque(jour);
+  });
+  wrap.addEventListener('dragleave',function(e){
+    var jour=e.target.closest&&e.target.closest('.rs-day.depot');
+    if(jour&&!jour.contains(e.relatedTarget))jour.classList.remove('depot');
+  });
+  wrap.addEventListener('drop',function(e){
+    if(!rsGlisse)return;
+    e.preventDefault();
+    var jour=e.target.closest&&e.target.closest('.rs-day[data-date]'),g=rsGlisse;
+    fin(); // avant rsDeplacer : le redessin retire la tuile, et avec elle son dragend
+    if(jour)rsDeplacer(g.id,jour.getAttribute('data-date'),g.carte);
+  });
+  wrap.addEventListener('dragend',fin);
+})();
 // ── SUIVI SPONSO ────────────────────────────────────────────────────────────
 // Les vagues vivent dans l'objet concert (c.sponso) plutot que dans une cle
 // app_data a part : pas de contrainte a modifier en base, et la sauvegarde,
