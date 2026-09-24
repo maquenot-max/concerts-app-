@@ -997,7 +997,6 @@ table.bud-lignes .w-x{width:40px}
 .bud-err{color:var(--red)}
 .bud-ok{padding:14px 16px;border-radius:var(--radius-sm);background:var(--green-bg);font-size:13px;display:flex;flex-direction:column;gap:6px}
 .bud-ok a{color:var(--accent);font-weight:600}
-.bud-warn{color:var(--amber);font-size:12px}
 .bc-card{max-width:900px;margin:0 auto}
 .bc-sec{padding:14px 0;border-top:1px solid var(--border-light)}
 .bc-bloc{border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:10px 12px;margin:8px 0}

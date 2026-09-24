@@ -5,9 +5,10 @@
  * exécute ce script (celui de Mathieu), la remplit avec ce que l'appli envoie,
  * et renvoie le lien du fichier. La forme, les formules, les listes et le logo
  * sont ceux de la trame, par construction : ce script n'écrit que des valeurs,
- * aux cellules prévues. Modifier la trame (couleurs, libellés, formules) ne
- * demande donc aucun changement ici, tant que les cellules ci-dessous gardent
- * leur place.
+ * aux cellules prévues. Seule exception : la liste déroulante des salles (D2)
+ * est retirée de la copie, la salle y étant écrite telle que l'appli la nomme.
+ * Modifier la trame (couleurs, libellés, formules) ne demande donc aucun
+ * changement ici, tant que les cellules ci-dessous gardent leur place.
  *
  * Qui peut l'appeler : l'appli envoie le jeton de session Supabase de la
  * personne connectée ; le script vérifie auprès de Supabase que ce jeton est
@@ -18,7 +19,7 @@
  * de référence ; le code qui tourne est celui du projet Apps Script.
  */
 
-var VERSION = '2026-09-24';
+var VERSION = '2026-09-24.2';
 var TRAME_ID = '1lkKhbzUofW0ZBOIxgIRl0w3HXiwJLd8bT90tlChtCQo';
 var FEUILLE = 'PREV';
 // Publics par conception (déjà dans le code du site) : ils ne donnent accès à
@@ -37,13 +38,12 @@ var SECTIONS = {
   radio:   { premiere: 55, capacite: 5, extensible: true }
 };
 
-// Lecture seule, sans donnée personnelle : version, nom de la trame et liste
-// des salles de sa cellule D2, pour que l'appli vérifie une salle à l'avance.
+// Lecture seule, sans donnée personnelle : version et nom de la trame, pour le
+// bouton « Tester » de l'appli.
 function doGet() {
   try {
     var trame = SpreadsheetApp.openById(TRAME_ID);
-    return json_({ ok: true, version: VERSION, trame: trame.getName(),
-      salles: listeDe_(trame.getSheetByName(FEUILLE).getRange('D2')) });
+    return json_({ ok: true, version: VERSION, trame: trame.getName() });
   } catch (err) {
     return json_({ ok: false, error: message_(err) });
   }
@@ -60,9 +60,12 @@ function doPost(e) {
     var classeur = SpreadsheetApp.openById(copie.getId());
     var f = classeur.getSheetByName(FEUILLE);
 
-    var salle = choisirSalle_(f.getRange('D2'), b.salle || {});
+    var salle = libelleSalle_(b.salle || {});
     f.getRange('D1').setValue(b.artiste || '');
-    f.getRange('D2').setValue(salle.valeur);
+    // Salle écrite telle que l'appli la nomme (« LE K, Reims »). La liste
+    // déroulante de la trame est retirée de la copie : stricte, elle refuserait
+    // toute salle qu'elle ne connaît pas, et aucune formule ne lit D2.
+    f.getRange('D2').clearDataValidations().setValue(salle);
     // Dates toujours écrites : la trame contient des dates d'exemple
     // (01/01/2026) qu'il ne faut jamais laisser passer pour de vraies.
     f.getRange('D3').setValue(b.date ? dateDe_(b.date) : '');
@@ -73,7 +76,7 @@ function doPost(e) {
     SpreadsheetApp.flush();
 
     return json_({ ok: true, url: classeur.getUrl(), id: classeur.getId(),
-      salle: salle.valeur, salleAjoutee: salle.ajoutee, par: par });
+      salle: salle, par: par });
   } catch (err) {
     return json_({ ok: false, error: message_(err) });
   }
@@ -106,39 +109,10 @@ function controler_(b) {
   });
 }
 
-// ── Salle (cellule D2, liste déroulante stricte) ─────────────────────────
-function listeDe_(cellule) {
-  var regle = cellule.getDataValidation();
-  if (!regle || regle.getCriteriaType() !== SpreadsheetApp.DataValidationCriteria.VALUE_IN_LIST) return [];
-  return regle.getCriteriaValues()[0].slice();
-}
-
-function norm_(s) {
-  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-}
-
-// La trame écrit « ARENA, Reims » ou « LA VAPEUR - Dijon ». On compare le nom
-// de la salle (ou l'un de ses alias : « Le K » = « LE KABARET ») et la ville.
-// Une salle absente de la liste y est ajoutée, pour CE budget seulement : la
-// trame n'est jamais modifiée, l'appli rappelle de l'y ajouter.
-function choisirSalle_(cellule, salle) {
-  var liste = listeDe_(cellule);
-  var noms = [salle.nom].concat(salle.alias || []).map(norm_).filter(Boolean);
-  var ville = norm_(salle.ville);
-  for (var i = 0; i < liste.length; i++) {
-    var parts = String(liste[i]).split(/\s*,\s*|\s+-\s+/);
-    var nomItem = norm_(parts[0]), villeItem = norm_(parts.slice(1).join(' '));
-    if (noms.indexOf(nomItem) >= 0 && (!ville || !villeItem || villeItem === ville)) {
-      return { valeur: liste[i], ajoutee: false };
-    }
-  }
-  var libelle = salle.libelle || [salle.nom, salle.ville].filter(Boolean).join(', ');
-  if (!libelle) return { valeur: liste[0] || '', ajoutee: false };
-  var regle = cellule.getDataValidation();
-  var constructeur = regle ? regle.copy() : SpreadsheetApp.newDataValidation();
-  cellule.setDataValidation(constructeur.requireValueInList(liste.concat([libelle]), true).build());
-  return { valeur: libelle, ajoutee: true };
+// ── Salle (cellule D2) ───────────────────────────────────────────────────
+// L'appli envoie le libellé complet ; nom et ville seuls en secours.
+function libelleSalle_(salle) {
+  return String(salle.libelle || [salle.nom, salle.ville].filter(Boolean).join(', '));
 }
 
 // ── Lignes ───────────────────────────────────────────────────────────────

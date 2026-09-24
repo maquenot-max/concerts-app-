@@ -4912,8 +4912,7 @@ var BUDGET_DEFAUT={
       {id:'al8',nom:'Collage grandes affiches (80x120)',qte:400,pu:1.1,total:''},
       {id:'al9',nom:'Collage petites affiches (60x40)',qte:300,pu:1,total:''},
       {id:'al10',nom:'Impression de bandeaux',qte:700,pu:0.3,total:''}]}
-  ],
-  alias:[{id:'as1',app:'Le K',trame:'LE KABARET'}]
+  ]
 };
 // Valeur synchronisee (cle budget_templates, meme mecanique que les autres :
 // versions, fusion, temps reel). Une ancienne configuration (avant le 24/09)
@@ -4926,7 +4925,7 @@ function normaliserConfigBudget(v){return syncIsPlain(v)&&v.version===2?v:syncCl
 function budNorm(s){return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
 // « Arena - Reims » ou « Reims - Arena » -> {ville:'Reims', salle:'Arena'} :
 // meme detection de l'ordre que formatLieu(). Sans l'alias « Chenôve = Dijon »
-// de getVille() : la trame connait « LE CEDRE, Chenôve ».
+// de getVille() : le budget porte la vraie ville (« LE CÈDRE, Chenôve »).
 function lieuDe(ville){
   var f=formatLieu(ville||''),p=f.split(' - ');
   if(p.length<2)return {ville:f.trim(),salle:''};
@@ -4972,30 +4971,11 @@ function budProposer(c,m,cfg){
   var radio=(tr.radio||[]).map(function(r){return budLigne({nom:r.nom,type:r.type||''});});
   return {street:street,espaces:espaces,digital:digital,radio:radio};
 }
-function budAlias(cfg,lieu){var s=budNorm(lieu.salle);return (cfg.alias||[]).filter(function(a){return a.app&&budNorm(a.app)===s;}).map(function(a){return a.trame;});}
+// Ecrite telle quelle en D2 (« LE K, Reims ») : depuis le 24/09, le script
+// retire de chaque budget la liste deroulante des salles de la trame.
 function budLibelleSalle(lieu){return [lieu.salle.toUpperCase(),lieu.ville].filter(Boolean).join(', ');}
-// Meme comparaison que le script Google : « ARENA, Reims » ou « LA VAPEUR - Dijon ».
-function budSalleDansListe(liste,lieu,alias){
-  var noms=[lieu.salle].concat(alias).map(budNorm).filter(Boolean),v=budNorm(lieu.ville);
-  for(var i=0;i<liste.length;i++){
-    var p=String(liste[i]).split(/\s*,\s*|\s+-\s+/),n=budNorm(p[0]),vi=budNorm(p.slice(1).join(' '));
-    if(noms.indexOf(n)>=0&&(!v||!vi||vi===v))return liste[i];
-  }
-  return null;
-}
 function budNomFichier(c,lieu){return (c.dc||'').replace(/-/g,'')+'_'+(c.art||'').toUpperCase()+' '+lieu.ville.toUpperCase()+'_BUDGET PROMO';}
 function budDateLongue(iso){if(!iso)return '—';var d=new Date(iso+'T00:00:00');return isNaN(d.getTime())?'—':d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
-
-// ── Liste des salles de la trame, lue une fois par session auprès du script ──
-var budSallesTrame=null;
-async function budLireTrame(){
-  if(budSallesTrame)return budSallesTrame;
-  var r=await fetch(budgetConfig.script);
-  var d=await r.json();
-  if(!d.ok)throw new Error(d.error||'réponse inattendue');
-  budSallesTrame=d;
-  return d;
-}
 
 // ── Fenetre « Budget promo » (depuis la fiche) ──
 var bud=null;
@@ -5009,41 +4989,15 @@ async function openBudgetModal(){
     if(lien){window.open(lien,'_blank','noopener');return;}
     if(!await customConfirm('Le champ « Lien budget » contient « '+c.budget+' », qui n\'est pas un lien. Créer le Google Sheet remplacera ce texte par le lien du Sheet.','Continuer'))return;
   }
-  bud={cid:c.id,montant:'',contrat:BUDGET_CONTRATS.indexOf(c.contrat)>=0?c.contrat:BUDGET_CONTRATS[0],lignes:null,salle:{statut:'attente'},envoi:false,resultat:null,erreur:''};
+  bud={cid:c.id,montant:'',contrat:BUDGET_CONTRATS.indexOf(c.contrat)>=0?c.contrat:BUDGET_CONTRATS[0],lignes:null,envoi:false,resultat:null,erreur:''};
   budRendre();
   document.getElementById('budget-modal').classList.add('open');
   setTimeout(function(){var i=document.getElementById('bud-montant');if(i)i.focus();},50);
-  budVerifierSalle();
 }
 function closeBudgetModal(){document.getElementById('budget-modal').classList.remove('open');bud=null;}
-async function budVerifierSalle(){
-  var c=budConcert();if(!c)return;
-  var etat=bud;
-  if(!budgetConfig.script){etat.salle={statut:'sans-script'};budMajSalle();return;}
-  try{
-    var d=await budLireTrame(),lieu=lieuDe(c.ville);
-    var trouvee=budSalleDansListe(d.salles||[],lieu,budAlias(budgetConfig,lieu));
-    etat.salle=trouvee?{statut:'ok',valeur:trouvee}:{statut:'absente'};
-  }catch(e){etat.salle={statut:'erreur'};}
-  if(bud===etat)budMajSalle();
-}
-function budTagSalle(){
-  var s=bud.salle;
-  if(s.statut==='ok')return '<span class="tag tag-green">dans la liste de la trame</span>';
-  if(s.statut==='absente')return '<span class="tag tag-amber">absente de la liste de la trame : ajoutée à ce budget</span>';
-  if(s.statut==='sans-script')return '<span class="tag tag-red">script Google non configuré</span>';
-  if(s.statut==='erreur')return '<span class="tag tag-neutral">liste de la trame illisible pour l\'instant</span>';
-  return '<span class="tag tag-neutral">vérification…</span>';
-}
-function budMajSalle(){
-  var c=budConcert(),el=document.getElementById('bud-salle');if(!c||!el)return;
-  var lieu=lieuDe(c.ville);
-  el.innerHTML=esc(bud.salle.valeur||budLibelleSalle(lieu))+'<span class="bud-cell">D2</span> '+budTagSalle();
-  budMajPied();
-}
 function budRendre(){
   var c=budConcert(),box=document.getElementById('budget-box');if(!c||!box)return;
-  var lieu=lieuDe(c.ville);
+  var lieu=lieuDe(c.ville),salle=budLibelleSalle(lieu);
   var h='<div class="bud-head"><div class="bud-head-txt"><div class="tk-modal-title">Budget promo — '+esc((c.art||'').toUpperCase())+'</div>'
     +'<div class="modal-note">Copie de la trame « AAAAMMJJ - BUDGET COM TRAME », créée dans le Drive de Mathieu.</div></div>'
     +'<button class="fiche-close" data-bud="fermer" title="Fermer">'+icon('x')+'</button></div>';
@@ -5053,7 +5007,7 @@ function budRendre(){
   h+='<div class="bud-body">'
     +'<div class="bud-sec"><div class="nl-label">Repris de la fiche</div><div class="bud-repris">'
     +'<span class="k">Spectacle</span><span>'+esc((c.art||'').toUpperCase())+'<span class="bud-cell">D1</span></span>'
-    +'<span class="k">Salle</span><span id="bud-salle"></span>'
+    +'<span class="k">Salle</span><span>'+(salle?esc(salle):'<span class="bud-muted">pas de salle dans la fiche : laissée vide</span>')+'<span class="bud-cell">D2</span></span>'
     +'<span class="k">Date du concert</span><span>'+esc(budDateLongue(c.dc))+'<span class="bud-cell">D3</span></span>'
     +'<span class="k">Mise en vente</span><span>'+(c.da?esc(budDateLongue(c.da))+' <span class="bud-muted">(date d\'annonce)</span>':'<span class="bud-muted">pas de date d\'annonce dans la fiche : laissée vide</span>')+'<span class="bud-cell">F7</span></span>'
     +'<span class="k">Nom du fichier</span><span class="bud-mono">'+esc(budNomFichier(c,lieu))+'</span>'
@@ -5067,7 +5021,7 @@ function budRendre(){
     +'<div class="bud-bilan" id="bud-bilan"></div>'
     +'<div class="bud-foot"><div class="bud-note" id="bud-note"></div><button class="btn" data-bud="fermer">Annuler</button><button class="btn btn-primary" id="bud-creer" data-bud="creer">Créer le Sheet</button></div>';
   box.innerHTML=h;
-  budMajSalle();budMajBilan();
+  budMajBilan();
 }
 function budSectionsHtml(){
   if(!bud.lignes)return '<div class="empty-state compact">Saisis le budget alloué pour voir la proposition.</div>';
@@ -5123,7 +5077,6 @@ function budResultatHtml(){
   var d=bud.resultat;
   return '<div class="bud-body"><div class="bud-ok">Budget créé dans le Drive de Mathieu : <a href="'+escUrl(d.url)+'" target="_blank" rel="noopener">'+esc(d.nom)+' '+icon('arrow-up-right')+'</a>'
     +'<div class="bud-muted">Le lien est enregistré dans la fiche (champ « Lien budget »). Le fichier est à ranger ensuite dans son dossier.</div>'
-    +(d.salleAjoutee?'<div class="bud-warn">« '+esc(d.salle)+' » ne figurait pas dans la liste des salles de la trame : elle a été ajoutée à ce budget. Pense à l\'ajouter aussi à la trame.</div>':'')
     +'</div></div><div class="bud-foot"><span class="bud-note"></span><button class="btn btn-primary" data-bud="fermer">Fermer</button></div>';
 }
 function budDerniereVague(){var vs=bud.lignes.digital.filter(function(l){return /vague \d+$/.test(l.nom);});return vs[vs.length-1]||null;}
@@ -5136,7 +5089,7 @@ async function budCreer(){
     var s=await getSupabase().auth.getSession(),jeton=s.data.session&&s.data.session.access_token;
     if(!jeton)throw new Error('Session expirée : reconnecte-toi.');
     var corps={token:jeton,budget:{fichier:nom,artiste:(c.art||'').toUpperCase(),
-      salle:{nom:lieu.salle,ville:lieu.ville,libelle:budLibelleSalle(lieu),alias:budAlias(budgetConfig,lieu)},
+      salle:{nom:lieu.salle,ville:lieu.ville,libelle:budLibelleSalle(lieu)},
       date:c.dc||'',miseEnVente:c.da||'',contrat:etat.contrat,montant:+etat.montant,
       lignes:{street:propre(etat.lignes.street),espaces:propre(etat.lignes.espaces),digital:propre(etat.lignes.digital),radio:propre(etat.lignes.radio)}}};
     var r,d;
@@ -5147,7 +5100,7 @@ async function budCreer(){
     var cc=concerts.find(function(x){return x.id===etat.cid;});
     if(cc){cc.budget=d.url;cc.contrat=etat.contrat;scheduleSave('concerts');}
     if(currentFicheId===etat.cid){var fb=document.getElementById('fi-budget');if(fb)fb.value=d.url;}
-    etat.resultat={url:d.url,nom:nom,salle:d.salle,salleAjoutee:d.salleAjoutee};
+    etat.resultat={url:d.url,nom:nom};
   }catch(e){etat.erreur=e.message||String(e);}
   etat.envoi=false;
   if(bud===etat){if(etat.resultat)budRendre();else budMajPied();}
@@ -5242,16 +5195,12 @@ function renderBudgetConfig(){
       +'<button class="btn-link" data-cfg="ajout-affichage-ligne" data-p="'+esc(p)+'.lignes">+ Ligne</button></div>';
   });
   h+='<button class="btn btn-sm" data-cfg="ajout-regle">+ Règle pour une ville ou une salle</button></div>';
-  // Correspondances
-  h+='<div class="bc-sec"><div class="nl-label">Noms de salles différents dans la trame</div><div class="modal-note">Quand la liste de la trame nomme une salle autrement que l\'appli.</div><table class="bud-lignes"><tr><th>Dans l\'appli</th><th>Dans la trame</th><th class="w-x"></th></tr>'
-    +cfg.alias.map(function(a,i){return '<tr><td>'+champ('alias.'+i+'.app',a.app)+'</td><td>'+champ('alias.'+i+'.trame',a.trame)+'</td><td>'+suppr('alias.'+i)+'</td></tr>';}).join('')
-    +'</table><button class="btn-link" data-cfg="ajout-alias">+ Correspondance</button></div>';
   el.innerHTML=h+'</div>';
 }
 function budChemin(o,ch){return ch===''?o:ch.split('.').reduce(function(x,k){return x==null?x:x[k];},o);}
 (function(){
   var el=document.getElementById('budget-config');
-  function modifie(rendre){scheduleSave('budget_templates');budSallesTrame=null;if(rendre)renderBudgetConfig();}
+  function modifie(rendre){scheduleSave('budget_templates');if(rendre)renderBudgetConfig();}
   el.addEventListener('input',function(e){
     var t=e.target,p=t.dataset.p;if(!p||t.tagName==='SELECT')return;
     var ks=p.split('.'),k=ks.pop(),o=budChemin(budgetConfig,ks.join('.'));if(!o)return;
@@ -5268,8 +5217,12 @@ function budChemin(o,ch){return ch===''?o:ch.split('.').reduce(function(x,k){ret
     var b=e.target.closest('[data-cfg]');if(!b)return;
     var a=b.dataset.cfg,p=b.dataset.p,cfg=budgetConfig;
     if(a==='tester'){
-      var st=document.getElementById('bc-script-statut');budSallesTrame=null;st.textContent='Test en cours…';
-      try{var d=await budLireTrame();st.textContent='Le script répond (version '+d.version+') : trame « '+d.trame+' », '+(d.salles||[]).length+' entrées dans la liste des salles.';}
+      var st=document.getElementById('bc-script-statut');st.textContent='Test en cours…';
+      try{
+        var d=await (await fetch(budgetConfig.script)).json();
+        if(!d.ok)throw new Error(d.error||'réponse inattendue');
+        st.textContent='Le script répond (version '+d.version+') : trame « '+d.trame+' ».';
+      }
       catch(err){st.textContent='Pas de réponse exploitable : '+(err.message||err)+'. Vérifie l\'adresse (elle doit finir par /exec) et le déploiement.';}
       return;
     }
@@ -5285,7 +5238,6 @@ function budChemin(o,ch){return ch===''?o:ch.split('.').reduce(function(x,k){ret
     if(a==='ajout-offerte'){cfg.offertes.push({id:uid('of'),nom:''});return modifie(true);}
     if(a==='ajout-affichage-ligne'){budChemin(cfg,p).push({id:uid('al'),nom:'',qte:'',pu:'',total:''});return modifie(true);}
     if(a==='ajout-regle'){cfg.affichage.push({id:uid('af'),ville:'',salle:'',lignes:[]});return modifie(true);}
-    if(a==='ajout-alias'){cfg.alias.push({id:uid('as'),app:'',trame:''});return modifie(true);}
   });
 })();
 

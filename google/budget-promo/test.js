@@ -62,6 +62,7 @@ function plage(f, a1) {
     setValues(t) { const cs = cellules(a1); assert.strictEqual(t.length, cs.length, 'setValues ' + a1 + ' : nombre de lignes'); cs.forEach((l, i) => { assert.strictEqual(t[i].length, l.length, 'setValues ' + a1 + ' : nombre de colonnes'); l.forEach((ref, j) => ecrire(f, ref, t[i][j])); }); return this; },
     getDataValidation() { return f.validations[a1] || null; },
     setDataValidation(r) { f.validations[a1] = r; return this; },
+    clearDataValidations() { delete f.validations[a1]; return this; },
     merge() { f.fusions.add(a1); return this; },
     copyTo(dest, type) {
       const src = cellules(a1)[0];
@@ -125,7 +126,7 @@ const offertes = ['Newsletter Please Please mensuelle', 'Intégration agenda cul
 function budget(o) {
   return Object.assign({
     fichier: '20261206_FEU! CHATTERTON REIMS_BUDGET PROMO', artiste: 'FEU! CHATTERTON',
-    salle: { nom: 'Arena', ville: 'Reims', libelle: 'ARENA, Reims', alias: [] },
+    salle: { nom: 'Arena', ville: 'Reims', libelle: 'ARENA, Reims' },
     date: '2026-12-06', miseEnVente: '2026-03-12', contrat: 'Promotion Locale', montant: 3000,
     lignes: {
       street: [ligne('Collage grandes affiches (80x120)', { qte: 600, pu: 1.1 }), ligne('Impression de bandeaux', { qte: 600, pu: 0.3 }), ligne('Forfait impression et diffusion flyer Arena', { qte: 50000, total: 200 })],
@@ -140,15 +141,18 @@ function cas(nom, fn) { try { fn(); ok++; console.log('  ok  ' + nom); } catch (
 
 console.log('Script Google du budget promo — test sous Node\n');
 
-cas('doGet : version, nom de la trame, liste des salles', () => {
+cas('doGet : version et nom de la trame', () => {
   const r = monde().ctx.doGet();
-  assert.ok(r.ok); assert.strictEqual(r.trame, 'AAAAMMJJ - BUDGET COM TRAME'); assert.deepStrictEqual(r.salles, LISTE_SALLES);
+  assert.ok(r.ok); assert.ok(r.version); assert.strictEqual(r.trame, 'AAAAMMJJ - BUDGET COM TRAME');
+  assert.strictEqual(r.salles, undefined, 'la liste des salles n\'est plus lue');
 });
 
 cas('budget complet : en-tête, lignes, formules, rien d\'autre', () => {
   const w = monde(), r = poster(w, { token: 'bon', budget: budget() }), v = w.derniere().feuille.valeurs;
-  assert.ok(r.ok, r.error); assert.strictEqual(r.salle, 'ARENA, Reims'); assert.strictEqual(r.salleAjoutee, false);
+  assert.ok(r.ok, r.error); assert.strictEqual(r.salle, 'ARENA, Reims'); assert.strictEqual(r.salleAjoutee, undefined);
   assert.strictEqual(r.par, 'communication@pleaseplease.fr');
+  assert.strictEqual(w.derniere().feuille.validations.D2, undefined, 'liste déroulante de D2 retirée de la copie');
+  assert.deepStrictEqual(w.derniere().feuille.validations.D4.valeurs, LISTE_CONTRATS, 'les autres listes restent');
   assert.deepStrictEqual(w.journal, ['copie « 20261206_FEU! CHATTERTON REIMS_BUDGET PROMO » dans Mon Drive']);
   assert.strictEqual(v.D1, 'FEU! CHATTERTON'); assert.strictEqual(v.D2, 'ARENA, Reims'); assert.strictEqual(v.D4, 'Promotion Locale'); assert.strictEqual(v.B7, 3000);
   assert.strictEqual(v.D3.getFullYear() + '-' + (v.D3.getMonth() + 1) + '-' + v.D3.getDate(), '2026-12-6');
@@ -163,23 +167,29 @@ cas('budget complet : en-tête, lignes, formules, rien d\'autre', () => {
   assert.strictEqual(v.A16, undefined, 'aucune ligne au-delà de celles envoyées');
 });
 
-cas('« Le K » retrouvé comme « LE KABARET, Reims » grâce à l\'alias', () => {
-  const w = monde(), r = poster(w, { token: 'bon', budget: budget({ salle: { nom: 'Le K', ville: 'Reims', libelle: 'LE K, Reims', alias: ['LE KABARET'] } }) });
-  assert.ok(r.ok, r.error); assert.strictEqual(r.salle, 'LE KABARET, Reims'); assert.strictEqual(r.salleAjoutee, false);
+cas('« Le K » écrit tel que l\'appli le nomme', () => {
+  const w = monde(), r = poster(w, { token: 'bon', budget: budget({ salle: { nom: 'Le K', ville: 'Reims', libelle: 'LE K, Reims' } }) });
+  assert.ok(r.ok, r.error); assert.strictEqual(r.salle, 'LE K, Reims'); assert.strictEqual(w.derniere().feuille.valeurs.D2, 'LE K, Reims');
 });
 
-cas('salles écrites différemment (accents, « - » ou « , »)', () => {
-  for (const [nom, ville, attendu] of [['Le Cèdre', 'Chenôve', 'LE CEDRE, Chenôve'], ['La Vapeur', 'Dijon', 'LA VAPEUR - Dijon'], ['Zenith', 'Dijon', 'ZENITH, Dijon']]) {
-    const r = poster(monde(), { token: 'bon', budget: budget({ salle: { nom, ville, libelle: '?' } }) });
-    assert.strictEqual(r.salle, attendu);
-  }
-});
-
-cas('salle absente (Zénith de Strasbourg) : ajoutée à la liste de CE budget, la trame intacte', () => {
+cas('salle inconnue de la trame (Zénith de Strasbourg) : écrite, la trame intacte', () => {
   const w = monde(), r = poster(w, { token: 'bon', budget: budget({ salle: { nom: 'Zenith', ville: 'Strasbourg', libelle: 'ZENITH, Strasbourg' } }) });
-  assert.ok(r.ok, r.error); assert.strictEqual(r.salleAjoutee, true); assert.strictEqual(w.derniere().feuille.valeurs.D2, 'ZENITH, Strasbourg');
-  assert.ok(w.derniere().feuille.validations.D2.valeurs.includes('ZENITH, Strasbourg'));
-  assert.ok(!w.classeurs['1lkKhbzUofW0ZBOIxgIRl0w3HXiwJLd8bT90tlChtCQo'].feuille.validations.D2.valeurs.includes('ZENITH, Strasbourg'), 'la trame ne doit pas changer');
+  assert.ok(r.ok, r.error); assert.strictEqual(w.derniere().feuille.valeurs.D2, 'ZENITH, Strasbourg');
+  const trame = w.classeurs['1lkKhbzUofW0ZBOIxgIRl0w3HXiwJLd8bT90tlChtCQo'].feuille;
+  assert.deepStrictEqual(trame.validations.D2.valeurs, LISTE_SALLES, 'la liste de la trame ne change pas');
+  assert.strictEqual(trame.valeurs.D2, 'SALLE');
+});
+
+cas('sans libellé : nom et ville ; sans salle : D2 vidé', () => {
+  let w = monde(), r = poster(w, { token: 'bon', budget: budget({ salle: { nom: 'La Vapeur', ville: 'Dijon' } }) });
+  assert.ok(r.ok, r.error); assert.strictEqual(w.derniere().feuille.valeurs.D2, 'La Vapeur, Dijon');
+  w = monde(); r = poster(w, { token: 'bon', budget: budget({ salle: undefined }) });
+  assert.ok(r.ok, r.error); assert.strictEqual(w.derniere().feuille.valeurs.D2, '', 'le « SALLE » d\'exemple ne doit pas rester');
+});
+
+cas('appli pas encore mise à jour (envoie des alias) : acceptée', () => {
+  const w = monde(), r = poster(w, { token: 'bon', budget: budget({ salle: { nom: 'Le K', ville: 'Reims', libelle: 'LE K, Reims', alias: ['LE KABARET'] } }) });
+  assert.ok(r.ok, r.error); assert.strictEqual(w.derniere().feuille.valeurs.D2, 'LE K, Reims');
 });
 
 cas('radio au-delà de 5 lignes : lignes insérées avant la dernière, mise en forme copiée', () => {
