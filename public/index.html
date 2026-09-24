@@ -171,54 +171,7 @@
       <div id="past-list"></div>
     </div>
     <div id="tab-budgetconfig" class="panel">
-      <div class="card" style="max-width:900px;margin:0 auto">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-          <h2 style="margin:0">Configuration Budget Promo</h2>
-          <span style="font-size:12px;color:var(--text-3);background:var(--bg);padding:3px 10px;border-radius:20px;border:1px solid var(--border)">Sauvegardé sur Supabase</span>
-          <button class="btn btn-primary" style="margin-left:auto" onclick="saveBudgetConfig()">Sauvegarder</button>
-        </div>
-
-        <!-- Onglets internes -->
-        <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px">
-          <button class="bc-tab active" onclick="showBcTab('templates',this)" style="padding:8px 18px;border:none;background:none;cursor:pointer;font-weight:600;font-size:13px;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--accent)">Templates</button>
-          <button class="bc-tab" onclick="showBcTab('styles',this)" style="padding:8px 18px;border:none;background:none;cursor:pointer;font-size:13px;color:var(--text-3)">Styles musicaux</button>
-          <button class="bc-tab" onclick="showBcTab('salles',this)" style="padding:8px 18px;border:none;background:none;cursor:pointer;font-size:13px;color:var(--text-3)">Salles / Villes</button>
-        </div>
-
-        <!-- Section Templates -->
-        <div id="bc-templates">
-          <p style="font-size:12px;color:var(--text-3);margin-bottom:16px">Configure les lignes pré-remplies pour chaque tranche de budget. Les 3 lignes fixes (Newsletter, Agenda, Posts PP) sont toujours présentes et non modifiables ici.</p>
-          <div style="display:flex;gap:8px;margin-bottom:16px">
-            <button class="bc-tpl-btn active" onclick="showBcTemplate('small',this)" style="padding:6px 14px;border-radius:6px;border:2px solid var(--accent);background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer">Petit (< 1 500€)</button>
-            <button class="bc-tpl-btn" onclick="showBcTemplate('standard',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Standard (1 500–4 000€)</button>
-            <button class="bc-tpl-btn" onclick="showBcTemplate('large',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Grand (> 4 000€)</button>
-          </div>
-          <div id="bc-tpl-editor"></div>
-        </div>
-
-        <!-- Section Styles -->
-        <div id="bc-styles" style="display:none">
-          <p style="font-size:12px;color:var(--text-3);margin-bottom:16px">Configure les opérations Radio / TV / Presse et les ajustements digitaux pour chaque style musical.</p>
-          <div style="display:flex;gap:8px;margin-bottom:16px">
-            <button class="bc-style-btn active" onclick="showBcStyle('rap',this)" style="padding:6px 14px;border-radius:6px;border:2px solid var(--accent);background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer">Rap</button>
-            <button class="bc-style-btn" onclick="showBcStyle('pop',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Pop</button>
-            <button class="bc-style-btn" onclick="showBcStyle('variete',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Variété</button>
-            <button class="bc-style-btn" onclick="showBcStyle('autre',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Autre</button>
-          </div>
-          <div id="bc-style-editor"></div>
-        </div>
-
-        <!-- Section Salles -->
-        <div id="bc-salles" style="display:none">
-          <p style="font-size:12px;color:var(--text-3);margin-bottom:16px">Configure les lignes spécifiques par salle / ville. Les OP media radio peuvent être ajustés ici.</p>
-          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-            <button class="bc-salle-btn active" onclick="showBcSalle('zenith',this)" style="padding:6px 14px;border-radius:6px;border:2px solid var(--accent);background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer">Zénith Dijon</button>
-            <button class="bc-salle-btn" onclick="showBcSalle('reims',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Reims Arena</button>
-            <button class="bc-salle-btn" onclick="showBcSalle('default',this)" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">Autres salles</button>
-          </div>
-          <div id="bc-salle-editor"></div>
-        </div>
-      </div>
+      <div id="budget-config"></div>
     </div>
     <div id="tab-process" class="panel">
       <div class="card">
@@ -669,6 +622,7 @@
     </div>
   </div>
 </div>
+<div class="tk-modal" id="budget-modal"><div class="tk-modal-box bud-box" id="budget-box" role="dialog" aria-label="Budget promo"></div></div>
 <!-- Notifications transitoires, empilées en haut au centre sous l'en-tête -->
 <div class="toast-stack">
   <div class="saving" id="saving">Sauvegarde...</div>
@@ -806,7 +760,6 @@ async function enterApp(session){
   authScreen(false);
   loadTeamNames();
   init();
-  loadBudgetConfig();
 }
 async function loadCurrentMember(){
   var email=(currentUser&&currentUser.email||'').toLowerCase();
@@ -1940,14 +1893,8 @@ function moveArtistPhotoOnRename(c,oldArt){
 // ne pas lui retirer le champ sous les doigts.
 var _rtChannel=null,_rtWasSubscribed=false,_renderPending=false,_hiddenAt=0;
 
-// Le modal Budget n'utilise pas de classe ".open" comme les autres (juste un
-// style.display bascule directement) : il faut donc le detecter a part pour
-// qu'une synchro en arriere-plan ne vienne pas perturber une saisie de budget.
 function isAnyModalOpen(){
-  if(document.querySelector('.tk-modal.open,.rs-modal.open,.overlay.open'))return true;
-  var budgetOverlay=document.getElementById('budget-overlay');
-  if(budgetOverlay&&budgetOverlay.style.display==='flex')return true;
-  return false;
+  return !!document.querySelector('.tk-modal.open,.rs-modal.open,.overlay.open');
 }
 function userIsEditing(){
   var a=document.activeElement;
@@ -1970,7 +1917,7 @@ function initRealtime(){
     // passait inapercu des autres postes tant qu'on n'ecoutait que UPDATE.
     .on('postgres_changes',{event:'*',schema:'public',table:'app_data'},function(payload){
       var k=payload.new&&payload.new.key;
-      if(ALL_SAVE_KEYS.indexOf(k)<0)return; // cles Budget : lues a la demande
+      if(ALL_SAVE_KEYS.indexOf(k)<0)return; // style_adjustments, regles_salles : plus lues depuis le 24/09
       pullRemote([k],payload.new.updated_by);
     })
     .subscribe(function(status){
@@ -2122,6 +2069,7 @@ function normalizeSynced(key,v){
     var raw=Array.isArray(v)?v:DEFAULT_PROCESS;
     return raw.map(function(t){return Object.assign({prereq:null,cat:t.cat||'gen'},t);});
   }
+  if(key==='budget_templates')return normaliserConfigBudget(v);
   if(SYNC_OBJECT_KEYS[key])return syncIsPlain(v)?v:{};
   v=Array.isArray(v)?v:[];
   if(key==='concerts')return v.map(function(c){return Object.assign({medias:'',jeux:'',budget:'',notes:'',ventes:0},c);});
@@ -2159,6 +2107,7 @@ function setValueFor(key,v){
   else if(key==='concert_tasks')customTasks=v;
   else if(key==='artist_photos')artistPhotos=v;
   else if(key==='city_groups')cityGroups=v;
+  else if(key==='budget_templates')budgetConfig=v;
 }
 function syncRecord(key,exists,at,value){syncState[key]={exists:exists,at:at,base:syncClone(value)};}
 // Integre une version lue en base : fusion avec l'etat local, puis elle
@@ -2215,11 +2164,11 @@ function showSyncBanner(msg,fadeOut){
 // Une cle n'est ecrite que si sa version en base est toujours celle qu'on
 // connait (ecriture conditionnelle sur updated_at). Sinon, quelqu'un a ecrit
 // entre-temps : on relit, on fusionne (voir SYNCHRO), puis on reessaie.
-var ALL_SAVE_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media','concert_tasks','artist_photos','city_groups'];
+var ALL_SAVE_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media','concert_tasks','artist_photos','city_groups','budget_templates'];
 var pendingSaveKeys={}; // cle -> compteur de modifications en attente
 var saveRetryTimer=null,_restoring=false;
 function currentValueFor(key){
-  return {concerts:concerts,taskstates:taskStates,process:process,tkcols:tkCols,tktasks:tkTasks,rsposts:rsPosts,concert_media:concertMedia,concert_tasks:customTasks,artist_photos:artistPhotos,city_groups:cityGroups}[key];
+  return {concerts:concerts,taskstates:taskStates,process:process,tkcols:tkCols,tktasks:tkTasks,rsposts:rsPosts,concert_media:concertMedia,concert_tasks:customTasks,artist_photos:artistPhotos,city_groups:cityGroups,budget_templates:budgetConfig}[key];
 }
 function scheduleSave(){
   if(!appDataLoaded){
@@ -2435,8 +2384,7 @@ function showTab(id,btn){
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
   if(btn)btn.classList.add('active');panel.classList.add('active');
   currentTab=id;
-  if(id==='budgetconfig'){ renderBcTemplateEditor(); renderBcStyleEditor(); renderBcSalleEditor(); }
-  else if(id==='team')renderTeam();
+  if(id==='team')renderTeam();
   else renderTab(id); // render() ne dessine que l'onglet visible : on dessine celui qu'on ouvre
   pushRoute(id,null);
   window.scrollTo(0,0);
@@ -2479,7 +2427,6 @@ document.addEventListener('keydown',function(e){
   var hm=document.getElementById('help-modal');if(hm&&hm.classList.contains('open')){closeHelp();return;}
   var sm=document.getElementById('sp-modal');if(sm&&sm.classList.contains('open')){spCloseModal();return;}
   if(document.querySelector('.tk-modal.open,.rs-modal.open'))return;
-  var bo=document.getElementById('budget-overlay');if(bo&&bo.style.display==='flex')return;
   var fm=document.getElementById('fiche-menu');
   if(fm&&fm.style.display!=='none'){fm.style.display='none';return;}
   if(document.getElementById('overlay').classList.contains('open'))closeFicheBtn();
@@ -4902,289 +4849,452 @@ function spToggleTermines(){
   if(ic)ic.classList.toggle('open',spTerminesOuvert);
 }
 
-// ── BUDGET CONFIG TOOL ──────────────────────────────────────────────────────
+// ── BUDGET PROMO ────────────────────────────────────────────────────────────
+// Le budget d'un concert est un Google Sheet : une copie de la trame
+// « AAAAMMJJ - BUDGET COM TRAME », faite et remplie par un script Google qui
+// tourne sous le compte de Mathieu (google/budget-promo/, voir son README).
+// L'appli ne touche jamais a la forme du Sheet : elle calcule une proposition
+// de lignes a partir des regles ci-dessous (onglet Budget, reserve aux
+// admins), la laisse modifier, puis envoie les valeurs au script avec le jeton
+// de session. Le script verifie que la personne est membre de l'equipe, copie
+// la trame dans le Drive de Mathieu et renvoie le lien, enregistre dans la fiche.
+// Refait le 24/09. L'ancien generateur reconstruisait la mise en forme par
+// l'API Sheets (et differait de la trame : type de contrat, salle, formule
+// « Vendu au », lignes offertes, logo), demandait une connexion Google et un
+// identifiant technique sur chaque appareil, et perdait 50 a 250 € dans
+// l'arrondi des vagues sans le dire.
+var BUDGET_SECTIONS=[
+  {id:'street',titre:'Street marketing',capacite:10},
+  {id:'espaces',titre:"Achat d'espaces",capacite:10},
+  {id:'digital',titre:'Digital',capacite:10},
+  {id:'radio',titre:'Opérations radio / TV / presse',capacite:5,extensible:true}
+];
+var BUDGET_CONTRATS=['Promotion Locale','Co-Réalisation','Cession'];
+// Reglages en place au 24/09, avec deux corrections demandees par Mathieu :
+// toutes les dates de Reims (Arena comme Le K) ont le forfait flyer « Arena »,
+// et seul le Zenith de Dijon a le forfait flyer « Zénith » (avant, tout lieu
+// contenant le mot « zenith », Strasbourg compris). Le style musical est
+// retire : aucune regle n'etait definie par style.
+// Tranches : « moins de » (inclus:false) ou « jusqu'a » (inclus:true), pour
+// garder les bornes d'origine (1 500 € = Standard, 4 000 € = Standard).
+var BUDGET_DEFAUT={
+  version:2,script:'',vagues:3,arrondi:100,prestaDooh:'JC Decaux',
+  offertes:[
+    {id:'of1',nom:'Newsletter Please Please mensuelle'},
+    {id:'of2',nom:'Intégration agenda culturels'},
+    {id:'of3',nom:'Post/Storys réseaux sociaux Please Please // ANTDT'}
+  ],
+  tranches:[
+    {id:'tr1',nom:'Petit budget',plafond:1500,inclus:false,sponsoPct:100,protege:0,radio:[]},
+    {id:'tr2',nom:'Standard',plafond:4000,inclus:true,sponsoPct:40,protege:0,radio:[
+      {id:'ra1',nom:'Jeu concours Bien Public',type:'2x2 places'},
+      {id:'ra2',nom:'OP Speak + Spot radio locale',type:'5x2 places'},
+      {id:'ra3',nom:'Jeu concours web local',type:'1x2 places'}]},
+    {id:'tr3',nom:'Grand budget',plafond:'',inclus:false,sponsoPct:100,protege:2500,radio:[
+      {id:'ra4',nom:'Jeu concours Bien Public',type:'2x2 places'},
+      {id:'ra5',nom:'OP Speak + Spot Cherie FM',type:'5x2 places'},
+      {id:'ra6',nom:'OP Speak + Spot K6FM',type:'5x2 places'},
+      {id:'ra7',nom:'OP Speak + Spot Ici Bourgogne',type:'5x2 places'},
+      {id:'ra8',nom:"OP McDonald's",type:'2x2 places'},
+      {id:'ra9',nom:"Jeu concours J'aime Dijon",type:'1x2 places'}]}
+  ],
+  affichage:[
+    {id:'af1',ville:'Dijon',salle:'Zenith',lignes:[
+      {id:'al1',nom:'Collage grandes affiches (80x120)',qte:400,pu:1.1,total:''},
+      {id:'al2',nom:'Collage petites affiches (60x40)',qte:300,pu:1,total:''},
+      {id:'al3',nom:'Impression de bandeaux',qte:700,pu:0.3,total:''},
+      {id:'al4',nom:'Forfait impression et diffusion flyer Zénith',qte:50000,pu:'',total:200}]},
+    {id:'af2',ville:'Reims',salle:'',lignes:[
+      {id:'al5',nom:'Collage grandes affiches (80x120)',qte:600,pu:1.1,total:''},
+      {id:'al6',nom:'Impression de bandeaux',qte:600,pu:0.3,total:''},
+      {id:'al7',nom:'Forfait impression et diffusion flyer Arena',qte:50000,pu:'',total:200}]},
+    {id:'af0',defaut:true,ville:'',salle:'',lignes:[
+      {id:'al8',nom:'Collage grandes affiches (80x120)',qte:400,pu:1.1,total:''},
+      {id:'al9',nom:'Collage petites affiches (60x40)',qte:300,pu:1,total:''},
+      {id:'al10',nom:'Impression de bandeaux',qte:700,pu:0.3,total:''}]}
+  ],
+  alias:[{id:'as1',app:'Le K',trame:'LE KABARET'}]
+};
+// Valeur synchronisee (cle budget_templates, meme mecanique que les autres :
+// versions, fusion, temps reel). Une ancienne configuration (avant le 24/09)
+// est remplacee par BUDGET_DEFAUT, qui en reprend les reglages ; elle n'est
+// reecrite en base qu'a la premiere modification faite par un admin.
+var budgetConfig=null;
+function normaliserConfigBudget(v){return syncIsPlain(v)&&v.version===2?v:syncClone(BUDGET_DEFAUT);}
 
-var _bcCurrentTpl = 'small';
-var _bcCurrentStyle = 'rap';
-
-function showBcTab(name, btn) {
-  document.getElementById('bc-templates').style.display = name==='templates' ? '' : 'none';
-  document.getElementById('bc-styles').style.display = name==='styles' ? '' : 'none';
-  document.getElementById('bc-salles').style.display = name==='salles' ? '' : 'none';
-  document.querySelectorAll('.bc-tab').forEach(function(b){
-    b.style.borderBottom='none'; b.style.color='var(--text-3)'; b.style.fontWeight='';
+// ── Regles ──
+function budNorm(s){return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
+// « Arena - Reims » ou « Reims - Arena » -> {ville:'Reims', salle:'Arena'} :
+// meme detection de l'ordre que formatLieu(). Sans l'alias « Chenôve = Dijon »
+// de getVille() : la trame connait « LE CEDRE, Chenôve ».
+function lieuDe(ville){
+  var f=formatLieu(ville||''),p=f.split(' - ');
+  if(p.length<2)return {ville:f.trim(),salle:''};
+  return {ville:p[0].trim(),salle:p.slice(1).join(' - ').trim()};
+}
+// Une regle « salle » l'emporte sur une regle « ville », qui l'emporte sur
+// « Autres salles » (marquee defaut, pour qu'une regle en cours de saisie,
+// encore sans ville ni salle, ne soit jamais prise pour elle).
+function budRegleAffichage(cfg,lieu){
+  var s=budNorm(lieu.salle),v=budNorm(lieu.ville),rs=cfg.affichage||[];
+  return rs.filter(function(r){return !r.defaut&&r.salle&&budNorm(r.salle)===s&&(!r.ville||budNorm(r.ville)===v);})[0]
+    ||rs.filter(function(r){return !r.defaut&&!r.salle&&r.ville&&budNorm(r.ville)===v;})[0]
+    ||rs.filter(function(r){return r.defaut;})[0]
+    ||{lignes:[]};
+}
+function budPlafond(t){return t.plafond===''||t.plafond==null?Infinity:+t.plafond;}
+function budTranche(cfg,m){
+  var ts=(cfg.tranches||[]).slice().sort(function(a,b){return budPlafond(a)-budPlafond(b);});
+  return ts.filter(function(t){var p=budPlafond(t);return p===Infinity||(t.inclus?m<=p:m<p);})[0]||ts[ts.length-1]||{radio:[]};
+}
+function budVide(v){return v===''||v===null||v===undefined;}
+function budTotal(l){return !budVide(l.qte)&&!budVide(l.pu)?Math.round(l.qte*l.pu*100)/100:(+l.total||0);}
+function budArrondi(n,pas){pas=+pas||1;return Math.max(0,Math.round(n/pas)*pas);}
+function budLigne(o){return Object.assign({id:uid('bl'),nom:'',presta:'',qte:'',pu:'',total:'',type:'',com:'',statut:'Prévisionnel'},o);}
+function budProposer(c,m,cfg){
+  var lieu=lieuDe(c.ville),tr=budTranche(cfg,m);
+  var sansAffiche=!!taskStates['skip-'+c.id+'-col'],sponsoProd=!!taskStates['skip-'+c.id+'-sp'];
+  var street=sansAffiche?[]:(budRegleAffichage(cfg,lieu).lignes||[]).map(function(l){
+    return budLigne({nom:l.nom,qte:budVide(l.qte)?'':+l.qte,pu:budVide(l.pu)?'':+l.pu,total:budVide(l.pu)&&!budVide(l.total)?+l.total:''});
   });
-  btn.style.borderBottom='2px solid var(--accent)'; btn.style.color='var(--accent)'; btn.style.fontWeight='600';
+  var reste=Math.max(0,m-street.reduce(function(s,l){return s+budTotal(l);},0));
+  var protege=Math.min(+tr.protege||0,reste);
+  if(protege>0)street.push(budLigne({nom:'Affichage protégé',total:protege}));
+  var apres=reste-protege,pct=+tr.sponsoPct||0;
+  var sponso=Math.min(apres,pct>=100?apres:budArrondi(apres*pct/100,cfg.arrondi)),dooh=apres-sponso;
+  var espaces=dooh>0?[budLigne({nom:'Campagne DOOH',presta:cfg.prestaDooh||'',total:dooh})]:[];
+  var digital=(cfg.offertes||[]).map(function(o){return budLigne({nom:o.nom,total:0,com:'OFFERT',statut:'Engagé',offerte:true});});
+  if(sponsoProd)digital.push(budLigne({nom:'Sponsorisation réseaux sociaux',com:'Géré par la prod'}));
+  else{
+    var n=Math.max(1,+cfg.vagues||1),pas=+cfg.arrondi||1,v=Math.floor(sponso/n/pas)*pas;
+    if(v>0)for(var i=1;i<=n;i++)digital.push(budLigne({nom:'Sponsorisation Instagram / Facebook vague '+i,total:v}));
+  }
+  var radio=(tr.radio||[]).map(function(r){return budLigne({nom:r.nom,type:r.type||''});});
+  return {street:street,espaces:espaces,digital:digital,radio:radio};
+}
+function budAlias(cfg,lieu){var s=budNorm(lieu.salle);return (cfg.alias||[]).filter(function(a){return a.app&&budNorm(a.app)===s;}).map(function(a){return a.trame;});}
+function budLibelleSalle(lieu){return [lieu.salle.toUpperCase(),lieu.ville].filter(Boolean).join(', ');}
+// Meme comparaison que le script Google : « ARENA, Reims » ou « LA VAPEUR - Dijon ».
+function budSalleDansListe(liste,lieu,alias){
+  var noms=[lieu.salle].concat(alias).map(budNorm).filter(Boolean),v=budNorm(lieu.ville);
+  for(var i=0;i<liste.length;i++){
+    var p=String(liste[i]).split(/\s*,\s*|\s+-\s+/),n=budNorm(p[0]),vi=budNorm(p.slice(1).join(' '));
+    if(noms.indexOf(n)>=0&&(!v||!vi||vi===v))return liste[i];
+  }
+  return null;
+}
+function budNomFichier(c,lieu){return (c.dc||'').replace(/-/g,'')+'_'+(c.art||'').toUpperCase()+' '+lieu.ville.toUpperCase()+'_BUDGET PROMO';}
+function budDateLongue(iso){if(!iso)return '—';var d=new Date(iso+'T00:00:00');return isNaN(d.getTime())?'—':d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
+
+// ── Liste des salles de la trame, lue une fois par session auprès du script ──
+var budSallesTrame=null;
+async function budLireTrame(){
+  if(budSallesTrame)return budSallesTrame;
+  var r=await fetch(budgetConfig.script);
+  var d=await r.json();
+  if(!d.ok)throw new Error(d.error||'réponse inattendue');
+  budSallesTrame=d;
+  return d;
 }
 
-var _bcCurrentSalle = 'zenith';
-
-function showBcSalle(salle, btn) {
-  _bcCurrentSalle = salle;
-  document.querySelectorAll('.bc-salle-btn').forEach(function(b){
-    b.style.border='1px solid var(--border)'; b.style.background='var(--bg)'; b.style.color='var(--text)'; b.style.fontWeight='';
-  });
-  btn.style.border='2px solid var(--accent)'; btn.style.background='var(--accent-soft)'; btn.style.color='var(--accent)'; btn.style.fontWeight='700';
-  renderBcSalleEditor();
+// ── Fenetre « Budget promo » (depuis la fiche) ──
+var bud=null;
+function budConcert(){return bud&&concerts.find(function(x){return x.id===bud.cid;});}
+async function openBudgetModal(){
+  var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
+  if(c.budget){
+    // Seuls les liens http(s) s'ouvrent : un « javascript:... » saisi dans le
+    // champ s'executerait sinon dans la page de celui qui clique.
+    var lien=safeUrl(c.budget);
+    if(lien){window.open(lien,'_blank','noopener');return;}
+    if(!await customConfirm('Le champ « Lien budget » contient « '+c.budget+' », qui n\'est pas un lien. Créer le Google Sheet remplacera ce texte par le lien du Sheet.','Continuer'))return;
+  }
+  bud={cid:c.id,montant:'',contrat:BUDGET_CONTRATS.indexOf(c.contrat)>=0?c.contrat:BUDGET_CONTRATS[0],lignes:null,salle:{statut:'attente'},envoi:false,resultat:null,erreur:''};
+  budRendre();
+  document.getElementById('budget-modal').classList.add('open');
+  setTimeout(function(){var i=document.getElementById('bud-montant');if(i)i.focus();},50);
+  budVerifierSalle();
 }
-
-function renderBcSalleEditor() {
-  var salle = REGLES_SALLES[_bcCurrentSalle] || {};
-  var affichage = salle.affichage || [];
-  var radio = salle.radio || [];
-  var html = '';
-
-  html += '<div style="margin-bottom:20px">';
-  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Affichage</span>';
-  html += '<button onclick="bcAddSalleRow(\'affichage\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">+ Ligne</button></div>';
-  html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
-  html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;background:var(--bg);padding:6px 10px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>Qté</span><span>PU €</span><span>Total €</span><span></span></div>';
-  affichage.forEach(function(r,i){
-    html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
-    html += '<input value="'+esc(r.nom)+'" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-    html += '<input value="'+esc(r.qte||'')+'" type="number" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'qte\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-    html += '<input value="'+esc(r.pu||'')+'" type="number" step="0.01" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'pu\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-    html += '<input value="'+esc(r.total||'')+'" type="number" placeholder="auto" onchange="bcUpdateSalleRow(\'affichage\','+i+',\'total\',this.value?+this.value:undefined)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-    html += '<button onclick="bcDeleteSalleRow(\'affichage\','+i+')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px;padding:0">×</button>';
-    html += '</div>';
-  });
-  if (!affichage.length) html += '<div style="padding:12px;font-size:12px;color:var(--text-3);text-align:center;font-style:italic">Aucune ligne</div>';
-  html += '</div></div>';
-
-  html += '<div style="margin-bottom:20px">';
-  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-3)">OP Media Radio spécifiques</span>';
-  html += '<button onclick="bcAddSalleRow(\'radio\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">+ Ligne</button></div>';
-  html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
-  html += '<div style="display:grid;grid-template-columns:1fr 120px 24px;background:var(--bg);padding:6px 10px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>Type</span><span></span></div>';
-  radio.forEach(function(r,i){
-    html += '<div style="display:grid;grid-template-columns:1fr 120px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
-    html += '<input value="'+esc(r.nom)+'" onchange="bcUpdateSalleRow(\'radio\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-    html += '<input value="'+esc(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateSalleRow(\'radio\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-    html += '<button onclick="bcDeleteSalleRow(\'radio\','+i+')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px;padding:0">×</button>';
-    html += '</div>';
-  });
-  if (!radio.length) html += '<div style="padding:12px;font-size:12px;color:var(--text-3);text-align:center;font-style:italic">Aucun OP Media spécifique</div>';
-  html += '</div></div>';
-
-  document.getElementById('bc-salle-editor').innerHTML = html;
+function closeBudgetModal(){document.getElementById('budget-modal').classList.remove('open');bud=null;}
+async function budVerifierSalle(){
+  var c=budConcert();if(!c)return;
+  var etat=bud;
+  if(!budgetConfig.script){etat.salle={statut:'sans-script'};budMajSalle();return;}
+  try{
+    var d=await budLireTrame(),lieu=lieuDe(c.ville);
+    var trouvee=budSalleDansListe(d.salles||[],lieu,budAlias(budgetConfig,lieu));
+    etat.salle=trouvee?{statut:'ok',valeur:trouvee}:{statut:'absente'};
+  }catch(e){etat.salle={statut:'erreur'};}
+  if(bud===etat)budMajSalle();
 }
-
-function bcUpdateSalleRow(section, idx, field, val) {
-  if (!REGLES_SALLES[_bcCurrentSalle][section]) return;
-  REGLES_SALLES[_bcCurrentSalle][section][idx][field] = val;
+function budTagSalle(){
+  var s=bud.salle;
+  if(s.statut==='ok')return '<span class="tag tag-green">dans la liste de la trame</span>';
+  if(s.statut==='absente')return '<span class="tag tag-amber">absente de la liste de la trame : ajoutée à ce budget</span>';
+  if(s.statut==='sans-script')return '<span class="tag tag-red">script Google non configuré</span>';
+  if(s.statut==='erreur')return '<span class="tag tag-neutral">liste de la trame illisible pour l\'instant</span>';
+  return '<span class="tag tag-neutral">vérification…</span>';
 }
-function bcDeleteSalleRow(section, idx) {
-  if (!REGLES_SALLES[_bcCurrentSalle][section]) return;
-  REGLES_SALLES[_bcCurrentSalle][section].splice(idx,1);
-  renderBcSalleEditor();
+function budMajSalle(){
+  var c=budConcert(),el=document.getElementById('bud-salle');if(!c||!el)return;
+  var lieu=lieuDe(c.ville);
+  el.innerHTML=esc(bud.salle.valeur||budLibelleSalle(lieu))+'<span class="bud-cell">D2</span> '+budTagSalle();
+  budMajPied();
 }
-function bcAddSalleRow(section) {
-  if (!REGLES_SALLES[_bcCurrentSalle][section]) REGLES_SALLES[_bcCurrentSalle][section]=[];
-  var r = section==='radio' ? {nom:'Nouvelle ligne', type:''} : {nom:'Nouvelle ligne', qte:0, pu:0};
-  REGLES_SALLES[_bcCurrentSalle][section].push(r);
-  renderBcSalleEditor();
+function budRendre(){
+  var c=budConcert(),box=document.getElementById('budget-box');if(!c||!box)return;
+  var lieu=lieuDe(c.ville);
+  var h='<div class="bud-head"><div class="bud-head-txt"><div class="tk-modal-title">Budget promo — '+esc((c.art||'').toUpperCase())+'</div>'
+    +'<div class="modal-note">Copie de la trame « AAAAMMJJ - BUDGET COM TRAME », créée dans le Drive de Mathieu.</div></div>'
+    +'<button class="fiche-close" data-bud="fermer" title="Fermer">'+icon('x')+'</button></div>';
+  if(bud.resultat){box.innerHTML=h+budResultatHtml();return;}
+  var flags=(taskStates['skip-'+c.id+'-sp']?'<span class="tag tag-amber">Sponso gérée par la prod : pas de vagues proposées</span> ':'')
+    +(taskStates['skip-'+c.id+'-col']?'<span class="tag tag-amber">Pas d\'affiche dispo : pas d\'affichage proposé</span>':'');
+  h+='<div class="bud-body">'
+    +'<div class="bud-sec"><div class="nl-label">Repris de la fiche</div><div class="bud-repris">'
+    +'<span class="k">Spectacle</span><span>'+esc((c.art||'').toUpperCase())+'<span class="bud-cell">D1</span></span>'
+    +'<span class="k">Salle</span><span id="bud-salle"></span>'
+    +'<span class="k">Date du concert</span><span>'+esc(budDateLongue(c.dc))+'<span class="bud-cell">D3</span></span>'
+    +'<span class="k">Mise en vente</span><span>'+(c.da?esc(budDateLongue(c.da))+' <span class="bud-muted">(date d\'annonce)</span>':'<span class="bud-muted">pas de date d\'annonce dans la fiche : laissée vide</span>')+'<span class="bud-cell">F7</span></span>'
+    +'<span class="k">Nom du fichier</span><span class="bud-mono">'+esc(budNomFichier(c,lieu))+'</span>'
+    +'</div></div>'
+    +'<div class="bud-sec modal-sep"><div class="nl-label">À renseigner</div><div class="bud-champs">'
+    +'<label for="bud-montant">Budget alloué (€ HT)</label><input id="bud-montant" class="bud-court" type="number" min="0" step="100" value="'+esc(bud.montant)+'" placeholder="ex. 3000">'
+    +'<label for="bud-contrat">Type de contrat</label><select id="bud-contrat" class="bud-moyen">'+BUDGET_CONTRATS.map(function(t){return '<option'+(t===bud.contrat?' selected':'')+'>'+esc(t)+'</option>';}).join('')+'</select>'
+    +'</div>'+(flags?'<div class="bud-flags">'+flags+'</div>':'')+'</div>'
+    +'<div class="bud-sec modal-sep"><div class="nl-label">Proposition <span class="bud-muted bud-nocaps">— modifiable ligne par ligne ; changer le budget la recalcule</span></div><div id="bud-sections">'+budSectionsHtml()+'</div></div>'
+    +'</div>'
+    +'<div class="bud-bilan" id="bud-bilan"></div>'
+    +'<div class="bud-foot"><div class="bud-note" id="bud-note"></div><button class="btn" data-bud="fermer">Annuler</button><button class="btn btn-primary" id="bud-creer" data-bud="creer">Créer le Sheet</button></div>';
+  box.innerHTML=h;
+  budMajSalle();budMajBilan();
 }
-
-function showBcTemplate(tpl, btn) {
-  _bcCurrentTpl = tpl;
-  document.querySelectorAll('.bc-tpl-btn').forEach(function(b){
-    b.style.border='1px solid var(--border)'; b.style.background='var(--bg)'; b.style.color='var(--text)'; b.style.fontWeight='';
-  });
-  btn.style.border='2px solid var(--accent)'; btn.style.background='var(--accent-soft)'; btn.style.color='var(--accent)'; btn.style.fontWeight='700';
-  renderBcTemplateEditor();
+function budSectionsHtml(){
+  if(!bud.lignes)return '<div class="empty-state compact">Saisis le budget alloué pour voir la proposition.</div>';
+  return BUDGET_SECTIONS.map(function(s){
+    var ls=bud.lignes[s.id],trop=ls.length>s.capacite;
+    var h='<div class="bud-secl"><span class="bud-sect">'+esc(s.titre)+'</span><span class="tag '+(trop?(s.extensible?'tag-amber':'tag-red'):'tag-neutral')+'">'+ls.length+' / '+s.capacite+' lignes'
+      +(trop?(s.extensible?' : la section sera agrandie':' : la trame n\'en contient que '+s.capacite):'')+'</span><span class="grow"></span><button class="btn-link" data-bud="ajouter" data-sec="'+esc(s.id)+'">+ Ligne</button></div>';
+    if(!ls.length)return h+'<div class="bud-vide">Aucune ligne proposée.</div>';
+    var radio=s.id==='radio';
+    h+='<table class="bud-lignes"><tr><th>Désignation</th><th class="w-presta">Prestataire</th>'
+      +(radio?'<th class="w-type">Type</th>':'<th class="w-qte">Qté</th><th class="w-pu">Tarif unit.</th><th class="w-tot">Total HT</th>')
+      +'<th class="w-com">Commentaire</th><th class="w-statut">Statut</th><th class="w-x"></th></tr>';
+    ls.forEach(function(l,i){
+      var dis=l.offerte?' disabled':'',at=' data-sec="'+esc(s.id)+'" data-i="'+i+'"';
+      function champ(f,cls){return '<input'+(cls?' class="'+cls+'"':'')+at+' data-f="'+f+'" value="'+esc(l[f])+'"'+dis+'>';}
+      h+='<tr'+(l.offerte?' class="offerte"':'')+'><td>'+champ('nom')+'</td><td>'+champ('presta')+'</td>'
+        +(radio?'<td>'+champ('type')+'</td>'
+          :'<td>'+champ('qte','num')+'</td><td>'+champ('pu','num')+'</td><td class="tot">'+(!budVide(l.qte)&&!budVide(l.pu)?'<span class="bud-calc">'+esc(spEuro(budTotal(l)))+'</span>':champ('total','num'))+'</td>')
+        +'<td>'+champ('com')+'</td><td><select'+at+' data-f="statut"'+dis+'>'+['Prévisionnel','Engagé'].map(function(st){return '<option'+(st===l.statut?' selected':'')+'>'+st+'</option>';}).join('')+'</select></td>'
+        +'<td>'+(l.offerte?'<span class="tag tag-neutral" title="Toujours présente">offerte</span>':'<button class="bud-x" data-bud="retirer"'+at+' title="Retirer la ligne">'+icon('x')+'</button>')+'</td></tr>';
+    });
+    return h+'</table>';
+  }).join('');
 }
-
-function showBcStyle(style, btn) {
-  _bcCurrentStyle = style;
-  document.querySelectorAll('.bc-style-btn').forEach(function(b){
-    b.style.border='1px solid var(--border)'; b.style.background='var(--bg)'; b.style.color='var(--text)'; b.style.fontWeight='';
-  });
-  btn.style.border='2px solid var(--accent)'; btn.style.background='var(--accent-soft)'; btn.style.color='var(--accent)'; btn.style.fontWeight='700';
-  renderBcStyleEditor();
+function budChiffres(){
+  var m=+bud.montant||0,prevu=0,engage=0;
+  if(bud.lignes)['street','espaces','digital'].forEach(function(k){bud.lignes[k].forEach(function(l){var t=budTotal(l);prevu+=t;if(l.statut==='Engagé')engage+=t;});});
+  return {m:m,prevu:Math.round(prevu*100)/100,engage:Math.round(engage*100)/100,reste:Math.round((m-prevu)*100)/100};
 }
-
-function renderBcTemplateEditor() {
-  var tpl = BUDGET_TEMPLATES[_bcCurrentTpl];
-  var sections = [
-    {key:'digital', label:'Digital (lignes variables)', showTarif:true},
-    {key:'espaces', label:"Achat d'espaces", showTarif:true},
-    {key:'radio',   label:'Radio / TV / Presse', showType:true},
-    {key:'street',  label:'Street Marketing', showStreet:true}
-  ];
-  var html = '';
-  sections.forEach(function(s) {
-    var rows = tpl[s.key] || [];
-    html += '<div style="margin-bottom:20px">';
-    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
-    html += '<span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-3);letter-spacing:.05em">'+s.label+'</span>';
-    html += '<button onclick="bcAddRow(\''+escJs(s.key)+'\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">+ Ligne</button></div>';
-    html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
-    if (s.showStreet) {
-      html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;gap:0;background:var(--bg);padding:6px 10px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>Qté</span><span>PU €</span><span>Total €</span><span></span></div>';
-    } else {
-      html += '<div style="display:grid;grid-template-columns:1fr '+(s.showTarif?'80px':'100px')+' 90px 24px;gap:0;background:var(--bg);padding:6px 10px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>'+(s.showTarif?'Total €':'Type')+'</span><span>Statut</span><span></span></div>';
+function budBlocage(){
+  if(!budgetConfig.script)return 'Script Google non configuré : un admin doit renseigner son adresse dans Budget (menu du compte).';
+  if(!(+bud.montant>0))return 'Saisis le budget alloué.';
+  var trop=BUDGET_SECTIONS.filter(function(s){return !s.extensible&&bud.lignes&&bud.lignes[s.id].length>s.capacite;})[0];
+  if(trop)return 'La section '+trop.titre+' dépasse les '+trop.capacite+' lignes de la trame.';
+  return '';
+}
+function budMajBilan(){
+  var el=document.getElementById('bud-bilan');if(!el)return;
+  var x=budChiffres();
+  el.innerHTML='<div class="m"><span>Budget alloué</span><b>'+esc(spEuro(x.m))+'</b></div><div class="m"><span>Prévu</span><b>'+esc(spEuro(x.prevu))+'</b></div><div class="m"><span>Engagé</span><b>'+esc(spEuro(x.engage))+'</b></div>'
+    +(!bud.lignes?'':x.reste>0?'<span class="tag tag-amber">Non affecté : '+esc(spEuro(x.reste))+'</span><button class="btn-link" data-bud="affecter">Ajouter à la dernière vague</button>'
+      :x.reste<0?'<span class="tag tag-red">Dépassement : '+esc(spEuro(-x.reste))+'</span>':'<span class="tag tag-green">Tout est affecté</span>');
+  budMajPied();
+}
+function budMajPied(){
+  var b=document.getElementById('bud-creer'),n=document.getElementById('bud-note');if(!b||!n)return;
+  var bloc=budBlocage();
+  b.disabled=!!bloc||bud.envoi;
+  b.textContent=bud.envoi?'Création…':'Créer le Sheet';
+  n.innerHTML=bloc?esc(bloc):bud.erreur?'<span class="bud-err">'+esc(bud.erreur)+'</span>':esc('Le Sheet arrive dans le Drive de Mathieu ; son lien est enregistré dans la fiche.');
+}
+function budResultatHtml(){
+  var d=bud.resultat;
+  return '<div class="bud-body"><div class="bud-ok">Budget créé dans le Drive de Mathieu : <a href="'+escUrl(d.url)+'" target="_blank" rel="noopener">'+esc(d.nom)+' '+icon('arrow-up-right')+'</a>'
+    +'<div class="bud-muted">Le lien est enregistré dans la fiche (champ « Lien budget »). Le fichier est à ranger ensuite dans son dossier.</div>'
+    +(d.salleAjoutee?'<div class="bud-warn">« '+esc(d.salle)+' » ne figurait pas dans la liste des salles de la trame : elle a été ajoutée à ce budget. Pense à l\'ajouter aussi à la trame.</div>':'')
+    +'</div></div><div class="bud-foot"><span class="bud-note"></span><button class="btn btn-primary" data-bud="fermer">Fermer</button></div>';
+}
+function budDerniereVague(){var vs=bud.lignes.digital.filter(function(l){return /vague \d+$/.test(l.nom);});return vs[vs.length-1]||null;}
+async function budCreer(){
+  var c=budConcert();if(!c||budBlocage()||bud.envoi)return;
+  var etat=bud,lieu=lieuDe(c.ville),nom=budNomFichier(c,lieu);
+  function propre(ls){return ls.map(function(l){return {nom:l.nom,presta:l.presta,qte:l.qte,pu:l.pu,total:l.total,type:l.type,com:l.com,statut:l.statut};});}
+  etat.envoi=true;etat.erreur='';budMajPied();
+  try{
+    var s=await getSupabase().auth.getSession(),jeton=s.data.session&&s.data.session.access_token;
+    if(!jeton)throw new Error('Session expirée : reconnecte-toi.');
+    var corps={token:jeton,budget:{fichier:nom,artiste:(c.art||'').toUpperCase(),
+      salle:{nom:lieu.salle,ville:lieu.ville,libelle:budLibelleSalle(lieu),alias:budAlias(budgetConfig,lieu)},
+      date:c.dc||'',miseEnVente:c.da||'',contrat:etat.contrat,montant:+etat.montant,
+      lignes:{street:propre(etat.lignes.street),espaces:propre(etat.lignes.espaces),digital:propre(etat.lignes.digital),radio:propre(etat.lignes.radio)}}};
+    var r,d;
+    try{r=await fetch(budgetConfig.script,{method:'POST',body:JSON.stringify(corps)});}
+    catch(e){throw new Error('Le script Google ne répond pas (connexion, ou adresse erronée dans Budget).');}
+    try{d=await r.json();}catch(e){throw new Error('Réponse inattendue du script Google (HTTP '+r.status+') : vérifie son adresse dans Budget.');}
+    if(!d.ok)throw new Error(d.error||'Échec de la création.');
+    var cc=concerts.find(function(x){return x.id===etat.cid;});
+    if(cc){cc.budget=d.url;cc.contrat=etat.contrat;scheduleSave('concerts');}
+    if(currentFicheId===etat.cid){var fb=document.getElementById('fi-budget');if(fb)fb.value=d.url;}
+    etat.resultat={url:d.url,nom:nom,salle:d.salle,salleAjoutee:d.salleAjoutee};
+  }catch(e){etat.erreur=e.message||String(e);}
+  etat.envoi=false;
+  if(bud===etat){if(etat.resultat)budRendre();else budMajPied();}
+}
+(function(){
+  var modal=document.getElementById('budget-modal'),box=document.getElementById('budget-box');
+  modal.addEventListener('click',function(e){if(e.target===modal)closeBudgetModal();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&modal.classList.contains('open')){e.stopPropagation();closeBudgetModal();}});
+  box.addEventListener('click',function(e){
+    var b=e.target.closest('[data-bud]');if(!b||!bud)return;
+    var a=b.dataset.bud,sec=b.dataset.sec;
+    if(a!=='creer'&&a!=='fermer')bud.erreur='';
+    if(a==='fermer')closeBudgetModal();
+    else if(a==='creer')budCreer();
+    else if(a==='ajouter'){bud.lignes[sec].push(budLigne({}));document.getElementById('bud-sections').innerHTML=budSectionsHtml();budMajBilan();}
+    else if(a==='retirer'){bud.lignes[sec].splice(+b.dataset.i,1);document.getElementById('bud-sections').innerHTML=budSectionsHtml();budMajBilan();}
+    else if(a==='affecter'){
+      var x=budChiffres(),v=budDerniereVague();
+      if(v)v.total=(+v.total||0)+x.reste;else bud.lignes.digital.push(budLigne({nom:'Sponsorisation Instagram / Facebook',total:x.reste}));
+      document.getElementById('bud-sections').innerHTML=budSectionsHtml();budMajBilan();
     }
-    rows.forEach(function(r,i){
-      if (s.showStreet) {
-        html += '<div style="display:grid;grid-template-columns:1fr 60px 60px 80px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
-        html += '<input value="'+esc(r.nom)+'" onchange="bcUpdateRow(\'street\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-        html += '<input value="'+esc(r.qte||'')+'" type="number" onchange="bcUpdateRow(\'street\','+i+',\'qte\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-        html += '<input value="'+esc(r.pu||'')+'" type="number" step="0.01" onchange="bcUpdateRow(\'street\','+i+',\'pu\',+this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-        html += '<input value="'+esc(r.total||'')+'" type="number" placeholder="auto" onchange="bcUpdateRow(\'street\','+i+',\'total\',+this.value||null)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-      } else {
-        html += '<div style="display:grid;grid-template-columns:1fr '+(s.showTarif?'80px':'100px')+' 90px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
-        html += '<input value="'+esc(r.nom)+'" onchange="bcUpdateRow(\''+escJs(s.key)+'\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-        if (s.showTarif) {
-          html += '<input value="'+esc(r.total||'')+'" type="number" placeholder="€" onchange="bcUpdateRow(\''+escJs(s.key)+'\','+i+',\'total\',+this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-        } else {
-          html += '<input value="'+esc(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateRow(\''+escJs(s.key)+'\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-        }
-        html += '<select onchange="bcUpdateRow(\''+escJs(s.key)+'\','+i+',\'statut\',this.value)" style="padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px">';
-        html += '<option value="Pr\u00e9visionnel"'+(r.statut!=='Engag\u00e9'?' selected':'')+'>Prévisionnel</option>';
-        html += '<option value="Engag\u00e9"'+(r.statut==='Engag\u00e9'?' selected':'')+'>Engagé</option>';
-        html += '</select>';
-      }
-      html += '<button onclick="bcDeleteRow(\''+escJs(s.key)+'\','+i+')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>';
-      html += '</div>';
-    });
-    if (!rows.length) html += '<div style="padding:12px;font-size:12px;color:var(--text-3);text-align:center;font-style:italic">Aucune ligne</div>';
-    html += '</div></div>';
   });
-  document.getElementById('bc-tpl-editor').innerHTML = html;
-}
-
-function renderBcStyleEditor() {
-  var adj = STYLE_ADJUSTMENTS[_bcCurrentStyle] || {};
-  var sections = [
-    {key:'radio',   label:'Radio / TV / Presse spécifiques', rows:adj.radio||[]},
-    {key:'digital', label:'Digital supplémentaire',          rows:adj.digital||[], showTarif:true}
-  ];
-  var html = '<p style="font-size:12px;color:var(--text-3);margin-bottom:14px">Ces lignes s\'ajoutent au template budget quand ce style est sélectionné.</p>';
-  sections.forEach(function(s){
-    html += '<div style="margin-bottom:20px">';
-    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
-    html += '<span style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-3)">'+s.label+'</span>';
-    html += '<button onclick="bcAddStyleRow(\''+escJs(s.key)+'\')" style="padding:2px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer">+ Ligne</button></div>';
-    html += '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
-    html += '<div style="display:grid;grid-template-columns:1fr 100px 24px;background:var(--bg);padding:6px 10px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase"><span>Désignation</span><span>'+(s.showTarif?'Total €':'Type')+'</span><span></span></div>';
-    s.rows.forEach(function(r,i){
-      html += '<div style="display:grid;grid-template-columns:1fr 100px 24px;gap:6px;padding:6px 10px;border-top:1px solid var(--border-light);align-items:center">';
-      html += '<input value="'+esc(r.nom)+'" onchange="bcUpdateStyleRow(\''+escJs(s.key)+'\','+i+',\'nom\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-      if (s.showTarif) {
-        html += '<input value="'+esc(r.total||'')+'" type="number" placeholder="€" onchange="bcUpdateStyleRow(\''+escJs(s.key)+'\','+i+',\'total\',+this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-      } else {
-        html += '<input value="'+esc(r.type||'')+'" placeholder="2x2 pl." onchange="bcUpdateStyleRow(\''+escJs(s.key)+'\','+i+',\'type\',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:100%;box-sizing:border-box">';
-      }
-      html += '<button onclick="bcDeleteStyleRow(\''+escJs(s.key)+'\','+i+')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:16px;padding:0;line-height:1">×</button>';
-      html += '</div>';
-    });
-    if (!s.rows.length) html += '<div style="padding:12px;font-size:12px;color:var(--text-3);text-align:center;font-style:italic">Aucune ligne spécifique</div>';
-    html += '</div></div>';
+  box.addEventListener('input',function(e){
+    var t=e.target;if(!bud)return;
+    bud.erreur='';
+    if(t.id==='bud-montant'){
+      bud.montant=t.value;
+      var c=budConcert();bud.lignes=+t.value>0&&c?budProposer(c,+t.value,budgetConfig):null;
+      document.getElementById('bud-sections').innerHTML=budSectionsHtml();budMajBilan();return;
+    }
+    var sec=t.dataset.sec,f=t.dataset.f;if(!sec||!f)return;
+    var l=bud.lignes[sec][+t.dataset.i];
+    l[f]=(f==='qte'||f==='pu'||f==='total')?(t.value.trim()===''?'':+t.value.replace(',','.')):t.value;
+    if(f==='qte'||f==='pu'){
+      // Le total devient calcule (ou redevient saisissable) : on redessine la seule cellule.
+      var td=t.closest('tr').querySelector('td.tot');
+      if(td&&!budVide(l.qte)&&!budVide(l.pu))td.innerHTML='<span class="bud-calc">'+esc(spEuro(budTotal(l)))+'</span>';
+      else if(td&&!td.querySelector('input')){td.innerHTML='<input class="num" data-sec="'+esc(sec)+'" data-i="'+esc(t.dataset.i)+'" data-f="total" value="'+esc(l.total)+'">';}
+    }
+    budMajBilan();
   });
-  document.getElementById('bc-style-editor').innerHTML = html;
-}
-
-function bcUpdateRow(section, idx, field, val) {
-  if (!BUDGET_TEMPLATES[_bcCurrentTpl][section]) return;
-  BUDGET_TEMPLATES[_bcCurrentTpl][section][idx][field] = val;
-}
-function bcDeleteRow(section, idx) {
-  if (!BUDGET_TEMPLATES[_bcCurrentTpl][section]) return;
-  BUDGET_TEMPLATES[_bcCurrentTpl][section].splice(idx,1);
-  renderBcTemplateEditor();
-}
-function bcAddRow(section) {
-  if (!BUDGET_TEMPLATES[_bcCurrentTpl][section]) BUDGET_TEMPLATES[_bcCurrentTpl][section] = [];
-  var r = section==='radio'  ? {nom:'Nouvelle ligne', type:'', statut:'Pr\u00e9visionnel'}
-        : section==='street' ? {nom:'Nouvelle ligne', qte:0, pu:0}
-        : {nom:'Nouvelle ligne', total:0, statut:'Pr\u00e9visionnel'};
-  BUDGET_TEMPLATES[_bcCurrentTpl][section].push(r);
-  renderBcTemplateEditor();
-}
-function bcUpdateStyleRow(section, idx, field, val) {
-  if (!STYLE_ADJUSTMENTS[_bcCurrentStyle]) STYLE_ADJUSTMENTS[_bcCurrentStyle]={};
-  if (!STYLE_ADJUSTMENTS[_bcCurrentStyle][section]) return;
-  STYLE_ADJUSTMENTS[_bcCurrentStyle][section][idx][field] = val;
-}
-function bcDeleteStyleRow(section, idx) {
-  if (!STYLE_ADJUSTMENTS[_bcCurrentStyle]||!STYLE_ADJUSTMENTS[_bcCurrentStyle][section]) return;
-  STYLE_ADJUSTMENTS[_bcCurrentStyle][section].splice(idx,1);
-  renderBcStyleEditor();
-}
-function bcAddStyleRow(section) {
-  if (!STYLE_ADJUSTMENTS[_bcCurrentStyle]) STYLE_ADJUSTMENTS[_bcCurrentStyle]={};
-  if (!STYLE_ADJUSTMENTS[_bcCurrentStyle][section]) STYLE_ADJUSTMENTS[_bcCurrentStyle][section]=[];
-  var r = section==='radio' ? {nom:'Nouvelle ligne', type:''} : {nom:'Nouvelle ligne', total:0};
-  STYLE_ADJUSTMENTS[_bcCurrentStyle][section].push(r);
-  renderBcStyleEditor();
-}
-
-async function saveBudgetConfig() {
-  // Si la configuration n'a jamais ete lue en base, l'editeur montre les
-  // valeurs par defaut du code : les enregistrer ecraserait la vraie config.
-  if (!budgetConfigLoaded) {
-    showToast('La configuration Budget n\'a pas pu être chargée depuis la base : enregistrement refusé pour ne pas écraser la version existante. Recharge la page.', 9000);
-    return;
-  }
-  var btn = document.querySelector('#tab-budgetconfig .btn-primary');
-  if (btn) { btn.textContent='⏳ Sauvegarde...'; btn.disabled=true; }
-  try {
-    await supaSet('budget_templates', BUDGET_TEMPLATES);
-    await supaSet('style_adjustments', STYLE_ADJUSTMENTS);
-    await supaSet('regles_salles', REGLES_SALLES);
-    if (btn) { btn.textContent='Sauvegardé ✓'; setTimeout(function(){ btn.textContent='Sauvegarder'; btn.disabled=false; }, 2000); }
-  } catch(e) {
-    if (btn) { btn.textContent='Sauvegarder'; btn.disabled=false; }
-    showToast('Échec de l\'enregistrement de la configuration Budget : '+e.message, 8000);
-    console.error(e);
-  }
-}
-
-var budgetConfigLoaded = false;
-async function loadBudgetConfig() {
-  try {
-    var tpls = await supaGet('budget_templates');
-    var adjs = await supaGet('style_adjustments');
-    var salles = await supaGet('regles_salles');
-    if (tpls) BUDGET_TEMPLATES = tpls;
-    if (adjs) STYLE_ADJUSTMENTS = adjs;
-    if (salles) REGLES_SALLES = salles;
-    budgetConfigLoaded = true;
-    if (currentTab === 'budgetconfig') { renderBcTemplateEditor(); renderBcStyleEditor(); renderBcSalleEditor(); }
-  } catch(e) { console.warn('Budget config non chargé:', e); }
-}
-
-// Avant le 23/09, une lecture en echec passait pour "pas de config" et une
-// ecriture en echec affichait "Sauvegardé ✓" : les deux levent maintenant.
-async function supaGet(key) {
-  var r = await fetch(SUPABASE_URL+'/rest/v1/app_data?key=eq.'+encodeURIComponent(key)+'&select=value',{ headers: await authHeaders() });
-  if (r.status===401) handleUnauthorized();
-  if (!r.ok) throw new Error('Lecture "'+key+'" impossible (HTTP '+r.status+')');
-  var d = await r.json();
-  if (!Array.isArray(d)) throw new Error('Réponse inattendue pour "'+key+'"');
-  return d[0] ? JSON.parse(d[0].value) : null;
-}
-async function supaSet(key, value) {
-  var r = await fetch(SUPABASE_URL+'/rest/v1/app_data',{
-    method:'POST',
-    headers:Object.assign(await authHeaders(),{'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'}),
-    body:JSON.stringify({key:key, value:JSON.stringify(value)})
+  box.addEventListener('change',function(e){
+    var t=e.target;if(!bud)return;
+    if(t.id==='bud-contrat'){bud.contrat=t.value;return;}
+    if(t.dataset.f==='statut'){bud.lignes[t.dataset.sec][+t.dataset.i].statut=t.value;budMajBilan();}
   });
-  if (r.status===401) handleUnauthorized();
-  if (!r.ok) throw new Error('Écriture "'+key+'" refusée (HTTP '+r.status+')');
-}
+})();
 
-function renderBudgetConfig() {
-  renderBcTemplateEditor();
-  renderBcStyleEditor();
+// ── Onglet Budget (admins) : les regles du generateur ──
+function renderBudgetConfig(){
+  var el=document.getElementById('budget-config');if(!el||!budgetConfig)return;
+  var cfg=budgetConfig;
+  function champ(chemin,val,o){o=o||{};return '<input'+(o.cls?' class="'+o.cls+'"':'')+' data-p="'+esc(chemin)+'"'+(o.num?' data-num="1" inputmode="decimal"':'')+' value="'+esc(val==null?'':val)+'"'+(o.ph?' placeholder="'+esc(o.ph)+'"':'')+'>';}
+  function suppr(chemin){return '<button class="bud-x" data-cfg="suppr" data-p="'+esc(chemin)+'" title="Supprimer">'+icon('x')+'</button>';}
+  var h='<div class="card bc-card"><div class="card-head"><div><h2>Budget promo</h2><div class="card-desc">Les règles qui préparent la proposition de budget. Chaque modification est enregistrée aussitôt, et vaut pour les prochains budgets ; ceux déjà créés ne changent pas.</div></div></div>';
+  // Script Google
+  h+='<div class="bc-sec"><div class="nl-label">Script Google</div><div class="modal-note">Adresse de l\'application web « Budget promo » (se termine par /exec). Installation : google/budget-promo/README.md.</div>'
+    +'<div class="bc-ligne">'+champ('script',cfg.script,{cls:'bc-large',ph:'https://script.google.com/macros/s/…/exec'})+'<button class="btn btn-sm" data-cfg="tester">Tester</button></div><div class="bud-muted" id="bc-script-statut"></div></div>';
+  // Tranches
+  h+='<div class="bc-sec"><div class="nl-label">Répartition selon le budget alloué</div><div class="modal-note">Le reste, une fois l\'affichage payé, est réparti entre sponso et DOOH. L\'affichage protégé est un montant fixe pris sur ce reste. La sponso est découpée en vagues égales, arrondies à l\'arrondi choisi plus bas.</div>';
+  cfg.tranches.forEach(function(t,i){
+    var p='tranches.'+i,dernier=i===cfg.tranches.length-1;
+    h+='<div class="bc-bloc"><div class="bc-ligne">'+champ(p+'.nom',t.nom,{cls:'bc-nom'})
+      +(dernier?'<span class="bud-muted">au-delà de la tranche précédente</span>'
+        :'<select data-p="'+esc(p)+'.inclus" data-bool="1"><option value="0"'+(t.inclus?'':' selected')+'>moins de</option><option value="1"'+(t.inclus?' selected':'')+'>jusqu\'à (inclus)</option></select>'+champ(p+'.plafond',t.plafond,{cls:'bc-num',num:1})+' €')
+      +'<span class="grow"></span>'+(dernier?'':suppr(p))+'</div>'
+      +'<div class="bc-ligne">Sponso '+champ(p+'.sponsoPct',t.sponsoPct,{cls:'bc-num',num:1})+' % du reste (le complément va au DOOH) · Affichage protégé '+champ(p+'.protege',t.protege,{cls:'bc-num',num:1})+' €</div>'
+      +'<div class="bc-sous">Lignes radio / TV / presse</div>'
+      +((t.radio||[]).length?'<table class="bud-lignes"><tr><th>Désignation</th><th class="w-type">Type</th><th class="w-x"></th></tr>'
+        +t.radio.map(function(r,j){return '<tr><td>'+champ(p+'.radio.'+j+'.nom',r.nom)+'</td><td>'+champ(p+'.radio.'+j+'.type',r.type)+'</td><td>'+suppr(p+'.radio.'+j)+'</td></tr>';}).join('')
+        +'</table>':'<div class="bud-vide">Aucune ligne radio pour cette tranche.</div>')
+      +'<button class="btn-link" data-cfg="ajout-radio" data-p="'+esc(p)+'.radio">+ Ligne radio</button></div>';
+  });
+  h+='<button class="btn btn-sm" data-cfg="ajout-tranche">+ Tranche</button></div>';
+  // Parametres
+  h+='<div class="bc-sec"><div class="nl-label">Sponso et DOOH</div><div class="bc-ligne">Vagues de sponso '+champ('vagues',cfg.vagues,{cls:'bc-num',num:1})+' · Arrondi '+champ('arrondi',cfg.arrondi,{cls:'bc-num',num:1})+' € · Prestataire DOOH '+champ('prestaDooh',cfg.prestaDooh,{cls:'bc-nom'})+'</div></div>';
+  // Lignes offertes
+  h+='<div class="bc-sec"><div class="nl-label">Lignes offertes</div><div class="modal-note">Toujours présentes en tête de Digital, à 0 €, « OFFERT », « Engagé ».</div><table class="bud-lignes"><tr><th>Désignation</th><th class="w-x"></th></tr>'
+    +cfg.offertes.map(function(o,i){return '<tr><td>'+champ('offertes.'+i+'.nom',o.nom)+'</td><td>'+suppr('offertes.'+i)+'</td></tr>';}).join('')
+    +'</table><button class="btn-link" data-cfg="ajout-offerte">+ Ligne offerte</button></div>';
+  // Affichage
+  h+='<div class="bc-sec"><div class="nl-label">Affichage (street marketing)</div><div class="modal-note">Une règle pour une salle précise l\'emporte sur une règle pour toute une ville, qui l\'emporte sur « Autres salles ». Exemple : toutes les dates de Reims ont le forfait flyer Arena ; seules celles du Zénith de Dijon ont le forfait flyer Zénith. Forfait : montant fixe, quand il n\'y a pas de tarif unitaire.</div>';
+  var ordre=cfg.affichage.map(function(r,i){return i;}).sort(function(a,b){return (cfg.affichage[a].defaut?1:0)-(cfg.affichage[b].defaut?1:0)||a-b;});
+  ordre.forEach(function(i){
+    var r=cfg.affichage[i],p='affichage.'+i,defaut=!!r.defaut;
+    h+='<div class="bc-bloc"><div class="bc-ligne">'+(defaut?'<b>Autres salles</b> <span class="bud-muted">(par défaut)</span>'
+        :'Ville '+champ(p+'.ville',r.ville,{cls:'bc-nom',ph:'Reims'})+' Salle '+champ(p+'.salle',r.salle,{cls:'bc-nom',ph:'toutes'}))
+      +'<span class="grow"></span>'+(defaut?'':suppr(p))+'</div>'
+      +((r.lignes||[]).length?'<table class="bud-lignes"><tr><th>Désignation</th><th class="w-qte">Quantité</th><th class="w-pu">Tarif unit.</th><th class="w-pu">Forfait</th><th class="w-x"></th></tr>'
+        +r.lignes.map(function(l,j){var q=p+'.lignes.'+j;return '<tr><td>'+champ(q+'.nom',l.nom)+'</td><td>'+champ(q+'.qte',l.qte,{cls:'num',num:1})+'</td><td>'+champ(q+'.pu',l.pu,{cls:'num',num:1})+'</td><td>'+champ(q+'.total',l.total,{cls:'num',num:1})+'</td><td>'+suppr(q)+'</td></tr>';}).join('')
+        +'</table>':'<div class="bud-vide">Aucune ligne d\'affichage.</div>')
+      +'<button class="btn-link" data-cfg="ajout-affichage-ligne" data-p="'+esc(p)+'.lignes">+ Ligne</button></div>';
+  });
+  h+='<button class="btn btn-sm" data-cfg="ajout-regle">+ Règle pour une ville ou une salle</button></div>';
+  // Correspondances
+  h+='<div class="bc-sec"><div class="nl-label">Noms de salles différents dans la trame</div><div class="modal-note">Quand la liste de la trame nomme une salle autrement que l\'appli.</div><table class="bud-lignes"><tr><th>Dans l\'appli</th><th>Dans la trame</th><th class="w-x"></th></tr>'
+    +cfg.alias.map(function(a,i){return '<tr><td>'+champ('alias.'+i+'.app',a.app)+'</td><td>'+champ('alias.'+i+'.trame',a.trame)+'</td><td>'+suppr('alias.'+i)+'</td></tr>';}).join('')
+    +'</table><button class="btn-link" data-cfg="ajout-alias">+ Correspondance</button></div>';
+  el.innerHTML=h+'</div>';
 }
+function budChemin(o,ch){return ch===''?o:ch.split('.').reduce(function(x,k){return x==null?x:x[k];},o);}
+(function(){
+  var el=document.getElementById('budget-config');
+  function modifie(rendre){scheduleSave('budget_templates');budSallesTrame=null;if(rendre)renderBudgetConfig();}
+  el.addEventListener('input',function(e){
+    var t=e.target,p=t.dataset.p;if(!p||t.tagName==='SELECT')return;
+    var ks=p.split('.'),k=ks.pop(),o=budChemin(budgetConfig,ks.join('.'));if(!o)return;
+    o[k]=t.dataset.num?(t.value.trim()===''?'':+t.value.replace(',','.')):t.value;
+    modifie(false);
+  });
+  el.addEventListener('change',function(e){
+    var t=e.target,p=t.dataset.p;if(!p||t.tagName!=='SELECT')return;
+    var ks=p.split('.'),k=ks.pop(),o=budChemin(budgetConfig,ks.join('.'));if(!o)return;
+    o[k]=t.dataset.bool?t.value==='1':t.value;
+    modifie(false);
+  });
+  el.addEventListener('click',async function(e){
+    var b=e.target.closest('[data-cfg]');if(!b)return;
+    var a=b.dataset.cfg,p=b.dataset.p,cfg=budgetConfig;
+    if(a==='tester'){
+      var st=document.getElementById('bc-script-statut');budSallesTrame=null;st.textContent='Test en cours…';
+      try{var d=await budLireTrame();st.textContent='Le script répond (version '+d.version+') : trame « '+d.trame+' », '+(d.salles||[]).length+' entrées dans la liste des salles.';}
+      catch(err){st.textContent='Pas de réponse exploitable : '+(err.message||err)+'. Vérifie l\'adresse (elle doit finir par /exec) et le déploiement.';}
+      return;
+    }
+    if(a==='suppr'){
+      var ks=p.split('.'),i=+ks.pop(),liste=budChemin(cfg,ks.join('.'));
+      if(!Array.isArray(liste))return;
+      if(ks.length===1&&ks[0]==='tranches'&&liste.length<2)return;
+      if(!await customConfirm('Supprimer cet élément de la configuration ?','Supprimer'))return;
+      liste.splice(i,1);return modifie(true);
+    }
+    if(a==='ajout-tranche'){cfg.tranches.splice(cfg.tranches.length-1,0,{id:uid('tr'),nom:'Nouvelle tranche',plafond:'',inclus:false,sponsoPct:100,protege:0,radio:[]});return modifie(true);}
+    if(a==='ajout-radio'){budChemin(cfg,p).push({id:uid('ra'),nom:'',type:''});return modifie(true);}
+    if(a==='ajout-offerte'){cfg.offertes.push({id:uid('of'),nom:''});return modifie(true);}
+    if(a==='ajout-affichage-ligne'){budChemin(cfg,p).push({id:uid('al'),nom:'',qte:'',pu:'',total:''});return modifie(true);}
+    if(a==='ajout-regle'){cfg.affichage.push({id:uid('af'),ville:'',salle:'',lignes:[]});return modifie(true);}
+    if(a==='ajout-alias'){cfg.alias.push({id:uid('as'),app:'',trame:''});return modifie(true);}
+  });
+})();
 
 // render() ne dessine plus que l'onglet visible, les autres le sont a leur
 // ouverture (showTab). Avant le 23/09, chaque synchro et chaque fermeture de
 // fiche redessinaient les huit vues, onglets masques compris, et le widget
 // Taches et les filtres deux fois chacun. Le travail sur les donnees (taches
 // recurrentes, posts auto) reste fait a chaque fois, quel que soit l'onglet.
-var TAB_RENDER={kanban:renderKanban,concerts:renderConcerts,past:renderPastConcerts,process:renderProcess,taches:renderTaches,rs:renderRS,sponso:renderSponso};
+var TAB_RENDER={kanban:renderKanban,concerts:renderConcerts,past:renderPastConcerts,process:renderProcess,taches:renderTaches,rs:renderRS,sponso:renderSponso,budgetconfig:renderBudgetConfig};
 function renderTab(id){
   if(!appDataLoaded)return; // avant le chargement, on garde les squelettes
   var f=TAB_RENDER[id];if(f)f();
@@ -5256,7 +5366,6 @@ function cmdkPick(i){var it=cmdkItems[i];if(!it)return;closeCmdK();it.action();}
     var t=document.activeElement,tag=t&&t.tagName;
     if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable))return;
     if(document.querySelector('.tk-modal.open,.rs-modal.open'))return;
-    var bo=document.getElementById('budget-overlay');if(bo&&bo.style.display==='flex')return;
     if(e.key==='/'){e.preventDefault();openCmdK();return;}
     if(e.key==='?'){e.preventDefault();openHelp();return;}
     var tabKeys={'1':'rs','2':'kanban','3':'concerts','4':'taches'};
@@ -5294,940 +5403,6 @@ function toggleFicheWide(){
 if(!location.hash)pushRoute('kanban',null,true);
 applyRoute();
 startApp();
-</script>
-<!-- ── MODAL BUDGET PROMO ───────────────────────────────── -->
-<div id="budget-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center">
-  <div id="budget-box" style="background:var(--surface);border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.18);width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;padding:0">
-    <!-- Header -->
-    <div style="padding:18px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-size:15px;font-weight:700;color:var(--text)"><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg> Créer le budget promo</div>
-        <div id="budget-subtitle" style="font-size:12px;color:var(--text-3);margin-top:2px"></div>
-      </div>
-      <button onclick="closeBudgetModal()" class="fiche-close" title="Fermer"><svg class="ico" aria-hidden="true"><use href="#i-x"></use></svg></button>
-    </div>
-    <!-- Connexion Google -->
-    <div id="budget-auth-section" style="padding:16px 24px;border-bottom:1px solid var(--border-light)">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div id="budget-auth-status" style="width:8px;height:8px;border-radius:50%;background:var(--border-strong);flex-shrink:0"></div>
-        <div style="flex:1">
-          <div id="budget-auth-label" style="font-size:12px;font-weight:600;color:var(--text)">Non connecté à Google</div>
-          <div id="budget-auth-sub" style="font-size:11px;color:var(--text-3)">Nécessaire pour créer le Sheet dans ton Drive</div>
-        </div>
-        <button id="budget-auth-btn" onclick="budgetGoogleAuth()" style="padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:600;cursor:pointer;color:var(--text)">Se connecter</button>
-      </div>
-      <div id="budget-client-id-wrap" style="margin-top:10px;display:none">
-        <label style="font-size:11px;color:var(--text-3);display:block;margin-bottom:4px">CLIENT ID GOOGLE OAUTH 2.0</label>
-        <div style="display:flex;gap:6px">
-          <input id="budget-client-id" type="text" placeholder="xxxx.apps.googleusercontent.com" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:monospace;background:var(--bg)">
-          <button onclick="budgetSaveClientId()" style="padding:6px 12px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer">OK</button>
-        </div>
-        <div style="font-size:11px;color:var(--text-3);margin-top:4px">
-          <a href="https://console.cloud.google.com/apis/credentials" target="_blank" style="color:var(--accent)">Google Cloud Console</a> → Créer des identifiants → ID client OAuth → Application Web → Ajouter <code>http://localhost</code> (ou ton domaine) aux origines autorisées
-        </div>
-      </div>
-    </div>
-    <!-- Formulaire -->
-    <div style="padding:16px 24px">
-      <!-- Infos pré-remplies -->
-      <div style="background:var(--bg);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text-2)">
-        <div style="font-weight:700;color:var(--text);margin-bottom:6px;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Infos depuis la fiche</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
-          <div><svg class="ico" aria-hidden="true"><use href="#i-mic"></use></svg> <span id="bud-info-art" style="font-weight:600;color:var(--text)"></span></div>
-          <div><svg class="ico" aria-hidden="true"><use href="#i-map-pin"></use></svg> <span id="bud-info-ville"></span></div>
-          <div><svg class="ico" aria-hidden="true"><use href="#i-calendar"></use></svg> <span id="bud-info-date"></span></div>
-          <div id="bud-info-flags" style="display:flex;gap:4px;flex-wrap:wrap"></div>
-        </div>
-      </div>
-      <!-- Budget alloué -->
-      <div style="margin-bottom:14px">
-        <label style="font-size:12px;font-weight:700;color:var(--text);display:block;margin-bottom:6px">Budget alloué (€ HT) <span style="color:var(--red)">*</span></label>
-        <div class="modal-actions-group">
-          <input id="bud-montant" type="number" min="0" step="100" placeholder="ex: 3000" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;background:var(--bg)">
-        </div>
-        <div id="bud-template-hint" style="margin-top:6px;font-size:11px;padding:5px 10px;border-radius:6px;display:none"></div>
-      </div>
-      <!-- Style musical -->
-      <div style="margin-bottom:14px">
-        <label style="font-size:12px;font-weight:700;color:var(--text);display:block;margin-bottom:6px">Style musical</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap" id="bud-style-btns">
-          <button class="bud-style-btn" data-style="rap" onclick="budSelectStyle(this)">Rap / Hip-hop</button>
-          <button class="bud-style-btn" data-style="pop" onclick="budSelectStyle(this)">Pop</button>
-          <button class="bud-style-btn" data-style="variete" onclick="budSelectStyle(this)">Variété</button>
-          <button class="bud-style-btn" data-style="autre" onclick="budSelectStyle(this)">Autre</button>
-        </div>
-      </div>
-      <!-- Aperçu template -->
-      <div id="bud-template-preview" style="display:none;margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
-        <div style="padding:8px 12px;background:var(--bg);border-bottom:1px solid var(--border);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3)">Lignes pré-remplies selon le template</div>
-        <div id="bud-template-lines" style="padding:10px 12px;display:flex;flex-direction:column;gap:3px;font-size:12px"></div>
-      </div>
-    </div>
-    <!-- Footer -->
-    <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;align-items:center">
-      <div id="budget-status-msg" style="flex:1;font-size:12px;color:var(--text-3)"></div>
-      <button onclick="closeBudgetModal()" style="padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:12px;cursor:pointer">Annuler</button>
-      <button id="budget-create-btn" onclick="budgetCreateSheet()" style="padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer;opacity:.5" disabled>Créer le Google Sheet</button>
-    </div>
-  </div>
-</div>
-
-
-<script>
-// ── BUDGET PROMO — GOOGLE SHEETS ─────────────────────────
-
-var BUDGET_CLIENT_ID = localStorage.getItem('budget_goog_client_id') || '';
-var budgetGToken = null;
-var budSelectedStyle = null;
-
-// Templates selon budget + style + salle
-// ── Lignes FIXES présentes dans TOUS les budgets ──────────────────────────
-var LIGNES_FIXES_DIGITAL = [
-  {nom:'Newsletter Please Please mensuelle',    statut:'Engag\u00e9'},
-  {nom:'Int\u00e9gration agenda culturels',     statut:'Engag\u00e9'},
-  {nom:'Post/Stories r\u00e9seaux sociaux Please Please', statut:'Engag\u00e9'}
-];
-
-// ── Règles par ville/salle ────────────────────────────────────────────────
-var REGLES_SALLES = {
-  'zenith': {
-    affichage: [
-      {nom:'Collage grandes affiches (80x120)', qte:400, pu:1.1},
-      {nom:'Collage petites affiches (60x40)',  qte:300, pu:1.0},
-      {nom:'Impression de bandeaux',            qte:700, pu:0.3},
-      {nom:'Forfait impression et diffusion flyer Z\u00e9nith', qte:50000, total:200}
-    ]
-  },
-  'reims': {
-    affichage: [
-      {nom:'Collage grandes affiches (80x120)', qte:600, pu:1.1},
-      {nom:'Impression de bandeaux',            qte:600, pu:0.3},
-      {nom:'Forfait impression et diffusion flyer Z\u00e9nith', qte:50000, total:200}
-    ]
-  },
-  'default': {
-    affichage: [
-      {nom:'Collage grandes affiches (80x120)', qte:400, pu:1.1},
-      {nom:'Collage petites affiches (60x40)',  qte:300, pu:1.0},
-      {nom:'Impression de bandeaux',            qte:700, pu:0.3}
-    ]
-  }
-};
-
-function getSalleKey(ville) {
-  if (!ville) return 'default';
-  var v = ville.toLowerCase();
-  if (v.indexOf('zenith') >= 0 || v.indexOf('z\u00e9nith') >= 0) return 'zenith';
-  if (v.indexOf('reims') >= 0) return 'reims';
-  return 'default';
-}
-
-function getLignesAffichage(ville) {
-  var key = getSalleKey(ville);
-  return JSON.parse(JSON.stringify(REGLES_SALLES[key].affichage));
-}
-
-function getLignesDigital(base, skipSp) {
-  var lignes = (base.digital || []).map(function(l){
-    return Object.assign({}, l, {statut:'Pr\u00e9visionnel'});
-  });
-  if (skipSp) {
-    // Sponso prod : une seule ligne avec mention
-    lignes = [{nom:'Sponsorisation r\u00e9seaux sociaux', comment:'G\u00e9r\u00e9 par la prod', statut:'Pr\u00e9visionnel'}];
-  }
-  // Toujours ajouter les 3 lignes fixes en Engagé
-  return lignes.concat(JSON.parse(JSON.stringify(LIGNES_FIXES_DIGITAL)));
-}
-
-function coutAffichage(ville) {
-  var key = getSalleKey(ville);
-  var lignes = REGLES_SALLES[key].affichage;
-  return lignes.reduce(function(sum, l) {
-    if (l.total) return sum + l.total;
-    return sum + (l.qte||0) * (l.pu||0);
-  }, 0);
-}
-
-function arrondiCentaine(n) {
-  return Math.max(0, Math.round(n / 100) * 100);
-}
-
-function getBudgetTemplate(montant, style, ville, skipAffichage, skipSp) {
-  var tplKey = montant < 1500 ? 'small' : montant <= 4000 ? 'standard' : 'large';
-  var base = JSON.parse(JSON.stringify(BUDGET_TEMPLATES[tplKey]));
-
-  // ── Street
-  var street = skipAffichage ? [] : getLignesAffichage(ville);
-  var coutAff = skipAffichage ? 0 : coutAffichage(ville);
-  var resteApresAff = Math.max(0, montant - coutAff);
-
-  // ── Calcul sponso et DOOH selon tranche
-  var sponsoTotal = 0, doohTotal = 0, doohProtege = 0;
-
-  if (montant < 1500) {
-    // Tout le reste en sponso 3 vagues
-    sponsoTotal = resteApresAff;
-  } else if (montant <= 4000) {
-    // 40% sponso, 60% DOOH
-    sponsoTotal = arrondiCentaine(resteApresAff * 0.40);
-    doohTotal   = resteApresAff - sponsoTotal;
-  } else {
-    // 2500€ DOOH protégé + reste en sponso 3 vagues
-    doohProtege = 2500;
-    sponsoTotal = Math.max(0, resteApresAff - doohProtege);
-  }
-
-  // Vagues sponso : montant identique par vague, arrondi à la centaine inférieure
-  var vague = Math.floor(sponsoTotal / 3 / 100) * 100; // centaine inférieure identique
-  var v1 = vague, v2 = vague, v3 = vague;
-
-  // ── Digital
-  var digitalLines = [];
-  if (skipSp) {
-    digitalLines = [{nom:'Sponsorisation r\u00e9seaux sociaux', comment:'G\u00e9r\u00e9 par la prod', statut:'Pr\u00e9visionnel'}];
-  } else if (sponsoTotal > 0) {
-    if (v1 > 0) digitalLines.push({nom:'Sponsorisation Instagram / Facebook vague 1', total:v1, statut:'Pr\u00e9visionnel'});
-    if (v2 > 0) digitalLines.push({nom:'Sponsorisation Instagram / Facebook vague 2', total:v2, statut:'Pr\u00e9visionnel'});
-    if (v3 > 0) digitalLines.push({nom:'Sponsorisation Instagram / Facebook vague 3', total:v3, statut:'Pr\u00e9visionnel'});
-  }
-  // Lignes fixes toujours en Engagé
-  var digital = digitalLines.concat(JSON.parse(JSON.stringify(LIGNES_FIXES_DIGITAL)));
-
-  // ── Espaces (DOOH)
-  var espaces = [];
-  if (doohTotal > 0) {
-    espaces.push({nom:'Campagne DOOH', presta:'JC Decaux', total:doohTotal, statut:'Pr\u00e9visionnel'});
-  }
-  if (doohProtege > 0) {
-    street.push({nom:'Affichage prot\u00e9g\u00e9', total:doohProtege, statut:'Pr\u00e9visionnel'});
-  }
-
-  // ── Radio
-  var radio = (base.radio || []).map(function(l){
-    return Object.assign({}, l, {statut:'Pr\u00e9visionnel'});
-  });
-
-  // ── Ajustements style musical
-  var adj = STYLE_ADJUSTMENTS[style] || {};
-  if (adj.radio) radio = radio.concat(adj.radio.map(function(l){ return Object.assign({},l,{statut:'Pr\u00e9visionnel'}); }));
-  if (adj.digital) digital = digital.concat(adj.digital.map(function(l){ return Object.assign({},l,{statut:'Pr\u00e9visionnel'}); }));
-
-  // ── OP Media spécifiques à la salle
-  var salleKey = getSalleKey(ville);
-  var salleRadio = (REGLES_SALLES[salleKey] && REGLES_SALLES[salleKey].radio) || [];
-  if (salleRadio.length) radio = radio.concat(salleRadio.map(function(l){ return Object.assign({},l,{statut:'Pr\u00e9visionnel'}); }));
-
-  return {
-    label: base.label,
-    color: base.color,
-    lines: { street:street, espaces:espaces, digital:digital, radio:radio }
-  };
-}
-
-// ── Templates budget selon montant ────────────────────────────────────────
-var BUDGET_TEMPLATES = {
-  small: {
-    label: 'Template Petit budget (< 1 500€)',
-    color: '#93c47d',
-    digital: [
-      {nom:'Sponsorisation Instagram / Facebook vague 1', total:100},
-      {nom:'Sponsorisation Instagram / Facebook vague 2', total:100}
-    ],
-    radio: []
-  },
-  standard: {
-    label: 'Template Standard (1 500–4 000€)',
-    color: '#6fa8dc',
-    espaces: [
-      {nom:'Campagne DOOH', presta:'JC Decaux', total:1400}
-    ],
-    digital: [
-      {nom:'Sponsorisation Instagram / Facebook vague 1', total:200},
-      {nom:'Sponsorisation Instagram / Facebook vague 2', total:200},
-      {nom:'Sponsorisation Instagram / Facebook vague 3', total:200}
-    ],
-    radio: [
-      {nom:'Jeu concours Bien Public', type:'2x2 places'},
-      {nom:'OP Speak + Spot radio locale', type:'5x2 places'},
-      {nom:'Jeu concours web local', type:'1x2 places'}
-    ]
-  },
-  large: {
-    label: 'Template Grand budget (> 4 000€)',
-    color: '#e06666',
-    espaces: [
-      {nom:'Campagne DOOH', presta:'JC Decaux', total:2000},
-      {nom:'Encart presse', presta:'Bien Public', total:500}
-    ],
-    digital: [
-      {nom:'Sponsorisation Instagram / Facebook vague 1', total:300},
-      {nom:'Sponsorisation Instagram / Facebook vague 2', total:300},
-      {nom:'Sponsorisation Instagram / Facebook vague 3', total:300},
-      {nom:'Sponsorisation TikTok', total:200},
-      {nom:'Partenariat influenceur(s)', total:500}
-    ],
-    radio: [
-      {nom:'Jeu concours Bien Public', type:'2x2 places'},
-      {nom:'OP Speak + Spot Cherie FM', type:'5x2 places'},
-      {nom:'OP Speak + Spot K6FM', type:'5x2 places'},
-      {nom:'OP Speak + Spot Ici Bourgogne', type:'5x2 places'},
-      {nom:"OP McDonald's", type:'2x2 places'},
-      {nom:"Jeu concours J'aime Dijon", type:'1x2 places'}
-    ]
-  }
-};
-
-// ── Ajustements par style musical ─────────────────────────────────────────
-var STYLE_ADJUSTMENTS = {
-  rap:     {},
-  pop:     {},
-  variete: {},
-  autre:   {}
-};
-
-
-async function openBudgetModal() {
-  if (!currentFicheId) return;
-  var c = concerts.find(function(x){return x.id===currentFicheId;});
-  if (!c) return;
-  if (c.budget) {
-    // Seuls les liens http(s) s'ouvrent : un "javascript:..." saisi dans le
-    // champ s'executerait sinon dans la page de celui qui clique.
-    var lien = safeUrl(c.budget);
-    if (lien) { window.open(lien, '_blank', 'noopener'); return; }
-    if (!await customConfirm('Le champ « Lien budget » contient « '+c.budget+' », qui n\'est pas un lien. Créer le Google Sheet remplacera ce texte par le lien du Sheet.', 'Continuer')) return;
-  }
-
-  // Remplir les infos fiche
-  document.getElementById('bud-info-art').textContent = c.art || '—';
-  document.getElementById('bud-info-ville').textContent = c.ville || '—';
-  document.getElementById('bud-info-date').textContent = c.dc ? new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : '—';
-  var flags = document.getElementById('bud-info-flags');
-  flags.innerHTML = '';
-  if (taskStates['skip-'+c.id+'-sp']) flags.innerHTML += '<span style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);border-radius:20px;padding:1px 7px;font-size:11px;font-weight:700">Sponso prod</span>';
-  if (taskStates['skip-'+c.id+'-col']) flags.innerHTML += '<span style="background:var(--bg);color:var(--text-3);border:1px solid var(--border);border-radius:20px;padding:1px 7px;font-size:11px;font-weight:700">Pas d\'affiche</span>';
-
-  document.getElementById('budget-subtitle').textContent = c.art + (c.ville ? ' · ' + c.ville : '') + (c.dc ? ' · ' + new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}) : '');
-  document.getElementById('bud-montant').value = '';
-  document.getElementById('bud-template-preview').style.display = 'none';
-  document.getElementById('bud-template-hint').style.display = 'none';
-  document.getElementById('budget-status-msg').textContent = '';
-  budSelectedStyle = null;
-  document.querySelectorAll('.bud-style-btn').forEach(function(b){b.classList.remove('active');});
-
-  // Auth state
-  updateBudgetAuthUI();
-
-  document.getElementById('budget-overlay').style.display = 'flex';
-}
-
-function closeBudgetModal() {
-  document.getElementById('budget-overlay').style.display = 'none';
-}
-
-function budSelectStyle(btn) {
-  document.querySelectorAll('.bud-style-btn').forEach(function(b){b.classList.remove('active');});
-  btn.classList.add('active');
-  budSelectedStyle = btn.dataset.style;
-  budUpdatePreview();
-}
-
-document.addEventListener('DOMContentLoaded', function(){
-  var inp = document.getElementById('bud-montant');
-  if (inp) inp.addEventListener('input', budUpdatePreview);
-});
-
-function budUpdatePreview() {
-  var montant = parseFloat(document.getElementById('bud-montant').value) || 0;
-  var hint = document.getElementById('bud-template-hint');
-  var preview = document.getElementById('bud-template-preview');
-  var createBtn = document.getElementById('budget-create-btn');
-
-  if (!montant) { hint.style.display='none'; preview.style.display='none'; createBtn.disabled=true; createBtn.style.opacity='.5'; return; }
-
-  var tplKey = montant < 1500 ? 'small' : montant <= 4000 ? 'standard' : 'large';
-  var tplInfo = BUDGET_TEMPLATES[tplKey];
-  hint.style.display = 'block';
-  hint.style.background = 'var(--accent-soft)';
-  hint.style.color = 'var(--accent)';
-  hint.textContent = tplInfo.label;
-
-  if (!budSelectedStyle) { preview.style.display='none'; createBtn.disabled=true; createBtn.style.opacity='.5'; return; }
-
-  var _c = currentFicheId ? concerts.find(function(x){return x.id===currentFicheId;}) : null;
-  var tpl = getBudgetTemplate(montant, budSelectedStyle, _c&&_c.ville||'', !!taskStates['skip-'+(_c&&_c.id||'')+'-col'], !!taskStates['skip-'+(_c&&_c.id||'')+'-sp']);
-  var lines = document.getElementById('bud-template-lines');
-  var sections = [{key:'street',label:'Street Marketing'},{key:'espaces',label:"Achat d'espaces"},{key:'digital',label:'Digital'},{key:'radio',label:'Radio / TV / Presse'}];
-  var html = '';
-  sections.forEach(function(s){
-    var rows = tpl.lines[s.key];
-    if (!rows || !rows.length) return;
-    html += '<div style="font-weight:700;color:var(--text-3);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-top:6px;margin-bottom:2px">'+s.label+'</div>';
-    rows.forEach(function(r){
-      var price = r.total ? r.total+'€' : (r.qte && r.pu ? (r.qte*r.pu).toFixed(0)+'€' : '—');
-      html += '<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border-light)">'
-        +'<span style="color:var(--text-2)">'+esc(r.nom)+'</span>'
-        +'<span style="font-weight:600;color:var(--text);min-width:40px;text-align:right">'+esc(price)+'</span></div>';
-    });
-  });
-  lines.innerHTML = html;
-  preview.style.display = 'block';
-  createBtn.disabled = false;
-  createBtn.style.opacity = '1';
-}
-
-// ── GOOGLE AUTH ───────────────────────────────────────────
-
-function updateBudgetAuthUI() {
-  var status = document.getElementById('budget-auth-status');
-  var label = document.getElementById('budget-auth-label');
-  var sub = document.getElementById('budget-auth-sub');
-  var btn = document.getElementById('budget-auth-btn');
-  var cidWrap = document.getElementById('budget-client-id-wrap');
-
-  if (budgetGToken) {
-    status.style.background = 'var(--green)';
-    label.textContent = 'Connecté à Google ✓';
-    sub.textContent = 'Prêt à créer le Sheet dans ton Drive';
-    btn.textContent = 'Déconnecter';
-    btn.onclick = function(){ budgetGToken=null; updateBudgetAuthUI(); };
-    cidWrap.style.display = 'none';
-  } else if (BUDGET_CLIENT_ID) {
-    status.style.background = 'var(--amber)';
-    label.textContent = 'Client ID configuré';
-    sub.textContent = 'Clique sur "Se connecter" pour autoriser l\'accès';
-    btn.textContent = 'Se connecter';
-    btn.onclick = budgetGoogleAuth;
-    cidWrap.style.display = 'none';
-  } else {
-    status.style.background = 'var(--red)';
-    label.textContent = 'Client ID manquant';
-    sub.textContent = 'Saisis ton Client ID Google OAuth pour continuer';
-    btn.textContent = 'Configurer';
-    btn.onclick = function(){ cidWrap.style.display = cidWrap.style.display==='none'?'block':'none'; };
-    cidWrap.style.display = 'block';
-  }
-}
-
-function budgetSaveClientId() {
-  var val = document.getElementById('budget-client-id').value.trim();
-  if (!val) return;
-  BUDGET_CLIENT_ID = val;
-  localStorage.setItem('budget_goog_client_id', val);
-  updateBudgetAuthUI();
-}
-
-function budgetGoogleAuth() {
-  if (!BUDGET_CLIENT_ID) { showToast('Configure d\'abord ton Client ID Google.'); return; }
-  var redirect = window.location.origin === 'http://localhost:8080' 
-    ? 'http://localhost:8080/index.html'
-    : 'https://dashboardppcomm.netlify.app';
-  var scope = encodeURIComponent('https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file');
-  var url = 'https://accounts.google.com/o/oauth2/v2/auth'
-    + '?client_id=' + encodeURIComponent(BUDGET_CLIENT_ID)
-    + '&redirect_uri=' + encodeURIComponent(redirect)
-    + '&response_type=token'
-    + '&scope=' + scope;
-  // Stocker qu'on attend un token OAuth + l'ID du concert en cours
-  sessionStorage.setItem('budget_oauth_pending','1');
-  sessionStorage.setItem('budget_oauth_concert', currentFicheId || '');
-  window.location.href = url;
-}
-
-// Récupérer le token OAuth au chargement si on revient d'une auth Google
-(function(){
-  var hash = window.location.hash;
-  if (hash && hash.indexOf('access_token') >= 0 && hash.indexOf('refresh_token') < 0 && hash.indexOf('type=recovery') < 0) {
-    var params = {};
-    hash.substring(1).split('&').forEach(function(p){ var kv=p.split('='); params[kv[0]]=decodeURIComponent(kv[1]||''); });
-    if (params.access_token) {
-      budgetGToken = params.access_token;
-      // Nettoyer l'URL
-      history.replaceState(null,'',window.location.pathname);
-      // Ré-ouvrir le modal budget si on était en train d'en créer un.
-      // On attend que le chargement initial des donnees soit reellement
-      // termine (au lieu d'un delai fixe) : sur un reseau lent, 500ms ne
-      // suffit pas toujours et openFiche() echouait silencieusement car
-      // "concerts" etait encore vide.
-      if (sessionStorage.getItem('budget_oauth_pending')) {
-        var concertId = sessionStorage.getItem('budget_oauth_concert');
-        sessionStorage.removeItem('budget_oauth_pending');
-        sessionStorage.removeItem('budget_oauth_concert');
-        var waitForDataThenReopen = function(){
-          if(!appDataLoaded){ setTimeout(waitForDataThenReopen, 200); return; }
-          updateBudgetAuthUI();
-          // Rouvrir la fiche concert puis le modal budget
-          if (concertId) {
-            openFiche(concertId);
-            setTimeout(function(){ openBudgetModal(); }, 300);
-          }
-        };
-        waitForDataThenReopen();
-      }
-    }
-  }
-})();
-
-// ── CRÉATION DU GOOGLE SHEET ──────────────────────────────
-
-function budgetCreateSheet() {
-  if (!budgetGToken) { showToast('Connecte-toi à Google d\'abord.'); return; }
-  var montant = parseFloat(document.getElementById('bud-montant').value);
-  if (!montant || !budSelectedStyle) { showToast('Remplis le budget et le style musical.'); return; }
-
-  var c = concerts.find(function(x){return x.id===currentFicheId;});
-  if (!c) return;
-
-  var btn = document.getElementById('budget-create-btn');
-  btn.disabled = true; btn.textContent = '⏳ Création...';
-  document.getElementById('budget-status-msg').textContent = 'Création du Google Sheet en cours...';
-
-  var tpl = getBudgetTemplate(montant, budSelectedStyle, c&&c.ville||'', !!taskStates['skip-'+(c&&c.id||'')+'-col'], !!taskStates['skip-'+(c&&c.id||'')+'-sp']);
-  var skipSp = !!taskStates['skip-'+c.id+'-sp'];
-  var skipCol = !!taskStates['skip-'+c.id+'-col'];
-
-  // Chaque section du Google Sheet a une mise en page figee de 10 lignes max
-  // (formules de somme sur une plage fixe). Une section qui deborde serait
-  // silencieusement tronquee a la generation : on bloque plutot avec un
-  // message clair pour que ca ne parte jamais inapercu.
-  var sectionsATesters={'Street marketing':tpl.lines.street,'Achat d\'espaces':tpl.lines.espaces,'Digital':tpl.lines.digital,'Radio/TV/Presse':tpl.lines.radio};
-  var sectionEnTrop=Object.keys(sectionsATesters).find(function(k){return (sectionsATesters[k]||[]).length>10;});
-  if(sectionEnTrop){
-    showToast('La section "'+sectionEnTrop+'" contient plus de 10 lignes ('+sectionsATesters[sectionEnTrop].length+'). Le modele de feuille ne peut en afficher que 10 par section : reduis le nombre de lignes dans la config Budget avant de creer le Sheet, sinon les lignes en trop seraient perdues.');
-    btn.disabled=false;btn.textContent='Créer le Google Sheet';
-    return;
-  }
-
-  var dcDate = c.dc ? new Date(c.dc) : null;
-  var dateStr = dcDate ? dcDate.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
-  var dcISO = dcDate ? dcDate.toISOString().slice(0,10).replace(/-/g,'') : '';
-  var artNom = (c.art||'ARTISTE').toUpperCase();
-  var villeNom = c.ville ? c.ville.split('/')[0].trim().toUpperCase() : 'LIEU';
-  var sheetTitle = dcISO + '_' + artNom + ' ' + villeNom + '_BUDGET PROMO';
-
-  var rows = buildSheetData(c, tpl, montant, dateStr, skipSp, skipCol);
-  console.log('=== BUDGET DEBUG ===');
-  console.log('Formule B9:', rows.values[8][1]);
-  console.log('Nb lignes:', rows.values.length);
-
-  // 1) Créer le spreadsheet
-  fetch('https://sheets.googleapis.com/v4/spreadsheets', {
-    method: 'POST',
-    headers: {'Authorization':'Bearer '+budgetGToken,'Content-Type':'application/json'},
-    body: JSON.stringify({
-      properties: {title: sheetTitle, locale: 'fr_FR'},
-      sheets: [{properties: {title: 'PREV', gridProperties: {rowCount: 120, columnCount: 9}}}]
-    })
-  })
-  .then(function(r){return r.json();})
-  .then(function(data){
-    console.log('1) Spreadsheet créé:', data.spreadsheetId, '— erreur:', data.error);
-    if (!data.spreadsheetId) throw new Error('Création spreadsheet: '+JSON.stringify(data));
-    var sid = data.spreadsheetId;
-    var sheetId = data.sheets[0].properties.sheetId;
-
-    // 2) Écrire les données
-    return fetch('https://sheets.googleapis.com/v4/spreadsheets/'+sid+'/values/PREV!A1:I120?valueInputOption=USER_ENTERED', {
-      method: 'PUT',
-      headers: {'Authorization':'Bearer '+budgetGToken,'Content-Type':'application/json'},
-      body: JSON.stringify({range:'PREV!A1:I120', majorDimension:'ROWS', values: rows.values})
-    })
-    .then(function(r){return r.json();})
-    .then(function(writeRes){
-      console.log('2) Données écrites:', writeRes.updatedCells, 'cellules — erreur:', writeRes.error);
-      if(writeRes.error) throw new Error('Écriture données: '+JSON.stringify(writeRes.error));
-      // 3) Appliquer le formatage
-      return applySheetFormatting(sid, sheetId, rows);
-    })
-    .then(function(fmtRes){
-      console.log('3) Formatage appliqué — erreur:', fmtRes && fmtRes.error);
-      if(fmtRes && fmtRes.error) console.warn('Détail erreur formatage:', JSON.stringify(fmtRes.error));
-      // 4) Insérer le logo PP Family en A1:C4
-      return insertLogo(sid, sheetId);
-    })
-    .then(function(){
-      var url = 'https://docs.google.com/spreadsheets/d/'+sid+'/edit';
-      // Concert relu par son id : une synchro pendant la creation (plusieurs
-      // secondes) a pu remplacer l'objet charge au debut.
-      var cBud = concerts.find(function(x){return x.id===c.id;}) || c;
-      cBud.budget = url;
-      scheduleSave('concerts');
-      if (document.getElementById('fi-budget')) document.getElementById('fi-budget').value = url;
-      renderConcerts();
-      document.getElementById('budget-status-msg').innerHTML = 'Sheet créé ✓ <a href="'+url+'" target="_blank" style="color:var(--accent);font-weight:700">Ouvrir dans Google Sheets '+icon('arrow-up-right')+'</a>';
-      btn.textContent = 'Créer le Google Sheet';
-      btn.disabled = false;
-    });
-  })
-  .catch(function(err){
-    console.error('ERREUR CATCH:', err);
-    document.getElementById('budget-status-msg').textContent = 'Erreur : ' + (err.message||err);
-    btn.textContent = 'Créer le Google Sheet';
-    btn.disabled = false;
-  });
-}
-
-function buildSheetData(c, tpl, montant, dateStr, skipSp, skipCol) {
-  var streetRows = tpl.lines.street || [];
-  var espaceRows = tpl.lines.espaces || [];
-  var digitalRows = tpl.lines.digital || [];
-  var radioRows = tpl.lines.radio || [];
-
-  // Formule française exacte du modèle — fonctionne avec locale fr_FR
-  var e = 'Engag\u00e9';
-  var engFormula = '=SI(H13="'+e+'";F13;0)+SI(H14="'+e+'";F14;0)+SI(H15="'+e+'";F15;0)+SI(H16="'+e+'";F16;0)+SI(H17="'+e+'";F17;0)+SI(H18="'+e+'";F18;0)+SI(H19="'+e+'";F19;0)+SI(H20="'+e+'";F20;0)+SI(H21="'+e+'";F21;0)+SI(H22="'+e+'";F22;0)+SI(H27="'+e+'";F27;0)+SI(H28="'+e+'";F28;0)+SI(H29="'+e+'";F29;0)+SI(H30="'+e+'";F30;0)+SI(H31="'+e+'";F31;0)+SI(H32="'+e+'";F32;0)+SI(H33="'+e+'";F33;0)+SI(H34="'+e+'";F34;0)+SI(H35="'+e+'";F35;0)+SI(H36="'+e+'";F36;0)+SI(H41="'+e+'";F41;0)+SI(H42="'+e+'";F42;0)+SI(H43="'+e+'";F43;0)+SI(H44="'+e+'";F44;0)+SI(H45="'+e+'";F45;0)+SI(H46="'+e+'";F46;0)+SI(H47="'+e+'";F47;0)+SI(H48="'+e+'";F48;0)+SI(H49="'+e+'";F49;0)+SI(H50="'+e+'";F50;0)';
-
-  var V = [];
-  V.push(['','','',c.art||'','','','','','']);
-  V.push(['','','',c.ville||'','','','','','']);
-  V.push(['','','',dateStr,'','','','','']);
-  V.push(['','','','Promotion Locale','','','','','']);
-  V.push(['','','','','','','','','']);
-
-  V.push(['R\u00e9cap budget promo','','','INFORMATIONS GLOBALES','','','','Kit Promo','']);
-  V.push(['Budget allou\u00e9', montant, '', 'Mise en vente', '', '', 'Kit Promo','','']);
-  V.push(['D\u00e9penses pr\u00e9visionnelles','=F23+F37+F51','','Jauge','','','Break','0','']);
-  V.push(['D\u00e9penses engag\u00e9es',engFormula,'','Vendu au ','','','Reste \u00e0 vendre','=F8-F9','']);
-  V.push(['','','','','','','','','']);
-
-  // R11-R23 : STREET MARKETING
-  V.push(['STREET MARKETING','','','','','','','','']); // R11
-  V.push(['D\u00e9signation','Prestataire','Quantit\u00e9','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']); // R12
-  for(var i=0;i<10;i++){
-    var r=streetRows[i];
-    if(r){
-      var rn=13+i;
-      var tot = r.total ? r.total : (r.qte&&r.pu ? '=C'+rn+'*D'+rn : '');
-      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', tot, r.comment||'', r.statut||'Pr\u00e9visionnel', '']);
-    } else V.push(['','','','','','','','','']);
-  }
-  V.push(['','','','=SUM(E13:E22)','','=SUM(F13:F22)','','','']); // R23 total
-  V.push(['','','','','','','','','']); // R24
-
-  // R25-R37 : ACHAT D'ESPACES
-  V.push(["ACHAT D\u2019ESPACES",'','','','','','','','']); // R25
-  V.push(['D\u00e9signation','Prestataire','Quantit\u00e9','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']); // R26
-  for(var i=0;i<10;i++){
-    var r=espaceRows[i];
-    if(r){
-      var rn=27+i;
-      var tot = r.total ? r.total : (r.qte&&r.pu ? '=C'+rn+'*D'+rn : '');
-      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', tot, r.comment||'', r.statut||'Pr\u00e9visionnel', '']);
-    } else V.push(['','','','','','','','','']);
-  }
-  V.push(['','','','=SUM(E27:E36)','','=SUM(F27:F36)','','','']); // R37
-  V.push(['','','','','','','','','']); // R38
-
-  // R39-R51 : DIGITAL
-  V.push(['DIGITAL','','','','','','','','']); // R39
-  V.push(['D\u00e9signation','Prestataire','Quantit\u00e9','Tarif unitaire HT','','Tarif total HT','Commentaire','Statut','']); // R40
-  for(var i=0;i<10;i++){
-    var r=digitalRows[i];
-    if(r){
-      V.push([r.nom, r.presta||'', r.qte||'', r.pu||'', '', r.total||'', r.comment||'', r.statut||'Pr\u00e9visionnel', '']);
-    } else V.push(['','','','','','','','','']);
-  }
-  V.push(['','','','=SUM(E41:E50)','','=SUM(F41:F50)','','','']); // R51
-  V.push(['','','','','','','','','']); // R52
-
-  // R53-R64 : RADIO / TV / PRESSE
-  V.push(['OPERATIONS RADIO / TV / PRESSE','','','','','','','','']); // R53
-  V.push(['D\u00e9signation','Prestataire','Type','','','','Commentaire','Statut','']); // R54
-  for(var i=0;i<10;i++){
-    var r=radioRows[i];
-    if(r){ V.push([r.nom, r.presta||'', r.type||'', '', '', '', r.comment||'', r.statut||'Pr\u00e9visionnel', '']); }
-    else V.push(['','','','','','','','','']);
-  }
-
-  return {values:V, r:{
-    recap:5, street:10, streetHdr:11, streetData:12, streetTot:22,
-    espace:24, espaceHdr:25, espaceData:26, espaceTot:36,
-    digital:38, digitalHdr:39, digitalData:40, digitalTot:50,
-    radio:52, radioHdr:53, radioData:54
-  }};
-}
-
-function insertLogo(sid, sheetId) {
-  var b64full = "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";
-  var binary = atob(b64full);
-  var bytes = new Uint8Array(binary.length);
-  for(var i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
-  var blob = new Blob([bytes],{type:"image/png"});
-  var form = new FormData();
-  form.append("metadata", new Blob([JSON.stringify({name:"logo_pp.png",mimeType:"image/png"})],{type:"application/json"}));
-  form.append("file", blob);
-  return fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
-    method: "POST", headers: {"Authorization":"Bearer "+budgetGToken}, body: form
-  }).then(function(r){return r.json();}).then(function(file){
-    if(!file.id){ console.warn("Logo upload failed:", JSON.stringify(file)); return Promise.resolve(); }
-    return fetch("https://www.googleapis.com/drive/v3/files/"+file.id+"/permissions",{
-      method:"POST",headers:{"Authorization":"Bearer "+budgetGToken,"Content-Type":"application/json"},
-      body:JSON.stringify({role:"reader",type:"anyone"})
-    }).then(function(){
-      return fetch("https://sheets.googleapis.com/v4/spreadsheets/"+sid+":batchUpdate",{
-        method:"POST",headers:{"Authorization":"Bearer "+budgetGToken,"Content-Type":"application/json"},
-        body:JSON.stringify({requests:[{addImage:{image:{imageProperties:{contentUri:"https://drive.google.com/uc?export=view&id="+file.id},anchorCell:{sheetId:sheetId,rowIndex:0,columnIndex:0},offsetXPixels:5,offsetYPixels:5,widthPixels:220,heightPixels:85}}}]})
-      }).then(function(r){return r.json();}).then(function(res){
-        if(res.error) console.warn("Logo insert:", res.error.message);
-        fetch("https://www.googleapis.com/drive/v3/files/"+file.id,{method:"DELETE",headers:{"Authorization":"Bearer "+budgetGToken}});
-        return res;
-      });
-    });
-  }).catch(function(e){console.warn("Logo:",e);});
-}
-
-function applySheetFormatting(sid, sheetId, rows) {
-  var rv = rows.r;
-  var requests = [];
-
-  // Couleurs EXACTES extraites du fichier original
-  var BG_BLUE_REC = {red:0.4353, green:0.6588, blue:0.8627}; // FF6FA8DC
-  var BG_PINK     = {red:0.8353, green:0.6510, blue:0.7412}; // FFD5A6BD
-  var BG_BLUE_SEC = {red:0.6235, green:0.7725, blue:0.9098}; // FF9FC5E8
-  var BG_BLUE_TOT = {red:0.8118, green:0.8863, blue:0.9529}; // FFCFE2F3
-  var BG_WHITE    = {red:1, green:1, blue:1};
-
-  // Formats EXACTS du modèle original
-  var FMT_EUR  = '#,##0.00\\ [$\u20AC-1]';
-  var FMT_NUM  = '#,##0';
-  var FMT_DATE = 'dd/MM/yyyy';
-
-  var FB = {bold:true,  fontSize:10, fontFamily:'Arial'};
-  var FN = {bold:false, fontSize:10, fontFamily:'Arial'};
-  var F14B= {bold:true, fontSize:14, fontFamily:'Arial'};
-
-  function rng(r1,c1,r2,c2){return {sheetId:sheetId,startRowIndex:r1,endRowIndex:r2,startColumnIndex:c1,endColumnIndex:c2};}
-
-  function fmt(r1,c1,r2,c2,bg,font,align){
-    requests.push({repeatCell:{range:rng(r1,c1,r2,c2),
-      cell:{userEnteredFormat:{backgroundColor:bg, textFormat:font||FN, horizontalAlignment:align||'LEFT'}},
-      fields:'userEnteredFormat.backgroundColor,userEnteredFormat.textFormat,userEnteredFormat.horizontalAlignment'
-    }});
-  }
-
-  function nfmt(r1,c1,r2,c2,pat){
-    requests.push({repeatCell:{range:rng(r1,c1,r2,c2),
-      cell:{userEnteredFormat:{numberFormat:{type:'NUMBER',pattern:pat}}},
-      fields:'userEnteredFormat.numberFormat'
-    }});
-  }
-
-  function mrg(r1,c1,r2,c2){
-    requests.push({mergeCells:{range:rng(r1,c1,r2,c2),mergeType:'MERGE_ALL'}});
-  }
-
-  function colW(c,px){
-    requests.push({updateDimensionProperties:{
-      range:{sheetId:sheetId,dimension:'COLUMNS',startIndex:c,endIndex:c+1},
-      properties:{pixelSize:px},fields:'pixelSize'
-    }});
-  }
-
-  // Masquer colonne I et J
-  requests.push({updateDimensionProperties:{
-    range:{sheetId:sheetId,dimension:'COLUMNS',startIndex:8,endIndex:10},
-    properties:{pixelSize:0,hiddenByUser:true},fields:'pixelSize,hiddenByUser'
-  }});
-
-  function dd(r1,c1,r2,c2,vals){
-    // Chips natifs Google Sheets via condition ONE_OF_LIST + showCustomUi
-    requests.push({setDataValidation:{range:rng(r1,c1,r2,c2),
-      rule:{
-        condition:{type:'ONE_OF_LIST',values:vals.map(function(v){return {userEnteredValue:v};})},
-        showCustomUi:true,
-        strict:false
-      }
-    }});
-    // Formatage conditionnel pour les couleurs de chips
-    requests.push({addConditionalFormatRule:{rule:{ranges:[rng(r1,c1,r2,c2)],
-      booleanRule:{condition:{type:'TEXT_EQ',values:[{userEnteredValue:vals[0]}]},
-      format:{backgroundColor:{red:0.714,green:0.843,blue:0.659}}}},index:0}});
-    requests.push({addConditionalFormatRule:{rule:{ranges:[rng(r1,c1,r2,c2)],
-      booleanRule:{condition:{type:'TEXT_EQ',values:[{userEnteredValue:vals[1]}]},
-      format:{backgroundColor:{red:0.957,green:0.800,blue:0.800}}}},index:0}});
-  }
-
-  function condColor(r1,c1,r2,c2,text,bg){
-    requests.push({addConditionalFormatRule:{
-      rule:{ranges:[rng(r1,c1,r2,c2)],
-        booleanRule:{
-          condition:{type:'TEXT_EQ',values:[{userEnteredValue:text}]},
-          format:{backgroundColor:bg}
-        }
-      }, index:0
-    }});
-  }
-
-  // ── Largeurs colonnes exactes du modèle (en pixels, ~7.5px par caractère)
-  // A=32.25ch, D=8.63ch, E=10ch, F=16ch, H=16.25ch
-  colW(0, 242); // A : 32.25ch
-  colW(1,  96); // B : ~12ch
-  colW(2,  80); // C : ~10ch
-  colW(3,  65); // D : 8.63ch
-  colW(4,  75); // E : 10ch
-  colW(5, 120); // F : 16ch
-  colW(6, 130); // G : ~17ch
-  colW(7, 122); // H : 16.25ch
-
-  // ── R1-R4 : fusions D:H, centré bold 14
-  mrg(0,3,1,8); mrg(1,3,2,8); mrg(2,3,3,8); mrg(3,3,4,8);
-  fmt(0,3,1,8, BG_WHITE, F14B, 'CENTER'); // R1 artiste
-  fmt(1,3,2,8, BG_WHITE, F14B, 'CENTER'); // R2 salle
-  fmt(2,3,3,8, BG_WHITE, F14B, 'CENTER'); // R3 date
-  fmt(3,3,4,8, BG_WHITE, FN,   'LEFT');   // R4 Promotion Locale
-  nfmt(2,3,3,8, 'dddd" "d" "mmmm" "yyyy'); // R3 format date long
-
-  // ── R6 : A6:B6 bleu récap | D6:H6 rose — fusions exactes du modèle
-  mrg(5,0,6,2); mrg(5,3,6,8);
-  fmt(5,0,6,2, BG_BLUE_REC, FB, 'CENTER');
-  fmt(5,3,6,8, BG_PINK,     FB, 'CENTER');
-  fmt(5,7,6,9, BG_WHITE,    FB, 'LEFT'); // Kit Promo col H
-
-  // ── R7 : labels bold, valeurs normales, formats
-  // A7 label, B7 valeur €, D7 label bold left, D7:E7 fusionné, F7 date, G7 bold, H7 vide
-  mrg(6,3,7,5); // D7:E7
-  fmt(6,0,7,1, BG_WHITE, FN, 'LEFT');    // A7 Budget alloué
-  fmt(6,1,7,2, BG_WHITE, FN, 'LEFT');    // B7 montant
-  nfmt(6,1,7,2, FMT_EUR);               // B7 format €
-  fmt(6,3,7,4, BG_WHITE, FB, 'LEFT');    // D7 Mise en vente bold
-  fmt(6,5,7,6, BG_WHITE, FN, 'CENTER'); // F7 date
-  nfmt(6,5,7,6, FMT_DATE);             // F7 format date
-  fmt(6,6,7,7, BG_WHITE, FB, 'LEFT');   // G7 Kit Promo bold
-
-  // ── R8
-  mrg(7,3,8,5); // D8:E8
-  fmt(7,0,8,1, BG_WHITE, FN, 'LEFT');   // A8
-  fmt(7,1,8,2, BG_WHITE, FN, 'LEFT');   // B8 dépenses prev
-  nfmt(7,1,8,2, FMT_EUR);
-  fmt(7,3,8,4, BG_WHITE, FB, 'LEFT');   // D8 Jauge bold
-  fmt(7,5,8,6, BG_WHITE, FN, 'CENTER'); // F8 jauge
-  nfmt(7,5,8,6, FMT_NUM);
-  fmt(7,6,8,7, BG_WHITE, FB, 'LEFT');   // G8 Break bold
-  fmt(7,7,8,8, BG_WHITE, FN, 'CENTER'); // H8 break value
-  nfmt(7,7,8,8, FMT_NUM);
-
-  // ── R9
-  mrg(8,3,9,5); // D9:E9
-  fmt(8,0,9,1, BG_WHITE, FN, 'LEFT');   // A9
-  fmt(8,1,9,2, BG_WHITE, FN, 'LEFT');   // B9 dépenses engagées
-  nfmt(8,1,9,2, FMT_EUR);
-  fmt(8,3,9,4, BG_WHITE, FB, 'LEFT');   // D9 Vendu au bold
-  fmt(8,4,9,5, BG_WHITE, FB, 'LEFT');   // E9 =TODAY() bold
-  fmt(8,5,9,6, BG_WHITE, FN, 'CENTER'); // F9 vendu
-  nfmt(8,5,9,6, FMT_NUM);
-  fmt(8,6,9,7, BG_WHITE, FB, 'LEFT');   // G9 Reste à vendre bold
-  fmt(8,7,9,8, BG_WHITE, FN, 'CENTER'); // H9 reste
-  nfmt(8,7,9,8, FMT_NUM);
-
-  // ── Titres sections : A:H fusionné, FF9FC5E8, bold centré
-  [rv.street, rv.espace, rv.digital, rv.radio].forEach(function(row){
-    mrg(row,0,row+1,8);
-    fmt(row,0,row+1,8, BG_BLUE_SEC, FB, 'CENTER');
-  });
-
-  // ── En-têtes colonnes : bold centré, pas de fond (blanc) + bordure basse
-  [rv.streetHdr, rv.espaceHdr, rv.digitalHdr, rv.radioHdr].forEach(function(row){
-    fmt(row,0,row+1,8, BG_WHITE, FB, 'CENTER');
-    mrg(row,3,row+1,5); // D:E fusionné sur l'en-tête
-    nfmt(row,3,row+1,6, FMT_EUR);
-    // Bordure basse sous les titres de colonnes
-    requests.push({updateBorders:{range:rng(row,0,row+1,8),
-      bottom:{style:'SOLID_MEDIUM',color:{red:0.4,green:0.4,blue:0.4}}
-    }});
-  });
-
-  // Fusion C54:F54 pour "Type" de la section Radio
-  mrg(rv.radioHdr,2,rv.radioHdr+1,6);
-  fmt(rv.radioHdr,2,rv.radioHdr+1,6, BG_WHITE, FB, 'CENTER');
-
-  // ── Lignes données : fusions D:E sur chaque ligne, formats €
-  [rv.streetData, rv.espaceData, rv.digitalData].forEach(function(start){
-    fmt(start,0,start+10,8, BG_WHITE, FN, 'LEFT');
-    for(var i=0;i<10;i++){ mrg(start+i,3,start+i+1,5); } // D:E fusionné
-    fmt(start,2,start+10,3, BG_WHITE, FN, 'CENTER'); // C quantité centré
-    nfmt(start,3,start+10,4, FMT_EUR); // D tarif unitaire
-    fmt(start,3,start+10,5, BG_WHITE, FN, 'RIGHT'); // D:E tarif unitaire aligné droite
-    nfmt(start,5,start+10,6, FMT_EUR); // F tarif total
-    fmt(start,5,start+10,6, BG_WHITE, FN, 'RIGHT'); // F aligné droite
-    dd(start,7,start+10,8, ['Engag\u00e9','Pr\u00e9visionnel']);
-  });
-
-  // Radio : fusions C:F sur chaque ligne (type s'étend)
-  fmt(rv.radioData,0,rv.radioData+10,8, BG_WHITE, FN, 'LEFT');
-  for(var i=0;i<10;i++){ mrg(rv.radioData+i,2,rv.radioData+i+1,6); }
-  fmt(rv.radioData,2,rv.radioData+10,3, BG_WHITE, FN, 'LEFT');
-  dd(rv.radioData,7,rv.radioData+10,8, ['Engag\u00e9','Pr\u00e9visionnel']);
-
-  // ── Lignes totaux : FFCFE2F3, formats €
-  [rv.streetTot, rv.espaceTot, rv.digitalTot].forEach(function(row){
-    fmt(row,0,row+1,8, BG_BLUE_TOT, FN, 'LEFT');
-    nfmt(row,3,row+1,4, FMT_EUR);
-    nfmt(row,5,row+1,6, FMT_EUR);
-  });
-
-  // ── Bordures : contours extérieurs épais + séparateurs de colonnes fins
-  var B_MED  = {style:'SOLID_MEDIUM', color:{red:0.4,green:0.4,blue:0.4}};
-  var B_THIN = {style:'SOLID', color:{red:0.7,green:0.7,blue:0.7}};
-  var B_NONE = {style:'NONE'};
-
-  function outerWithCols(r1,c1,r2,c2){
-    requests.push({updateBorders:{range:rng(r1,c1,r2,c2),
-      top:B_MED, bottom:B_MED, left:B_MED, right:B_MED,
-      innerHorizontal:B_NONE, innerVertical:B_THIN
-    }});
-  }
-
-  // Récap A6:B9 et Infos D6:H9
-  outerWithCols(5,0,9,2);
-  outerWithCols(5,3,9,8);
-
-  // Sections complètes
-  [[rv.street,rv.streetTot],[rv.espace,rv.espaceTot],[rv.digital,rv.digitalTot]].forEach(function(s){
-    outerWithCols(s[0],0,s[1]+1,8);
-  });
-  outerWithCols(rv.radio,0,rv.radioData+10,8);
-
-  // ── Fusions D:E sur lignes totaux (R23, R37, R51)
-  [rv.streetTot, rv.espaceTot, rv.digitalTot].forEach(function(row){
-    mrg(row,3,row+1,5);
-  });
-
-  // ── Alignement droite sur les totaux et tarifs unitaires
-  [rv.streetTot, rv.espaceTot, rv.digitalTot].forEach(function(row){
-    fmt(row,3,row+1,6, BG_BLUE_TOT, FN, 'RIGHT');
-  });
-
-  // ── Paramètres d'impression : portrait, sans quadrillage, ajusté à la page
-  requests.push({updateSheetProperties:{
-    properties:{
-      sheetId: sheetId,
-      gridProperties:{hideGridlines:true},
-      tabColor:{red:0.435,green:0.659,blue:0.863}
-    },
-    fields:'gridProperties.hideGridlines,tabColor'
-  }});
-
-  // Marges et orientation portrait via spreadsheet properties
-  requests.push({updateSpreadsheetProperties:{
-    properties:{
-      title: null, // ne pas modifier le titre
-      locale:'fr_FR',
-      defaultFormat:{
-        padding:{top:2,right:2,bottom:2,left:2}
-      }
-    },
-    fields:'defaultFormat.padding'
-  }});
-
-  return fetch('https://sheets.googleapis.com/v4/spreadsheets/'+sid+':batchUpdate',{
-    method:'POST',
-    headers:{'Authorization':'Bearer '+budgetGToken,'Content-Type':'application/json'},
-    body:JSON.stringify({requests:requests})
-  }).then(function(r){return r.json();}).then(function(res){
-    if(res.error) console.error('Format error:',JSON.stringify(res.error));
-    return res;
-  });
-}
 </script>
 </body>
 </html>

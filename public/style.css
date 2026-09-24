@@ -702,7 +702,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .overlay.open .fiche{animation:ficheIn .22s cubic-bezier(.2,.8,.2,1)}
 @keyframes ficheIn{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
 .filters-panel{animation:popIn .12s ease}
-.tk-modal.open .tk-modal-box,.tk-modal.open .cmdk-box,.rs-modal.open .rs-modal-box,#budget-box{animation:popIn .16s ease}
+.tk-modal.open .tk-modal-box,.tk-modal.open .cmdk-box,.rs-modal.open .rs-modal-box{animation:popIn .16s ease}
 @keyframes popIn{from{opacity:0;transform:translateY(-4px) scale(.99)}to{opacity:1;transform:none}}
 .ftask-chk,.tk-chk{transition:background .15s,border-color .15s}
 .ftask-chk.on .ico{animation:tick .18s ease}
@@ -809,8 +809,6 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
   .process-header,.prow{min-width:700px}
 }
 
-.bud-style-btn{padding:5px 12px;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer;transition:all .15s;color:var(--text-2)}
-.bud-style-btn.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
 
 /* ── BILAN DE COMMUNICATION (EXPORT PDF CLIENT) ──────────── */
 #bilan-report{position:fixed;left:-9999px;top:0;width:210mm;background:#fff;color:#222;font-family:inherit;padding:20mm 16mm}
@@ -948,3 +946,66 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
   #bilan-report,#bilan-report *{visibility:visible}
   #bilan-report{position:absolute;left:0;top:0;width:100%;padding:14mm 16mm}
 }
+
+/* ── BUDGET PROMO : fenetre de creation (fiche) et onglet de configuration ──
+   Refaits le 24/09 : le Sheet est une copie de la trame, l'appli ne fait que
+   proposer et envoyer des valeurs (voir google/budget-promo/). */
+.tk-modal-box.bud-box{width:880px;padding:0;display:flex;flex-direction:column}
+.bud-head{padding:18px 24px 12px;border-bottom:1px solid var(--border-light);display:flex;gap:12px;align-items:flex-start}
+.bud-head-txt{flex:1}
+.bud-body{padding:14px 24px 6px;overflow-x:auto}
+.bud-sec{margin-bottom:14px}
+.bud-repris{display:grid;grid-template-columns:140px 1fr;gap:6px 14px;font-size:13px;align-items:baseline}
+.bud-repris .k{color:var(--text-3);font-size:12px}
+.bud-cell{font-size:11px;color:var(--text-4);margin-left:6px;font-variant-numeric:tabular-nums}
+.bud-muted{color:var(--text-3);font-size:12px}
+.bud-nocaps{text-transform:none;letter-spacing:0;font-weight:400}
+.bud-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.bud-champs{display:grid;grid-template-columns:160px auto;gap:10px 14px;align-items:center;justify-content:start}
+.tk-modal .bud-champs label{margin:0}
+.tk-modal .bud-court{width:140px}
+.tk-modal .bud-moyen{width:220px}
+.bud-flags{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap}
+.bud-secl{display:flex;align-items:center;gap:8px;margin:12px 0 4px}
+.bud-secl .grow{flex:1}
+.bud-sect{font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--text-2)}
+.bud-vide{font-size:12px;color:var(--text-4);font-style:italic;padding:2px 2px 6px}
+table.bud-lignes{width:100%;border-collapse:separate;border-spacing:0 4px;font-size:12px}
+table.bud-lignes th{font-size:12px;font-weight:500;color:var(--text-3);text-align:left;padding:0 3px;white-space:nowrap}
+table.bud-lignes td{padding:0 3px;vertical-align:middle}
+.tk-modal table.bud-lignes input,.tk-modal table.bud-lignes select,#budget-config table.bud-lignes input{font-size:12px;padding:6px 7px;width:100%}
+table.bud-lignes input.num{text-align:right}
+table.bud-lignes td.tot{text-align:right;white-space:nowrap}
+.bud-calc{font-weight:600;font-variant-numeric:tabular-nums}
+table.bud-lignes tr.offerte input,table.bud-lignes tr.offerte select{background:var(--surface-2);color:var(--text-3)}
+table.bud-lignes .w-presta{width:110px}
+table.bud-lignes .w-qte{width:76px}
+table.bud-lignes .w-pu{width:72px}
+table.bud-lignes .w-tot{width:88px;text-align:right}
+table.bud-lignes .w-com{width:100px}
+table.bud-lignes .w-statut{width:116px}
+table.bud-lignes .w-type{width:120px}
+table.bud-lignes .w-x{width:40px}
+.bud-x{border:none;background:none;color:var(--text-4);cursor:pointer;padding:4px 6px;border-radius:var(--radius-xs);line-height:0}
+.bud-x:hover{color:var(--red);background:var(--red-bg)}
+.bud-bilan{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--border-light);padding:10px 24px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.bud-bilan .m{display:flex;flex-direction:column;gap:1px}
+.bud-bilan .m span{font-size:12px;color:var(--text-3)}
+.bud-bilan .m b{font-variant-numeric:tabular-nums;font-size:15px}
+.bud-foot{padding:12px 24px;border-top:1px solid var(--border-light);display:flex;gap:10px;align-items:center}
+.bud-note{flex:1;font-size:12px;color:var(--text-3)}
+.bud-err{color:var(--red)}
+.bud-ok{padding:14px 16px;border-radius:var(--radius-sm);background:var(--green-bg);font-size:13px;display:flex;flex-direction:column;gap:6px}
+.bud-ok a{color:var(--accent);font-weight:600}
+.bud-warn{color:var(--amber);font-size:12px}
+.bc-card{max-width:900px;margin:0 auto}
+.bc-sec{padding:14px 0;border-top:1px solid var(--border-light)}
+.bc-bloc{border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:10px 12px;margin:8px 0}
+.bc-ligne{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;margin:4px 0}
+.bc-ligne .grow{flex:1}
+#budget-config input,#budget-config select{padding:6px 9px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);font-family:inherit;outline:none}
+#budget-config input:focus,#budget-config select:focus{border-color:var(--text-3)}
+.bc-large{flex:1;min-width:260px}
+.bc-nom{width:180px}
+.bc-num{width:84px;text-align:right}
+.bc-sous{font-size:12px;font-weight:600;color:var(--text-3);margin:8px 0 2px;text-transform:uppercase;letter-spacing:.03em}
