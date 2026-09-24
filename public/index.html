@@ -4091,7 +4091,7 @@ function renderConcerts(){
       var sp=spRead(c),spTot=spTotal(c);
       var spDots=spVaguesTriees(c).map(function(v,i){
         var st=spStatut(v);
-        return '<i class="sp-dot" title="'+esc('Vague '+(i+1)+' · '+SP_STATUTS[st].label+(v.debut&&v.fin?' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin):'')+(spNonTransmise(v)?' · prestataire pas encore informé':''))+'"></i>';
+        return '<i class="sp-dot '+SP_STATUTS[st].cls+'" title="'+esc('Vague '+(i+1)+' · '+SP_STATUTS[st].label+(v.debut&&v.fin?' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin):'')+(spNonTransmise(v)?' · prestataire pas encore informé':''))+'"></i>';
       }).join('');
       var spCell='<div class="crow-cell" onclick="event.stopPropagation();spOpenConcert(\''+escJs(c.id)+'\')">'
         +(sp.vagues.length
