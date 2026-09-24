@@ -55,6 +55,7 @@ const v = Date.now();
 html = html.replace(/<script src="https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js[^"]*"[^>]*><\/script>/,
   '<script src="data.js?v=' + v + '"></script><script src="harness.js?v=' + v + '"></script>');
 if (html.length === avant) throw new Error('balise supabase-js introuvable dans public/index.html');
+html = html.replace('href="style.css"', 'href="style.css?v=' + v + '"');
 fs.writeFileSync(path.join(SITE, 'index.html'), html);
 fs.copyFileSync(path.join(DEPOT, 'public', 'style.css'), path.join(SITE, 'style.css'));
 fs.cpSync(path.join(DEPOT, 'public', 'favicon_io'), path.join(SITE, 'favicon_io'), { recursive: true });

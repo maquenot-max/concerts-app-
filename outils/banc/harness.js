@@ -34,6 +34,8 @@
   var B = window.__banc = {
     db: DB, role: 'admin', latency: 25, denied: false, loggedIn: true,
     writes: [], log: [], uploads: [], deletes: [], channel: null,
+    scriptAppels: [], scriptErreur: '',
+    sallesTrame: ['SALLE', 'LA VAPEUR - Dijon', 'ZENITH, Dijon', 'LE CEDRE, Chenôve', 'LES SALINES ROYALES, Arc-et-Senans', 'ARENA, Reims', 'LE KABARET, Reims', 'LE CAPITOLE, Châlons-en-Champagne'],
     nextAt: nextAt,
     get: function (k) { return DB[k] ? JSON.parse(DB[k].value) : undefined; },
     // Ecriture d'un "collegue" directement en base, puis evenement temps reel.
@@ -98,6 +100,21 @@
     init = init || {};
     var url = typeof input === 'string' ? input : input.url;
     var method = (init.method || 'GET').toUpperCase();
+    // Faux script Google du budget promo (google/budget-promo/Code.gs) : liste
+    // des salles de la trame en GET, creation simulee en POST (rien n'est cree).
+    if (url.indexOf('script.google.com') >= 0) {
+      await B.wait(B.latency * 4);
+      if (method === 'GET') return rep({ ok: true, version: 'banc', trame: 'AAAAMMJJ - BUDGET COM TRAME', salles: B.sallesTrame });
+      var demande = JSON.parse(init.body || '{}');
+      B.scriptAppels.push(demande);
+      if (B.scriptErreur) return rep({ ok: false, error: B.scriptErreur });
+      if (demande.token !== session.access_token) return rep({ ok: false, error: 'Session expirée : reconnecte-toi dans l\'appli.' });
+      var s = demande.budget.salle, norm = function (x) { return String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
+      var noms = [s.nom].concat(s.alias || []).map(norm), trouvee = B.sallesTrame.filter(function (it) {
+        var p = it.split(/\s*,\s*|\s+-\s+/); return noms.indexOf(norm(p[0])) >= 0 && norm(p.slice(1).join(' ')) === norm(s.ville);
+      })[0];
+      return rep({ ok: true, url: 'https://docs.google.com/spreadsheets/d/BANC' + B.scriptAppels.length + '/edit', salle: trouvee || s.libelle, salleAjoutee: !trouvee, par: 'test@banc.local' });
+    }
     if (url.indexOf('supabase.co') < 0) {
       if (url.indexOf(location.origin) === 0 || url.charAt(0) === '/') return realFetch(input, init);
       B.log.push('BLOQUE ' + method + ' ' + url);
