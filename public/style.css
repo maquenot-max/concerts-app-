@@ -1178,8 +1178,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .sp-mini-dots{display:inline-flex;gap:3px}
 /* Un carre par vague : bleu une fois lancee (en cours ou terminee), gris tant
    qu'elle n'a pas commence (programmee, ou a programmer faute de dates). */
-.sp-dot{width:8px;height:8px;border-radius:2px;display:inline-block;background:var(--border-strong)}
-.sp-dot.sp-encours,.sp-dot.sp-terminee{background:var(--accent)}
+.sp-dot{width:8px;height:8px;border-radius:2px;display:inline-block;background:var(--accent-mid)}
+.sp-dot.sp-programmee,.sp-dot.sp-aprogrammer{background:var(--border-strong)}
 
 @media print{
   body *{visibility:hidden}
