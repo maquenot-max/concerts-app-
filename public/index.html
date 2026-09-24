@@ -4590,17 +4590,18 @@ function renderTaches(){
   wrap.innerHTML='';wrap.appendChild(board);
   var sub=document.getElementById('tk-sub');
   if(sub)sub.textContent=nbAffichees?(nbAffichees+' tâche'+(nbAffichees>1?'s':'')+(nbFaites?' · '+nbFaites+' faite'+(nbFaites>1?'s':''):'')):'Aucune tâche';
-  // Setup modal buttons (une seule fois)
-  tkSetupModal();
 }
-var tkModalSetup=false;
-function tkSetupModal(){
-  if(tkModalSetup)return;tkModalSetup=true;
+// Boutons de la fenetre Nouvelle tache, branches une fois au chargement. Ils
+// l'etaient a la fin de renderTaches() : depuis que render() ne dessine plus
+// que l'onglet visible (23/09), la fenetre ouverte depuis le tableau de bord
+// (+ Ajouter, clic sur une tache) n'avait ni Ajouter, ni Annuler, ni Echap
+// tant que l'onglet Taches n'avait pas ete ouvert.
+(function tkSetupModal(){
   document.getElementById('tk-modal-save').addEventListener('click',tkSaveTask);
   document.getElementById('tk-modal-cancel').addEventListener('click',tkCloseModal);
   document.getElementById('tk-modal').addEventListener('click',function(e){if(e.target===this)tkCloseModal();});
   document.addEventListener('keydown',function(e){if(e.key==='Escape')tkCloseModal();});
-}
+})();
 function tkFillRecurUI(t){
   var on=!!(t&&t.recur);
   document.getElementById('tk-recur-on').checked=on;
