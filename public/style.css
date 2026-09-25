@@ -343,6 +343,144 @@ button.tag.fiche-annoncer:hover{background:var(--accent-hover);border-color:var(
 .tag.fa-lien:hover{border-color:var(--border-strong)}
 .tag.fa-lien .ico{width:14px;height:14px;color:var(--text-3)}
 .fa-notes{font-size:13px;line-height:1.5;color:var(--text-2);white-space:pre-wrap;overflow-wrap:anywhere}
+/* ── EVENEMENT (25/09) : un festival = une fiche ; ses spectacles dans le
+   programme, en cartes par jour (une colonne par jour en fiche agrandie) ou
+   en liste modifiable sur place. Maquette : canevas « Événement — propositions ». */
+/* Cinq onglets : « Programme » a un peu plus de place (il deborde a 375 px). */
+.fiche.est-evt .fiche-onglets{grid-template-columns:minmax(0,1.3fr) repeat(4,minmax(0,1fr))}
+.fiche-evt-tag{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;margin-bottom:2px;border-radius:var(--radius-pill);background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:600}
+.fiche-evt-tag .ico{width:12px;height:12px}
+.fiche.a-photo .fiche-evt-tag{background:var(--photo-verre);color:var(--photo-encre)}
+.fiche-evt-resume{font-weight:500}
+.evt-complets{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-3);white-space:nowrap}
+.tag.evt-complets{gap:6px;color:var(--text-2)}
+.evt-complets i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--red)}
+.fiche-programme{display:flex;flex-direction:column;gap:14px}
+.evt-barre{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.evt-barre .btn,.evt-barre .btn-link{display:inline-flex;align-items:center;gap:5px}
+.evt-barre .ico{width:14px;height:14px}
+.view-toggle.compact .view-toggle-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:4px 11px;font-size:12px}
+.view-toggle.compact .view-toggle-btn .ico{width:14px;height:14px}
+.evt-puces{display:flex;flex-wrap:wrap;gap:6px}
+.evt-puce{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border:1px solid var(--border);border-radius:var(--radius-pill);background:var(--surface);font:inherit;font-size:12px;font-weight:500;color:var(--text-2);cursor:pointer;white-space:nowrap}
+.evt-puce:hover{border-color:var(--border-strong);color:var(--text)}
+.evt-puce.on{background:var(--accent-soft);border-color:var(--accent-mid);color:var(--accent)}
+.evt-puce .n{font-weight:400;color:var(--text-4)}
+.evt-puce.on .n{color:var(--accent)}
+.evt-jour{display:flex;flex-direction:column;gap:10px}
+.evt-jour-titre{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.evt-jour .evt-jour-titre::after{content:'';flex:1;height:1px;background:var(--border-light)}
+.evt-grille{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.evt-ajout-jour{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;margin-left:-10px}
+.evt-ajout-jour .ico{width:13px;height:13px}
+/* Carte d'un spectacle : photo 16:9 de l'artiste (la meme que la newsletter) */
+.evt-carte{min-width:0;display:flex;flex-direction:column;padding:0;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);font:inherit;text-align:left;color:var(--text);overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.evt-carte:hover{border-color:var(--border-strong);box-shadow:var(--shadow-md)}
+.evt-photo{position:relative;display:block;width:100%;aspect-ratio:16/9;background:var(--text);overflow:hidden}
+.evt-photo img{display:block;width:100%;height:100%;object-fit:cover}
+.evt-photo.vide{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:auto;margin:6px 6px 0;border:1.5px dashed var(--border-strong);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--text-3);font-size:12px;font-weight:600}
+.evt-photo.vide .ico{width:16px;height:16px}
+.evt-heure{position:absolute;top:8px;left:8px;display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:var(--radius-pill);background:rgba(255,255,255,.94);color:var(--text);font-size:12px;font-weight:600}
+.evt-photo.vide .evt-heure{top:6px;left:6px;border:1px solid var(--border);background:var(--surface)}
+.evt-complet{position:absolute;top:8px;right:8px}
+.evt-photo.vide .evt-complet{top:6px;right:6px}
+.evt-carte-corps{display:flex;flex-direction:column;gap:2px;min-width:0;padding:10px 12px 12px}
+.evt-art{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evt-carte .evt-art{font-size:15px;line-height:1.25}
+.evt-lieu{font-size:12.5px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evt-carte-pied{display:flex;align-items:center;gap:8px;margin-top:8px;min-height:22px}
+.evt-ventes{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-3);white-space:nowrap}
+.evt-billet{display:inline-flex;color:var(--text-3)}
+.evt-billet .ico{width:15px;height:15px}
+/* Fiche agrandie : une colonne par jour, comme une grille de festival */
+.evt-colonnes{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;align-items:start}
+.evt-colonne{min-width:0;display:flex;flex-direction:column;gap:8px}
+.evt-colonne .evt-jour-titre{padding-bottom:6px;border-bottom:1px solid var(--border-light)}
+.evt-colonne .evt-carte-corps{padding:8px 10px 10px}
+.evt-colonne .evt-carte .evt-art{font-size:13.5px}
+.evt-colonne .evt-lieu{font-size:12px}
+.evt-colonne .evt-carte-pied{margin-top:5px}
+.evt-colonne .evt-ventes{display:none}
+/* Liste : une ligne par spectacle, qui s'ouvre sur ses champs */
+.evt-liste{display:flex;flex-direction:column}
+.evt-liste-jour:first-child{padding-top:4px}
+.evt-ligne{display:grid;grid-template-columns:44px minmax(0,1fr) auto 92px 16px;align-items:center;gap:10px;width:calc(100% + 16px);padding:8px;margin:0 -8px;border:none;border-radius:var(--radius-sm);background:none;font:inherit;text-align:left;color:var(--text);cursor:pointer}
+.evt-ligne:hover,.evt-ligne.ouverte{background:var(--bg)}
+.evt-ligne-h{font-size:13px;font-weight:600}
+.evt-ligne-txt{display:flex;flex-direction:column;min-width:0}
+.evt-ligne .evt-art{font-size:13px;line-height:1.35}
+.evt-ligne .evt-lieu{font-size:12px;color:var(--text-3)}
+.evt-ligne-flags{display:flex;gap:4px}
+.evt-ligne-chev{display:inline-flex;color:var(--text-4);transition:transform .15s}
+.evt-ligne-chev .ico{width:14px;height:14px}
+.evt-ligne.ouverte .evt-ligne-chev{transform:rotate(90deg)}
+.evt-liste .evt-ajout-jour{margin-top:2px}
+.evt-edition{display:flex;flex-direction:column;gap:12px;margin:4px 0 10px;padding:14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2)}
+.evt-edition-l1{display:grid;grid-template-columns:minmax(0,1fr) 104px;gap:12px;align-items:end}
+.evt-edition-duo{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px}
+.evt-champ{display:flex;flex-direction:column;gap:4px;min-width:0}
+.evt-champ-l{font-size:12px;font-weight:500;color:var(--text-3)}
+.evt-in{width:100%;height:32px;padding:0 9px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font:inherit;font-size:13px;color:var(--text);outline:none}
+.evt-in:focus{border-color:var(--accent-mid)}
+textarea.evt-in{height:auto;padding:8px 10px;line-height:1.5;resize:vertical}
+.evt-jours-choix{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.evt-jour-btn{height:32px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);font:inherit;font-size:12px;font-weight:500;color:var(--text-2);cursor:pointer}
+.evt-jour-btn:hover{border-color:var(--border-strong);color:var(--text)}
+.evt-jour-btn.on{background:var(--accent-soft);border-color:var(--accent-mid);color:var(--accent);font-weight:600}
+.evt-in-date{width:auto;flex:0 1 142px;min-width:0;color:var(--text-3)}
+.evt-in-date.on{border-color:var(--accent-mid);color:var(--accent)}
+.evt-ventes-choix{align-self:flex-start;flex-wrap:wrap}
+.evt-photo-ligne{display:flex;align-items:center;gap:12px}
+.evt-vignette{display:block;width:96px;aspect-ratio:16/9;flex-shrink:0;object-fit:cover;border-radius:var(--radius-sm);background:var(--bg)}
+.evt-vignette.vide{display:flex;align-items:center;justify-content:center;border:1.5px dashed var(--border-strong);color:var(--text-4)}
+.evt-vignette.vide .ico{width:16px;height:16px}
+.evt-photo-note{flex:1;min-width:0;font-size:12px;line-height:1.45;color:var(--text-2)}
+.evt-edition-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding-top:10px;border-top:1px dashed var(--border)}
+.evt-edition-actions .btn-link{display:inline-flex;align-items:center;gap:5px}
+.evt-edition-actions .ico{width:13px;height:13px}
+.btn-link.danger{color:var(--red)}
+.btn-link.danger:hover{background:var(--red-bg)}
+.evt-vide{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:18px;border:1.5px dashed var(--border-strong);border-radius:var(--radius);background:var(--surface-2)}
+.evt-vide p{font-size:13px;font-weight:600}
+.evt-vide .evt-vide-aide{font-weight:400;color:var(--text-3)}
+.evt-vide-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.evt-vide-actions .btn{display:inline-flex;align-items:center;gap:6px}
+.evt-vide-actions .ico{width:14px;height:14px}
+/* Fenetre « Ajouter au programme » : un spectacle, ou un tableau colle */
+.tk-modal-box.evt-box{width:560px;gap:14px}
+.evt-modal-tete{display:flex;align-items:flex-start;gap:10px}
+.evt-modal-titres{flex:1;min-width:0}
+.evt-modal-titres .tk-modal-title{margin-bottom:0}
+.evt-modal-sous{font-size:12px;color:var(--text-3)}
+.evt-modes{align-self:flex-start}
+.evt-aide{font-size:13px;line-height:1.5;color:var(--text-2)}
+.tk-modal textarea.evt-collage{min-height:150px;font-family:ui-monospace,'SF Mono',Consolas,monospace;font-size:12px;line-height:1.6;white-space:pre;overflow-x:auto;tab-size:4}
+.evt-analyse{display:flex;flex-direction:column;gap:8px}
+.evt-analyse:empty{display:none}
+.evt-analyse-ok{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--green)}
+.evt-analyse-ok .ico{width:16px;height:16px}
+.evt-apercu{border:1px solid var(--border-light);border-radius:var(--radius-sm);overflow:hidden}
+.evt-apercu-l{display:grid;grid-template-columns:62px 48px minmax(0,1fr) minmax(0,1fr) 74px;gap:10px;align-items:center;padding:7px 12px;border-bottom:1px solid var(--border-light);font-size:12.5px}
+.evt-apercu-l:last-child{border-bottom:none}
+.evt-apercu-l>span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evt-apercu-l.tete{background:var(--surface-2);font-size:12px;font-weight:500;color:var(--text-3)}
+.evt-apercu-l .manque{color:var(--amber);font-weight:600}
+.evt-apercu-corps{max-height:232px;overflow-y:auto;overscroll-behavior:contain}
+.evt-alerte{display:flex;align-items:flex-start;gap:7px;padding:8px 10px;border-radius:var(--radius-sm);background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber);font-size:12px;line-height:1.45}
+.evt-alerte .ico{width:14px;height:14px;flex-shrink:0;margin-top:1px}
+.evt-ajoute{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--green)}
+.evt-ajoute .ico{width:15px;height:15px;flex-shrink:0}
+/* L'evenement dans les autres vues : tableau de bord, listes, calendrier */
+.tag.evt-tag{height:20px;padding:0 7px;gap:4px;flex-shrink:0;font-weight:600}
+.tag.evt-tag .ico{width:11px;height:11px}
+.kb-nom,.crow-nom{display:flex;align-items:center;gap:6px;min-width:0}
+.kb-nom .crow-name,.crow-nom .crow-name{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kb-evt{margin-top:2px;font-size:12px;color:var(--text-3)}
+.ann-evt{font-size:12px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nc-tete{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.nc-tete h2{margin:0}
+.card-desc.nc-aide{margin:-6px 0 12px}
+.nl-cjour{position:sticky;top:0;z-index:1;padding:5px 10px;background:var(--surface-2);border-bottom:1px solid var(--border-light);font-size:12px;font-weight:600;color:var(--text-3)}
 /* Onglet Sponso : la frise reprend les classes de l'onglet Sponso (sp-bar,
    sp-dc, sp-today, sp-sep, sp-head-m). */
 .fiche-sp-tete{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -1015,6 +1153,9 @@ button.tag:hover{border-color:var(--border-strong);color:var(--text)}
 .cal-ev{display:flex;flex-direction:column;align-items:flex-start;padding:3px 6px;border-radius:var(--radius-xs);background:var(--bg);cursor:pointer;overflow:hidden;min-width:0;transition:background .15s}
 .cal-ev:hover{background:var(--accent-soft)}
 .cal-ev .cal-art{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.cal-ev.evt{background:var(--accent-soft)}
+.cal-ev.evt:hover{box-shadow:inset 0 0 0 1px var(--accent-mid)}
+.cal-ev.evt .cal-art{color:var(--accent)}
 .cal-ev-lieu{font-size:12px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .cal-more{font-size:12px;color:var(--text-3);padding:0 6px}
 .is-cancelled{opacity:.5}
@@ -1050,7 +1191,7 @@ button.tag:hover{border-color:var(--border-strong);color:var(--text)}
 /* ── TYPOGRAPHIE ──────────────────────────────────────── */
 /* Geist pour toute l'interface (chiffres alignes). Les noms d'artistes en
    Bricolage Grotesque semi-condensee, en capitales : une tete d'affiche. */
-.artist,.crow-name,.fiche-ident h2,.fiche-barre-titre,.ann-art,.cal-art,.rpt-cover h1,.bilan-header h1{font-family:'Bricolage Grotesque','Geist',-apple-system,BlinkMacSystemFont,sans-serif;font-stretch:88%;font-weight:700;letter-spacing:.005em;text-transform:uppercase}
+.artist,.crow-name,.fiche-ident h2,.fiche-barre-titre,.ann-art,.cal-art,.evt-art,.rpt-cover h1,.bilan-header h1{font-family:'Bricolage Grotesque','Geist',-apple-system,BlinkMacSystemFont,sans-serif;font-stretch:88%;font-weight:700;letter-spacing:.005em;text-transform:uppercase}
 .crow-name{font-size:14px}
 .ann-art{font-size:14px}
 .cal-art{font-size:12px !important}
@@ -1183,6 +1324,16 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
   .fa-tuiles{gap:6px}
   .fa-tuile{padding:10px}
   .fiche-photo-vignette,.fiche-photo-vide{width:140px}
+  /* Programme d'un evenement : cartes plus compactes, liste sans la jauge. */
+  .evt-grille{gap:8px}
+  .evt-carte-corps{padding:8px 10px 10px}
+  .evt-carte .evt-art{font-size:14px}
+  .evt-carte .evt-ventes{display:none}
+  .evt-ligne{grid-template-columns:40px minmax(0,1fr) auto 16px}
+  .evt-ligne .evt-ventes{display:none}
+  .evt-edition-l1,.evt-edition-duo{grid-template-columns:minmax(0,1fr)}
+  .evt-apercu-l{grid-template-columns:52px 44px minmax(0,1fr) 64px}
+  .evt-apercu-l>span:nth-child(4){display:none}
   /* Pas de survol sur un ecran tactile : les actions restent visibles. */
   .ftask-actions,.tk-task-actions{opacity:1}
   .rs-posts-list{padding:10px 12px 12px 16px}
