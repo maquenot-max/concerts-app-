@@ -224,6 +224,8 @@
 <div class="overlay" id="overlay" onclick="closeFiche(event)">
   <div class="fiche" id="fiche" role="dialog" aria-modal="true" aria-labelledby="fiche-title">
     <div class="fiche-barre">
+      <button class="btn-link fiche-retour" id="fiche-retour" onclick="ficheRetourMenu()"><svg class="ico" aria-hidden="true"><use href="#i-chevron-left"></use></svg>Programme</button>
+      <div class="fiche-fil" id="fiche-fil"></div>
       <button class="fiche-btn fiche-voisin" id="fiche-prev" onclick="ficheVoisin(-1)" title="Concert précédent" aria-label="Concert précédent"><svg class="ico" aria-hidden="true"><use href="#i-chevron-left"></use></svg></button>
       <button class="fiche-btn fiche-voisin" id="fiche-next" onclick="ficheVoisin(1)" title="Concert suivant" aria-label="Concert suivant"><svg class="ico" aria-hidden="true"><use href="#i-chevron-right"></use></svg></button>
       <span class="fiche-barre-titre" id="fiche-barre-titre" aria-hidden="true"></span>
@@ -234,6 +236,8 @@
           <button class="menu-item danger" id="fi-annule-btn" onclick="closeFicheMenu();ficheBasculerAnnule()">Marquer comme annulé</button>
           <button class="menu-item" id="fi-annonce-undo" onclick="closeFicheMenu();ficheAnnonceUndo()" style="display:none">Remettre l'annonce à faire</button>
           <button class="menu-item" onclick="closeFicheMenu();resetFicheTasks()">Réinitialiser les tâches</button>
+          <button class="menu-item" id="fi-sp-apart" onclick="closeFicheMenu();ficheSpApart()" hidden>En faire un concert à part</button>
+          <button class="menu-item danger" id="fi-sp-retirer" onclick="closeFicheMenu();ficheSpRetirer()" hidden>Retirer du programme</button>
           <button class="menu-item" id="fi-archive-btn" onclick="closeFicheMenu();deleteFicheConcert()">Déplacer vers Concerts passés</button>
           <button class="menu-item" id="fi-restore-btn" onclick="closeFicheMenu();restoreConcert(currentFicheId)" style="display:none">Remettre en actif</button>
           <button class="menu-item danger" id="fi-perma-delete-btn" onclick="closeFicheMenu();permanentlyDeleteConcert(currentFicheId)" style="display:none">Supprimer définitivement</button>
@@ -241,6 +245,8 @@
       </div>
       <button class="fiche-btn" onclick="closeFicheBtn()" title="Fermer (Échap)" aria-label="Fermer"><svg class="ico" aria-hidden="true"><use href="#i-x"></use></svg></button>
     </div>
+    <nav class="fiche-evt-menu" id="fiche-evt-menu" aria-label="L'événement et ses spectacles"></nav>
+    <div class="fiche-corps">
     <div class="fiche-tete" id="fiche-tete">
       <div class="fiche-hero" aria-hidden="true">
         <img class="fiche-hero-fond" id="fiche-hero-fond" alt="">
@@ -249,6 +255,7 @@
       <div class="fiche-ident">
         <div class="fiche-ident-txt">
           <span class="fiche-evt-tag" id="fiche-evt-tag" hidden><svg class="ico" aria-hidden="true"><use href="#i-calendar"></use></svg>Événement</span>
+          <span class="fiche-sur" id="fiche-sur" hidden></span>
           <h2 id="fiche-title">Concert</h2>
           <span class="fiche-sub" id="fiche-sub"></span>
           <span class="fiche-autres" id="fiche-autres"></span>
@@ -268,18 +275,19 @@
     <div class="fiche-puces" id="fiche-puces"></div>
     <div class="fiche-annule" id="fiche-annule" hidden>
       <svg class="ico" aria-hidden="true"><use href="#i-ban"></use></svg>
-      <span>Concert annulé : il reste grisé dans les listes, mais n'apparaît plus dans les annonces à venir ni dans la newsletter.</span>
+      <span id="fiche-annule-txt">Concert annulé : il reste grisé dans les listes, mais n'apparaît plus dans les annonces à venir ni dans la newsletter.</span>
       <button class="btn btn-sm" onclick="ficheBasculerAnnule()">Rétablir</button>
     </div>
     <div id="fiche-ancre"></div>
     <div class="fiche-onglets-cadre">
       <div class="view-toggle fiche-onglets" id="fiche-onglets" role="tablist" aria-label="Sections de la fiche">
-        <button class="view-toggle-btn fiche-onglet" role="tab" id="fo-programme" aria-controls="fp-programme" onclick="ficheOnglet('programme')" hidden>Programme</button>
         <button class="view-toggle-btn fiche-onglet" role="tab" id="fo-apercu" aria-controls="fp-apercu" onclick="ficheOnglet('apercu')">Aperçu</button>
+        <button class="view-toggle-btn fiche-onglet" role="tab" id="fo-programme" aria-controls="fp-programme" onclick="ficheOnglet('programme')" hidden>Programme</button>
         <button class="view-toggle-btn fiche-onglet" role="tab" id="fo-plan" aria-controls="fp-plan" onclick="ficheOnglet('plan')">Plan<span class="fiche-onglet-n" id="fo-plan-n" title="Tâches en retard" hidden></span></button>
         <button class="view-toggle-btn fiche-onglet" role="tab" id="fo-sponso" aria-controls="fp-sponso" onclick="ficheOnglet('sponso')">Sponso</button>
         <button class="view-toggle-btn fiche-onglet" role="tab" id="fo-infos" aria-controls="fp-infos" onclick="ficheOnglet('infos')">Infos</button>
       </div>
+      <div class="fiche-onglets-droite" id="fiche-onglets-droite"></div>
     </div>
     <div class="fiche-panneau fiche-programme" id="fp-programme" role="tabpanel" aria-labelledby="fo-programme" hidden></div>
     <div class="fiche-panneau fiche-apercu" id="fp-apercu" role="tabpanel" aria-labelledby="fo-apercu"></div>
@@ -287,6 +295,8 @@
       <div class="fiche-plan-tete" id="fiche-plan-sum"></div>
       <button type="button" class="fiche-switch" role="switch" id="skip-col-btn" aria-checked="false" onclick="toggleSkip('col')"><span class="fiche-switch-piste" aria-hidden="true"></span><span>Pas d'affiche dispo <span class="fiche-switch-aide">· masque Collage et Affichage protégé</span></span></button>
       <div class="fiche-tasks" id="fiche-tasks"></div>
+      <div class="fiche-plan-sp" id="fiche-plan-sp" hidden></div>
+      <p class="fiche-plan-evt" id="fiche-plan-evt" hidden></p>
     </div>
     <div class="fiche-panneau" id="fp-sponso" role="tabpanel" aria-labelledby="fo-sponso" hidden>
       <div class="fiche-sp-tete">
@@ -314,10 +324,12 @@
         <input type="file" id="evt-photo-input" accept="image/*" hidden>
         <div id="fiche-photo"></div>
       </div>
+      <div class="fiche-sp-infos" id="fiche-sp-infos"></div>
     </div>
     <div class="fiche-footer">
       <button class="btn" id="fi-budget-btn" onclick="openBudgetModal()" title="Créer ou ouvrir le budget promo (Google Sheet)">Budget promo</button>
       <button class="btn" onclick="openCampaignWizard(currentFicheId)" title="Questionnaire guidé pour générer le rapport de campagne (PDF)"><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg><span class="fb-long">Rapport de campagne</span><span class="fb-court">Rapport</span></button>
+    </div>
     </div>
   </div>
 </div>
@@ -547,7 +559,7 @@
 <div class="tk-modal" id="date-override-modal">
   <div class="tk-modal-box w-340">
     <div class="tk-modal-title">Décaler l'échéance</div>
-    <div><label>Nouvelle date pour ce concert</label><input type="date" id="do-date"></div>
+    <div><label for="do-date" id="do-label">Nouvelle date pour ce concert</label><input type="date" id="do-date"></div>
     <div class="tk-modal-actions between">
       <button class="btn" onclick="clearDateOverride()"><svg class="ico" aria-hidden="true"><use href="#i-rotate"></use></svg> Date par défaut</button>
       <div class="modal-actions-group">
@@ -628,6 +640,7 @@
 <div class="tk-modal" id="budget-modal"><div class="tk-modal-box bud-box" id="budget-box" role="dialog" aria-label="Budget promo"></div></div>
 <!-- Evenement : ajouter un spectacle, ou coller tout le programme (rempli par renderEvtModal) -->
 <div class="tk-modal" id="evt-modal"><div class="tk-modal-box evt-box" id="evt-box" role="dialog" aria-modal="true" aria-label="Ajouter au programme"></div></div>
+<div class="tk-modal" id="evt-rep-modal"><div class="tk-modal-box evt-rep-box" id="evt-rep-box" role="dialog" aria-modal="true" aria-label="Tâches de chaque spectacle"></div></div>
 <!-- Notifications transitoires, empilées en haut au centre sous l'en-tête -->
 <div class="toast-stack">
   <div class="saving" id="saving">Sauvegarde...</div>
@@ -1212,7 +1225,7 @@ function nlEvenements(){
 }
 function nlEvtParDefaut(){var l=nlEvenements();return l.length?l[0].id:'';}
 function nlEvtDuBloc(b){return b&&b.evt?concerts.find(function(c){return c.id===b.evt&&estEvt(c)&&!c.supprime;})||null:null;}
-function nlSpectaclesDuBloc(b,c){return evtTrie(evtProg(c)).filter(function(p){return !b.exclus[p.id];});}
+function nlSpectaclesDuBloc(b,c){return evtTrie(evtProg(c)).filter(function(p){return !p.annule&&!b.exclus[p.id];});}
 function nlPhotoNom(art){var k=artKey(art);return k&&artistPhotos[k]?artistPhotos[k].url:'';}
 // « 20h30 » sous l'intertitre du jour ; « jeu. 12 nov. · 20h30 » sans lui.
 function nlHoraire(p,avecJour){
@@ -1228,7 +1241,7 @@ function nlPlageLongue(c){
   return 'Du '+d1.toLocaleDateString('fr-FR',memeMois?{day:'numeric'}:memeAn?{day:'numeric',month:'long'}:o)+' au '+d2.toLocaleDateString('fr-FR',o);
 }
 function nlCandidats(b){
-  if(b.type==='evenement'){var ce=nlEvtDuBloc(b);return ce?evtTrie(evtProg(ce)):[];}
+  if(b.type==='evenement'){var ce=nlEvtDuBloc(b);return ce?evtTrie(evtProg(ce)).filter(function(p){return !p.annule;}):[];}
   if(b.type==='annonces')return nlRecentlyAnnouncedConcerts(b.jours);
   var sel=nlVillesSel(b);
   return nlUpcomingConcerts().filter(function(c){return !sel.length||sel.indexOf(getVille(c.ville))>=0;});
@@ -2005,7 +2018,7 @@ function nlLigneConcert(b,c){
 // Spectacles du programme, par jour, a cocher ; photo et billetterie se
 // completent sur place, comme dans « Concerts a venir ».
 function nlListeProgramme(b,c){
-  var l=evtTrie(evtProg(c)),jours={};
+  var l=evtTrie(evtProg(c)).filter(function(p){return !p.annule;}),jours={};
   l.forEach(function(p){(jours[p.dc||'']=jours[p.dc||'']||[]).push(p);});
   return '<div class="nl-champ"><div class="nl-champ-nom nl-liste-tete"><span class="nl-ccompte" data-compte="'+esc(b.id)+'">'+nlCompte(b)+'</span>'
       +(l.length?'<span class="grow"></span><button type="button" class="btn-link" data-nl="tous" data-b="'+esc(b.id)+'">Tout cocher</button><button type="button" class="btn-link" data-nl="aucun" data-b="'+esc(b.id)+'">Tout décocher</button>':'')
@@ -2824,6 +2837,7 @@ function renderFichePhoto(c){
   // Evenement : c'est son visuel (rangé sous son nom, comme une photo d'artiste).
   var evt=estEvt(c);
   if(evt)usage=entry?'Visuel de l\'événement : en-tête de la fiche et newsletter.':'Le visuel de l\'événement, en 16:9 : en-tête de la fiche et newsletter.';
+  else if(c.spectacle)usage=entry?'Photo de '+nom+' : la même sur ses autres dates et dans la newsletter.':'Une photo par artiste : elle servira aussi sur ses autres dates et dans la newsletter.';
   document.getElementById('fiche-photo-btn-l').textContent=evt?'Visuel':'Photo';
   document.getElementById('fiche-photo-ajout-l').textContent=evt?'Visuel 16:9':'Photo 16:9';
   document.getElementById('fiche-photo-btn').title=evt?'Visuel de l\'événement':'Photo de l\'artiste';
@@ -2851,21 +2865,23 @@ function renderFichePhoto(c){
       +'<div class="fiche-photo-meta"><p class="fiche-photo-note">'+esc(usage)+' Elle sera recadrée en 16:9.</p></div>';
   }
   document.getElementById('fiche-photo').innerHTML=html+'</div>';
-  if(currentFicheId===c.id)ficheCompacte();
+  if(currentFicheId)ficheCompacte();
 }
+// La photo de ce qui est affiche : le concert, le visuel de l'evenement, ou
+// l'artiste du spectacle choisi dans sa page (rangee sous son nom).
 function onFichePhotoFileChosen(input){
   var file=input.files&&input.files[0];input.value='';if(!file)return;
-  var cid=currentFicheId;
-  cropFromFile(file,null,function(blob,orig){uploadArtistPhotoBlob(cid,blob,orig);});
+  var s=ficheSujet();if(!s)return;
+  var art=s.art,cid=currentFicheId;
+  cropFromFile(file,null,function(blob,orig){envoyerPhotoArtiste(art,blob,orig).then(function(ok){if(ok)ficheApresPhoto(cid);});});
 }
 // Rouvre l'outil de recadrage sur la photo deja en ligne, a partir de
 // l'original enregistre avec elle quand il existe.
 function recropArtistPhoto(){
-  var cid=currentFicheId;
-  var c=concerts.find(function(x){return x.id===cid;});if(!c)return;
-  var key=artKey(c.art);
+  var s=ficheSujet();if(!s)return;
+  var art=s.art,cid=currentFicheId,key=artKey(art);
   var entry=key?artistPhotos[key]:null;if(!entry)return;
-  cropFromExisting(null,(entry.orig&&entry.orig.url)||entry.url,null,function(blob){uploadArtistPhotoBlob(cid,blob,null);});
+  cropFromExisting(null,(entry.orig&&entry.orig.url)||entry.url,null,function(blob){envoyerPhotoArtiste(art,blob,null).then(function(ok){if(ok)ficheApresPhoto(cid);});});
 }
 // cid : le concert dont la fiche etait ouverte au moment du choix (et non celle
 // ouverte a la fin de l'envoi). origBlob : original d'un NOUVEAU fichier, a
@@ -2904,14 +2920,14 @@ async function envoyerPhotoArtiste(art,blob,origBlob){
   }
 }
 function removeArtistPhoto(){
-  var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
-  var key=artKey(c.art);
+  var s=ficheSujet();if(!s)return;
+  var cid=currentFicheId,key=artKey(s.art);
   var entry=key?artistPhotos[key]:null;if(!entry)return;
-  customConfirm('Retirer la photo de '+c.art+' ? Elle disparaîtra de tous ses concerts (le fichier reste en ligne pour les newsletters déjà envoyées).','Retirer').then(function(ok){
+  customConfirm('Retirer la photo de '+s.art+' ? Elle disparaîtra de tous ses concerts (le fichier reste en ligne pour les newsletters déjà envoyées).','Retirer').then(function(ok){
     if(!ok)return;
     delete artistPhotos[key];
     scheduleSave('artist_photos');
-    renderFichePhoto(c);
+    ficheApresPhoto(cid);
   });
 }
 // Un artiste figure-t-il dans le programme d'un evenement ? Sa photo y sert
@@ -3452,10 +3468,12 @@ function showTab(id,btn){
 // fiche, puis revient a l'onglet precedent).
 var TAB_IDS=['rs','kanban','concerts','past','taches','sponso','process','budgetconfig','team'];
 var _routing=false; // vrai pendant applyRoute() : on ne re-pousse pas l'URL
-function routeHash(tab,ficheId){return '#'+tab+(ficheId?'/'+ficheId:'');}
-function pushRoute(tab,ficheId,replace){
+// Page d'un evenement : #onglet/idEvenement/idSpectacle pour l'un de ses
+// spectacles.
+function routeHash(tab,ficheId,sp){return '#'+tab+(ficheId?'/'+ficheId+(sp?'/'+sp:''):'');}
+function pushRoute(tab,ficheId,replace,sp){
   if(_routing)return;
-  var hsh=routeHash(tab,ficheId);
+  var hsh=routeHash(tab,ficheId,sp);
   if(location.hash===hsh)return;
   var st={tab:tab,fiche:ficheId||null};
   if(replace)history.replaceState(st,'',hsh);else history.pushState(st,'',hsh);
@@ -3465,7 +3483,7 @@ function parseRoute(){
   if(!hsh||hsh.indexOf('access_token')>=0)return null; // retour OAuth Google : pas une route
   var parts=hsh.split('/');
   if(TAB_IDS.indexOf(parts[0])<0)return null;
-  return {tab:parts[0],fiche:parts[1]||null};
+  return {tab:parts[0],fiche:parts[1]||null,sp:parts[2]||null};
 }
 function applyRoute(){
   var r=parseRoute();
@@ -3473,7 +3491,10 @@ function applyRoute(){
   _routing=true;
   try{
     if(r.tab!==currentTab||!document.getElementById('tab-'+r.tab).classList.contains('active'))showTab(r.tab);
-    if(r.fiche){if(appDataLoaded&&currentFicheId!==r.fiche)openFiche(r.fiche);}
+    if(r.fiche){
+      if(appDataLoaded&&currentFicheId!==r.fiche)openFiche(r.fiche,null,false,r.sp);
+      else if(appDataLoaded&&r.sp!==ficheSpId)ficheChoisirSpectacle(r.sp);
+    }
     else if(currentFicheId)closeFicheBtn();
   }finally{_routing=false;}
 }
@@ -3614,11 +3635,40 @@ function tk(cid,tid){return cid+'-'+tid;}
 // numerique cote process devient null plutot que du code.
 function jsNum(v){var n=Number(v);return isFinite(n)?String(n):'null';}
 function tidLit(t){return t.isCustom?("'"+escJs(t.id)+"'"):jsNum(t.id);}
-function isUnlocked(c,t){if(!t.prereq)return true;return !!taskStates[tk(c.id,t.prereq)];}
+// Prerequis. Dans un evenement, une etape est soit commune, soit faite pour
+// chaque spectacle (evtEtapesSp) : un spectacle attend un prerequis commun
+// sur l'evenement, et l'evenement attend un prerequis « par spectacle » sur
+// tous ses spectacles (celui ou il est marque inutile ne bloque pas).
+function isUnlocked(c,t){
+  if(!t.prereq)return true;
+  var e=c.spectacle?c.evenement:(estEvt(c)?c:null);
+  // Concert, ou prerequis commun : sa coche, sur l'evenement le cas echeant.
+  if(!e||!evtEtapesSp(e)[t.prereq])return !!taskStates[tk(e?e.id:c.id,t.prereq)];
+  if(c.spectacle)return !!taskStates[tk(c.id,t.prereq)];
+  return evtSuivis(e).every(function(p){return taskStates[tk(p.id,t.prereq)]||taskStates['na-'+p.id+'-'+t.prereq];});
+}
 function isNA(c,t){return !!taskStates['na-'+c.id+'-'+t.id];}
+// Etapes du process qui reviennent a c : toutes pour un concert, les communes
+// pour un evenement, celles « pour chaque spectacle » pour un spectacle.
+function etapesSujet(c){
+  if(c.spectacle){
+    if(evtApart(c.spectacle))return [];
+    var m=evtEtapesSp(c.evenement);return process.filter(function(t){return m[t.id];});
+  }
+  if(estEvt(c)){var n=evtEtapesSp(c);return process.filter(function(t){return !n[t.id];});}
+  return process;
+}
 function sortedProcess(c){
   var custom=customTasks.filter(function(t){return t.concertId===c.id;});
-  return process.concat(custom).sort(function(a,b){var da=calcDate(c,a),db=calcDate(c,b);if(!da&&!db)return 0;if(!da)return 1;if(!db)return-1;return da-db;});
+  return etapesSujet(c).concat(custom).sort(function(a,b){var da=calcDate(c,a),db=calcDate(c,b);if(!da&&!db)return 0;if(!da)return 1;if(!db)return-1;return da-db;});
+}
+// « Pas d'affiche dispo », « Sponso geree par la prod » : un spectacle suit
+// aussi le reglage de son evenement.
+function skipActif(c,cat){return !!taskStates['skip-'+c.id+'-'+cat]||!!(c.spectacle&&taskStates['skip-'+c.evenement.id+'-'+cat]);}
+function sansEtapesSautees(c,l){
+  var sp=skipActif(c,'sp'),col=skipActif(c,'col');
+  if(!sp&&!col)return l;
+  return l.filter(function(t){return !(sp&&t.cat==='sp')&&!(col&&(t.cat==='col'||t.cat==='affp'));});
 }
 function fillFilterSelect(el,opts,emptyLabel){
   if(!el)return;
@@ -3698,10 +3748,14 @@ function updateFiltersBadge(badgeId,selectIds){
 }
 function matchesCategoryFilter(c,cat){
   if(!cat)return true;
-  return sortedProcess(c).some(function(t){
-    var d=calcDate(c,t);
-    return t.cat===cat&&!taskStates[tk(c.id,t.id)]&&isUnlocked(c,t)&&!isNA(c,t)&&(isLate(d)||isToday(d));
-  });
+  function urgente(s){
+    return sortedProcess(s).some(function(t){
+      var d=calcDate(s,t);
+      return t.cat===cat&&!taskStates[tk(s.id,t.id)]&&isUnlocked(s,t)&&!isNA(s,t)&&(isLate(d)||isToday(d));
+    });
+  }
+  // Un evenement passe aussi par les taches de ses spectacles.
+  return urgente(c)||(estEvt(c)&&evtSuivis(c).some(function(p){return urgente(spSujet(c,p));}));
 }
 // ── FICHE CONCERT ─────────────────────────────────────────
 // Refaite le 25/09 d'apres la maquette « B · Onglets » : un en-tete (photo de
@@ -3715,8 +3769,13 @@ function matchesCategoryFilter(c,cat){
 // ouvre directement le plan (« + N autres taches » du tableau de bord).
 var ficheTab='apercu';
 var FICHE_ONGLETS={programme:'programme',apercu:'apercu',plan:'plan',sponso:'sponso',infos:'infos',info:'infos'};
-// Un evenement s'ouvre sur son programme ; l'onglet n'existe que pour lui.
-function ficheOrdreOnglets(c){return estEvt(c)?['programme','apercu','plan','sponso','infos']:['apercu','plan','sponso','infos'];}
+// « Programme » n'existe que pour un evenement ; un spectacle, dans la page de
+// son evenement, n'a ni programme ni sponso (elle se fait pour l'evenement).
+function ficheOrdreOnglets(c){
+  if(!c)return [];
+  if(c.spectacle)return ['apercu','plan','infos'];
+  return estEvt(c)?['apercu','programme','plan','sponso','infos']:['apercu','plan','sponso','infos'];
+}
 var FICHE_VENTES=['Pas en vente','Ventes faibles','Ventes moyennes','Bonnes ventes','Complet'];
 var FICHE_VENTES_COURT=['Pas en vente','Faibles','Moyennes','Bonnes','Complet'];
 function ficheConcert(){return concerts.find(function(x){return x.id===currentFicheId;});}
@@ -3745,12 +3804,18 @@ function ficheJours(c){
 // voisin : on arrive par les fleches ou une autre date du meme artiste. On
 // garde l'onglet, et l'URL est remplacee plutot qu'empilee : le bouton retour
 // referme la fiche au lieu de rejouer chaque concert parcouru.
-function openFiche(id,sec,voisin){
+// sp : l'un des spectacles d'un evenement, a afficher dans sa page (lien,
+// recherche, tableau de bord). Absent : on garde celui qui etait affiche.
+function openFiche(id,sec,voisin,sp){
   var c=concerts.find(function(x){return x.id===id;});if(!c)return;
   var autre=currentFicheId!==id;
-  if(autre){ficheGroupsOpen={avenir:true,done:false,na:false};spFicheOuverte=null;evtJour='';evtOuvert=null;evtVue=evtVueParDefaut();}
+  if(autre){ficheGroupsOpen={avenir:true,done:false,na:false};spFicheOuverte=null;evtJour='';evtOuvert=null;evtVue=evtVueParDefaut();evtEtapeOuverte=null;}
+  if(autre||sp!==undefined){var p=sp&&estEvt(c)?evtSpectacle(c,sp):null;ficheSpId=p&&!evtApart(p)?p.id:null;}
   if(sec&&FICHE_ONGLETS[sec])ficheTab=FICHE_ONGLETS[sec];
-  else if(autre&&!voisin)ficheTab=estEvt(c)?'programme':'apercu';
+  else if(autre&&!voisin)ficheTab='apercu';
+  // Telephone : la page d'un evenement s'ouvre sur son menu (ses spectacles).
+  if(autre)ficheMenuTel=estEvt(c)&&!ficheSpId&&!sec;
+  else if(sec||ficheSpId)ficheMenuTel=false;
   currentFicheId=id;
   closeFicheMenu();
   renderFiche(c);
@@ -3760,12 +3825,12 @@ function openFiche(id,sec,voisin){
   ov.classList.add('open');
   document.body.style.overflow='hidden';
   ficheCompacte();
-  pushRoute(currentTab,id,!!voisin);
+  pushRoute(currentTab,id,!!voisin,ficheSpId);
 }
 function closeFiche(e){if(e.target===document.getElementById('overlay'))closeFicheBtn();}
 function closeFicheMenu(){['fiche-menu','fiche-photo-menu'].forEach(function(id){var m=document.getElementById(id);if(m)m.style.display='none';});}
 function closeFicheBtn(){
-  closeFicheMenu();document.getElementById('overlay').classList.remove('open');document.body.style.overflow='';currentFicheId=null;render();
+  closeFicheMenu();document.getElementById('overlay').classList.remove('open');document.body.style.overflow='';currentFicheId=null;ficheSpId=null;ficheMenuTel=false;render();
   if(!_routing){
     // Fiche ouverte par un clic (entree d'historique a nous) : on revient en
     // arriere ; fiche ouverte par un lien direct : on remplace simplement l'URL.
@@ -3773,43 +3838,75 @@ function closeFicheBtn(){
     else pushRoute(currentTab,null,true);
   }
 }
+// Un evenement s'affiche en pleine page (.pleine), avec son menu ; ce qu'on
+// y a choisi (l'evenement lui-meme, ou l'un de ses spectacles : ficheSujet)
+// occupe l'en-tete, les onglets et les panneaux de droite.
 function renderFiche(c){
-  var evt=estEvt(c);
-  document.getElementById('fiche').classList.toggle('est-evt',evt);
-  document.getElementById('fo-programme').hidden=!evt;
-  if(!evt&&ficheTab==='programme')ficheTab='apercu';
+  var evt=estEvt(c),f=document.getElementById('fiche');
+  if(evt&&ficheSpId){var p0=evtSpectacle(c,ficheSpId);if(!p0||evtApart(p0))ficheSpId=null;}
+  if(!evt)ficheSpId=null;
+  var s=ficheSujet()||c,sp=!!s.spectacle;
+  f.classList.toggle('est-evt',evt);
+  f.classList.toggle('pleine',evt);
+  f.classList.toggle('est-sp',sp);
+  f.classList.toggle('vue-menu',evt&&ficheMenuTel);
+  // La page d'un evenement prend deja tout l'ecran : pas de fiche « agrandie ».
+  f.classList.toggle('wide',!evt&&ficheLargePref());
+  var ordre=ficheOrdreOnglets(s);
+  if(ordre.indexOf(ficheTab)<0)ficheTab='apercu';
+  ['programme','sponso'].forEach(function(k){document.getElementById('fo-'+k).hidden=ordre.indexOf(k)<0;});
   ficheMajTete(c);
   ficheMajInfos(c);
-  renderFichePhoto(c);
+  renderFichePhoto(s);
   updateSkipButtons();
   renderFicheTasks(c);
   spRenderFiche(c.id);
   ficheMajBudget(c);
   renderFicheProgramme(c);
-  document.getElementById('fi-archive-btn').style.display=c.supprime?'none':'';
-  document.getElementById('fi-restore-btn').style.display=c.supprime?'':'none';
-  document.getElementById('fi-perma-delete-btn').style.display=c.supprime?'':'none';
+  renderFicheMenu(c);
+  document.getElementById('fi-archive-btn').style.display=c.supprime||sp?'none':'';
+  document.getElementById('fi-restore-btn').style.display=c.supprime&&!sp?'':'none';
+  document.getElementById('fi-perma-delete-btn').style.display=c.supprime&&!sp?'':'none';
 }
 // En-tete, puces d'etat, bandeau « annule », fleches et menu : tout ce qui
 // depend du nom, des dates, de l'annonce, des ventes ou de l'annulation.
 function ficheMajTete(c){
-  document.getElementById('fiche-title').textContent=c.art||'Concert';
+  c=ficheCible(c);
+  var p=c.spectacle||null,e=p?c.evenement:null;
+  document.getElementById('fiche-title').textContent=c.art||(p?'Spectacle':'Concert');
   document.getElementById('fiche-barre-titre').textContent=c.art||'Concert';
   var evt=estEvt(c);
   document.getElementById('fiche-evt-tag').hidden=!evt;
-  document.getElementById('fiche-sub').textContent=evt?[c.ville,evtPlage(c,true)].filter(Boolean).join(' · '):[formatLieu(c.ville),ficheDateLongue(c.dc)].filter(Boolean).join(' · ');
-  document.getElementById('fiche-autres').innerHTML=evt?'<span class="fiche-evt-resume">'+esc(evtResume(c))+'</span>':ficheAutresHtml(c);
+  // Spectacle : son evenement et son jour au-dessus du nom.
+  var sur=document.getElementById('fiche-sur');
+  sur.hidden=!p;
+  sur.innerHTML=p?'<button type="button" class="fiche-sur-evt" onclick="ficheVersEvt()">'+esc(e.art)+'</button><span>'+esc(evtJourLong(p.dc))+'</span>':'';
+  var heure=p?evtHeure(p.h):'';
+  document.getElementById('fiche-sub').textContent=p?[c.ville,ficheDateLongue(p.dc)+(heure?' · '+heure.replace(':','h'):'')].filter(Boolean).join(' · ')
+    :evt?[c.ville,evtPlage(c,true)].filter(Boolean).join(' · '):[formatLieu(c.ville),ficheDateLongue(c.dc)].filter(Boolean).join(' · ');
+  document.getElementById('fiche-autres').innerHTML=p?'':evt?'<span class="fiche-evt-resume">'+esc(evtResume(c))+'</span>':ficheAutresHtml(c);
   document.getElementById('fiche-puces').innerHTML=fichePucesHtml(c);
   document.getElementById('fiche-annule').hidden=!c.annule;
+  document.getElementById('fiche-annule-txt').textContent=p?'Spectacle annulé : ses tâches ne comptent plus dans le suivi de l\'événement, et il n\'apparaît plus dans la newsletter.':'Concert annulé : il reste grisé dans les listes, mais n\'apparaît plus dans les annonces à venir ni dans la newsletter.';
   var ab=document.getElementById('fi-annule-btn');
-  ab.textContent=c.annule?'Rétablir le concert':'Marquer comme annulé';
+  ab.textContent=c.annule?(p?'Rétablir le spectacle':'Rétablir le concert'):'Marquer comme annulé';
   ab.classList.toggle('danger',!c.annule);
+  document.getElementById('fi-sp-apart').hidden=!p;
+  document.getElementById('fi-sp-retirer').hidden=!p;
+  document.getElementById('fiche-fil').innerHTML=ficheFilHtml(c);
   updateFicheAnnonceUndoBtn();
   ficheMajVoisins();
 }
+// Barre du haut de la page d'un evenement : ou l'on est.
+function ficheFilHtml(c){
+  var tag='<span class="tag tag-accent evt-tag">'+icon('calendar')+'Événement</span>';
+  if(c.spectacle)return tag+'<button type="button" class="fiche-fil-evt" onclick="ficheVersEvt()">'+esc(c.evenement.art)+'</button>'+icon('chevron-right')+'<b>'+esc(c.art||'Spectacle')+'</b>';
+  return estEvt(c)?tag+'<b>'+esc(c.art)+'</b>':'';
+}
 // L'etat d'annonce suit annonceEnAttente() : une date d'annonce passee vaut
 // annonce faite, meme sans clic sur « Marquer annonce ».
-function fichePucesHtml(c){
+// statique : sans les boutons (en-tete du menu, sur telephone).
+function fichePucesHtml(c,statique){
   var h='';
   if(c.annule)h+='<span class="tag tag-red">Annulé</span>';
   var j=ficheJours(c);
@@ -3817,14 +3914,17 @@ function fichePucesHtml(c){
   if(estEvt(c)&&j!==null&&j<0&&evtFin(c)>=spTodayStr())h+='<span class="tag tag-neutral">En cours</span>';
   else if(j!==null)h+='<span class="tag tag-neutral">'+(j>1?'Dans '+j+' jours':j===1?'Demain':j===0?'Aujourd\'hui':j===-1?'Hier':'Il y a '+(-j)+' jours')+'</span>';
   if(!c.annule){
+    // Un spectacle sans date d'annonce a lui est annonce avec son evenement :
+    // il en montre l'etat, sans bouton (on l'annonce depuis l'evenement).
+    var ref=c.spectacle&&!c.spectacle.da?c.evenement:c;
     var t0=new Date();t0.setHours(0,0,0,0);
-    var da=c.da?new Date(c.da+'T00:00:00'):null;
+    var da=ref.da?new Date(ref.da+'T00:00:00'):null;
     if(da&&isNaN(da.getTime()))da=null;
-    if(taskStates['annonce-'+c.id]||(da&&da<t0)){
-      h+='<span class="tag tag-green">'+icon('check')+(da&&da<=t0?'Annoncé le '+esc(ficheCourt(c.da)):'Annoncé')+'</span>';
+    if(taskStates['annonce-'+ref.id]||(da&&da<t0)){
+      h+='<span class="tag tag-green">'+icon('check')+(da&&da<=t0?'Annoncé le '+esc(ficheCourt(ref.da)):'Annoncé')+'</span>';
     }else{
-      h+='<span class="tag tag-amber">'+(da?'Annonce le '+esc(ficheCourt(c.da,true)):'Date d\'annonce à fixer')+'</span>'
-        +'<button type="button" class="tag fiche-annoncer" onclick="ficheAnnonceFaite()">Marquer annoncé</button>';
+      h+='<span class="tag tag-amber">'+(da?'Annonce le '+esc(ficheCourt(ref.da,true)):'Date d\'annonce à fixer')+'</span>'
+        +(ref===c&&!statique?'<button type="button" class="tag fiche-annoncer" onclick="ficheAnnonceFaite()">Marquer annoncé</button>':'');
     }
   }
   // Evenement : les ventes sont celles de chaque spectacle (programme).
@@ -3848,54 +3948,72 @@ function ficheAutresHtml(c){
 }
 function updateFicheAnnonceUndoBtn(){
   var b=document.getElementById('fi-annonce-undo');if(!b)return;
-  b.style.display=(currentFicheId&&taskStates['annonce-'+currentFicheId])?'':'none';
+  var s=currentFicheId?ficheSujet():null;
+  b.style.display=(s&&taskStates['annonce-'+s.id])?'':'none';
 }
 function ficheAnnonceUndo(){
-  var c=ficheConcert();if(!c)return;
-  annonceUndo(c.id);
-  ficheMajTete(c);
+  var s=ficheSujet();if(!s)return;
+  annonceUndo(s.id);
+  ficheMajTete(s);
 }
 function ficheAnnonceFaite(){
-  var c=ficheConcert();if(!c)return;
-  annonceDone(c.id);
-  ficheMajTete(c);
+  var s=ficheSujet();if(!s)return;
+  annonceDone(s.id);
+  ficheMajTete(s);
 }
 function ficheVentes(){
-  var c=ficheConcert();if(!c)return;
-  c.ventes=(ficheVentesNiveau(c)+1)%VENTES.length;
+  var s=ficheSujet();if(!s)return;
+  var v=(ficheVentesNiveau(s)+1)%VENTES.length;
+  if(s.spectacle){s.spectacle.ventes=v;evtEnregistrer(s.evenement,true);return;}
+  s.ventes=v;
   scheduleSave('concerts');
-  ficheMajTete(c);renderFicheApercu(c);
+  ficheMajTete(s);renderFicheApercu(s);
 }
 // Annuler reste reversible : bandeau rouge avec « Retablir ». Jusqu'au 25/09,
 // c'etait une case perdue entre deux champs : personne ne la cochait, on
 // ecrivait « (ANNULE) » dans le nom de l'artiste, et le concert restait
 // propose dans la newsletter et les annonces a venir.
 function ficheBasculerAnnule(){
-  var c=ficheConcert();if(!c)return;
-  c.annule=!c.annule;
+  var s=ficheSujet();if(!s)return;
+  // Un spectacle annule sort du suivi de l'evenement (taches, tableau de
+  // bord) et de la newsletter ; il reste au programme, grise.
+  if(s.spectacle){s.spectacle.annule=!s.spectacle.annule;evtEnregistrer(s.evenement,true);renderKanban();return;}
+  s.annule=!s.annule;
   scheduleSave('concerts');
-  ficheMajTete(c);
+  ficheMajTete(s);
 }
 // Concert precedent / suivant par date, parmi ceux du meme statut (actifs, ou
-// passes quand la fiche est celle d'un concert archive).
+// passes quand la fiche est celle d'un concert archive). Dans la page d'un
+// evenement, les fleches passent d'un spectacle a l'autre.
 function ficheVoisins(){
   var c=ficheConcert();if(!c)return [];
+  if(ficheSpId&&estEvt(c))return evtTrie(evtProg(c)).filter(function(p){return !evtApart(p);});
   return concerts.filter(function(x){return !!x.supprime===!!c.supprime;})
     .sort(function(a,b){var x=a.dc||'9999',y=b.dc||'9999';return x<y?-1:x>y?1:0;});
 }
 function ficheVoisin(dir){
-  var l=ficheVoisins(),i=l.findIndex(function(x){return x.id===currentFicheId;});
+  var l=ficheVoisins(),courant=ficheSpId||currentFicheId,i=l.findIndex(function(x){return x.id===courant;});
   var n=i<0?null:l[i+dir];
-  if(n)openFiche(n.id,null,true);
+  if(!n)return;
+  if(ficheSpId)ficheChoisirSpectacle(n.id);else openFiche(n.id,null,true);
 }
 function ficheMajVoisins(){
-  var l=ficheVoisins(),i=l.findIndex(function(x){return x.id===currentFicheId;});
-  document.getElementById('fiche-prev').disabled=i<=0;
-  document.getElementById('fiche-next').disabled=i<0||i>=l.length-1;
+  var c=ficheConcert(),l=ficheVoisins(),courant=ficheSpId||currentFicheId,i=l.findIndex(function(x){return x.id===courant;});
+  var prev=document.getElementById('fiche-prev'),next=document.getElementById('fiche-next');
+  // Vue d'ensemble d'un evenement : pas de voisin (le menu est a cote).
+  var cache=estEvt(c)&&!ficheSpId;
+  prev.hidden=next.hidden=cache;
+  prev.disabled=i<=0;
+  next.disabled=i<0||i>=l.length-1;
+  var mot=ficheSpId?'Spectacle':'Concert';
+  prev.title=!prev.disabled&&ficheSpId?'Précédent : '+l[i-1].art:mot+' précédent';
+  next.title=!next.disabled&&ficheSpId?'Suivant : '+l[i+1].art:mot+' suivant';
+  prev.setAttribute('aria-label',prev.title);
+  next.setAttribute('aria-label',next.title);
 }
 function ficheOnglet(nom){
   if(!FICHE_ONGLETS[nom])return;
-  if(ficheOrdreOnglets(ficheConcert()).indexOf(FICHE_ONGLETS[nom])<0)return;
+  if(ficheOrdreOnglets(ficheSujet()).indexOf(FICHE_ONGLETS[nom])<0)return;
   ficheTab=FICHE_ONGLETS[nom];
   ficheAfficherOnglet();
   // Deja descendu sous les onglets : on remonte au debut du nouvel onglet,
@@ -3912,11 +4030,15 @@ function ficheAfficherOnglet(){
     b.tabIndex=on?0:-1;
     document.getElementById('fp-'+k).hidden=!on;
   });
+  // Plan de l'evenement : le reglage de la repartition, a droite des onglets.
+  var c=ficheConcert();
+  document.getElementById('fiche-onglets-droite').innerHTML=ficheTab==='plan'&&estEvt(c)&&!ficheSpId
+    ?'<button type="button" class="btn btn-sm" onclick="evtOuvrirRepartir()" title="Choisir les tâches à faire pour chaque spectacle">'+icon('settings')+'Répartir les tâches</button>':'';
 }
 // Fleches gauche/droite entre les onglets, comme tout groupe d'onglets.
 document.getElementById('fiche-onglets').addEventListener('keydown',function(e){
   if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;
-  var ordre=ficheOrdreOnglets(ficheConcert()),i=ordre.indexOf(ficheTab);
+  var ordre=ficheOrdreOnglets(ficheSujet()),i=ordre.indexOf(ficheTab);
   var n=ordre[(i+(e.key==='ArrowRight'?1:ordre.length-1))%ordre.length];
   e.preventDefault();ficheOnglet(n);document.getElementById('fo-'+n).focus();
 });
@@ -3931,6 +4053,9 @@ document.getElementById('fiche').addEventListener('scroll',ficheCompacte,{passiv
 
 // ── Infos : une ligne par champ, modifiable sur place ──
 function ficheMajInfos(c){
+  // Spectacle : ses propres champs (jour, heure, salle, billetterie...).
+  var sj=ficheCible(c);
+  if(sj&&sj.spectacle){renderFicheSpInfos(sj.evenement,sj.spectacle);return;}
   var s=spRead(c),evt=estEvt(c);
   document.getElementById('fi-art-l').textContent=evt?'Nom':'Artiste';
   document.getElementById('fi-dc-l').textContent=evt?'Premier jour':'Date du concert';
@@ -3995,13 +4120,7 @@ function toggleFicheGroup(key){
   if(c)renderFicheTasks(c);
 }
 function ficheGroupes(c){
-  var sorted=sortedProcess(c);
-  var skipSp=!!taskStates['skip-'+c.id+'-sp'],skipCol=!!taskStates['skip-'+c.id+'-col'];
-  if(skipSp||skipCol)sorted=sorted.filter(function(t){
-    if(skipSp&&t.cat==='sp')return false;
-    if(skipCol&&(t.cat==='col'||t.cat==='affp'))return false;
-    return true;
-  });
+  var sorted=sansEtapesSautees(c,sortedProcess(c));
   var g={late:[],soon:[],future:[],nocalc:[],blocked:[],done:[],na:[]};
   sorted.forEach(function(t){
     if(isNA(c,t)){g.na.push(t);return;}
@@ -4062,10 +4181,12 @@ function ficheProchaine(c,g){
   return d?d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}):'';
 }
 function renderFicheTasks(c){
-  var g=ficheGroupes(c),pctFait=g.pct,proch=ficheProchaine(c,g);
-  document.getElementById('fiche-plan-sum').innerHTML='<span class="fiche-avancement">'+g.done.length+' / '+g.total+' faites</span>'
+  c=ficheCible(c);
+  var g=ficheGroupes(c),pctFait=g.pct,proch=ficheProchaine(c,g),evt=estEvt(c);
+  document.getElementById('fiche-plan-sum').innerHTML=(evt?'<h3 class="fiche-plan-h">Une fois pour l\'événement</h3>':'')
+    +'<span class="fiche-avancement">'+g.done.length+' / '+g.total+' faites</span>'
     +'<span class="fiche-jauge" aria-hidden="true"><i style="width:'+pctFait+'%"></i></span>'
-    +'<span class="grow"></span><button type="button" class="btn-link" onclick="openCustomTaskModal(currentFicheId)">+ Ajouter une tâche</button>';
+    +'<span class="grow"></span><button type="button" class="btn-link" onclick="openCustomTaskModal(ficheSujetId())">+ Ajouter une tâche</button>';
   function liste(arr,kind){return arr.map(function(t){return ficheTacheHtml(c,t,kind);}).join('');}
   var html='';
   if(g.late.length)html+=ficheGroupeTitre('En retard',g.late.length,'late')+liste(g.late,'late');
@@ -4075,11 +4196,14 @@ function renderFicheTasks(c){
   if(g.blocked.length)html+=ficheGroupeTitre('En attente de prérequis',g.blocked.length,'muted')+liste(g.blocked,'blocked');
   if(g.done.length){html+=ficheGroupeRepli('done','Faites',g.done.length,'done','');if(ficheGroupsOpen.done)html+=liste(g.done,'done');}
   if(g.na.length){html+=ficheGroupeRepli('na','Inutiles',g.na.length,'muted','');if(ficheGroupsOpen.na)html+=liste(g.na,'na');}
-  if(!html)html='<div class="empty-state compact">Aucune tâche pour ce concert.<br><button class="btn" onclick="openCustomTaskModal(currentFicheId)">+ Ajouter une tâche</button></div>';
+  if(!html)html='<div class="empty-state compact">'+(c.spectacle?'Aucune tâche pour ce spectacle.':evt?'Aucune tâche pour l\'événement.':'Aucune tâche pour ce concert.')+'<br><button class="btn" onclick="openCustomTaskModal(ficheSujetId())">+ Ajouter une tâche</button></div>';
   document.getElementById('fiche-tasks').innerHTML=html;
+  // Evenement : les taches de chaque spectacle, sous les siennes. La pastille
+  // de l'onglet compte les retards des deux.
+  var nRetard=g.late.length+renderFichePlanSp(c);
   var n=document.getElementById('fo-plan-n');
-  n.textContent=g.late.length?String(g.late.length):'';
-  n.hidden=!g.late.length;
+  n.textContent=nRetard?String(nRetard):'';
+  n.hidden=!nRetard;
   renderFicheApercu(c,g);
 }
 
@@ -4101,7 +4225,10 @@ function ficheSponsoResume(c){
 }
 function renderFicheApercu(c,g){
   var el=document.getElementById('fp-apercu');if(!el||!c)return;
+  c=ficheCible(c);
   g=g||ficheGroupes(c);
+  if(c.spectacle){el.innerHTML=ficheApercuSpHtml(c,g);return;}
+  var evt=estEvt(c);
   var pctFait=g.pct;
   var prio=g.late.map(function(t){return ficheTacheHtml(c,t,'late',true);}).join('')
     +g.soon.map(function(t){return ficheTacheHtml(c,t,'soon',true);}).join('');
@@ -4119,15 +4246,17 @@ function renderFicheApercu(c,g){
   el.innerHTML='<section class="fa-bloc">'
       +'<div class="fa-tete"><h3>À faire en priorité</h3><button type="button" class="btn-link" onclick="ficheOnglet(\'plan\')">Tout le plan'+icon('arrow-right')+'</button></div>'
       +'<div class="fa-taches">'+prio+'</div>'
+      +(evt?evtApercuSpHtml(c):'')
     +'</section>'
     +'<div class="fa-tuiles">'
-      +'<button type="button" class="fa-tuile" onclick="ficheOnglet(\'plan\')"><span class="fa-l">Plan</span>'
+      +'<button type="button" class="fa-tuile" onclick="ficheOnglet(\'plan\')"><span class="fa-l">'+(evt?'Une fois pour l\'événement':'Plan')+'</span>'
         +'<span class="fa-v">'+g.done.length+'<small> / '+g.total+'</small></span>'
         +'<span class="fiche-jauge" aria-hidden="true"><i style="width:'+pctFait+'%"></i></span>'+planSous+'</button>'
+      +(evt?evtTuileSpHtml(c)+evtTuileHtml(c):'')
       +'<button type="button" class="fa-tuile" onclick="ficheOnglet(\'sponso\')"><span class="fa-l">Sponso</span>'
         +'<span class="fa-v">'+esc(sp.total)+'</span><span class="fa-s '+sp.cls+'">'+esc(sp.sous)+'</span>'
         +(sp.sous2?'<span class="fa-s2">'+esc(sp.sous2)+'</span>':'')+'</button>'
-      +(estEvt(c)?evtTuileHtml(c)
+      +(evt?''
         :'<button type="button" class="fa-tuile ventes-'+v+'" onclick="ficheVentes()" title="Statut des ventes : cliquer pour changer"><span class="fa-l">Ventes</span>'
         +'<span class="fa-v">'+FICHE_VENTES_COURT[v]+'</span>'
         +'<span class="ventes-gauge fa-jauge" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="fa-s2">Changer</span></button>')
@@ -4256,8 +4385,10 @@ function renderFicheProgramme(c){
   var prog=evtTrie(evtProg(c)),jours=evtJours(c);
   if(prog.some(function(p){return !p.dc;}))jours.push('');
   if(evtJour&&jours.indexOf(evtJour)<0)evtJour='';
-  // « Agrandir » n'existe pas sur telephone (la fiche y prend tout l'ecran).
-  var large=document.getElementById('fiche').classList.contains('wide')&&!window.matchMedia('(max-width:768px)').matches;
+  // Une colonne par jour en pleine page (ou en fiche agrandie) ; pas sur
+  // telephone, ou la fiche prend tout l'ecran de toute facon.
+  var f=document.getElementById('fiche');
+  var large=(f.classList.contains('wide')||f.classList.contains('pleine'))&&!window.matchMedia('(max-width:768px)').matches;
   var h='<div class="evt-barre">'
     +'<div class="view-toggle compact" role="group" aria-label="Affichage du programme">'
       +'<button type="button" class="view-toggle-btn'+(evtVue==='cartes'?' active':'')+'" data-ev="vue" data-v="cartes" aria-pressed="'+(evtVue==='cartes'?'true':'false')+'">'+icon('grid')+'Cartes</button>'
@@ -4298,16 +4429,17 @@ function renderFicheProgramme(c){
     }).join('')+'</div>';
   }else if(large){
     // Fiche agrandie : une colonne par jour, comme une grille de festival.
-    h+='<div class="evt-colonnes">'+jv.map(function(j){
+    var nj=Math.max(1,jv.length);
+    h+='<div class="evt-colonnes" style="--n:'+nj+'">'+jv.map(function(j){
       var l=evtParJour(prog,j);
       return '<section class="evt-colonne"><h3 class="evt-jour-titre">'+esc(evtJourCourt(j))+'<span class="fg-n">'+l.length+'</span></h3>'
-        +l.map(evtCarteHtml).join('')+ajoutJour(j,true)+'</section>';
+        +l.map(function(p){return evtCarteHtml(p,c);}).join('')+ajoutJour(j,true)+'</section>';
     }).join('')+'</div>';
   }else{
     h+=jv.map(function(j){
       var l=evtParJour(prog,j);
       return '<section class="evt-jour"><h3 class="evt-jour-titre">'+esc(evtJourLong(j))+'<span class="fg-n">'+l.length+'</span></h3>'
-        +(l.length?'<div class="evt-grille">'+l.map(evtCarteHtml).join('')+'</div>':'')
+        +(l.length?'<div class="evt-grille">'+l.map(function(p){return evtCarteHtml(p,c);}).join('')+'</div>':'')
         +ajoutJour(j,false)+'</section>';
     }).join('');
   }
@@ -4315,10 +4447,13 @@ function renderFicheProgramme(c){
 }
 // Une carte : photo 16:9 de l'artiste, heure, complet, lieu, ventes. Un clic
 // ouvre le spectacle dans la liste, ou tout se modifie.
-function evtCarteHtml(p){
+// Un clic ouvre la fiche du spectacle (e : son evenement, pour ses taches en
+// retard).
+function evtCarteHtml(p,e){
   var ph=evtPhotoUrl(p),v=evtVentes(p),heure=evtHeure(p.h),lieu=evtLieu(p),billet=safeUrl(p.billet);
   var libelle=[p.art,evtJourCourt(p.dc)+(heure?' à '+heure:''),lieu].filter(Boolean).join(', ');
-  return '<button type="button" class="evt-carte" data-ev="ouvrir" data-p="'+esc(p.id)+'" aria-label="'+esc(libelle)+'" title="Modifier ce spectacle">'
+  var retard=e&&!p.annule&&!evtApart(p)?ficheGroupes(spSujet(e,p)).late.length:0;
+  return '<button type="button" class="evt-carte'+(p.annule?' annule':'')+'" data-ev="ouvrir" data-p="'+esc(p.id)+'" aria-label="'+esc(libelle)+'" title="'+(evtApart(p)?'Ouvrir sa fiche concert':'Ouvrir la fiche du spectacle')+'">'
     +'<span class="evt-photo'+(ph?'':' vide')+'">'
       +(ph?'<img src="'+esc(ph)+'" alt="" loading="lazy">':icon('image')+'<span>Photo 16:9</span>')
       +(heure?'<span class="evt-heure">'+esc(heure)+'</span>':'')
@@ -4330,6 +4465,8 @@ function evtCarteHtml(p){
       +'<span class="evt-carte-pied">'
         +'<span class="evt-ventes ventes-'+v+'"><span class="ventes-gauge" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'+VENTES[v].label+'</span>'
         +'<span class="grow"></span>'
+        +(p.annule?'<span class="tag tag-red">Annulé</span>':'')
+        +(retard?'<span class="tag tag-red" title="Tâches en retard pour ce spectacle">'+evtPluriel(retard,'retard')+'</span>':'')
         +(evtApart(p)?'<span class="tag tag-neutral">Fiche à part</span>':'')
         +(billet?'<span class="evt-billet" title="Lien billetterie renseigné">'+icon('ticket')+'</span>':'<span class="tag tag-amber">Billetterie</span>')
       +'</span>'
@@ -4387,15 +4524,23 @@ function evtPhotoLigneHtml(p){
 }
 // Apres une modification : sauvegarde, en-tete, Apercu ; programme redessine
 // sauf pour un champ texte (evtMajLigne met la ligne a jour en place).
+// Dans la page de l'evenement : en-tete, menu, plan et apercu suivent (les
+// dates des taches d'un spectacle dependent de son jour et de son annonce).
 function evtEnregistrer(c,redessiner){
   scheduleSave('concerts');
-  if(redessiner)renderFicheProgramme(c);
-  ficheMajTete(c);renderFicheApercu(c);
+  if(redessiner){renderFicheProgramme(c);var s=ficheSujet();if(s&&s.spectacle)renderFicheSpInfos(c,s.spectacle);}
+  ficheMajTete(c);renderFicheMenu(c);renderFicheTasks(c);
 }
 function evtMajLigne(p){
   var q=CSS.escape(p.id);
   var b=document.querySelector('#fp-programme .evt-ligne[data-p="'+q+'"]');if(b)b.innerHTML=evtLigneInterieur(p);
-  var ph=document.querySelector('#fp-programme [data-photo="'+q+'"]');if(ph)ph.innerHTML=evtPhotoLigneHtml(p);
+  document.querySelectorAll('#fp-programme [data-photo="'+q+'"],#fiche-sp-infos [data-photo="'+q+'"]').forEach(function(ph){ph.innerHTML=evtPhotoLigneHtml(p);});
+  evtMajSpInfos(p);
+}
+// Valeur refusee : le champ reprend la valeur enregistree.
+function evtRestaurer(c){
+  renderFicheProgramme(c);
+  var s=ficheSujet();if(s&&s.spectacle)renderFicheSpInfos(c,s.spectacle);
 }
 function evtDefilerVers(pid){
   var q=CSS.escape(pid),el=document.querySelector('#fp-programme .evt-ligne[data-p="'+q+'"]');
@@ -4404,15 +4549,20 @@ function evtDefilerVers(pid){
 function evtChangerChamp(c,p,champ,val){
   val=String(val||'').trim();
   if(champ==='art'){
-    if(!val){showToast('Le nom de l\'artiste ne peut pas être vide.');renderFicheProgramme(c);return;}
+    if(!val){showToast('Le nom de l\'artiste ne peut pas être vide.');evtRestaurer(c);return;}
     var avant=p.art;p.art=val;evtSuivrePhoto(avant,val);
   }
   else if(champ==='h')p.h=evtHeure(val);
-  else if(champ==='salle'||champ==='ville')p[champ]=val;
+  else if(champ==='salle'||champ==='ville'||champ==='medias'||champ==='jeux'||champ==='notes')p[champ]=val;
   else if(champ==='billet'){
     var u=val?nlLien(val):'';
-    if(val&&!/^https?:\/\//i.test(u)){showToast('Lien billetterie invalide : il doit commencer par https://');renderFicheProgramme(c);return;}
+    if(val&&!/^https?:\/\//i.test(u)){showToast('Lien billetterie invalide : il doit commencer par https://');evtRestaurer(c);return;}
     p.billet=u;
+  }
+  // Date d'annonce propre au spectacle ; vide, c'est celle de l'evenement.
+  else if(champ==='da'){
+    if(val&&!/^\d{4}-\d{2}-\d{2}$/.test(val))return;
+    if(val)p.da=val;else delete p.da;
   }
   else if(champ==='dc'){
     if(!/^\d{4}-\d{2}-\d{2}$/.test(val))return;
@@ -4429,23 +4579,42 @@ function evtSuivrePhoto(avant,apres){
   artistPhotos[nk]=Object.assign(syncClone(artistPhotos[ok]),{art:apres});
   scheduleSave('artist_photos');
 }
+// Ses coches et ses taches ajoutees a la main partent avec lui.
 async function evtRetirer(c,p){
-  if(!await customConfirm('Retirer '+(p.art||'ce spectacle')+' du programme ?','Retirer'))return;
+  if(!await customConfirm('Retirer '+(p.art||'ce spectacle')+' du programme ? Ses tâches cochées ou ajoutées seront oubliées.','Retirer'))return;
   c.prog=evtProg(c).filter(function(x){return x.id!==p.id;});
   if(evtOuvert===p.id)evtOuvert=null;
-  evtEnregistrer(c,true);
+  var o=oublierSujet(p.id);
+  if(o.taches)scheduleSave('taskstates');
+  if(o.perso)scheduleSave('concert_tasks');
+  if(ficheSpId===p.id){scheduleSave('concerts');ficheQuitterSpectacle(c);}
+  else evtEnregistrer(c,true);
+  renderKanban();
 }
 // Un spectacle qui a sa propre campagne (budget, sponso, taches) devient un
 // concert a part entiere ; il reste dans le programme, relie a sa fiche.
 async function evtConcertAPart(c,p){
   var quand=[evtJourCourt(p.dc).toLowerCase(),evtLieu(p)].filter(Boolean).join(', ');
   if(!await customConfirm('Créer une fiche concert pour '+p.art+' ('+quand+') ? Elle aura son propre plan, sa sponso et son budget ; le spectacle reste dans le programme de '+c.art+'.','Créer la fiche'))return;
-  var nc={id:Date.now().toString(),art:p.art,ville:evtLieu(p),dc:p.dc,da:c.da||'',medias:'',jeux:'',budget:'',notes:'Spectacle de '+c.art,ventes:evtVentes(p)};
+  var nc={id:Date.now().toString(),art:p.art,ville:evtLieu(p),dc:p.dc,da:p.da||c.da||'',medias:p.medias||'',jeux:p.jeux||'',budget:'',notes:[p.notes,'Spectacle de '+c.art].filter(Boolean).join(' · '),ventes:evtVentes(p)};
   if(p.billet)spWrite(nc).billet=p.billet;
+  // Ce qui etait fait pour ce spectacle le reste sur sa fiche concert ; ses
+  // taches ajoutees a la main l'y suivent.
+  var siennes=customTasks.filter(function(t){return t.concertId===p.id;}),copies=0;
+  process.concat(siennes).forEach(function(t){
+    [[tk(p.id,t.id),tk(nc.id,t.id)],['na-'+p.id+'-'+t.id,'na-'+nc.id+'-'+t.id],['datemod-'+p.id+'-'+t.id,'datemod-'+nc.id+'-'+t.id]].forEach(function(k){
+      if(taskStates[k[0]]!==undefined&&taskStates[k[1]]===undefined){taskStates[k[1]]=taskStates[k[0]];copies++;}
+    });
+  });
+  siennes.forEach(function(t){t.concertId=nc.id;});
+  if(copies)scheduleSave('taskstates');
+  if(siennes.length)scheduleSave('concert_tasks');
   concerts.push(nc);
   concerts.sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
   p.concertId=nc.id;
-  evtEnregistrer(c,true);
+  if(ficheSpId===p.id){scheduleSave('concerts');ficheQuitterSpectacle(c);}
+  else evtEnregistrer(c,true);
+  renderKanban();
   showToast('Fiche concert créée pour '+p.art+' : « Ouvrir sa fiche concert » dans le programme.');
 }
 var evtPhotoCible=null;
@@ -4458,13 +4627,14 @@ function evtChoisirPhoto(c,p){
     var file=this.files&&this.files[0],cible=evtPhotoCible;this.value='';
     if(!file||!cible)return;
     cropFromFile(file,null,function(blob,orig){
-      envoyerPhotoArtiste(cible.art,blob,orig).then(function(ok){
-        var c=ficheConcert();
-        if(ok&&c&&c.id===cible.eid){renderFicheProgramme(c);renderFicheApercu(c);}
-      });
+      envoyerPhotoArtiste(cible.art,blob,orig).then(function(ok){if(ok)ficheApresPhoto(cible.eid);});
     });
   });
-  var el=document.getElementById('fp-programme');
+  // Le programme et l'onglet Infos d'un spectacle partagent leurs champs et
+  // leurs boutons (data-ev, data-champ) : memes gestionnaires.
+  brancher(document.getElementById('fp-programme'));
+  brancher(document.getElementById('fiche-sp-infos'));
+  function brancher(el){
   el.addEventListener('click',function(e){
     var t=e.target.closest('[data-ev]');if(!t||!el.contains(t))return;
     var c=ficheConcert();if(!estEvt(c))return;
@@ -4475,7 +4645,7 @@ function evtChoisirPhoto(c,p){
     else if(a==='coller')evtOuvrirAjout(c,'coller','');
     else if(a==='newsletter')nlOuvrirPourEvenement(c.id);
     else if(!p)return;
-    else if(a==='ouvrir'){evtVue='liste';evtOuvert=p.id;renderFicheProgramme(c);evtDefilerVers(p.id);}
+    else if(a==='ouvrir'){if(evtApart(p))openFiche(p.concertId);else ficheChoisirSpectacle(p.id);}
     else if(a==='ligne'){evtOuvert=evtOuvert===p.id?null:p.id;renderFicheProgramme(c);if(evtOuvert)evtDefilerVers(p.id);}
     else if(a==='champ-jour'){p.dc=t.dataset.v;evtEnregistrer(c,true);evtDefilerVers(p.id);}
     else if(a==='champ-ventes'){p.ventes=parseInt(t.dataset.v,10)||0;evtEnregistrer(c,true);}
@@ -4493,7 +4663,646 @@ function evtChoisirPhoto(c,p){
     var t=e.target;
     if(e.key==='Enter'&&t.dataset&&t.dataset.champ&&t.tagName==='INPUT'){e.preventDefault();t.blur();}
   });
+  }
 })();
+// Photo d'artiste (ou visuel) enregistree : tout ce qui la montre dans la
+// page, si elle est encore ouverte sur le meme evenement.
+function ficheApresPhoto(cid){
+  if(!currentFicheId||currentFicheId!==cid)return;
+  var c=ficheConcert(),s=ficheSujet();if(!c)return;
+  renderFichePhoto(s);
+  if(estEvt(c)){
+    renderFicheProgramme(c);renderFicheMenu(c);renderFicheApercu(c);
+    if(s.spectacle)document.querySelectorAll('#fiche-sp-infos [data-photo]').forEach(function(ph){ph.innerHTML=evtPhotoLigneHtml(s.spectacle);});
+  }
+}
+
+// ── EVENEMENT EN PLEINE PAGE, UN SPECTACLE = UNE DATE (25/09, suite) ──────
+// Maquette validee par Mathieu le 25/09 (canevas « Événement pleine page —
+// propositions ») : la fiche d'un evenement prend tout l'ecran, avec a gauche
+// un menu (l'evenement, puis ses spectacles jour par jour). Chaque spectacle
+// y est traite comme une date a part entiere : sa fiche, ses ventes, son
+// plan. Le process se partage en deux, evenement par evenement
+// (c.parSpectacle, {idEtape:true}) : une etape se fait soit une fois pour
+// tout l'evenement, soit pour chaque spectacle, datee d'apres son jour.
+// Les spectacles restent dans c.prog, pas de vrais concerts : ni migration,
+// ni 18 cartes au tableau de bord, et une version de l'appli restee ouverte
+// ailleurs n'y voit rien d'etrange. Leurs coches sont dans taskStates sous
+// l'id du spectacle (« pg…-<etape> »), comme celles d'un concert ;
+// purgeOrphanTaskStates ne les touche pas (elle ne lit que les ids
+// numeriques des concerts). Nouveaux champs d'un spectacle : da (sinon celle
+// de l'evenement), medias, jeux, notes, annule.
+var ficheSpId=null;        // spectacle affiche dans la page (null : l'evenement)
+var ficheMenuTel=false;    // telephone : la page montre le menu
+var evtEtapeOuverte=null;  // etape depliee dans « Pour chaque spectacle »
+var evtPlanVue=(function(){try{return localStorage.getItem('pp_evt_plan_vue')==='tableau'?'tableau':'tache';}catch(e){return 'tache';}})();
+// Les 11 etapes « pour chaque spectacle » proposees puis validees le 25/09
+// (ids du process en base) : kit promo, site web, production, phoner et
+// interviews, jeux concours, photographes, report comm. Point de depart
+// d'un evenement quand aucun autre n'a encore ete reparti.
+var EVT_ETAPES_SP_DEFAUT=[28,4,5,32,12,18,20,27,23,24,26];
+function evtEtapesSp(e){return e&&e.parSpectacle&&typeof e.parSpectacle==='object'?e.parSpectacle:{};}
+function evtAReparti(e){return !!(e&&e.parSpectacle&&typeof e.parSpectacle==='object');}
+function evtNbEtapesSp(e){var m=evtEtapesSp(e);return process.filter(function(t){return m[t.id];}).length;}
+// Les spectacles qui ont leur plan ici : ni annules, ni « a part » (ceux-la
+// ont leur propre fiche concert).
+function evtSuivis(e){return evtTrie(evtProg(e)).filter(function(p){return !p.annule&&!evtApart(p);});}
+// Un spectacle vu comme une date : ce que lisent les fonctions du plan (id,
+// date, date d'annonce, ventes...). Sa date d'annonce est celle de
+// l'evenement, sauf s'il a la sienne (ajoute apres l'annonce, par exemple).
+function spSujet(e,p){
+  return {id:p.id,art:p.art||'',dc:p.dc||'',da:p.da||e.da||'',ville:[p.salle,p.ville].filter(Boolean).join(', '),
+    ventes:evtVentes(p),annule:!!p.annule,notes:p.notes||'',spectacle:p,evenement:e};
+}
+function ficheSujet(){
+  var c=ficheConcert();if(!c)return null;
+  if(ficheSpId&&estEvt(c)){var p=evtSpectacle(c,ficheSpId);if(p&&!evtApart(p))return spSujet(c,p);}
+  return c;
+}
+function ficheSujetId(){var s=ficheSujet();return s?s.id:null;}
+// Ce que vise un rendu de la fiche : le spectacle affiche quand on demande de
+// redessiner son evenement (ou l'un de ses spectacles).
+function ficheCible(c){
+  if(!c||!currentFicheId)return c;
+  if(c.id===currentFicheId||(c.spectacle&&c.evenement.id===currentFicheId))return ficheSujet()||c;
+  return c;
+}
+// Concert, evenement ou spectacle, d'apres l'id porte par ses coches.
+function sujetParId(id){
+  var c=concerts.find(function(x){return x.id===id;});if(c)return c;
+  for(var i=0;i<concerts.length;i++){
+    var e=concerts[i];if(!estEvt(e))continue;
+    var p=evtSpectacle(e,id);if(p)return spSujet(e,p);
+  }
+  return null;
+}
+function ficheLargePref(){try{return !!localStorage.getItem('pp_fiche_wide');}catch(e){return false;}}
+function evtJourMoyen(iso){var d=new Date((iso||'')+'T00:00:00');return isNaN(d.getTime())?'Sans date':evtCap(d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}));}
+function evtQuand(t){
+  var n=Math.abs(+t.jours||0);
+  if(t.ref==='annonce')return n?n+' j '+(t.jours<0?'avant':'après')+' l\'annonce':'le jour de l\'annonce';
+  if(!n)return 'le jour du spectacle';
+  return t.jours===1?'le lendemain du spectacle':n+' j '+(t.jours<0?'avant':'après')+' le spectacle';
+}
+function evtQuandCourt(t){
+  var n=Math.abs(+t.jours||0),sg=t.jours<0?'−':'+';
+  if(t.ref==='annonce')return n?'annonce '+sg+n:'annonce';
+  return n?'J'+sg+n:'jour J';
+}
+function evtPlageDates(l){
+  if(!l.length)return '';
+  var a=l[0],b=l[0];l.forEach(function(d){if(d<a)a=d;if(d>b)b=d;});
+  if(+a===+b)return fmt(a);
+  return (a.getMonth()===b.getMonth()&&a.getFullYear()===b.getFullYear()?a.getDate():fmt(a))+' → '+fmt(b);
+}
+// Un spectacle retire du programme : ses coches, dates decalees, taches
+// ajoutees a la main (comme pour un concert supprime definitivement).
+function oublierSujet(id){
+  var motif=new RegExp('^(?:annonce-|skip-|na-|datemod-|hl-)?'+String(id).replace(/[^0-9a-zA-Z]/g,'\\$&')+'(?:-|$)'),n=0;
+  Object.keys(taskStates).forEach(function(k){if(motif.test(k)){delete taskStates[k];n++;}});
+  var avant=customTasks.length;
+  customTasks=customTasks.filter(function(t){return t.concertId!==id;});
+  return {taches:n,perso:avant-customTasks.length};
+}
+// Apres une coche, une date decalee, une tache ajoutee... : ce qui en depend
+// dans la fiche ouverte (plan, apercu, pastilles du menu et des onglets).
+function ficheApresTache(){
+  if(!currentFicheId)return;
+  var c=ficheConcert();if(!c)return;
+  renderFicheTasks(c);
+  if(estEvt(c)){renderFicheMenu(c);renderFicheProgramme(c);}
+}
+
+// ── Menu de la page : l'evenement, puis ses spectacles par jour ──
+function renderFicheMenu(c){
+  var el=document.getElementById('fiche-evt-menu');if(!el)return;
+  if(!estEvt(c)){el.innerHTML='';return;}
+  var gE=ficheGroupes(c),vis=evtPhotoUrl({art:c.art});
+  var h='<div class="fm-tete-tel"><h2>'+esc(c.art)+'</h2><span class="fm-tete-sous">'+esc([c.ville,evtPlage(c,true)].filter(Boolean).join(' · '))+'</span>'
+      +'<div class="fm-tete-puces">'+fichePucesHtml(c,true)+'</div></div>'
+    +'<button type="button" class="fm-l fm-evt'+(ficheSpId?'':' on')+'" data-fm="evt"'+(ficheSpId?'':' aria-current="page"')+'>'
+      +(vis?'<img class="fm-vis" src="'+esc(vis)+'" alt="">':'<span class="fm-vis vide">'+icon('calendar')+'</span>')
+      +'<span class="fm-txt"><span class="fm-nom">'+esc(c.art)+'</span><span class="fm-sous">Vue d\'ensemble</span></span>'
+      +'<span class="fm-fin">'+(gE.late.length?'<span class="fm-n" title="Tâches de l\'événement en retard">'+gE.late.length+'</span>':'')+'</span></button>'
+    +'<div class="fm-titre">Programme<span class="fg-n">'+evtProg(c).length+'</span><span class="grow"></span>'
+      +'<button type="button" class="fiche-btn" data-fm="ajouter" title="Ajouter un spectacle, ou coller tout le programme" aria-label="Ajouter un spectacle">'+icon('plus')+'</button></div>';
+  var prog=evtTrie(evtProg(c)),jours=evtJours(c);
+  if(prog.some(function(p){return !p.dc;}))jours.push('');
+  jours.forEach(function(j){
+    var l=evtParJour(prog,j);if(!l.length)return;
+    h+='<div class="fm-jour">'+esc(evtJourLong(j))+'<span class="fg-n">'+l.length+'</span></div>';
+    l.forEach(function(p){
+      var on=ficheSpId===p.id,apart=evtApart(p),ph=evtPhotoUrl(p);
+      var n=apart||p.annule?0:ficheGroupes(spSujet(c,p)).late.length;
+      var sous=p.annule?'Annulé':apart?'Fiche concert à part':([p.salle,p.ville].filter(Boolean).join(' · ')||'Lieu à préciser');
+      h+='<button type="button" class="fm-l'+(on?' on':'')+(p.annule?' annule':'')+'" data-fm="sp" data-p="'+esc(p.id)+'"'+(on?' aria-current="page"':'')+(apart?' title="Ce spectacle a sa propre fiche concert"':'')+'>'
+        +(ph?'<img class="fm-vis" src="'+esc(ph)+'" alt="" loading="lazy">':'<span class="fm-vis vide">'+icon('image')+'</span>')
+        +'<span class="fm-txt"><span class="fm-nom evt-art">'+esc(p.art||'Sans nom')+'</span><span class="fm-sous">'+esc(sous)+'</span></span>'
+        +'<span class="fm-fin">'+(evtVentes(p)===4&&!p.annule?'<span class="fm-complet" title="Complet"></span>':'')
+          +(n?'<span class="fm-n" title="Tâches en retard">'+n+'</span>':'')+(apart?icon('arrow-up-right','ico-muted'):'')+'</span></button>';
+    });
+  });
+  if(!prog.length)h+='<p class="fm-vide">Aucun spectacle pour l\'instant.</p>';
+  h+='<div class="fm-actions"><button type="button" class="btn-link" data-fm="ajouter">'+icon('plus')+'Ajouter un spectacle</button>'
+    +'<button type="button" class="btn-link" data-fm="coller">'+icon('clipboard')+'Coller le programme</button></div>';
+  el.innerHTML=h;
+}
+(function(){
+  var el=document.getElementById('fiche-evt-menu');
+  el.addEventListener('click',function(e){
+    var t=e.target.closest('[data-fm]');if(!t||!el.contains(t))return;
+    var c=ficheConcert();if(!estEvt(c))return;
+    var a=t.dataset.fm;
+    if(a==='evt')ficheChoisirSpectacle(null);
+    else if(a==='sp'){
+      var p=evtSpectacle(c,t.dataset.p);if(!p)return;
+      if(evtApart(p)){openFiche(p.concertId);return;}
+      ficheChoisirSpectacle(p.id);
+    }
+    else if(a==='ajouter')evtOuvrirAjout(c,'un','');
+    else if(a==='coller')evtOuvrirAjout(c,'coller','');
+  });
+})();
+// Afficher un spectacle (ou, pid vide, l'evenement) dans la page. L'onglet
+// est garde s'il existe des deux cotes ; l'URL est remplacee, pas empilee :
+// le bouton retour referme la page.
+function ficheChoisirSpectacle(pid,onglet){
+  var c=ficheConcert();if(!estEvt(c))return;
+  var avant=ficheSpId;
+  ficheSpId=pid||null;
+  ficheMenuTel=false;
+  if(onglet&&FICHE_ONGLETS[onglet])ficheTab=FICHE_ONGLETS[onglet];
+  if(avant!==ficheSpId)ficheGroupsOpen={avenir:true,done:false,na:false};
+  closeFicheMenu();
+  renderFiche(c);
+  ficheAfficherOnglet();
+  document.getElementById('fiche').scrollTop=0;
+  ficheCompacte();
+  pushRoute(currentTab,c.id,true,ficheSpId);
+}
+function ficheVersEvt(onglet){ficheChoisirSpectacle(null,onglet);}
+// Le spectacle affiche quitte le programme (retire, ou devenu concert a part) :
+// retour a la vue d'ensemble, adresse comprise.
+function ficheQuitterSpectacle(c){
+  ficheSpId=null;
+  renderFiche(c);ficheAfficherOnglet();
+  pushRoute(currentTab,c.id,true,null);
+}
+// Telephone : retour au menu de l'evenement.
+function ficheRetourMenu(){
+  var c=ficheConcert();if(!estEvt(c))return;
+  ficheMenuTel=true;
+  renderFiche(c);
+  document.getElementById('fiche').scrollTop=0;
+}
+
+// ── Plan de l'evenement : les taches de chaque spectacle ──
+// Par etape : combien de spectacles l'ont faite, en retard, en attente d'une
+// autre tache... Les spectacles ou l'etape est sautee (« pas d'affiche »,
+// « sponso geree par la prod ») ne comptent pas ; ceux ou elle est inutile
+// comptent a part.
+function evtEtatEtapes(e){
+  var sps=evtSuivis(e),m=evtEtapesSp(e);
+  var etapes=process.filter(function(t){return m[t.id];}).map(function(t){
+    var r={t:t,n:0,faits:0,na:0,retard:0,semaine:0,attente:0,dates:[],urgents:[]};
+    sps.forEach(function(p){
+      var s=spSujet(e,p);
+      if(!sansEtapesSautees(s,[t]).length)return;
+      r.n++;
+      if(isNA(s,t)){r.na++;return;}
+      if(taskStates[tk(p.id,t.id)]){r.faits++;return;}
+      if(!isUnlocked(s,t)){r.attente++;return;}
+      var d=calcDate(s,t);if(!d)return;
+      r.dates.push(d);
+      if(isLate(d)){r.retard++;r.urgents.push(p);}
+      else if(isSoon(d)){r.semaine++;r.urgents.push(p);}
+    });
+    return r;
+  });
+  // Dans l'ordre de leurs echeances (celles du premier spectacle).
+  if(sps.length){
+    var s0=spSujet(e,sps[0]);
+    etapes.sort(function(a,b){var x=calcDate(s0,a.t),y=calcDate(s0,b.t);if(!x&&!y)return 0;if(!x)return 1;if(!y)return -1;return x-y;});
+  }
+  return etapes;
+}
+// Renvoie le nombre de taches de spectacles en retard (pastille de l'onglet).
+function renderFichePlanSp(c){
+  var box=document.getElementById('fiche-plan-sp'),note=document.getElementById('fiche-plan-evt');
+  if(!box||!note)return 0;
+  if(c&&c.spectacle){
+    box.hidden=true;box.innerHTML='';
+    var nb=etapesSujet(c.evenement).length;
+    var txt=!evtNbEtapesSp(c.evenement)?'Aucune tâche du process n\'est encore faite pour chaque spectacle : tout se fait une fois pour l\'événement.'
+      :!nb?'Toutes les tâches du process se font pour chaque spectacle.'
+      :evtPluriel(nb,'autre tâche','autres tâches')+(nb>1?' se font':' se fait')+' une fois pour tout l\'événement.';
+    note.hidden=false;
+    note.innerHTML=icon('calendar')+'<span>'+esc(txt)+'</span><button type="button" class="btn-link" onclick="ficheVersEvt(\'plan\')">Plan de l\'événement</button>';
+    return 0;
+  }
+  note.hidden=true;note.innerHTML='';
+  if(!estEvt(c)){box.hidden=true;box.innerHTML='';return 0;}
+  var sps=evtSuivis(c),etapes=evtEtatEtapes(c),retard=0;
+  etapes.forEach(function(r){retard+=r.retard;});
+  box.hidden=false;
+  box.classList.toggle('tableau',evtPlanVue==='tableau'&&etapes.length>0&&sps.length>0);
+  box.innerHTML=evtPlanSpHtml(c,etapes,sps);
+  return retard;
+}
+function evtPlanSpHtml(e,etapes,sps){
+  var h='<div class="evp-sec-tete"><h3>Pour chaque spectacle</h3>';
+  if(!sps.length)return h+'</div><p class="evp-sec-aide">Les tâches de chaque spectacle apparaîtront ici avec les spectacles du programme.</p>';
+  if(!etapes.length)return h+'</div><div class="evt-vide evp-vide"><p>Pour l\'instant, tout le process se fait une fois pour l\'événement.</p>'
+    +'<p class="evt-vide-aide">Choisis les tâches à faire pour chaque spectacle (photographes, report comm…) : elles apparaîtront dans sa fiche, datées d\'après son jour.</p>'
+    +'<div class="evt-vide-actions"><button type="button" class="btn btn-sm btn-primary" data-pl="repartir">'+icon('settings')+'Choisir les tâches de chaque spectacle</button></div></div>';
+  var tot=0,faits=0;etapes.forEach(function(r){tot+=r.n-r.na;faits+=r.faits;});
+  var pct=tot?Math.round(faits/tot*100):0,vt=evtPlanVue==='tableau';
+  h+='<span class="fiche-avancement">'+faits+' / '+tot+' faites</span><span class="fiche-jauge" aria-hidden="true"><i style="width:'+pct+'%"></i></span><span class="grow"></span>'
+    +'<button type="button" class="btn-link evp-repartir-tel" data-pl="repartir">Répartir</button>'
+    +'<div class="view-toggle compact" role="group" aria-label="Affichage des tâches des spectacles">'
+      +'<button type="button" class="view-toggle-btn'+(vt?'':' active')+'" data-pl="vue" data-v="tache" aria-pressed="'+(vt?'false':'true')+'">'+icon('list')+'Par tâche</button>'
+      +'<button type="button" class="view-toggle-btn evp-vue-tableau'+(vt?' active':'')+'" data-pl="vue" data-v="tableau" aria-pressed="'+(vt?'true':'false')+'">'+icon('sheet')+'Tableau</button>'
+    +'</div></div>'
+    +'<p class="evp-sec-aide">'+esc(evtPluriel(etapes.length,'tâche')+(etapes.length>1?', datées':', datée')+' d\'après le jour de chaque spectacle. Chacune est aussi dans la fiche du spectacle.')+'</p>';
+  return h+(vt?evtTableauHtml(e,etapes,sps):evtEtapesHtml(e,etapes,sps));
+}
+function evtEtapesHtml(e,etapes,sps){
+  return '<div class="evp-etapes">'+etapes.map(function(r){
+    var t=r.t,n=r.n-r.na,reste=n-r.faits,pct=n?Math.round(r.faits/n*100):100,ouv=evtEtapeOuverte===t.id;
+    var st='',sym='',etat,ecls='',cat=CATS[t.cat]||CATS.gen;
+    if(!n)etat='Sans objet';
+    else if(!reste){st='fait';sym=icon('check');etat='Toutes faites';ecls='ok';}
+    else if(r.retard){st='retard';etat=r.retard+' en retard';ecls='late';}
+    else if(r.attente===reste){st='attente';sym=icon('hourglass');var pr=findTaskById(t.prereq);etat='Attend « '+(pr?pr.nom:'?')+' »';}
+    else{etat=evtPlageDates(r.dates)||'Sans date';if(r.semaine)ecls='soon';}
+    return '<button type="button" class="evp-etape'+(ouv?' ouverte':'')+'" data-pl="etape" data-t="'+esc(t.id)+'" aria-expanded="'+(ouv?'true':'false')+'">'
+      +'<span class="evp-st '+st+'" aria-hidden="true">'+sym+'</span>'
+      +'<span class="evp-etape-nom"><span class="evp-etape-titre">'+esc(t.nom)+'</span><span class="evp-etape-meta"><span class="pill '+cat.cls+'">'+esc(cat.label)+'</span><span>'+esc(evtQuand(t))+'</span></span></span>'
+      +'<span class="evp-etape-prog"><span class="fiche-jauge" aria-hidden="true"><i style="width:'+pct+'%"></i></span>'+r.faits+' / '+n+'</span>'
+      +'<span class="evp-etape-etat '+ecls+'" title="'+esc(etat)+'">'+esc(etat)+'</span>'
+      +'<span class="evp-etape-chev" aria-hidden="true">'+icon('chevron-right')+'</span></button>'
+      +(ouv?evtEtapeDetailHtml(e,t,sps):'');
+  }).join('')+'</div>';
+}
+// L'etape ouverte : une case par spectacle, jour par jour.
+function evtEtapeDetailHtml(e,t,sps){
+  var jours=[],parJ={},restants=0;
+  sps.forEach(function(p){var j=p.dc||'';if(!parJ[j]){parJ[j]=[];jours.push(j);}parJ[j].push(p);});
+  var cols=jours.map(function(j){
+    var l=parJ[j],compte={},dRef=null,max=0;
+    // La date du jour : la plus frequente (un spectacle decale garde la sienne).
+    l.forEach(function(p){var d=calcDate(spSujet(e,p),t);if(!d)return;var k=+d;compte[k]=(compte[k]||0)+1;if(compte[k]>max){max=compte[k];dRef=d;}});
+    return '<div class="evp-detail-jour"><h4>'+esc(evtJourMoyen(j))+'</h4><p>'+esc(dRef?'à faire le '+dRef.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}):'sans date')+'</p>'
+      +l.map(function(p){
+        var s=spSujet(e,p);
+        if(sansEtapesSautees(s,[t]).length&&!isNA(s,t)&&!taskStates[tk(p.id,t.id)]&&isUnlocked(s,t))restants++;
+        return evtCocheHtml(s,t,dRef);
+      }).join('')+'</div>';
+  }).join('');
+  return '<div class="evp-detail"><div class="evp-detail-jours">'+cols+'</div>'
+    +'<div class="evp-detail-actions">'
+      +(restants?'<button type="button" class="btn-link" data-pl="tout" data-t="'+esc(t.id)+'">'+icon('check')+'Tout cocher</button>':'')
+      +'<button type="button" class="btn-link" data-pl="decaler" data-t="'+esc(t.id)+'">'+icon('calendar-clock')+'Décaler pour tous</button>'
+      +'<span class="grow"></span><span class="evp-aide">Une case = la tâche dans la fiche de ce spectacle.</span></div></div>';
+}
+function evtCocheHtml(s,t,dRef){
+  var p=s.spectacle,fait=!!taskStates[tk(p.id,t.id)],d=calcDate(s,t);
+  var autre=d&&dRef&&+d!==+dRef?'<small>'+esc(fmt(d))+'</small>':'';
+  var nom='<span class="evt-art">'+esc(p.art||'Sans nom')+'</span>';
+  if(!sansEtapesSautees(s,[t]).length)return '<span class="evp-coche off" title="Sans objet pour ce spectacle"><span class="ftask-chk na" aria-hidden="true">'+icon('minus')+'</span>'+nom+'</span>';
+  if(isNA(s,t))return '<span class="evp-coche off" title="Marquée inutile pour ce spectacle"><span class="ftask-chk na" aria-hidden="true">'+icon('ban')+'</span>'+nom+'</span>';
+  if(!fait&&!isUnlocked(s,t)){var pr=findTaskById(t.prereq);return '<span class="evp-coche off" title="'+esc('En attente de : '+(pr?pr.nom:'?'))+'"><span class="ftask-chk blocked" aria-hidden="true">'+icon('hourglass')+'</span>'+nom+autre+'</span>';}
+  var late=!fait&&d&&isLate(d);
+  return '<button type="button" class="evp-coche'+(late?' late':'')+'" data-pl="case" data-p="'+esc(p.id)+'" data-t="'+esc(t.id)+'" aria-pressed="'+(fait?'true':'false')+'" title="'+esc((fait?'Remettre à faire : ':'Marquer faite : ')+(p.art||''))+'">'
+    +'<span class="ftask-chk'+(fait?' on':'')+'" aria-hidden="true">'+(fait?icon('check'):'')+'</span>'+nom+autre+'</button>';
+}
+// En tableau : les spectacles en lignes, les etapes en colonnes.
+function evtTableauHtml(e,etapes,sps){
+  var cols=etapes.map(function(r){return r.t;}),nc=cols.length+1,jours=[],parJ={};
+  // Au-dela, le tableau defile de cote (premiere colonne collee).
+  var mw=220+cols.length*78;
+  sps.forEach(function(p){var j=p.dc||'';if(!parJ[j]){parJ[j]=[];jours.push(j);}parJ[j].push(p);});
+  var h='<div class="evp-tab"><table style="min-width:'+mw+'px"><thead><tr><th class="evp-tab-sp" scope="col">Spectacle</th>'
+    +cols.map(function(t){return '<th scope="col" title="'+esc(t.nom+' : '+evtQuand(t))+'">'+esc(t.nom)+'<small>'+esc(evtQuandCourt(t))+'</small></th>';}).join('')+'</tr></thead><tbody>';
+  jours.forEach(function(j){
+    h+='<tr class="evp-tab-jour"><th colspan="'+nc+'" scope="colgroup">'+esc(evtJourLong(j))+'</th></tr>';
+    parJ[j].forEach(function(p){
+      var ph=evtPhotoUrl(p),s=spSujet(e,p);
+      h+='<tr><th scope="row"><button type="button" class="evp-tab-art" data-pl="ouvrir" data-p="'+esc(p.id)+'" title="Ouvrir la fiche du spectacle">'
+        +(ph?'<img src="'+esc(ph)+'" alt="" loading="lazy">':'<span class="evp-tab-vide">'+icon('image')+'</span>')
+        +'<span><span class="evt-art">'+esc(p.art||'Sans nom')+'</span><small>'+esc([p.salle,p.ville].filter(Boolean).join(' · '))+'</small></span></button></th>'
+        +cols.map(function(t){return '<td>'+evtCaseHtml(s,t)+'</td>';}).join('')+'</tr>';
+    });
+  });
+  return h+'</tbody><tfoot><tr><th scope="row">Faites</th>'+etapes.map(function(r){return '<td>'+r.faits+' / '+(r.n-r.na)+'</td>';}).join('')+'</tr></tfoot></table></div>'
+    +'<div class="evp-legende"><span><span class="evp-c fait">'+icon('check')+'</span>Faite</span>'
+      +'<span><span class="evp-c attente">'+icon('hourglass')+'</span>Attend une autre tâche</span>'
+      +'<span><span class="evp-c retard">date</span>En retard</span><span><span class="evp-c semaine">date</span>Cette semaine</span>'
+      +'<span><span class="evp-c">date</span>À venir</span><span>Un clic coche ou décoche.</span></div>';
+}
+function evtCaseHtml(s,t){
+  var p=s.spectacle,lib=esc((p.art||'')+' · '+t.nom);
+  if(!sansEtapesSautees(s,[t]).length)return '<span class="evp-c" title="Sans objet pour ce spectacle">–</span>';
+  if(isNA(s,t))return '<span class="evp-c" title="'+lib+' : inutile pour ce spectacle">'+icon('ban')+'</span>';
+  if(taskStates[tk(p.id,t.id)])return '<button type="button" class="evp-c fait" data-pl="case" data-p="'+esc(p.id)+'" data-t="'+esc(t.id)+'" aria-label="'+lib+' : faite, cliquer pour décocher" title="Faite : cliquer pour décocher">'+icon('check')+'</button>';
+  if(!isUnlocked(s,t)){var pr=findTaskById(t.prereq);return '<span class="evp-c attente" title="'+esc('En attente de : '+(pr?pr.nom:'?'))+'">'+icon('hourglass')+'</span>';}
+  var d=calcDate(s,t),cls=d&&isLate(d)?' retard':d&&isSoon(d)?' semaine':'';
+  return '<button type="button" class="evp-c'+cls+'" data-pl="case" data-p="'+esc(p.id)+'" data-t="'+esc(t.id)+'" aria-label="'+lib+' : à faire, cliquer pour cocher" title="Cliquer pour cocher">'+esc(d?fmt(d):'—')+'</button>';
+}
+(function(){
+  var el=document.getElementById('fiche-plan-sp');
+  el.addEventListener('click',function(ev){
+    var b=ev.target.closest('[data-pl]');if(!b||!el.contains(b))return;
+    var e=ficheConcert();if(!estEvt(e))return;
+    var a=b.dataset.pl,t=b.dataset.t!=null?process.find(function(x){return String(x.id)===b.dataset.t;}):null;
+    if(a==='vue'){evtPlanVue=b.dataset.v==='tableau'?'tableau':'tache';try{localStorage.setItem('pp_evt_plan_vue',evtPlanVue);}catch(x){}renderFichePlanSp(e);return;}
+    if(a==='repartir'){evtOuvrirRepartir();return;}
+    if(a==='ouvrir'){ficheChoisirSpectacle(b.dataset.p,'plan');return;}
+    if(!t)return;
+    var qt=CSS.escape(String(t.id)),q='[data-t="'+qt+'"]';
+    if(a==='etape'){
+      evtEtapeOuverte=evtEtapeOuverte===t.id?null:t.id;renderFichePlanSp(e);
+      var r=el.querySelector('.evp-etape'+q);if(r)r.focus();
+    }else if(a==='case'){
+      // Le focus reste sur la case (clavier) une fois le tableau redessine.
+      var pid=b.dataset.p,qp=CSS.escape(pid);toggleFicheTask(pid,t.id);
+      var nb=el.querySelector('[data-pl="case"][data-p="'+qp+'"]'+q);if(nb)nb.focus();
+    }
+    else if(a==='tout')evtToutCocher(e,t);
+    else if(a==='decaler')openDateOverrideModal(e.id,t.id,true);
+  });
+})();
+function evtToutCocher(e,t){
+  var n=0;
+  evtSuivis(e).forEach(function(p){
+    var s=spSujet(e,p);
+    if(!sansEtapesSautees(s,[t]).length||isNA(s,t)||taskStates[tk(p.id,t.id)]||!isUnlocked(s,t))return;
+    taskStates[tk(p.id,t.id)]=true;n++;
+  });
+  if(!n)return;
+  scheduleSave('taskstates');
+  ficheApresTache();renderKanban();renderConcerts();
+  showToast(t.nom+' : cochée pour '+evtPluriel(n,'spectacle')+'.');
+}
+// Depuis l'apercu ou le tableau de bord : le plan, cette etape depliee.
+function evtMontrerEtape(tid){
+  var t=process.find(function(x){return String(x.id)===String(tid);});if(!t)return;
+  evtEtapeOuverte=t.id;
+  // La tache depliee ne se voit que par tache (sans changer le choix enregistre).
+  evtPlanVue='tache';
+  ficheOnglet('plan');
+  renderFichePlanSp(ficheConcert());
+  var qt=CSS.escape(String(t.id)),r=document.querySelector('#fiche-plan-sp .evp-etape[data-t="'+qt+'"]');
+  if(r)r.scrollIntoView({block:'center'});
+}
+
+// ── Apercu : l'evenement et ses spectacles, un spectacle ──
+function evtApercuSpHtml(e){
+  if(!evtSuivis(e).length)return '';
+  var etapes=evtEtatEtapes(e);
+  if(!etapes.length)return '<div class="fa-vide fa-note">'+icon('list')+'<span>Les tâches de chaque spectacle ne sont pas encore choisies.</span><button type="button" class="btn-link" data-ap="repartir">Choisir</button></div>';
+  var urg=etapes.filter(function(r){return r.urgents.length;});
+  if(!urg.length){
+    var proch=null;
+    etapes.forEach(function(r){r.dates.forEach(function(d){if(!proch||d<proch.d)proch={d:d,t:r.t};});});
+    return '<div class="fa-vide fa-note">'+icon('circle-check')+'<span>'+esc('Rien d\'urgent du côté des spectacles.'+(proch?' Prochaine tâche : '+proch.t.nom+', à partir du '+proch.d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})+'.':''))+'</span></div>';
+  }
+  return urg.map(function(r){
+    var late=r.retard>0,cat=CATS[r.t.cat]||CATS.gen;
+    return '<button type="button" class="ftask ftask-'+(late?'late':'soon')+' fa-groupe" data-ap="etape" data-t="'+esc(r.t.id)+'" title="Voir cette tâche pour chaque spectacle">'
+      +'<span class="kb-groupe-ico" aria-hidden="true">'+icon('list')+'</span>'
+      +'<span class="ftask-body"><span class="ftask-name">'+esc(r.t.nom)+'</span><span class="ftask-meta"><span class="pill '+cat.cls+'">'+esc(cat.label)+'</span><span class="ftask-note">'+esc(evtNomsCourts(r.urgents))+'</span></span></span>'
+      +'<span class="ftask-date">'+esc(evtPluriel(r.urgents.length,'spectacle'))+'</span></button>';
+  }).join('');
+}
+function evtTuileSpHtml(e){
+  var sps=evtSuivis(e),etapes=evtEtatEtapes(e),tot=0,faits=0,retard=0,semaine=0;
+  if(!sps.length||!etapes.length)return '<button type="button" class="fa-tuile" data-ap="repartir"><span class="fa-l">Pour chaque spectacle</span><span class="fa-v">—</span>'
+    +'<span class="fa-s">'+(sps.length?'Tâches à choisir':'Aucun spectacle')+'</span></button>';
+  etapes.forEach(function(r){tot+=r.n-r.na;faits+=r.faits;retard+=r.retard;semaine+=r.semaine;});
+  var pct=tot?Math.round(faits/tot*100):0;
+  var sous=retard?'<span class="fa-s late">'+retard+' en retard</span>':semaine?'<span class="fa-s soon">'+semaine+' cette semaine</span>':'<span class="fa-s ok">À jour</span>';
+  return '<button type="button" class="fa-tuile" onclick="ficheOnglet(\'plan\')"><span class="fa-l">Pour chaque spectacle</span>'
+    +'<span class="fa-v">'+faits+'<small> / '+tot+'</small></span><span class="fiche-jauge" aria-hidden="true"><i style="width:'+pct+'%"></i></span>'+sous
+    +'<span class="fa-s2">'+esc(evtPluriel(etapes.length,'tâche')+' × '+evtPluriel(sps.length,'spectacle'))+'</span></button>';
+}
+function ficheApercuSpHtml(s,g){
+  var p=s.spectacle,e=s.evenement,pct=g.pct,v=evtVentes(p),ub=safeUrl(p.billet);
+  var prio=g.late.map(function(t){return ficheTacheHtml(s,t,'late',true);}).join('')
+    +g.soon.map(function(t){return ficheTacheHtml(s,t,'soon',true);}).join('');
+  if(!prio){
+    var proch=ficheProchaine(s,g);
+    prio='<div class="fa-vide">'+icon('circle-check')+(proch?'Rien d\'urgent. Prochaine tâche : '+esc(proch)+'.':g.total>g.done.length?'Rien d\'urgent.':g.total?'Tout est fait.':'Aucune tâche pour ce spectacle.')+'</div>';
+  }
+  var planSous=g.late.length?'<span class="fa-s late">'+g.late.length+' en retard</span>'
+    :g.soon.length?'<span class="fa-s soon">'+g.soon.length+' cette semaine</span>'
+    :'<span class="fa-s ok">À jour</span>';
+  var memeJour=evtTrie(evtProg(e)).filter(function(x){return x.id!==p.id&&x.dc===p.dc&&!evtApart(x);});
+  return '<section class="fa-bloc">'
+      +'<div class="fa-tete"><h3>À faire en priorité</h3><button type="button" class="btn-link" onclick="ficheOnglet(\'plan\')">Tout le plan'+icon('arrow-right')+'</button></div>'
+      +'<div class="fa-taches">'+prio+'</div>'
+    +'</section>'
+    +'<div class="fa-tuiles">'
+      +'<button type="button" class="fa-tuile" onclick="ficheOnglet(\'plan\')"><span class="fa-l">Plan</span>'
+        +'<span class="fa-v">'+g.done.length+'<small> / '+g.total+'</small></span>'
+        +'<span class="fiche-jauge" aria-hidden="true"><i style="width:'+pct+'%"></i></span>'+planSous+'</button>'
+      +'<button type="button" class="fa-tuile ventes-'+v+'" onclick="ficheVentes()" title="Statut des ventes : cliquer pour changer"><span class="fa-l">Ventes</span>'
+        +'<span class="fa-v">'+FICHE_VENTES_COURT[v]+'</span>'
+        +'<span class="ventes-gauge fa-jauge" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="fa-s2">Changer</span></button>'
+    +'</div>'
+    +(ub?'<section class="fa-bloc"><h3>Liens</h3><div class="fa-liens"><a class="tag tag-neutral fa-lien" href="'+esc(ub)+'" target="_blank" rel="noopener">'+icon('ticket')+'Billetterie'+icon('arrow-up-right','ico-muted')+'</a></div></section>':'')
+    +(memeJour.length?'<section class="fa-bloc"><h3>Le même jour</h3><div class="fa-liens">'+memeJour.map(function(x){
+        return '<button type="button" class="tag tag-neutral fa-lien" data-ap="sp" data-p="'+esc(x.id)+'">'+esc(x.art||'Sans nom')+(evtHeure(x.h)?' · '+esc(evtHeure(x.h)):'')+icon('arrow-right','ico-muted')+'</button>';
+      }).join('')+'</div></section>':'')
+    +(p.notes?'<section class="fa-bloc"><h3>Notes</h3><p class="fa-notes">'+esc(p.notes)+'</p></section>':'');
+}
+(function(){
+  var el=document.getElementById('fp-apercu');
+  el.addEventListener('click',function(ev){
+    var b=ev.target.closest('[data-ap]');if(!b||!el.contains(b))return;
+    var a=b.dataset.ap;
+    if(a==='repartir')evtOuvrirRepartir();
+    else if(a==='sp')ficheChoisirSpectacle(b.dataset.p);
+    else if(a==='etape')evtMontrerEtape(b.dataset.t);
+  });
+})();
+
+// ── Infos d'un spectacle : chaque champ s'enregistre en le quittant ──
+function renderFicheSpInfos(e,p){
+  var el=document.getElementById('fiche-sp-infos');if(!el)return;
+  var pid=esc(p.id),jours=evtJours(e).filter(Boolean),hors=!!p.dc&&jours.indexOf(p.dc)<0,v=evtVentes(p),ub=safeUrl(p.billet);
+  function champ(cle,label,val,type,extra){
+    return '<label class="fiche-prop"><span class="fiche-prop-l">'+label+'</span><input type="'+(type||'text')+'" class="fiche-champ" data-champ="'+cle+'" data-p="'+pid+'" value="'+esc(val)+'"'+(extra||'')+'></label>';
+  }
+  el.innerHTML='<div class="fiche-props">'
+      +champ('art','Artiste',p.art||'')
+      +'<div class="fiche-prop fiche-prop-haut"><span class="fiche-prop-l">Jour</span><div class="evt-jours-choix">'
+        +jours.map(function(j){var on=p.dc===j;return '<button type="button" class="evt-jour-btn'+(on?' on':'')+'" data-ev="champ-jour" data-p="'+pid+'" data-v="'+esc(j)+'" aria-pressed="'+(on?'true':'false')+'">'+esc(evtJourCourt(j))+'</button>';}).join('')
+        +'<input type="date" class="evt-in evt-in-date'+(hors?' on':'')+'" data-champ="dc" data-p="'+pid+'" value="'+esc(hors?p.dc:'')+'" title="Autre date" aria-label="Autre date"></div></div>'
+      +champ('h','Heure',evtHeure(p.h),'time')
+      +champ('salle','Salle',p.salle||'','text',' placeholder="La Vapeur"')
+      +champ('ville','Ville',p.ville||'','text',' placeholder="Dijon"')
+      +'<label class="fiche-prop"><span class="fiche-prop-l">Date d\'annonce</span><span class="fiche-prop-lien"><input type="date" class="fiche-champ" data-champ="da" data-p="'+pid+'" value="'+esc(p.da||'')+'">'
+        +'<span class="fiche-prop-aide" data-da-aide="1">'+esc(p.da?'':'Comme l\'événement'+(e.da?' ('+ficheCourt(e.da)+')':''))+'</span></span></label>'
+      +'<div class="fiche-prop"><label class="fiche-prop-l" for="fsp-billet">Billetterie</label><span class="fiche-prop-lien"><input type="text" inputmode="url" spellcheck="false" id="fsp-billet" class="fiche-champ" data-champ="billet" data-p="'+pid+'" value="'+esc(p.billet||'')+'" placeholder="https://…">'
+        +'<a class="fiche-ouvrir" data-billet-lien="1" target="_blank" rel="noopener" title="Ouvrir la billetterie" aria-label="Ouvrir la billetterie"'+(ub?' href="'+esc(ub)+'"':' hidden')+'>'+icon('arrow-up-right')+'</a></span></div>'
+      +champ('medias','Médias / Photographes',p.medias||'','text',' placeholder="Bien Public, L\'Union…"')
+      +champ('jeux','Jeu concours',p.jeux||'','text',' placeholder="L\'Union 5×2…"')
+      +champ('notes','Notes',p.notes||'','text',' placeholder="Notes libres…"')
+      +'<div class="fiche-prop fiche-prop-haut"><span class="fiche-prop-l">Ventes</span><div class="view-toggle compact evt-ventes-choix" role="group" aria-label="Ventes">'
+        +VENTES.map(function(x){var on=v===x.id;return '<button type="button" class="view-toggle-btn'+(on?' active':'')+'" data-ev="champ-ventes" data-p="'+pid+'" data-v="'+esc(x.id)+'" aria-pressed="'+(on?'true':'false')+'">'+esc(x.label)+'</button>';}).join('')
+      +'</div></div>'
+    +'</div>'
+    +'<div class="fiche-photo-bloc"><span class="fiche-prop-l">Photo de l\'artiste</span><div class="evt-photo-ligne" data-photo="'+pid+'">'+evtPhotoLigneHtml(p)+'</div></div>'
+    +'<div class="evt-edition-actions fsp-actions">'
+      +'<button type="button" class="btn-link danger" data-ev="retirer" data-p="'+pid+'">'+icon('trash')+'Retirer du programme</button><span class="grow"></span>'
+      +'<button type="button" class="btn-link" data-ev="apart" data-p="'+pid+'" title="Pour un spectacle qui a sa propre campagne : budget, sponso et tâches à part">En faire un concert à part'+icon('arrow-up-right')+'</button>'
+    +'</div>';
+}
+// Champ texte quitte : lien billetterie et rappel de la date d'annonce mis a
+// jour sur place, sans redessiner (on garde le curseur a la tabulation).
+function evtMajSpInfos(p){
+  var el=document.getElementById('fiche-sp-infos');if(!el||ficheSpId!==p.id)return;
+  var a=el.querySelector('[data-billet-lien]'),u=safeUrl(p.billet);
+  if(a){if(u)a.href=u;else a.removeAttribute('href');a.hidden=!u;}
+  var h=el.querySelector('[data-da-aide]'),c=ficheConcert();
+  if(h&&c)h.textContent=p.da?'':'Comme l\'événement'+(c.da?' ('+ficheCourt(c.da)+')':'');
+}
+function ficheSpApart(){var s=ficheSujet();if(s&&s.spectacle)evtConcertAPart(s.evenement,s.spectacle);}
+function ficheSpRetirer(){var s=ficheSujet();if(s&&s.spectacle)evtRetirer(s.evenement,s.spectacle);}
+
+// ── Repartir les taches : une fois pour l'evenement, ou pour chaque spectacle ──
+var evtRep=null; // {eid, choix:{idEtape:true}}
+// Point de depart : la repartition du dernier evenement reparti, sinon celle
+// validee le 25/09.
+function evtEtapesProposees(sauf){
+  var dernier=concerts.filter(function(x){return estEvt(x)&&x!==sauf&&evtAReparti(x);})
+    .sort(function(a,b){return Number(b.id)-Number(a.id);})[0];
+  var m={};
+  if(dernier){var d=evtEtapesSp(dernier);process.forEach(function(t){if(d[t.id])m[t.id]=true;});return m;}
+  EVT_ETAPES_SP_DEFAUT.forEach(function(id){if(process.some(function(t){return t.id===id;}))m[id]=true;});
+  return m;
+}
+function evtOuvrirRepartir(){
+  var e=ficheConcert();if(!estEvt(e))return;
+  var m=evtAReparti(e)?evtEtapesSp(e):evtEtapesProposees(e),choix={};
+  process.forEach(function(t){if(m[t.id])choix[t.id]=true;});
+  evtRep={eid:e.id,choix:choix};
+  renderEvtRep();
+  document.getElementById('evt-rep-modal').classList.add('open');
+  setTimeout(function(){var b=document.querySelector('#evt-rep-box [data-rep="fermer"]');if(b)b.focus();},30);
+}
+function fermerEvtRep(){document.getElementById('evt-rep-modal').classList.remove('open');evtRep=null;}
+function renderEvtRep(){
+  var box=document.getElementById('evt-rep-box');if(!box||!evtRep)return;
+  var e=concerts.find(function(x){return x.id===evtRep.eid;});if(!e){fermerEvtRep();return;}
+  var avant=evtEtapesSp(e),cibles=evtProg(e).filter(function(p){return !evtApart(p);}).length,nSp=0;
+  function tri(a,b){return (+a.jours||0)-(+b.jours||0);}
+  var groupes=[
+    ['Autour de l\'annonce',process.filter(function(t){return t.ref==='annonce';}).sort(tri)],
+    ['Avant les spectacles',process.filter(function(t){return t.ref!=='annonce'&&(+t.jours||0)<=0;}).sort(tri)],
+    ['Après',process.filter(function(t){return t.ref!=='annonce'&&(+t.jours||0)>0;}).sort(tri)]
+  ];
+  var corps=groupes.filter(function(g){return g[1].length;}).map(function(g){
+    return '<div class="evp-rep-groupe">'+esc(g[0])+'</div>'+g[1].map(function(t){
+      var sp=!!evtRep.choix[t.id],cat=CATS[t.cat]||CATS.gen,note='';
+      if(sp)nSp++;
+      // Ce qui sera recopie pour chaque spectacle a l'enregistrement.
+      if(sp&&!avant[t.id]&&cibles){
+        if(taskStates[tk(e.id,t.id)])note='Déjà faite pour l\'événement : elle sera cochée pour les '+evtPluriel(cibles,'spectacle');
+        else if(taskStates['na-'+e.id+'-'+t.id])note='Inutile pour l\'événement : elle le sera pour les '+evtPluriel(cibles,'spectacle');
+      }
+      return '<div class="evp-rep-l'+(sp?' spect':'')+'"><div class="evp-rep-nom"><span class="evp-rep-titre">'+esc(t.nom)+'</span>'
+          +'<span class="evp-rep-meta"><span class="pill '+cat.cls+'">'+esc(cat.label)+'</span><span>'+esc(evtQuand(t))+'</span></span>'
+          +(note?'<span class="evp-rep-note">'+esc(note)+'</span>':'')+'</div>'
+        +'<div class="view-toggle compact" role="group" aria-label="'+esc(t.nom)+'">'
+          +'<button type="button" class="view-toggle-btn'+(sp?'':' active')+'" data-rep="une" data-t="'+esc(t.id)+'" aria-pressed="'+(sp?'false':'true')+'">Une fois</button>'
+          +'<button type="button" class="view-toggle-btn'+(sp?' active':'')+'" data-rep="chaque" data-t="'+esc(t.id)+'" aria-pressed="'+(sp?'true':'false')+'">'+icon('list')+'Chaque spectacle</button>'
+        +'</div></div>';
+    }).join('');
+  }).join('');
+  box.innerHTML='<div class="evp-rep-tete"><div class="evt-modal-tete"><div class="evt-modal-titres"><div class="tk-modal-title">Tâches de chaque spectacle</div>'
+      +'<div class="evt-modal-sous">'+esc(e.art+' · '+evtPluriel(evtProg(e).length,'spectacle'))+'</div></div>'
+      +'<button type="button" class="fiche-close" data-rep="fermer" title="Fermer (Échap)" aria-label="Fermer">'+icon('x')+'</button></div>'
+      +'<p class="evp-rep-aide">Une tâche « pour chaque spectacle » apparaît dans la fiche de chacun, datée d\'après son jour, et se coche spectacle par spectacle. Les autres se font une fois pour tout l\'événement. Ce choix vaut pour cet événement seulement.</p></div>'
+    +'<div class="evp-rep-corps">'+corps+'</div>'
+    +'<div class="evp-rep-pied"><span class="evp-rep-total"><b>'+nSp+'</b> pour chaque spectacle, <b>'+(process.length-nSp)+'</b> une fois</span><span class="grow"></span>'
+      +'<button type="button" class="btn" data-rep="fermer">Annuler</button><button type="button" class="btn btn-primary" data-rep="enregistrer">Enregistrer</button></div>';
+}
+// Une etape qui passe « pour chaque spectacle » reprend pour chacun ce qui
+// avait ete fait pour l'evenement (cochee, inutile, decalee), sauf s'il a
+// deja son propre etat : sinon 18 cases tomberaient en retard d'un coup.
+// L'inverse ne recopie rien : l'etat de l'evenement est toujours la.
+function evtEnregistrerRepartition(){
+  var e=concerts.find(function(x){return evtRep&&x.id===evtRep.eid;});if(!e){fermerEvtRep();return;}
+  var avant=evtEtapesSp(e),choix=evtRep.choix,copies=0,m={};
+  var cibles=evtProg(e).filter(function(p){return !evtApart(p);});
+  Object.keys(choix).forEach(function(id){
+    m[id]=true;
+    if(avant[id])return;
+    cibles.forEach(function(p){
+      [[tk(e.id,id),tk(p.id,id)],['na-'+e.id+'-'+id,'na-'+p.id+'-'+id],['datemod-'+e.id+'-'+id,'datemod-'+p.id+'-'+id]].forEach(function(k){
+        if(taskStates[k[0]]&&taskStates[k[1]]===undefined){taskStates[k[1]]=taskStates[k[0]];copies++;}
+      });
+    });
+  });
+  e.parSpectacle=m;
+  if(copies)scheduleSave('concerts','taskstates');else scheduleSave('concerts');
+  var n=Object.keys(m).length;
+  fermerEvtRep();
+  if(currentFicheId===e.id){renderFiche(e);ficheAfficherOnglet();}
+  renderKanban();renderConcerts();
+  showToast(n?evtPluriel(n,'tâche')+' pour chaque spectacle, '+(process.length-n)+' une fois pour l\'événement.':'Tout le process se fait une fois pour l\'événement.');
+}
+(function(){
+  var m=document.getElementById('evt-rep-modal');
+  m.addEventListener('click',function(ev){
+    if(ev.target===m){fermerEvtRep();return;}
+    var b=ev.target.closest('[data-rep]');if(!b||!evtRep)return;
+    var a=b.dataset.rep;
+    if(a==='fermer')fermerEvtRep();
+    else if(a==='enregistrer')evtEnregistrerRepartition();
+    else if(a==='une'||a==='chaque'){
+      var t=process.find(function(x){return String(x.id)===b.dataset.t;});if(!t)return;
+      if(a==='chaque')evtRep.choix[t.id]=true;else delete evtRep.choix[t.id];
+      // La liste defile : on la garde ou elle en etait.
+      var corps=document.querySelector('#evt-rep-box .evp-rep-corps'),haut=corps?corps.scrollTop:0;
+      renderEvtRep();
+      corps=document.querySelector('#evt-rep-box .evp-rep-corps');if(corps)corps.scrollTop=haut;
+      var qt=CSS.escape(String(t.id)),f=document.querySelector('#evt-rep-box [data-rep="'+a+'"][data-t="'+qt+'"]');if(f)f.focus();
+    }
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Escape'||!m.classList.contains('open')||document.querySelector('#confirm-modal.open'))return;
+    fermerEvtRep();
+  });
+})();
+
+// ── Tableau de bord : les taches des spectacles, regroupees par tache ──
+// « Compiler demande photographes · 3 spectacles » plutot que trois lignes.
+function evtUrgencesSp(e){
+  var g={},ordre=[];
+  evtSuivis(e).forEach(function(p){
+    var s=spSujet(e,p);
+    sansEtapesSautees(s,sortedProcess(s)).forEach(function(t){
+      if(isNA(s,t)||taskStates[tk(p.id,t.id)]||!isUnlocked(s,t))return;
+      var d=calcDate(s,t);if(!d||!(isLate(d)||isToday(d)))return;
+      var k=(t.isCustom?'c':'p')+t.id;
+      if(!g[k]){g[k]={t:t,sps:[],retard:false,d:d};ordre.push(k);}
+      g[k].sps.push(p);
+      if(isLate(d))g[k].retard=true;
+      if(d<g[k].d)g[k].d=d;
+    });
+  });
+  return ordre.map(function(k){return g[k];}).sort(function(a,b){return a.d-b.d;});
+}
+// Un seul spectacle concerne : sa fiche ; sinon le plan de l'evenement, la
+// tache depliee.
+function evtOuvrirUrgence(eid,tid,pid){
+  if(pid){openFiche(eid,'plan',false,pid);return;}
+  openFiche(eid,'plan',false,null);
+  evtMontrerEtape(tid);
+}
 
 // ── Ajouter au programme : un spectacle, ou tout un tableau colle ──
 var evtAjout={mode:'un',jour:'',texte:'',salle:'',ville:'',dernier:''};
@@ -4799,12 +5608,13 @@ function exportCampaignReport(id){
   window.print();
 }
 async function resetFicheTasks(){
-  var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
-  if(!await customConfirm('Réinitialiser toutes les tâches de '+c.art+' ?'))return;
+  var c=ficheSujet();if(!c)return;
+  // Evenement : ses taches a lui ; celles de ses spectacles restent.
+  if(!await customConfirm('Réinitialiser toutes les tâches de '+c.art+' ?'+(estEvt(c)?' Celles de ses spectacles ne changent pas.':'')))return;
   // Taches du process ET taches ajoutees a la main sur ce concert (avant le
   // 23/09, ces dernieres restaient cochees), surlignage compris.
   sortedProcess(c).forEach(function(t){['','na-','datemod-','hl-'].forEach(function(pre){delete taskStates[pre?pre+c.id+'-'+t.id:tk(c.id,t.id)];});});
-  scheduleSave('taskstates');renderFicheTasks(c);renderKanban();renderConcerts();
+  scheduleSave('taskstates');ficheApresTache();renderKanban();renderConcerts();
 }
 var customTaskEditCid=null,customTaskEditId=null;
 function customTaskGenId(){return uid('ct');}
@@ -4834,8 +5644,7 @@ function saveCustomTask(){
   }
   scheduleSave('concert_tasks');
   document.getElementById('custom-task-modal').classList.remove('open');
-  var c=concerts.find(function(x){return x.id===customTaskEditCid;});
-  if(c)renderFicheTasks(c);
+  ficheApresTache();
   renderKanban();renderConcerts();
 }
 function deleteCustomTask(cid,tid){
@@ -4844,50 +5653,57 @@ function deleteCustomTask(cid,tid){
     customTasks=customTasks.filter(function(x){return x.id!==tid;});
     delete taskStates[tk(cid,tid)];
     scheduleSave('concert_tasks','taskstates');
-    var c=concerts.find(function(x){return x.id===cid;});
-    if(c)renderFicheTasks(c);
+    ficheApresTache();
     renderKanban();renderConcerts();
   });
 }
-var dateOverrideCid=null,dateOverrideTid=null;
-function openDateOverrideModal(cid,tid){
-  dateOverrideCid=cid;dateOverrideTid=tid;
-  document.getElementById('do-date').value=taskStates['datemod-'+cid+'-'+tid]||'';
+// tous : « Decaler pour tous » d'une etape faite pour chaque spectacle (cid
+// est alors l'evenement) ; la meme date pour chacun de ses spectacles.
+var dateOverrideCid=null,dateOverrideTid=null,dateOverrideTous=false;
+function openDateOverrideModal(cid,tid,tous){
+  dateOverrideCid=cid;dateOverrideTid=tid;dateOverrideTous=!!tous;
+  var s=tous?null:sujetParId(cid),e=tous?concerts.find(function(x){return x.id===cid;}):null;
+  document.getElementById('do-label').textContent=tous?'Nouvelle date pour les '+evtPluriel(e?evtSuivis(e).length:0,'spectacle'):'Nouvelle date pour ce'+(s&&s.spectacle?' spectacle':estEvt(s)?'t événement':' concert');
+  document.getElementById('do-date').value=tous?'':(taskStates['datemod-'+cid+'-'+tid]||'');
   document.getElementById('date-override-modal').classList.add('open');
+}
+function dateOverrideCibles(){
+  if(!dateOverrideTous)return [dateOverrideCid];
+  var e=concerts.find(function(x){return x.id===dateOverrideCid;});
+  return e?evtSuivis(e).map(function(p){return p.id;}):[];
 }
 function saveDateOverride(){
   var val=document.getElementById('do-date').value;
   if(!val)return;
-  taskStates['datemod-'+dateOverrideCid+'-'+dateOverrideTid]=val;
+  dateOverrideCibles().forEach(function(id){taskStates['datemod-'+id+'-'+dateOverrideTid]=val;});
   scheduleSave('taskstates');
   document.getElementById('date-override-modal').classList.remove('open');
-  var c=concerts.find(function(x){return x.id===dateOverrideCid;});
-  if(c)renderFicheTasks(c);
+  ficheApresTache();
   renderKanban();renderConcerts();
 }
 function clearDateOverride(){
-  delete taskStates['datemod-'+dateOverrideCid+'-'+dateOverrideTid];
+  dateOverrideCibles().forEach(function(id){delete taskStates['datemod-'+id+'-'+dateOverrideTid];});
   scheduleSave('taskstates');
   document.getElementById('date-override-modal').classList.remove('open');
-  var c=concerts.find(function(x){return x.id===dateOverrideCid;});
-  if(c)renderFicheTasks(c);
+  ficheApresTache();
   renderKanban();renderConcerts();
 }
 function toggleTaskNA(cid,tid){
-  var c=concerts.find(function(x){return x.id===cid;});
+  var c=sujetParId(cid);
   if(!c)return;
   var k='na-'+cid+'-'+tid;
   if(taskStates[k])delete taskStates[k];else taskStates[k]=true;
   scheduleSave('taskstates');
-  renderFicheTasks(c);renderKanban();renderConcerts();
+  ficheApresTache();renderKanban();renderConcerts();
 }
 function findTaskById(tid){return process.find(function(p){return p.id===tid;})||customTasks.find(function(p){return p.id===tid;});}
+// cid : un concert, un evenement ou l'un de ses spectacles (sujetParId).
 function toggleFicheTask(cid,tid){
-  var c=concerts.find(function(x){return x.id===cid;});
+  var c=sujetParId(cid);
   var t=findTaskById(tid);
   if(!c||!t||!isUnlocked(c,t))return;
   var k=tk(cid,tid);taskStates[k]=!taskStates[k];scheduleSave('taskstates');
-  if(c)renderFicheTasks(c);renderKanban();renderConcerts();
+  ficheApresTache();renderKanban();renderConcerts();
 }
 async function deleteFicheConcert(){
   var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
@@ -4905,7 +5721,7 @@ async function addConcert(){
   if(evt&&dcfin&&dcfin<dc){showToast('Le dernier jour est avant le premier.');return;}
   var btn=document.getElementById('add-btn');btn.disabled=true;btn.textContent='Ajout...';
   var nc={id:Date.now().toString(),art:art,ville:ville,dc:dc,da:da,medias:'',jeux:'',budget:'',notes:'',ventes:0};
-  if(evt){nc.evt=true;nc.dcFin=dcfin||dc;nc.prog=[];}
+  if(evt){nc.evt=true;nc.dcFin=dcfin||dc;nc.prog=[];nc.parSpectacle=evtEtapesProposees(null);}
   concerts.push(nc);
   concerts.sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
   document.getElementById('f-art').value='';document.getElementById('f-ville').value='';
@@ -4949,6 +5765,7 @@ async function permanentlyDeleteConcert(id){
   // restaient orphelines dans taskStates, voir purgeOrphanTaskStates).
   var motif=new RegExp('^(?:annonce-|skip-|na-|datemod-|hl-)?'+String(id).replace(/[^0-9a-zA-Z]/g,'\\$&')+'(?:-|$)');
   Object.keys(taskStates).forEach(function(k){if(motif.test(k))delete taskStates[k];});
+  if(estEvt(c))evtProg(c).forEach(function(p){oublierSujet(p.id);});
   cleanupArtistPhotoIfOrphan(c.art);
   // Son post automatique du planning RS (majPostsAuto() epargne un jour les
   // posts des concerts recents introuvables, qui peuvent etre en transit).
@@ -4958,7 +5775,7 @@ async function permanentlyDeleteConcert(id){
   if(currentFicheId===id)closeFicheBtn();else render();
 }
 function toggleTask(cid,tid){
-  var c=concerts.find(function(x){return x.id===cid;});
+  var c=sujetParId(cid);
   var t=findTaskById(tid);
   if(!c||!t||!isUnlocked(c,t))return;
   var k=tk(cid,tid);taskStates[k]=!taskStates[k];scheduleSave('taskstates');renderKanban();renderConcerts();
@@ -5084,19 +5901,15 @@ function renderKanban(){
   var sub=document.getElementById('kanban-sub');
   if(!list.length){if(sub)sub.textContent='';wrap.innerHTML=emptyConcertsHtml(kanbanFiltersActive(),'resetKanbanFilters()');return;}
   var cards=list.map(function(c){
-    var sorted=sortedProcess(c);
-    var skipSpK=!!taskStates['skip-'+c.id+'-sp'];
-    var skipColK=!!taskStates['skip-'+c.id+'-col'];
-    if(skipSpK||skipColK){sorted=sorted.filter(function(t){
-      if(skipSpK&&t.cat==='sp')return false;
-      if(skipColK&&(t.cat==='col'||t.cat==='affp'))return false;
-      return true;
-    });}
-    sorted=sorted.filter(function(t){return !isNA(c,t);});
+    var sorted=sansEtapesSautees(c,sortedProcess(c)).filter(function(t){return !isNA(c,t);});
     var lateTasks=sorted.filter(function(t){var d=calcDate(c,t);return !taskStates[tk(c.id,t.id)]&&isUnlocked(c,t)&&(isLate(d)||isToday(d));});
-    var hasLate=lateTasks.length>0;
+    // Evenement : les taches de ses spectacles, regroupees par tache, apres
+    // les siennes. Toujours une seule carte.
+    var evt=estEvt(c),groupes=evt?evtUrgencesSp(c):[];
+    var hasLate=lateTasks.length>0||groupes.length>0;
     var ds=c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
-    var shown=lateTasks.slice(0,4);
+    var shown=lateTasks.slice(0,4),gShown=groupes.slice(0,Math.max(0,4-shown.length));
+    var reste=lateTasks.length-shown.length+groupes.length-gShown.length;
     var body='';
     if(hasLate){
       body='<div class="kb-tasks">'+shown.map(function(t){
@@ -5109,12 +5922,18 @@ function renderKanban(){
           +(isNew?'<span class="tag tag-amber">Nouveau</span>':'')
           +'</div>';
       }).join('')
-      +(lateTasks.length>shown.length?'<a href="#" class="kb-more" onclick="event.preventDefault();openFiche(\''+escJs(c.id)+'\',\'plan\')">+ '+(lateTasks.length-shown.length)+' autres tâches</a>':'')
+      +gShown.map(function(g){
+        var seul=g.sps.length===1;
+        return '<a href="#" class="kb-groupe" onclick="event.preventDefault();event.stopPropagation();evtOuvrirUrgence(\''+escJs(c.id)+'\',\''+escJs(g.t.id)+'\',\''+escJs(seul?g.sps[0].id:'')+'\')" title="'+esc(seul?'Ouvrir la fiche du spectacle':'Voir cette tâche pour chaque spectacle')+'">'
+          +'<span class="kb-groupe-ico" aria-hidden="true">'+icon('list')+'</span>'
+          +'<span class="kb-task-body"><span class="kb-task-name">'+esc(g.t.nom)+'</span><span class="kb-groupe-sp">'+esc(evtNomsCourts(g.sps))+'</span></span>'
+          +'<span class="tag '+(g.retard?'tag-red':'tag-neutral')+'">'+esc(evtPluriel(g.sps.length,'spectacle'))+'</span></a>';
+      }).join('')
+      +(reste?'<a href="#" class="kb-more" onclick="event.preventDefault();openFiche(\''+escJs(c.id)+'\',\'plan\')">+ '+reste+(reste>1?' autres tâches':' autre tâche')+'</a>':'')
       +'</div>';
     }
     // Un evenement : une seule carte, ses dates du … au …, son programme en
     // une ligne (les ventes sont celles de chaque spectacle).
-    var evt=estEvt(c);
     if(evt)ds=evtPlage(c);
     var html='<div class="kb-card'+(c.annule?' is-cancelled':'')+'">'
       +'<div class="kb-head'+(hasLate?'':' only')+'" onclick="openFiche(\''+escJs(c.id)+'\')">'
@@ -5123,7 +5942,7 @@ function renderKanban(){
       +'<span class="kb-sub">'+(c.ville?esc(formatLieu(c.ville))+' · ':'')+ds+'</span>'
       +(evt?'<span class="kb-evt">'+esc(evtResumeCourt(c))+'</span>':ventesHtml(c,'toggleVentes(event,\''+escJs(c.id)+'\')'))
       +'</div>'+body
-      +(evt?'<a href="#" class="kb-more" onclick="event.preventDefault();openFiche(\''+escJs(c.id)+'\',\'programme\')">Voir le programme</a>':'')
+      +(evt?'<a href="#" class="kb-more" onclick="event.preventDefault();openFiche(\''+escJs(c.id)+'\')">Ouvrir l\'événement</a>':'')
       +'</div>';
     return {hasLate:hasLate,html:html};
   });
@@ -5542,22 +6361,29 @@ function toggleSkipFromList(cid, cat){
   if(cat==='sp'&&spModalCid===cid)spOpenConcert(cid);
 }
 function toggleSkip(cat){
-  var c=ficheConcert();if(!c)return;
-  var key='skip-'+c.id+'-'+cat;
+  var s=ficheSujet();if(!s)return;
+  var key='skip-'+s.id+'-'+cat;
   if(taskStates[key])delete taskStates[key];else taskStates[key]=true;
   scheduleSave('taskstates');updateSkipButtons();
-  renderFicheTasks(c);
-  if(cat==='sp')spRenderFiche(c.id);
+  ficheApresTache();renderKanban();renderConcerts();
+  if(cat==='sp')spRenderFiche(currentFicheId);
 }
 // Les deux interrupteurs vivent dans l'onglet qu'ils modifient : « Pas
-// d'affiche dispo » dans Plan, « Geree par la prod » dans Sponso.
+// d'affiche dispo » dans Plan, « Geree par la prod » dans Sponso. Un
+// spectacle suit le reglage de son evenement (interrupteur alors fige).
 function updateSkipButtons(){
-  if(!currentFicheId)return;
+  var s=currentFicheId?ficheSujet():null;if(!s)return;
   [['sp','skip-sp-btn'],['col','skip-col-btn']].forEach(function(p){
-    var on=!!taskStates['skip-'+currentFicheId+'-'+p[0]],b=document.getElementById(p[1]);
+    var propre=!!taskStates['skip-'+s.id+'-'+p[0]],herite=!!(s.spectacle&&taskStates['skip-'+s.evenement.id+'-'+p[0]]);
+    var on=propre||herite,b=document.getElementById(p[1]);
     b.classList.toggle('on',on);
     b.setAttribute('aria-checked',on?'true':'false');
+    b.disabled=herite&&!propre;
+    b.title=herite&&!propre?'Réglé sur l\'événement':'';
   });
+  // Spectacle : « Pas d'affiche dispo » ne vaut que si des taches d'affiche
+  // ou de collage sont faites pour chaque spectacle.
+  document.getElementById('skip-col-btn').hidden=!!s.spectacle&&!etapesSujet(s).some(function(t){return t.cat==='col'||t.cat==='affp';});
 }
 function toggleHighlight(cid,tid){var k="hl-"+cid+"-"+tid;if(taskStates[k])delete taskStates[k];else taskStates[k]=true;scheduleSave('taskstates');renderKanban();renderTkWidget();}
 function startCellEdit(e,cid,field){
@@ -7493,7 +8319,7 @@ function cmdkRender(q){
     // Un artiste trouve dans le programme d'un evenement : on le dit, et la
     // fiche s'ouvre sur le programme.
     var dansProg=nq&&cmdkNorm(c.art).indexOf(nq)<0?cmdkProg(c,nq):[];
-    items.push({type:'concert',title:c.art,sub:(dansProg.length?'Au programme : '+dansProg.map(function(p){return p.art;}).slice(0,2).join(', ')+' · ':(c.ville?formatLieu(c.ville)+' · ':''))+ds+(c.supprime?' · passé':''),action:function(){openFiche(c.id,dansProg.length?'programme':null);}});
+    items.push({type:'concert',title:c.art,sub:(dansProg.length?'Au programme : '+dansProg.map(function(p){return p.art;}).slice(0,2).join(', ')+' · ':(c.ville?formatLieu(c.ville)+' · ':''))+ds+(c.supprime?' · passé':''),action:function(){openFiche(c.id,null,false,dansProg.length?dansProg[0].id:undefined);}});
   });
   CMDK_TABS.forEach(function(t){
     // Ne pas proposer un onglet que showTab refusera : Process figure dans
@@ -7557,7 +8383,7 @@ function closeHelp(){document.getElementById('help-modal').classList.remove('ope
 // ── FICHE AGRANDISSABLE (500 -> 820 px), memorisee par appareil ──
 function applyFicheWide(w){
   var f=document.getElementById('fiche');if(!f)return;
-  f.classList.toggle('wide',!!w);
+  f.classList.toggle('wide',!!w&&!f.classList.contains('pleine'));
   var b=document.getElementById('fiche-expand-btn');
   if(b){b.innerHTML=icon(w?'minimize':'maximize');b.title=w?'Réduire la fiche':'Agrandir la fiche';}
   // Programme d'un evenement : une colonne par jour en fiche agrandie.
