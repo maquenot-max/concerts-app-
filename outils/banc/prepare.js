@@ -58,6 +58,8 @@ if (html.length === avant) throw new Error('balise supabase-js introuvable dans 
 html = html.replace('href="style.css"', 'href="style.css?v=' + v + '"');
 fs.writeFileSync(path.join(SITE, 'index.html'), html);
 fs.copyFileSync(path.join(DEPOT, 'public', 'style.css'), path.join(SITE, 'style.css'));
+// Texture du fond (identite Braise, 26/09) : sans elle, le banc n'a pas de grain.
+fs.copyFileSync(path.join(DEPOT, 'public', 'grain.png'), path.join(SITE, 'grain.png'));
 fs.cpSync(path.join(DEPOT, 'public', 'favicon_io'), path.join(SITE, 'favicon_io'), { recursive: true });
 fs.copyFileSync(path.join(ICI, 'harness.js'), path.join(SITE, 'harness.js'));
 fs.writeFileSync(path.join(SITE, 'data.js'), 'window.__BANC_DATA=' + JSON.stringify(lignes) + ';\n');

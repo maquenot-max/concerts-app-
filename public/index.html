@@ -5996,12 +5996,11 @@ function renderKanban(){
     var body='';
     if(hasLate){
       body='<div class="kb-tasks">'+shown.map(function(t){
-        var cat=CATS[t.cat]||{cls:'p-gen',label:'?'};
         var d=calcDate(c,t);var isHl=!!taskStates['hl-'+c.id+'-'+t.id];
         var isNew=d?Math.floor((today-d)/86400000)<3:false;
         return '<div class="kb-task'+(isHl?' hl':'')+'" title="Surligner (la tâche remonte dans les tâches Please Please)" onclick="event.stopPropagation();toggleHighlight(\''+escJs(c.id)+'\','+tidLit(t)+')">'
           +'<button type="button" class="kb-chk" aria-label="Marquer comme fait" onclick="event.stopPropagation();cocherAnime(this,function(){toggleTask(\''+escJs(c.id)+'\','+tidLit(t)+')})"></button>'
-          +'<span class="kb-task-body"><span class="kb-task-name">'+esc(t.nom)+'</span><span class="pill '+cat.cls+'">'+cat.label+'</span></span>'
+          +'<span class="kb-task-body"><span class="kb-task-name">'+esc(t.nom)+'</span></span>'
           +(isNew?'<span class="tag tag-amber">Nouveau</span>':'')
           +'</div>';
       }).join('')
@@ -6018,12 +6017,13 @@ function renderKanban(){
     // Un evenement : une seule carte, ses dates du … au …, son programme en
     // une ligne (les ventes sont celles de chaque spectacle).
     if(evt)ds=evtPlage(c);
-    // Photo de l'artiste (ou visuel de l'evenement) en tete de carte, en 16:9
-    // comme partout ; le nom est pose dessus. Sans photo, l'en-tete habituel.
+    // Photo de l'artiste (ou visuel de l'evenement) en tete de carte, en bandeau
+    // 21:9 (plus bas que le 16:9 de la fiche, 26/09) ; le nom est pose dessus.
+    // Sans photo, l'en-tete habituel.
     var nomHtml=evt?'<span class="kb-nom"><span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>'+evtTagHtml()+'</span>'
       :'<span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>';
     var photo=nlPhotoArtiste(c);
-    var html='<div class="kb-card'+(c.annule?' is-cancelled':'')+'">'
+    var html='<div class="kb-card'+(hasLate?' a-faire':'')+(c.annule?' is-cancelled':'')+'">'
       +'<div class="kb-head'+(hasLate?'':' only')+'" onclick="openFiche(\''+escJs(c.id)+'\')">'
       +(safeUrl(photo)?'<span class="kb-photo"><img src="'+escUrl(photo)+'" alt="" loading="lazy" decoding="async"><span class="kb-photo-nom">'+nomHtml+'</span></span>':nomHtml)
       +'<span class="kb-sub">'+(lieuTexte(c)?esc(lieuTexte(c))+' · ':'')+ds+'</span>'
