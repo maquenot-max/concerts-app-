@@ -62,6 +62,15 @@ body{font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
    son equivalent <button class="btn-link"> non : « Tout voir » souligne,
    « Tout le plan » non. Chaque composant donne sa couleur et son survol. */
 a{color:inherit;text-decoration:none}
+/* Controles de formulaire (26/09, tour dans Safari) : ils ne prennent pas la
+   police de la page d'eux-memes. La barre de navigation, « Filtres »,
+   « + Nouveau concert » ou le bas de la fiche etaient en police systeme, dans
+   tous les navigateurs. Et Safari aligne le contenu d'un bouton en flex en haut
+   a gauche (align-items:flex-start dans sa feuille interne, normal ailleurs) :
+   sur telephone, le montant des cartes Sponso restait colle au nom au lieu
+   d'aller a droite. Un composant qui veut autre chose le dit dans sa classe. */
+button,input,select,textarea{font-family:inherit}
+button{align-items:normal}
 
 /* ── HEADER FIXE ──────────────────────────────────────── */
 header{
@@ -116,7 +125,9 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
    (plutot que dans le panneau Filtres) pour un acces en un clic. */
 .hideok-toggle{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--surface);color:var(--text-2);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;user-select:none;white-space:nowrap}
 .hideok-toggle:hover{background:var(--bg)}
-.hideok-toggle input{width:auto;margin:0}
+/* [type=checkbox] pour l'emporter sur .filters input{width:100%} du telephone :
+   Safari etirait la case sur toute la largeur et son texte sortait du cadre. */
+.hideok-toggle input[type=checkbox]{width:auto;margin:0}
 .hideok-toggle:has(input:checked){background:var(--accent-soft);border-color:transparent;color:var(--text)}
 /* Menu d'actions (fiche) : meme popover, aligne a droite, items en liste */
 .fiche-menu{left:auto;right:0;min-width:240px;gap:0;padding:6px}

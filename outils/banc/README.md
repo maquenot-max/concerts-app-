@@ -37,6 +37,34 @@ Les écritures conditionnelles (`updated_at`), les conflits et l'écho temps
 réel de ses propres écritures se comportent comme sur Supabase. Toute autre
 requête externe est bloquée et notée dans `__banc.log`.
 
+## Tour dans Safari et Chrome
+
+```bash
+node outils/banc/tour.mjs
+```
+
+Ouvre 19 écrans (tableau de bord, listes, fiches, événement, newsletter…) à
+1 440, 1 024 et 390 px dans Safari puis dans Chrome, et range le tout dans
+`outils/banc/captures/<date>/` : `index.html` montre les deux navigateurs côte
+à côte, avec pour chaque écran les erreurs JavaScript, une page qui déborde de
+côté et le texte qui n'est pas dans les polices de l'interface. Pour ne faire
+qu'une partie : `--ecrans fiche`, `--largeurs 390`, `--navigateurs chrome`,
+`--url http://localhost:8765/`.
+
+- Aucune dépendance : `safaridriver` est livré avec macOS, Chrome tourne sans
+  interface. Pour Safari, cocher une fois *Autoriser l'automatisation à
+  distance* dans son menu Développement.
+- C'est le Safari du Mac, pas celui de l'iPhone.
+- Si le Mac affiche toujours les barres de défilement, Safari perd 15 px de
+  large : Chrome est réglé sur la même largeur utile pour comparer.
+- La fenêtre de Safari peut rester cachée derrière les autres : Safari fige
+  alors transitions et animations, et une capture montrait un onglet encore
+  surligné ou une fiche encore hors de l'écran. Le tour les coupe, la page
+  s'affiche directement dans son état final.
+- Lancer le tour avant et après une modification visuelle, puis comparer
+  les deux dossiers.
+- Les captures montrent des données réelles : `captures/` est exclu du dépôt.
+
 ## Ce que le banc ne couvre pas
 
 La vraie authentification (connexion, 2FA), les règles RLS réelles, le vrai
