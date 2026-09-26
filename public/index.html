@@ -194,7 +194,9 @@
           <div id="plist"></div>
         </div>
         <p class="card-foot-note">
-          Prérequis : la tâche ne sera active que si la tâche sélectionnée est cochée.
+          Prérequis : la tâche ne sera active que si la tâche sélectionnée est cochée, marquée inutile ou sans objet pour ce concert.<br>
+          Sponsoring : une étape nommée « … Vague 2 » tombe le jour où la vague 2 programmée dans la fiche démarre ; si le concert a des vagues mais pas de vague 2, elle disparaît de son plan.<br>
+          « Annoncer date sur RS » et le bouton « Marquer annoncé » se cochent l'un l'autre.
         </p>
       </div>
     </div>
@@ -497,6 +499,7 @@
       <span class="help-keys"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></span><span>Plannings RS · Tableau de bord · Concerts · Tâches</span>
       <span class="help-keys"><kbd>N</kbd></span><span>Nouveau concert</span>
       <span class="help-keys"><kbd>Échap</kbd></span><span>Fermer la fiche, le menu ou la fenêtre ouverte</span>
+      <span class="help-keys"><kbd>⌘Z</kbd></span><span>Annuler la dernière action, tant que son message est affiché (Ctrl+Z sur Windows)</span>
       <span class="help-keys"><kbd>?</kbd></span><span>Afficher cette aide</span>
     </div>
     <div class="tk-modal-actions"><button class="btn" onclick="closeHelp()">Fermer</button></div>
@@ -646,6 +649,7 @@
   <div class="saving" id="saving">Sauvegarde...</div>
   <div class="saving" id="sync-banner" style="background:var(--green)"></div>
   <div class="saving toast-warn" id="app-toast"></div>
+  <div class="saving toast-annuler" id="undo-toast" role="status"><span id="undo-msg"></span><button type="button" class="toast-annuler-btn" onclick="annulerDerniere()">Annuler</button></div>
 </div>
 <script>
 var SUPABASE_URL='https://vkehaerkbvfxlyjvrpzi.supabase.co';
@@ -3513,6 +3517,8 @@ function calcDate(c,t){
   if(t.isCustom)return t.date?new Date(t.date):null;
   var override=taskStates['datemod-'+c.id+'-'+t.id];
   if(override)return new Date(override);
+  var vg=vagueDeLEtape(c,t);
+  if(vg&&vg.debut)return new Date(vg.debut);
   // Un evenement dure plusieurs jours : ce qui se fait apres (report comm a
   // J+1) part de son dernier jour, le reste de son premier.
   var base=t.ref==='annonce'?c.da:(t.jours>0&&estEvt(c)?evtFin(c):c.dc);if(!base)return null;var d=new Date(base);d.setDate(d.getDate()+t.jours);return d;
@@ -3638,14 +3644,26 @@ function tidLit(t){return t.isCustom?("'"+escJs(t.id)+"'"):jsNum(t.id);}
 // Prerequis. Dans un evenement, une etape est soit commune, soit faite pour
 // chaque spectacle (evtEtapesSp) : un spectacle attend un prerequis commun
 // sur l'evenement, et l'evenement attend un prerequis « par spectacle » sur
-// tous ses spectacles (celui ou il est marque inutile ne bloque pas).
+// tous ses spectacles.
+// Un prerequis est leve des qu'il est fait, marque inutile ou sans objet
+// (etape sautee : « Pas d'affiche dispo », « Sponso geree par la prod »,
+// vague absente) : une etape qu'on ne fera pas ne bloque rien. Meme regle
+// partout depuis le 26/09 ; avant, « inutile » ne levait le prerequis que
+// pour une etape commune qui attendait tous les spectacles, et une tache de
+// concert dont le prerequis etait marque inutile restait en attente pour
+// toujours.
+function prerequisLeve(s,tid){
+  if(taskStates[tk(s.id,tid)]||taskStates['na-'+s.id+'-'+tid])return true;
+  var t=process.find(function(x){return String(x.id)===String(tid);});
+  return !!(t&&!sansEtapesSautees(s,[t]).length);
+}
 function isUnlocked(c,t){
   if(!t.prereq)return true;
   var e=c.spectacle?c.evenement:(estEvt(c)?c:null);
-  // Concert, ou prerequis commun : sa coche, sur l'evenement le cas echeant.
-  if(!e||!evtEtapesSp(e)[t.prereq])return !!taskStates[tk(e?e.id:c.id,t.prereq)];
-  if(c.spectacle)return !!taskStates[tk(c.id,t.prereq)];
-  return evtSuivis(e).every(function(p){return taskStates[tk(p.id,t.prereq)]||taskStates['na-'+p.id+'-'+t.prereq];});
+  // Concert, ou prerequis commun : sur l'evenement le cas echeant.
+  if(!e||!evtEtapesSp(e)[t.prereq])return prerequisLeve(e||c,t.prereq);
+  if(c.spectacle)return prerequisLeve(c,t.prereq);
+  return evtSuivis(e).every(function(p){return prerequisLeve(spSujet(e,p),t.prereq);});
 }
 function isNA(c,t){return !!taskStates['na-'+c.id+'-'+t.id];}
 // Etapes du process qui reviennent a c : toutes pour un concert, les communes
@@ -3667,8 +3685,33 @@ function sortedProcess(c){
 function skipActif(c,cat){return !!taskStates['skip-'+c.id+'-'+cat]||!!(c.spectacle&&taskStates['skip-'+c.evenement.id+'-'+cat]);}
 function sansEtapesSautees(c,l){
   var sp=skipActif(c,'sp'),col=skipActif(c,'col');
-  if(!sp&&!col)return l;
-  return l.filter(function(t){return !(sp&&t.cat==='sp')&&!(col&&(t.cat==='col'||t.cat==='affp'));});
+  return l.filter(function(t){
+    if(sp&&t.cat==='sp')return false;
+    if(col&&(t.cat==='col'||t.cat==='affp'))return false;
+    return vagueDeLEtape(c,t)!==false;
+  });
+}
+// Etapes Sponsoring nommees « … Vague N » (Lancer sponso Vague 1, Relancer
+// sponso Vague 2…) : liees aux vagues programmees dans la sponso du concert,
+// numerotees par date comme partout (spVaguesTriees). Depuis le 26/09 :
+// - vague N datee : l'etape tombe le jour ou la vague demarre (un « Decaler »
+//   de la fiche reste prioritaire) ;
+// - aucune vague programmee : la date du process, comme avant ;
+// - des vagues, mais pas de vague N : l'etape est sans objet, comme une etape
+//   sautee (retiree du plan et du tableau de bord).
+// Rien n'est jamais coche tout seul.
+function etapeNumVague(t){
+  if(!t||t.isCustom||t.cat!=='sp')return 0;
+  var m=/\bvague\s*(\d+)/i.exec(t.nom||'');
+  return m?parseInt(m[1],10):0;
+}
+// La vague N de l'etape, null si l'etape n'est pas liee ou si aucune vague
+// n'est programmee, false s'il y a des vagues mais pas de vague N.
+function vagueDeLEtape(c,t){
+  var n=etapeNumVague(t);if(!n)return null;
+  var vs=spVaguesTriees(c);
+  if(!vs.length)return null;
+  return vs[n-1]||false;
 }
 function fillFilterSelect(el,opts,emptyLabel){
   if(!el)return;
@@ -4144,6 +4187,7 @@ function ficheTacheHtml(c,t,kind,sansActions){
   var notes='';
   if(t.isCustom)notes+='<span class="ftask-note">Ajoutée à la main</span>';
   if(!t.isCustom&&!fait&&!na&&taskStates['datemod-'+c.id+'-'+t.id])notes+='<span class="ftask-note">Date décalée</span>';
+  else if(!fait&&!na){var vg=vagueDeLEtape(c,t);if(vg&&vg.debut)notes+='<span class="ftask-note">Début de la vague '+etapeNumVague(t)+'</span>';}
   if(bloque){var pt=findTaskById(t.prereq);notes+='<span class="ftask-note">En attente de : '+esc(pt?pt.nom:'?')+'</span>';}
   var chk;
   if(na)chk='<span class="ftask-chk na" aria-hidden="true">'+icon('ban')+'</span>';
@@ -5033,16 +5077,20 @@ function evtCaseHtml(s,t){
   });
 })();
 function evtToutCocher(e,t){
-  var n=0;
+  var cles=[];
   evtSuivis(e).forEach(function(p){
     var s=spSujet(e,p);
     if(!sansEtapesSautees(s,[t]).length||isNA(s,t)||taskStates[tk(p.id,t.id)]||!isUnlocked(s,t))return;
-    taskStates[tk(p.id,t.id)]=true;n++;
+    cles.push(tk(p.id,t.id));
   });
-  if(!n)return;
+  if(!cles.length)return;
+  var avant=photoEtats(cles);
+  cles.forEach(function(k){taskStates[k]=true;});
   scheduleSave('taskstates');
-  ficheApresTache();renderKanban();renderConcerts();
-  showToast(t.nom+' : cochée pour '+evtPluriel(n,'spectacle')+'.');
+  apresChangementTaches();
+  proposerAnnulation('« '+t.nom+' » cochée pour '+evtPluriel(cles.length,'spectacle'),function(){
+    remettreEtats(avant);scheduleSave('taskstates');apresChangementTaches();
+  });
 }
 // Depuis l'apercu ou le tableau de bord : le plan, cette etape depliee.
 function evtMontrerEtape(tid){
@@ -5689,22 +5737,73 @@ function clearDateOverride(){
   renderKanban();renderConcerts();
 }
 function toggleTaskNA(cid,tid){
-  var c=sujetParId(cid);
+  var c=sujetParId(cid),t=findTaskById(tid);
   if(!c)return;
-  var k='na-'+cid+'-'+tid;
-  if(taskStates[k])delete taskStates[k];else taskStates[k]=true;
+  var k='na-'+cid+'-'+tid,avant=photoEtats([k]),na=!taskStates[k];
+  if(na)taskStates[k]=true;else delete taskStates[k];
   scheduleSave('taskstates');
-  ficheApresTache();renderKanban();renderConcerts();
+  apresChangementTaches();
+  proposerAnnulation((t?'« '+t.nom+' » ':'Tâche ')+(na?'marquée inutile':'réactivée')+nomSujet(c),function(){
+    remettreEtats(avant);scheduleSave('taskstates');apresChangementTaches();
+  });
 }
 function findTaskById(tid){return process.find(function(p){return p.id===tid;})||customTasks.find(function(p){return p.id===tid;});}
 // cid : un concert, un evenement ou l'un de ses spectacles (sujetParId).
+// Depuis la fiche, le tableau de bord ou le tableau d'un evenement : une seule
+// fonction, qui propose d'annuler et tient l'annonce a jour (etapeAnnonceDe).
 function toggleFicheTask(cid,tid){
   var c=sujetParId(cid);
   var t=findTaskById(tid);
   if(!c||!t||!isUnlocked(c,t))return;
-  var k=tk(cid,tid);taskStates[k]=!taskStates[k];scheduleSave('taskstates');
-  ficheApresTache();renderKanban();renderConcerts();
+  var k=tk(cid,tid),fait=!taskStates[k];
+  var ta=etapeAnnonceDe(c);
+  if(ta&&ta===t&&(fait||taskStates['annonce-'+cid])){annonceMarquer(cid,fait);return;}
+  var avant=photoEtats([k]);
+  taskStates[k]=fait;scheduleSave('taskstates');
+  apresChangementTaches();
+  proposerAnnulation('« '+t.nom+' » '+(fait?'faite':'remise à faire')+nomSujet(c),function(){
+    remettreEtats(avant);scheduleSave('taskstates');apresChangementTaches();
+  });
 }
+function toggleTask(cid,tid){toggleFicheTask(cid,tid);}
+function apresChangementTaches(){ficheApresTache();renderKanban();renderConcerts();}
+// « pour ARTISTE » dans un message, quand la tache vise un spectacle ou un
+// concert qu'on ne voit pas forcement (tableau de bord).
+function nomSujet(c){return c&&c.art?' · '+c.art:'';}
+// « de JOSMAN », « d'EIFFEL » : elision devant une voyelle ou un h muet.
+function deNom(nom){return (/^[aeiouyhàâäéèêëîïôöûüù]/i.test(nom||'')?"d'":'de ')+nom;}
+
+// ── ANNULER LA DERNIERE ACTION ─────────────────────────────────────────
+// Cocher, marquer inutile, annoncer, supprimer un post ou une tache du
+// tableau : ces gestes d'un clic, sans confirmation, s'annulent quelques
+// secondes depuis le message qui les suit, ou par ⌘Z / Ctrl+Z hors d'un champ
+// (26/09). Seule la derniere action s'annule. Le retour en arriere est une
+// modification comme une autre : enregistre et fusionne avec les collegues.
+var annulation=null;
+function proposerAnnulation(msg,annuler){
+  var el=document.getElementById('undo-toast');if(!el)return;
+  annulation=annuler;
+  document.getElementById('undo-msg').textContent=msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t=setTimeout(function(){el.classList.remove('show');annulation=null;},7000);
+}
+function annulerDerniere(){
+  var f=annulation,el=document.getElementById('undo-toast');
+  if(!f)return false;
+  annulation=null;
+  if(el){el.classList.remove('show');clearTimeout(el._t);}
+  f();
+  showToast('Action annulée.');
+  return true;
+}
+// Valeurs de taskStates avant une action, pour la defaire cle par cle.
+function photoEtats(cles){
+  var o={};
+  cles.forEach(function(k){o[k]=Object.prototype.hasOwnProperty.call(taskStates,k)?taskStates[k]:undefined;});
+  return o;
+}
+function remettreEtats(o){Object.keys(o).forEach(function(k){if(o[k]===undefined)delete taskStates[k];else taskStates[k]=o[k];});}
 async function deleteFicheConcert(){
   var c=concerts.find(function(x){return x.id===currentFicheId;});if(!c)return;
   if(!await customConfirm('Déplacer '+c.art+' vers "Concerts passés" ? Tu pourras le remettre en actif à tout moment.','Déplacer'))return;
@@ -5774,27 +5873,49 @@ async function permanentlyDeleteConcert(id){
   orphanMedia.forEach(function(m){if(m.type==='image'&&m.path)storageDelete(m.path);});
   if(currentFicheId===id)closeFicheBtn();else render();
 }
-function toggleTask(cid,tid){
-  var c=sujetParId(cid);
-  var t=findTaskById(tid);
-  if(!c||!t||!isUnlocked(c,t))return;
-  var k=tk(cid,tid);taskStates[k]=!taskStates[k];scheduleSave('taskstates');renderKanban();renderConcerts();
+function annonceDone(cid){annonceMarquer(cid,true);}
+function annonceUndo(cid){annonceMarquer(cid,false);}
+// L'annonce (« Marquer annoncé », carte Annonces a venir) et l'etape « Annoncer
+// date sur RS » du process sont un seul geste depuis le 26/09 : l'un coche
+// l'autre, dans les deux sens. Le post automatique du planning RS suit aussi :
+// « posté » une fois l'annonce faite, de nouveau a faire si on la remet a
+// faire (sinon il restait « Posté » pour toujours alors que l'annonce etait
+// revenue dans les annonces a venir).
+function annonceMarquer(cid,fait){
+  var s=sujetParId(cid),t=s?etapeAnnonceDe(s):null;
+  var cles=['annonce-'+cid];
+  if(t&&!taskStates['na-'+cid+'-'+t.id])cles.push(tk(cid,t.id));
+  var avant=photoEtats(cles);
+  var post=rsPosts.find(function(p){return p.autoRef===cid&&p.proj==='pp';});
+  var postAvant=post?{id:post.id,status:post.status,ready:post.ready}:null;
+  cles.forEach(function(k){if(fait)taskStates[k]=true;else delete taskStates[k];});
+  if(post&&fait&&post.status!=='posted'){post.status='posted';post.ready=true;}
+  if(post&&!fait&&post.status==='posted'){post.status='';post.ready=false;}
+  scheduleSave('taskstates','rsposts');
+  apresAnnonce();
+  proposerAnnulation('Annonce'+(s&&s.art?' '+deNom(s.art):'')+(fait?' marquée faite':' remise à faire'),function(){
+    remettreEtats(avant);
+    var p=postAvant&&rsPosts.find(function(x){return x.id===postAvant.id;});
+    if(p){p.status=postAvant.status;p.ready=postAvant.ready;}
+    scheduleSave('taskstates','rsposts');
+    apresAnnonce();
+  });
 }
-function annonceDone(cid){
-  taskStates['annonce-'+cid]=true;
-  // Marquer le post auto comme posté dans le planning RS
-  var autoPost=rsPosts.find(function(p){return p.autoRef===cid&&p.proj==='pp';});
-  if(autoPost&&autoPost.status!=='posted'){autoPost.status='posted';autoPost.ready=true;}
-  scheduleSave('taskstates','rsposts');renderAnnonces();renderConcerts();renderRS();
+function apresAnnonce(){
+  apresChangementTaches();renderRS();
+  var s=currentFicheId?ficheSujet():null;
+  if(s)ficheMajTete(s);
 }
-function annonceUndo(cid){
-  delete taskStates['annonce-'+cid];
-  // Symetrique exact de annonceDone : le post auto du planning RS doit
-  // repasser "a faire", sinon il reste affiche "Poste" pour toujours alors
-  // que l'annonce, elle, est revenue dans les annonces a venir.
-  var autoPost=rsPosts.find(function(p){return p.autoRef===cid&&p.proj==='pp';});
-  if(autoPost&&autoPost.status==='posted'){autoPost.status='';autoPost.ready=false;}
-  scheduleSave('taskstates','rsposts');renderAnnonces();renderConcerts();renderRS();
+// L'etape « Annoncer date sur RS » quand elle revient a ce concert, cet
+// evenement ou ce spectacle (une etape « pour chaque spectacle » ne revient
+// pas a l'evenement). Reperee par son id d'origine (7), a defaut par son nom.
+function etapeAnnonceRS(){
+  return process.find(function(t){return String(t.id)==='7'&&/annon/i.test(t.nom||'');})
+    ||process.find(function(t){return cmdkNorm(t.nom).replace(/\s+/g,' ').trim()==='annoncer date sur rs';})||null;
+}
+function etapeAnnonceDe(s){
+  var t=etapeAnnonceRS();
+  return t&&etapesSujet(s).indexOf(t)>=0?t:null;
 }
 // Regle UNIQUE de "concert encore a annoncer", partagee par le widget du
 // tableau de bord et le compteur de la page Concerts : les deux affichaient
@@ -6663,19 +6784,34 @@ function tkAdvanceRecurringTasks(){
 function tkToggleDone(id){
   var t=tkTasks.find(function(x){return x.id===id;});
   if(!t)return;
+  var avant={done:t.done,date:t.date},msg;
   if(t.recur&&!t.done){
     // Tache recurrente validee : on programme directement la prochaine
     // occurrence au lieu de la marquer simplement terminee (elle ne doit
     // jamais s'empiler ni disparaitre definitivement).
     t.date=tkNextOccurrence(t.date,t.recur);
+    msg='« '+t.nom+' » faite · prochaine le '+ficheCourt(t.date);
   } else {
     t.done=!t.done;
+    msg='« '+t.nom+' » '+(t.done?'faite':'remise à faire');
   }
   scheduleSave('tktasks');renderTaches();renderTkWidget();
+  proposerAnnulation(msg,function(){
+    var x=tkTasks.find(function(y){return y.id===id;});if(!x)return;
+    x.done=avant.done;x.date=avant.date;
+    scheduleSave('tktasks');renderTaches();renderTkWidget();
+  });
 }
 function tkDelTask(id){
+  var i=tkTasks.findIndex(function(x){return x.id===id;});if(i<0)return;
+  var copie=JSON.parse(JSON.stringify(tkTasks[i]));
   tkTasks=tkTasks.filter(function(x){return x.id!==id;});
   scheduleSave('tktasks');renderTaches();renderTkWidget();
+  proposerAnnulation('Tâche « '+copie.nom+' » supprimée',function(){
+    if(tkTasks.some(function(x){return x.id===id;}))return;
+    tkTasks.splice(Math.min(i,tkTasks.length),0,copie);
+    scheduleSave('tktasks');renderTaches();renderTkWidget();
+  });
 }
 
 function renderTkWidget(){
@@ -7208,14 +7344,24 @@ function rsCopyLegend(id){
 }
 
 function rsDelPost(id){
-  var p=rsPosts.find(function(x){return x.id===id;});
-  var date=p?p.date:null,plans=p?rsPlanningsDe(p):[];
+  var i=rsPosts.findIndex(function(x){return x.id===id;});if(i<0)return;
+  var p=rsPosts[i],date=p.date,plans=rsPlanningsDe(p),copie=JSON.parse(JSON.stringify(p)),msg;
   // Post partage : il ne quitte que le planning affiche.
   if(plans.length>1&&plans.indexOf(rsCurrentProj)>=0){
     rsAffecter(p,plans.filter(function(k){return k!==rsCurrentProj;}));
-    showToast('Retiré de ce planning, toujours sur '+rsPlanningsDe(p).map(function(k){return rsPlanning(k).nom;}).join(', ')+'.');
-  } else rsPosts=rsPosts.filter(function(x){return x.id!==id;});
-  scheduleSave('rsposts');renderRS();
+    msg='Retiré de ce planning, toujours sur '+rsPlanningsDe(p).map(function(k){return rsPlanning(k).nom;}).join(', ');
+  } else {rsPosts=rsPosts.filter(function(x){return x.id!==id;});msg='Post supprimé';}
+  scheduleSave('rsposts');renderRS();rsRouvrirJour(date);
+  // Supprime sans confirmation (un clic sur la croix) : on peut revenir en arriere.
+  proposerAnnulation(msg,function(){
+    var x=rsPosts.find(function(y){return y.id===id;});
+    if(x){x.proj=copie.proj;if(copie.projs)x.projs=copie.projs;else delete x.projs;}
+    else rsPosts.splice(Math.min(i,rsPosts.length),0,copie);
+    scheduleSave('rsposts');renderRS();rsRouvrirJour(date);
+  });
+}
+// Garde deplie le jour qu'on vient de modifier (renderRS le replie).
+function rsRouvrirJour(date){
   if(date)setTimeout(function(){
     var el=document.getElementById('rslist-'+date);
     if(el&&rsPosts.some(function(x){return x.date===date&&rsSurPlanning(x,rsCurrentProj);}))el.style.display='block';
@@ -8356,9 +8502,13 @@ function cmdkPick(i){var it=cmdkItems[i];if(!it)return;closeCmdK();it.action();}
   document.addEventListener('keydown',function(e){
     var isMod=e.metaKey||e.ctrlKey;
     if(isMod&&(e.key==='k'||e.key==='K')){e.preventDefault();if(document.getElementById('cmdk-modal').classList.contains('open'))closeCmdK();else openCmdK();return;}
-    if(isMod||e.altKey)return;
     var t=document.activeElement,tag=t&&t.tagName;
-    if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable))return;
+    var enSaisie=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable);
+    // ⌘Z hors d'un champ : la derniere action proposee a l'annulation. Dans
+    // un champ, le navigateur garde son propre retour en arriere.
+    if(isMod&&!e.shiftKey&&!e.altKey&&(e.key==='z'||e.key==='Z')&&!enSaisie&&annulation){e.preventDefault();annulerDerniere();return;}
+    if(isMod||e.altKey)return;
+    if(enSaisie)return;
     if(document.querySelector('.tk-modal.open,.rs-modal.open'))return;
     if(e.key==='/'){e.preventDefault();openCmdK();return;}
     if(e.key==='?'){e.preventDefault();openHelp();return;}
