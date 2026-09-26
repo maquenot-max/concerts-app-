@@ -153,7 +153,8 @@
           <p class="card-desc nc-aide" id="nc-aide" hidden>Plusieurs spectacles, une seule campagne : un seul plan, une annonce, un budget. Les spectacles s'ajoutent ensuite dans son programme.</p>
           <div class="form-grid">
             <div class="form-group"><label for="f-art" id="f-art-l">Artiste</label><input type="text" id="f-art" placeholder="Nom de l'artiste"></div>
-            <div class="form-group"><label for="f-ville" id="f-ville-l">Salle / Ville</label><input type="text" id="f-ville" placeholder="ex: Dijon - Zenith"></div>
+            <div class="form-group" id="f-salle-g"><label for="f-salle">Salle</label><input type="text" id="f-salle" placeholder="Zénith" list="dl-salles" autocomplete="off"></div>
+            <div class="form-group"><label for="f-ville" id="f-ville-l">Ville</label><input type="text" id="f-ville" placeholder="Dijon" list="dl-villes" autocomplete="off"></div>
             <div class="form-group"><label for="f-dc" id="f-dc-l">Date du concert</label><input type="date" id="f-dc"></div>
             <div class="form-group" id="f-dcfin-g" hidden><label for="f-dcfin">Dernier jour</label><input type="date" id="f-dcfin"></div>
             <div class="form-group"><label for="f-da">Date d'annonce</label><input type="date" id="f-da"></div>
@@ -312,7 +313,8 @@
         <label class="fiche-prop"><span class="fiche-prop-l" id="fi-art-l">Artiste</span><input type="text" id="fi-art" class="fiche-champ" onchange="updateFicheField('art',this.value)"></label>
         <label class="fiche-prop"><span class="fiche-prop-l" id="fi-dc-l">Date du concert</span><input type="date" id="fi-dc" class="fiche-champ" onchange="updateFicheField('dc',this.value)"></label>
         <label class="fiche-prop" id="fi-dcfin-row" hidden><span class="fiche-prop-l">Dernier jour</span><input type="date" id="fi-dcfin" class="fiche-champ" onchange="updateFicheField('dcFin',this.value)"></label>
-        <label class="fiche-prop"><span class="fiche-prop-l" id="fi-ville-l">Salle / Ville</span><input type="text" id="fi-ville" class="fiche-champ" placeholder="Dijon - Zenith" onchange="updateFicheField('ville',this.value)"></label>
+        <label class="fiche-prop" id="fi-salle-row"><span class="fiche-prop-l">Salle</span><input type="text" id="fi-salle" class="fiche-champ" placeholder="Zénith" list="dl-salles" autocomplete="off" onchange="updateFicheField('salle',this.value.trim())"></label>
+        <label class="fiche-prop"><span class="fiche-prop-l" id="fi-ville-l">Ville</span><input type="text" id="fi-ville" class="fiche-champ" placeholder="Dijon" list="dl-villes" autocomplete="off" onchange="updateFicheField('ville',this.value.trim())"></label>
         <label class="fiche-prop"><span class="fiche-prop-l">Date d'annonce</span><input type="date" id="fi-da" class="fiche-champ" onchange="updateFicheField('da',this.value)"></label>
         <div class="fiche-prop"><label class="fiche-prop-l" for="fi-billet">Billetterie</label><span class="fiche-prop-lien"><input type="text" inputmode="url" spellcheck="false" id="fi-billet" class="fiche-champ" placeholder="https://…" onchange="ficheBillet(this.value)"><a class="fiche-ouvrir" id="fi-billet-lien" target="_blank" rel="noopener" title="Ouvrir la billetterie" aria-label="Ouvrir la billetterie" hidden><svg class="ico" aria-hidden="true"><use href="#i-arrow-up-right"></use></svg></a></span></div>
         <label class="fiche-prop"><span class="fiche-prop-l">Médias / Photographes</span><input type="text" id="fi-medias" class="fiche-champ" placeholder="Bien Public, L'Union…" onchange="updateFicheField('medias',this.value)"></label>
@@ -644,7 +646,9 @@
 <!-- Evenement : ajouter un spectacle, ou coller tout le programme (rempli par renderEvtModal) -->
 <div class="tk-modal" id="evt-modal"><div class="tk-modal-box evt-box" id="evt-box" role="dialog" aria-modal="true" aria-label="Ajouter au programme"></div></div>
 <div class="tk-modal" id="evt-rep-modal"><div class="tk-modal-box evt-rep-box" id="evt-rep-box" role="dialog" aria-modal="true" aria-label="Tâches de chaque spectacle"></div></div>
-<!-- Notifications transitoires, empilées en haut au centre sous l'en-tête -->
+<!-- Salles et villes deja saisies, proposees a la saisie (majSuggestionsLieux) -->
+<datalist id="dl-salles"></datalist><datalist id="dl-villes"></datalist>
+<!-- Notifications transitoires, empilées en bas à droite -->
 <div class="toast-stack">
   <div class="saving" id="saving">Sauvegarde...</div>
   <div class="saving" id="sync-banner" style="background:var(--green)"></div>
@@ -1213,7 +1217,7 @@ function nlRecentlyAnnouncedConcerts(jours){
 }
 function nlCityList(){
   var n={};
-  nlUpcomingConcerts().forEach(function(c){var v=getVille(c.ville);if(v)n[v]=(n[v]||0)+1;});
+  nlUpcomingConcerts().forEach(function(c){var v=villeRegroupee(c.ville);if(v)n[v]=(n[v]||0)+1;});
   return n;
 }
 // Villes choisies qui ont encore des concerts a venir (une ville sans date ne
@@ -1248,7 +1252,7 @@ function nlCandidats(b){
   if(b.type==='evenement'){var ce=nlEvtDuBloc(b);return ce?evtTrie(evtProg(ce)).filter(function(p){return !p.annule;}):[];}
   if(b.type==='annonces')return nlRecentlyAnnouncedConcerts(b.jours);
   var sel=nlVillesSel(b);
-  return nlUpcomingConcerts().filter(function(c){return !sel.length||sel.indexOf(getVille(c.ville))>=0;});
+  return nlUpcomingConcerts().filter(function(c){return !sel.length||sel.indexOf(villeRegroupee(c.ville))>=0;});
 }
 function nlConcertsDuBloc(b){
   var l=nlCandidats(b).filter(function(c){return !b.exclus[c.id];});
@@ -1356,7 +1360,7 @@ function nlCarteConcert(c,b,x){
   if(el.date&&c.dc)lignes.push({apres:12,pad:2,st:'font-family:\'Fraunces\', Georgia, serif;font-style:italic;font-weight:600;font-size:14px;color:'+cDate+';',html:esc(estEvt(c)?nlPlageLongue(c):new Date(c.dc+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}))});
   if(el.artiste)lignes.push({apres:12,pad:2,st:'font-family:'+police+';font-size:16px;font-weight:700;color:#16171F;',html:esc(c.art)+(badge?' '+badge:'')});
   else if(badge)lignes.push({apres:12,pad:2,html:badge.replace('margin-left:4px;','')});
-  if(el.lieu&&c.ville)lignes.push({apres:12,pad:2,st:'font-family:Arial, Helvetica, sans-serif;font-size:11.5px;letter-spacing:0.4px;text-transform:uppercase;color:#9C9891;',html:esc(formatLieu(c.ville))});
+  if(el.lieu&&lieuTexte(c))lignes.push({apres:12,pad:2,st:'font-family:Arial, Helvetica, sans-serif;font-size:11.5px;letter-spacing:0.4px;text-transform:uppercase;color:#9C9891;',html:esc(lieuTexte(c))});
   var txt=(b.boutonTxt||'').trim();
   if(el.bouton&&billet&&txt)lignes.push({apres:12,pad:10,html:nlPetitBouton(billet,txt,cols,pal)});
   return h+nlLignesHtml(lignes,!!h);
@@ -2009,7 +2013,7 @@ function nlLigneConcert(b,c){
   return '<div class="nl-crow'+(exclu?' exclu':'')+'">'
     +'<label class="nl-crow-lbl"><input type="checkbox" data-nl="excl" data-b="'+esc(b.id)+'" data-c="'+esc(cid)+'"'+(exclu?'':' checked')+'>'
       +(ph?'<img class="nl-cthumb" src="'+escUrl(ph)+'" alt="">':'<span class="nl-cthumb vide">'+icon('image')+'</span>')
-      +'<span class="nl-cinfo"><b>'+esc(c.art)+'</b><span>'+(b.type==='annonces'?'annoncé le ':'')+esc(dt)+' · '+esc(getVille(c.ville))+'</span></span></label>'
+      +'<span class="nl-cinfo"><b>'+esc(c.art)+'</b><span>'+(b.type==='annonces'?'annoncé le ':'')+esc(dt)+(c.ville?' · '+esc(c.ville):'')+'</span></span></label>'
     +'<span class="nl-cflags">'
       +(c.ventes===4?'<span class="tag tag-red">Complet</span>':'')
       +(ph?'':(nlEnvoi['c:'+cid]?'<span class="tag tag-neutral">Envoi…</span>'
@@ -3149,7 +3153,7 @@ function normalizeSynced(key,v){
   if(key==='budget_templates')return normaliserConfigBudget(v);
   if(SYNC_OBJECT_KEYS[key])return syncIsPlain(v)?v:{};
   v=Array.isArray(v)?v:[];
-  if(key==='concerts')return v.map(function(c){return Object.assign({medias:'',jeux:'',budget:'',notes:'',ventes:0},c);});
+  if(key==='concerts')return v.map(function(c){return normaliserLieu(Object.assign({salle:'',medias:'',jeux:'',budget:'',notes:'',ventes:0},c));});
   return repairDuplicateIds(v);
 }
 // Deux elements ne doivent jamais partager un id, la fusion se faisant par id.
@@ -3603,33 +3607,55 @@ function customConfirm(msg,okLabel){
   document.getElementById('confirm-modal').classList.add('open');
   return new Promise(function(resolve){_confirmModalResolve=resolve;});
 }
-// Liste unique des noms de salle utilisee par formatLieu() et getVille() pour
-// detecter l'ancien format "Salle - Ville" : garder une seule liste evite
-// que les deux fonctions se desynchronisent quand une salle est ajoutee.
+// ── LIEU : salle et ville ─────────────────────────────────────────────
+// Deux champs depuis le 26/09 (c.salle, c.ville), comme les spectacles d'un
+// evenement. Avant, un seul champ c.ville portait « Salle - Ville » ou
+// « Ville - Salle », remis dans l'ordre a l'affichage grace a la liste des
+// salles connues : une salle absente de la liste s'affichait a l'envers, et un
+// meme lieu s'ecrivait de sept facons selon l'ecran. Une ancienne valeur est
+// separee a la lecture (normalizeSynced : chargement, synchro, restauration
+// d'une sauvegarde) et part en base au prochain enregistrement des concerts ;
+// une version de l'appli restee ouverte ailleurs qui ecrirait encore
+// « Salle - Ville » est traitee de meme. Le lieu d'un evenement reste un
+// texte libre (c.ville, « Dijon et alentours »).
 var KNOWN_SALLES=['arena','zenith','vapeur','la vapeur','cube','cedre','c\xe8dre','spot','expo','parc','le k','tinqueux','k tinqueux'];
-function formatLieu(ville){
-  if(!ville)return '';
-  var parts=ville.split(' - ');
-  if(parts.length<2)return ville;
-  var first=parts[0].toLowerCase().trim();
-  var isOldFormat=KNOWN_SALLES.some(function(s){return first.indexOf(s)>=0;});
-  if(isOldFormat){
-    // Ancien format "Salle - Ville" → afficher "Ville - Salle"
-    return parts[parts.length-1].trim()+' - '+parts.slice(0,-1).join(' - ').trim();
-  }
-  // Nouveau format "Ville - Salle" → afficher tel quel
-  return parts[0].trim()+' - '+parts.slice(1).join(' - ').trim();
+function lieuDepuisTexte(txt){
+  var t=String(txt||'').trim(),parts=t.split(/\s+[-\u2013]\s+/);
+  if(parts.length<2)return {salle:'',ville:t};
+  function estSalle(x){x=x.toLowerCase().trim();return KNOWN_SALLES.some(function(k){return x.indexOf(k)>=0;});}
+  // « Salle - Ville » quand le premier morceau est une salle connue, sinon
+  // « Ville - Salle », l'ordre propose par le formulaire depuis toujours.
+  var n=parts.length-1;
+  if(estSalle(parts[0])&&!estSalle(parts[n]))return {salle:parts.slice(0,n).join(' - ').trim(),ville:parts[n].trim()};
+  return {ville:parts[0].trim(),salle:parts.slice(1).join(' - ').trim()};
 }
-function getVille(ville){
-  if(!ville)return '';
-  var parts=ville.split(' - ');
-  if(parts.length<2)return ville.trim();
-  // Detecter si c'est l'ancien format "Salle - Ville"
-  var first=parts[0].toLowerCase().trim();
-  var isOldFormat=KNOWN_SALLES.some(function(s){return first.indexOf(s)>=0;});
-  var v=isOldFormat?parts[parts.length-1].trim():parts[0].trim();
-  var aliases={'Chenove':'Dijon','Chenôve':'Dijon'};
-  return aliases[v]||v;
+function normaliserLieu(c){
+  if(estEvt(c)||!/\s[-\u2013]\s/.test(String(c.ville||'')))return c;
+  var l=lieuDepuisTexte(c.ville);
+  return Object.assign({},c,{salle:l.salle,ville:l.ville});
+}
+// « Reims - Arena » : la ville, puis la salle, sur tous les ecrans (listes,
+// fiche, frise sponso, newsletter, rapport). Concert, evenement ou spectacle.
+function lieuTexte(x){
+  if(!x)return '';
+  if(estEvt(x))return String(x.ville||'').trim();
+  return [x.ville,x.salle].map(function(v){return String(v||'').trim();}).filter(Boolean).join(' - ');
+}
+// Ville des filtres et de la newsletter : Chenove se range avec Dijon.
+function villeRegroupee(v){v=String(v||'').trim();var a={'Chenove':'Dijon','Chenôve':'Dijon'};return a[v]||v;}
+// Salles et villes deja saisies, proposees a la saisie : un lieu s'ecrit une
+// fois pour toutes (plus de « Zenith » a cote de « Zénith »).
+function majSuggestionsLieux(){
+  var salles={},villes={};
+  concerts.forEach(function(c){
+    if(c.salle)salles[String(c.salle).trim()]=1;
+    if(c.ville&&!estEvt(c))villes[String(c.ville).trim()]=1;
+    evtProg(c).forEach(function(p){if(p.salle)salles[String(p.salle).trim()]=1;if(p.ville)villes[String(p.ville).trim()]=1;});
+  });
+  [['dl-salles',salles],['dl-villes',villes]].forEach(function(x){
+    var el=document.getElementById(x[0]);if(!el)return;
+    el.innerHTML=Object.keys(x[1]).sort(function(a,b){return a.localeCompare(b,'fr');}).map(function(v){return '<option value="'+esc(v)+'">';}).join('');
+  });
 }
 function fmt(d){return d?d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'-';}
 function isLate(d){if(!d)return false;var n=new Date();n.setHours(0,0,0,0);return d<n;}
@@ -3925,8 +3951,8 @@ function ficheMajTete(c){
   sur.hidden=!p;
   sur.innerHTML=p?'<button type="button" class="fiche-sur-evt" onclick="ficheVersEvt()">'+esc(e.art)+'</button><span>'+esc(evtJourLong(p.dc))+'</span>':'';
   var heure=p?evtHeure(p.h):'';
-  document.getElementById('fiche-sub').textContent=p?[c.ville,ficheDateLongue(p.dc)+(heure?' · '+heure.replace(':','h'):'')].filter(Boolean).join(' · ')
-    :evt?[c.ville,evtPlage(c,true)].filter(Boolean).join(' · '):[formatLieu(c.ville),ficheDateLongue(c.dc)].filter(Boolean).join(' · ');
+  document.getElementById('fiche-sub').textContent=p?[lieuTexte(c),ficheDateLongue(p.dc)+(heure?' · '+heure.replace(':','h'):'')].filter(Boolean).join(' · ')
+    :evt?[lieuTexte(c),evtPlage(c,true)].filter(Boolean).join(' · '):[lieuTexte(c),ficheDateLongue(c.dc)].filter(Boolean).join(' · ');
   document.getElementById('fiche-autres').innerHTML=p?'':evt?'<span class="fiche-evt-resume">'+esc(evtResume(c))+'</span>':ficheAutresHtml(c);
   document.getElementById('fiche-puces').innerHTML=fichePucesHtml(c);
   document.getElementById('fiche-annule').hidden=!c.annule;
@@ -3986,7 +4012,7 @@ function ficheAutresHtml(c){
   if(!autres.length)return '';
   return '<span>Aussi :</span>'+autres.slice(0,2).map(function(x){
     return '<button type="button" class="fiche-autre" onclick="openFiche(\''+escJs(x.id)+'\',null,true)">'
-      +esc([formatLieu(x.ville),ficheCourt(x.dc,true)].filter(Boolean).join(', '))+icon('arrow-right')+'</button>';
+      +esc([lieuTexte(x),ficheCourt(x.dc,true)].filter(Boolean).join(', '))+icon('arrow-right')+'</button>';
   }).join('')+(autres.length>2?'<span>+'+(autres.length-2)+'</span>':'');
 }
 function updateFicheAnnonceUndoBtn(){
@@ -4103,10 +4129,13 @@ function ficheMajInfos(c){
   document.getElementById('fi-art-l').textContent=evt?'Nom':'Artiste';
   document.getElementById('fi-dc-l').textContent=evt?'Premier jour':'Date du concert';
   document.getElementById('fi-dcfin-row').hidden=!evt;
-  document.getElementById('fi-ville-l').textContent=evt?'Lieu':'Salle / Ville';
-  document.getElementById('fi-ville').placeholder=evt?'Dijon et alentours':'Dijon - Zenith';
+  document.getElementById('fi-salle-row').hidden=evt;
+  document.getElementById('fi-ville-l').textContent=evt?'Lieu':'Ville';
+  document.getElementById('fi-ville').placeholder=evt?'Dijon et alentours':'Dijon';
+  document.getElementById('fi-ville').setAttribute('list',evt?'':'dl-villes');
+  majSuggestionsLieux();
   document.getElementById('fi-photo-l').textContent=evt?'Visuel de l\'événement':'Photo de l\'artiste';
-  var vals={'fi-art':c.art,'fi-dc':c.dc,'fi-dcfin':c.dcFin,'fi-ville':c.ville,'fi-da':c.da,'fi-billet':s.billet,'fi-medias':c.medias,'fi-jeux':c.jeux,'fi-budget':c.budget,'fi-notes':c.notes};
+  var vals={'fi-art':c.art,'fi-dc':c.dc,'fi-dcfin':c.dcFin,'fi-salle':c.salle,'fi-ville':c.ville,'fi-da':c.da,'fi-billet':s.billet,'fi-medias':c.medias,'fi-jeux':c.jeux,'fi-budget':c.budget,'fi-notes':c.notes};
   Object.keys(vals).forEach(function(id){var el=document.getElementById(id);if(el&&el!==document.activeElement)el.value=vals[id]||'';});
   ficheMajLien('fi-billet-lien',s.billet);
   ficheMajLien('fi-budget-lien',c.budget);
@@ -4140,6 +4169,12 @@ function updateFicheField(field,val){
   if(field==='dcFin'&&val&&c.dc&&val<c.dc){showToast('Le dernier jour est avant le premier.');ficheMajInfos(c);return;}
   var avant=c[field];
   c[field]=val;
+  // « Reims - Le K » saisi d'un bloc dans Ville : separe en salle et ville,
+  // champs mis a jour aussitot (meme celui qui a encore le focus).
+  if(field==='ville'&&!estEvt(c)&&/\s[-\u2013]\s/.test(val)){
+    var l=normaliserLieu(c);c.salle=l.salle;c.ville=l.ville;
+    document.getElementById('fi-salle').value=c.salle;document.getElementById('fi-ville').value=c.ville;
+  }
   if(field==='art'){moveArtistPhotoOnRename(c,avant);renderFichePhoto(c);}
   concerts.sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
   scheduleSave('concerts');
@@ -4325,7 +4360,7 @@ function renderFicheApercu(c,g){
 function estEvt(c){return !!(c&&c.evt);}
 function evtProg(c){return c&&Array.isArray(c.prog)?c.prog:[];}
 function evtFin(c){return c.dcFin&&c.dcFin>=(c.dc||'')?c.dcFin:c.dc;}
-function evtLieu(p){return [p.ville,p.salle].map(function(x){return String(x||'').trim();}).filter(Boolean).join(' - ');}
+function evtLieu(p){return lieuTexte(p);}
 function evtCap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s;}
 function evtPluriel(n,mot,pl){return n+' '+(n>1?(pl||mot+'s'):mot);}
 function evtIso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -4382,8 +4417,8 @@ function evtTagHtml(){return '<span class="tag tag-accent evt-tag">'+icon('calen
 // Villes d'un concert pour les filtres : pour un evenement, celles de ses
 // spectacles (son lieu est libre : « Dijon et alentours »).
 function concertVilles(c){
-  if(!estEvt(c)||!evtProg(c).length)return [getVille(c.ville)].filter(Boolean);
-  var v={};evtProg(c).forEach(function(p){var x=getVille(p.ville);if(x)v[x]=1;});
+  if(!estEvt(c)||!evtProg(c).length)return [villeRegroupee(c.ville)].filter(Boolean);
+  var v={};evtProg(c).forEach(function(p){var x=villeRegroupee(p.ville);if(x)v[x]=1;});
   return Object.keys(v);
 }
 // Recherche : le nom du concert, ou celui d'un artiste du programme.
@@ -4426,6 +4461,7 @@ evtVue=evtVueParDefaut();
 function renderFicheProgramme(c){
   var el=document.getElementById('fp-programme');if(!el)return;
   if(!estEvt(c)){el.innerHTML='';return;}
+  majSuggestionsLieux();
   var prog=evtTrie(evtProg(c)),jours=evtJours(c);
   if(prog.some(function(p){return !p.dc;}))jours.push('');
   if(evtJour&&jours.indexOf(evtJour)<0)evtJour='';
@@ -4535,7 +4571,8 @@ function evtEditionHtml(c,p){
   var pid=esc(p.id),jours=evtJours(c),v=evtVentes(p),hors=jours.indexOf(p.dc)<0;
   function champ(cle,label,val,type,cls){
     return '<label class="evt-champ'+(cls||'')+'"><span class="evt-champ-l">'+label+'</span><input type="'+(type||'text')+'" class="evt-in" data-champ="'+cle+'" data-p="'+pid+'" value="'+esc(val)+'"'
-      +(cle==='billet'?' inputmode="url" spellcheck="false" placeholder="https://…"':'')+'></label>';
+      +(cle==='billet'?' inputmode="url" spellcheck="false" placeholder="https://…"':'')
+      +(cle==='salle'||cle==='ville'?' list="dl-'+cle+'s" autocomplete="off"':'')+'></label>';
   }
   return '<div class="evt-edition">'
     +'<div class="evt-edition-l1">'
@@ -4755,7 +4792,7 @@ function evtSuivis(e){return evtTrie(evtProg(e)).filter(function(p){return !p.an
 // date, date d'annonce, ventes...). Sa date d'annonce est celle de
 // l'evenement, sauf s'il a la sienne (ajoute apres l'annonce, par exemple).
 function spSujet(e,p){
-  return {id:p.id,art:p.art||'',dc:p.dc||'',da:p.da||e.da||'',ville:[p.salle,p.ville].filter(Boolean).join(', '),
+  return {id:p.id,art:p.art||'',dc:p.dc||'',da:p.da||e.da||'',salle:p.salle||'',ville:p.ville||'',
     ventes:evtVentes(p),annule:!!p.annule,notes:p.notes||'',spectacle:p,evenement:e};
 }
 function ficheSujet(){
@@ -4822,7 +4859,7 @@ function renderFicheMenu(c){
   var el=document.getElementById('fiche-evt-menu');if(!el)return;
   if(!estEvt(c)){el.innerHTML='';return;}
   var gE=ficheGroupes(c),vis=evtPhotoUrl({art:c.art});
-  var h='<div class="fm-tete-tel"><h2>'+esc(c.art)+'</h2><span class="fm-tete-sous">'+esc([c.ville,evtPlage(c,true)].filter(Boolean).join(' · '))+'</span>'
+  var h='<div class="fm-tete-tel"><h2>'+esc(c.art)+'</h2><span class="fm-tete-sous">'+esc([lieuTexte(c),evtPlage(c,true)].filter(Boolean).join(' · '))+'</span>'
       +'<div class="fm-tete-puces">'+fichePucesHtml(c,true)+'</div></div>'
     +'<button type="button" class="fm-l fm-evt'+(ficheSpId?'':' on')+'" data-fm="evt"'+(ficheSpId?'':' aria-current="page"')+'>'
       +(vis?'<img class="fm-vis" src="'+esc(vis)+'" alt="">':'<span class="fm-vis vide">'+icon('calendar')+'</span>')
@@ -4838,7 +4875,7 @@ function renderFicheMenu(c){
     l.forEach(function(p){
       var on=ficheSpId===p.id,apart=evtApart(p),ph=evtPhotoUrl(p);
       var n=apart||p.annule?0:ficheGroupes(spSujet(c,p)).late.length;
-      var sous=p.annule?'Annulé':apart?'Fiche concert à part':([p.salle,p.ville].filter(Boolean).join(' · ')||'Lieu à préciser');
+      var sous=p.annule?'Annulé':apart?'Fiche concert à part':(lieuTexte(p)||'Lieu à préciser');
       h+='<button type="button" class="fm-l'+(on?' on':'')+(p.annule?' annule':'')+'" data-fm="sp" data-p="'+esc(p.id)+'"'+(on?' aria-current="page"':'')+(apart?' title="Ce spectacle a sa propre fiche concert"':'')+'>'
         +(ph?'<img class="fm-vis" src="'+esc(ph)+'" alt="" loading="lazy">':'<span class="fm-vis vide">'+icon('image')+'</span>')
         +'<span class="fm-txt"><span class="fm-nom evt-art">'+esc(p.art||'Sans nom')+'</span><span class="fm-sous">'+esc(sous)+'</span></span>'
@@ -5034,7 +5071,7 @@ function evtTableauHtml(e,etapes,sps){
       var ph=evtPhotoUrl(p),s=spSujet(e,p);
       h+='<tr><th scope="row"><button type="button" class="evp-tab-art" data-pl="ouvrir" data-p="'+esc(p.id)+'" title="Ouvrir la fiche du spectacle">'
         +(ph?'<img src="'+esc(ph)+'" alt="" loading="lazy">':'<span class="evp-tab-vide">'+icon('image')+'</span>')
-        +'<span><span class="evt-art">'+esc(p.art||'Sans nom')+'</span><small>'+esc([p.salle,p.ville].filter(Boolean).join(' · '))+'</small></span></button></th>'
+        +'<span><span class="evt-art">'+esc(p.art||'Sans nom')+'</span><small>'+esc(lieuTexte(p))+'</small></span></button></th>'
         +cols.map(function(t){return '<td>'+evtCaseHtml(s,t)+'</td>';}).join('')+'</tr>';
     });
   });
@@ -5178,6 +5215,7 @@ function ficheApercuSpHtml(s,g){
 // ── Infos d'un spectacle : chaque champ s'enregistre en le quittant ──
 function renderFicheSpInfos(e,p){
   var el=document.getElementById('fiche-sp-infos');if(!el)return;
+  majSuggestionsLieux();
   var pid=esc(p.id),jours=evtJours(e).filter(Boolean),hors=!!p.dc&&jours.indexOf(p.dc)<0,v=evtVentes(p),ub=safeUrl(p.billet);
   function champ(cle,label,val,type,extra){
     return '<label class="fiche-prop"><span class="fiche-prop-l">'+label+'</span><input type="'+(type||'text')+'" class="fiche-champ" data-champ="'+cle+'" data-p="'+pid+'" value="'+esc(val)+'"'+(extra||'')+'></label>';
@@ -5188,8 +5226,8 @@ function renderFicheSpInfos(e,p){
         +jours.map(function(j){var on=p.dc===j;return '<button type="button" class="evt-jour-btn'+(on?' on':'')+'" data-ev="champ-jour" data-p="'+pid+'" data-v="'+esc(j)+'" aria-pressed="'+(on?'true':'false')+'">'+esc(evtJourCourt(j))+'</button>';}).join('')
         +'<input type="date" class="evt-in evt-in-date'+(hors?' on':'')+'" data-champ="dc" data-p="'+pid+'" value="'+esc(hors?p.dc:'')+'" title="Autre date" aria-label="Autre date"></div></div>'
       +champ('h','Heure',evtHeure(p.h),'time')
-      +champ('salle','Salle',p.salle||'','text',' placeholder="La Vapeur"')
-      +champ('ville','Ville',p.ville||'','text',' placeholder="Dijon"')
+      +champ('salle','Salle',p.salle||'','text',' placeholder="La Vapeur" list="dl-salles" autocomplete="off"')
+      +champ('ville','Ville',p.ville||'','text',' placeholder="Dijon" list="dl-villes" autocomplete="off"')
       +'<label class="fiche-prop"><span class="fiche-prop-l">Date d\'annonce</span><span class="fiche-prop-lien"><input type="date" class="fiche-champ" data-champ="da" data-p="'+pid+'" value="'+esc(p.da||'')+'">'
         +'<span class="fiche-prop-aide" data-da-aide="1">'+esc(p.da?'':'Comme l\'événement'+(e.da?' ('+ficheCourt(e.da)+')':''))+'</span></span></label>'
       +'<div class="fiche-prop"><label class="fiche-prop-l" for="fsp-billet">Billetterie</label><span class="fiche-prop-lien"><input type="text" inputmode="url" spellcheck="false" id="fsp-billet" class="fiche-champ" data-champ="billet" data-p="'+pid+'" value="'+esc(p.billet||'')+'" placeholder="https://…">'
@@ -5368,6 +5406,7 @@ function fermerEvtModal(){document.getElementById('evt-modal').classList.remove(
 function renderEvtModal(){
   var c=ficheConcert(),box=document.getElementById('evt-box');if(!box||!estEvt(c))return;
   var un=evtAjout.mode==='un';
+  majSuggestionsLieux();
   box.innerHTML='<div class="evt-modal-tete"><div class="evt-modal-titres"><div class="tk-modal-title">Ajouter au programme</div>'
       +'<div class="evt-modal-sous">'+esc(c.art)+' · '+esc(evtPlage(c,true))+'</div></div>'
       +'<button type="button" class="fiche-close" data-ev="fermer" title="Fermer (Échap)" aria-label="Fermer">'+icon('x')+'</button></div>'
@@ -5383,8 +5422,8 @@ function evtFormHtml(c){
     +'</div></div>'
     +'<div class="evt-edition-l1"><label class="evt-champ"><span class="evt-champ-l">Artiste</span><input type="text" class="evt-in" id="evt-f-art" data-focus="1" placeholder="Nom de l\'artiste ou du spectacle" autocomplete="off"></label>'
     +'<label class="evt-champ evt-champ-heure"><span class="evt-champ-l">Heure</span><input type="time" class="evt-in" id="evt-f-h"></label></div>'
-    +'<div class="evt-edition-duo"><label class="evt-champ"><span class="evt-champ-l">Salle</span><input type="text" class="evt-in" id="evt-f-salle" value="'+esc(evtAjout.salle)+'" placeholder="La Vapeur"></label>'
-    +'<label class="evt-champ"><span class="evt-champ-l">Ville</span><input type="text" class="evt-in" id="evt-f-ville" value="'+esc(evtAjout.ville)+'" placeholder="Dijon"></label></div>'
+    +'<div class="evt-edition-duo"><label class="evt-champ"><span class="evt-champ-l">Salle</span><input type="text" class="evt-in" id="evt-f-salle" value="'+esc(evtAjout.salle)+'" placeholder="La Vapeur" list="dl-salles" autocomplete="off"></label>'
+    +'<label class="evt-champ"><span class="evt-champ-l">Ville</span><input type="text" class="evt-in" id="evt-f-ville" value="'+esc(evtAjout.ville)+'" placeholder="Dijon" list="dl-villes" autocomplete="off"></label></div>'
     +'<label class="evt-champ"><span class="evt-champ-l">Lien billetterie</span><input type="text" class="evt-in" id="evt-f-billet" inputmode="url" spellcheck="false" placeholder="https://… (facultatif)"></label>'
     +(evtAjout.dernier?'<div class="evt-ajoute" role="status">'+icon('circle-check')+'<span>'+esc(evtAjout.dernier)+'</span></div>':'')
     +'<div class="tk-modal-actions"><button type="button" class="btn" data-ev="fermer">Fermer</button><button type="button" class="btn btn-primary" data-ev="form-ajouter">Ajouter</button></div>';
@@ -5620,7 +5659,7 @@ function exportCampaignReport(id){
     return '<tr><td>'+fmt(new Date(p.date))+'</td><td>'+esc(t.label)+'</td><td>'+(p.format==='story'?'Story':'Post')+'</td><td>'+esc(netLabel(p))+'</td><td>'+statusHtml+'</td></tr>';
   }).join('');
   var ventes=VENTES[c.ventes||0];
-  var html='<div class="rpt-cover"><div class="rpt-brand">Please Please Communication</div><h1 class="artist">'+esc(c.art)+'</h1><div class="rpt-cover-sub">'+esc(formatLieu(c.ville))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div>';
+  var html='<div class="rpt-cover"><div class="rpt-brand">Please Please Communication</div><h1 class="artist">'+esc(c.art)+'</h1><div class="rpt-cover-sub">'+esc(lieuTexte(c))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div>';
   var mediaForConcert=concertMedia.filter(function(m){return m.concertId===c.id;});
   REPORT_SECTIONS.forEach(function(sec){
     var items=mediaForConcert.filter(function(m){return sec.cats.indexOf(m.cat)>=0;});
@@ -5629,9 +5668,9 @@ function exportCampaignReport(id){
     html+='<div class="rpt-section">'+reportMediaGridHtml(items)+'</div>';
   });
   html+='<div class="rpt-divider"><h2>Suivi & avancement</h2></div>';
-  html+='<div class="bilan-header" style="margin-top:24px"><div><h1 class="artist">'+esc(c.art)+'</h1><div class="bilan-sub">'+esc(formatLieu(c.ville))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div><div class="bilan-date">Please Please Communication<br>Rapport généré le '+fmtFull(new Date())+'</div></div>';
+  html+='<div class="bilan-header" style="margin-top:24px"><div><h1 class="artist">'+esc(c.art)+'</h1><div class="bilan-sub">'+esc(lieuTexte(c))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div><div class="bilan-date">Please Please Communication<br>Rapport généré le '+fmtFull(new Date())+'</div></div>';
   html+='<div class="bilan-section"><h2>Informations générales</h2><div class="bilan-infos">'
-    +'<div><span>Salle</span>'+esc(formatLieu(c.ville)||'-')+'</div>'
+    +'<div><span>Salle</span>'+esc(lieuTexte(c)||'-')+'</div>'
     +'<div><span>Date du concert</span>'+(c.dc?fmtFull(new Date(c.dc)):'-')+'</div>'
     +'<div><span>Date d\'annonce</span>'+(c.da?fmtFull(new Date(c.da)):'-')+'</div>'
     +'<div><span>Statut des ventes</span>'+esc(ventes.label)+'</div>'
@@ -5813,17 +5852,20 @@ async function deleteFicheConcert(){
 async function addConcert(){
   var art=document.getElementById('f-art').value.trim();
   var ville=document.getElementById('f-ville').value.trim();
+  var salle=ncTypeCourant==='evt'?'':document.getElementById('f-salle').value.trim();
   var dc=document.getElementById('f-dc').value;
   var da=document.getElementById('f-da').value;
   var evt=ncTypeCourant==='evt',dcfin=evt?document.getElementById('f-dcfin').value:'';
   if(!art||!dc){showToast(evt?'Nom et premier jour obligatoires.':'Artiste et date de concert obligatoires.');return;}
   if(evt&&dcfin&&dcfin<dc){showToast('Le dernier jour est avant le premier.');return;}
   var btn=document.getElementById('add-btn');btn.disabled=true;btn.textContent='Ajout...';
-  var nc={id:Date.now().toString(),art:art,ville:ville,dc:dc,da:da,medias:'',jeux:'',budget:'',notes:'',ventes:0};
+  // « Dijon - Zénith » saisi d'un bloc dans Ville : separe comme a la lecture.
+  var nc={id:Date.now().toString(),art:art,salle:salle,ville:ville,dc:dc,da:da,medias:'',jeux:'',budget:'',notes:'',ventes:0};
   if(evt){nc.evt=true;nc.dcFin=dcfin||dc;nc.prog=[];nc.parSpectacle=evtEtapesProposees(null);}
+  else nc=normaliserLieu(nc);
   concerts.push(nc);
   concerts.sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
-  document.getElementById('f-art').value='';document.getElementById('f-ville').value='';
+  document.getElementById('f-art').value='';document.getElementById('f-salle').value='';document.getElementById('f-ville').value='';
   document.getElementById('f-dc').value='';document.getElementById('f-da').value='';document.getElementById('f-dcfin').value='';
   scheduleSave('concerts');render();btn.disabled=false;
   var f=document.getElementById('new-concert-form');if(f)f.style.display='none';
@@ -5842,8 +5884,10 @@ function ncType(t){
   document.getElementById('nc-aide').hidden=!evt;
   document.getElementById('f-art-l').textContent=evt?'Nom de l\'événement':'Artiste';
   document.getElementById('f-art').placeholder=evt?'Nom du festival, du week-end…':'Nom de l\'artiste';
-  document.getElementById('f-ville-l').textContent=evt?'Lieu':'Salle / Ville';
-  document.getElementById('f-ville').placeholder=evt?'ex: Dijon et alentours':'ex: Dijon - Zenith';
+  document.getElementById('f-salle-g').hidden=evt;
+  document.getElementById('f-ville-l').textContent=evt?'Lieu':'Ville';
+  document.getElementById('f-ville').placeholder=evt?'Dijon et alentours':'Dijon';
+  document.getElementById('f-ville').setAttribute('list',evt?'':'dl-villes');
   document.getElementById('f-dc-l').textContent=evt?'Premier jour':'Date du concert';
   document.getElementById('f-dcfin-g').hidden=!evt;
   document.getElementById('add-btn').textContent=evt?'Créer l\'événement':'Ajouter le concert';
@@ -5954,7 +5998,7 @@ function renderAnnonces(){
     return '<div class="'+cls+'" onclick="openFiche(\''+escJs(c.id)+'\')" title="'+esc(c.art)+'">'
       +'<div class="ann-date"><span class="ann-day">'+(hasDate?da.getDate():'?')+'</span><span class="ann-month">'+(hasDate?da.toLocaleDateString('fr-FR',{month:'short'}):'—')+'</span></div>'
       +'<div class="ann-body"><span class="ann-art">'+esc(c.art)+cancelBadge(c)+'</span>'
-      +(c.ville?'<span class="ann-lieu">'+esc(formatLieu(c.ville))+'</span>':'')
+      +(lieuTexte(c)?'<span class="ann-lieu">'+esc(lieuTexte(c))+'</span>':'')
       +(estEvt(c)?'<span class="ann-evt">'+esc(evtProg(c).length?evtPluriel(evtProg(c).length,'spectacle'):'Événement')+'</span>':'')
       +'<span class="tag '+tagCls+'">'+tag+'</span></div>'
       +'<button class="ann-done" onclick="event.stopPropagation();annonceDone(\''+escJs(c.id)+'\')" title="Marquer comme annoncé" aria-label="Marquer comme annoncé">'+icon('check')+'</button>'
@@ -5986,7 +6030,7 @@ function renderDashLine(today){
     var cnt=diff<0?'En cours':diff===0?"Aujourd'hui":diff===1?'Demain':'J-'+diff;
     groups.push('<span class="dash-line-group"><span class="dash-line-label">Prochain concert</span>'
       +'<a href="#" class="crow-name dash-line-art" onclick="event.preventDefault();openFiche(\''+escJs(nextC.id)+'\')">'+esc(nextC.art)+cancelBadge(nextC)+'</a>'
-      +'<span class="dash-line-sub">'+(nextC.ville?esc(formatLieu(nextC.ville))+' · ':'')+(estEvt(nextC)?esc(evtPlage(nextC)):d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}))+'</span>'
+      +'<span class="dash-line-sub">'+(lieuTexte(nextC)?esc(lieuTexte(nextC))+' · ':'')+(estEvt(nextC)?esc(evtPlage(nextC)):d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}))+'</span>'
       +'<span class="tag '+(diff<=7?'tag-red':diff<=30?'tag-amber':'tag-neutral')+'">'+cnt+'</span></span>');
   }
   var todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
@@ -6060,7 +6104,7 @@ function renderKanban(){
       +'<div class="kb-head'+(hasLate?'':' only')+'" onclick="openFiche(\''+escJs(c.id)+'\')">'
       +(evt?'<span class="kb-nom"><span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>'+evtTagHtml()+'</span>'
         :'<span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>')
-      +'<span class="kb-sub">'+(c.ville?esc(formatLieu(c.ville))+' · ':'')+ds+'</span>'
+      +'<span class="kb-sub">'+(lieuTexte(c)?esc(lieuTexte(c))+' · ':'')+ds+'</span>'
       +(evt?'<span class="kb-evt">'+esc(evtResumeCourt(c))+'</span>':ventesHtml(c,'toggleVentes(event,\''+escJs(c.id)+'\')'))
       +'</div>'+body
       +(evt?'<a href="#" class="kb-more" onclick="event.preventDefault();openFiche(\''+escJs(c.id)+'\')">Ouvrir l\'événement</a>':'')
@@ -6159,7 +6203,7 @@ function renderConcerts(){
         +'<div class="crow-info">'
         +(evt?'<span class="crow-nom"><span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>'+evtTagHtml()+'</span>'
           :'<span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>')
-        +'<span class="crow-sub">'+(c.ville?esc(formatLieu(c.ville))+' · ':'')+ds+(evt&&evtProg(c).length?' · '+esc(evtPluriel(evtProg(c).length,'spectacle')):'')+'</span>'
+        +'<span class="crow-sub">'+(lieuTexte(c)?esc(lieuTexte(c))+' · ':'')+ds+(evt&&evtProg(c).length?' · '+esc(evtPluriel(evtProg(c).length,'spectacle')):'')+'</span>'
         +annonce
         +(flags?'<div class="crow-flags">'+flags+'</div>':'')
         +'</div>'
@@ -6178,7 +6222,7 @@ function renderConcerts(){
 function renderConcertsGrouped(liste,el){
   var groups={};
   liste.forEach(function(c){
-    var key=c.ville?formatLieu(c.ville):'Salle non renseignée';
+    var key=lieuTexte(c)||'Salle non renseignée';
     if(!groups[key])groups[key]=[];
     groups[key].push(c);
   });
@@ -6237,13 +6281,13 @@ function renderConcertsCalendar(liste,el){
       +evs.slice(0,3).map(function(x){
         var c=x.c;
         if(x.jour){
-          var n=evtParJour(evtProg(c),x.jour).length,sous=n?evtPluriel(n,'spectacle'):(c.ville||'Événement');
+          var n=evtParJour(evtProg(c),x.jour).length,sous=n?evtPluriel(n,'spectacle'):(lieuTexte(c)||'Événement');
           return '<div class="cal-ev evt'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+escJs(c.id)+'\',\'programme\')" title="'+esc(c.art+' · '+sous)+'">'
             +'<div class="cal-art">'+esc(c.art)+cancelBadge(c)+'</div>'
             +'<div class="cal-ev-lieu">'+esc(sous)+'</div>'
             +'</div>';
         }
-        var lieu=formatLieu(c.ville);
+        var lieu=lieuTexte(c);
         return '<div class="cal-ev'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+escJs(c.id)+'\')" title="'+esc(c.art)+(lieu?' - '+esc(lieu):'')+'">'
           +'<div class="cal-art">'+esc(c.art)+cancelBadge(c)+'</div>'
           +(lieu?'<div class="cal-ev-lieu">'+esc(lieu)+'</div>':'')
@@ -6292,7 +6336,7 @@ function renderPastConcerts(){
       var ds=concertDateTxt(c);
       return '<div class="crow crow-simple" onclick="openFiche(\''+escJs(c.id)+'\')">'
         +'<div class="crow-info"><span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>'
-        +'<span class="crow-sub">'+(c.ville?esc(formatLieu(c.ville))+' · ':'')+ds+'</span></div>'
+        +'<span class="crow-sub">'+(lieuTexte(c)?esc(lieuTexte(c))+' · ':'')+ds+'</span></div>'
         +'<div class="crow-actions">'
         +'<button class="btn btn-sm" onclick="event.stopPropagation();restoreConcert(\''+escJs(c.id)+'\')">'+icon('rotate')+' Remettre en actif</button>'
         +'<button class="btn btn-sm btn-danger" onclick="event.stopPropagation();permanentlyDeleteConcert(\''+escJs(c.id)+'\')">Supprimer définitivement</button>'
@@ -6543,6 +6587,7 @@ function toggleNewConcert(){
   var btn=document.getElementById('btn-new-concert');
   if(form.style.display==='none'){
     form.style.display='block';
+    majSuggestionsLieux();
     btn.textContent='Annuler';
     btn.classList.remove('btn-primary');
   } else {
@@ -7556,8 +7601,7 @@ function spAVenirProg(c){return spRead(c).vagues.some(function(v){var s=spStatut
 function spVilleDe(c){
   var s=spRead(c);
   if(s.ville)return s.ville.trim();
-  var parts=(c.ville||'').split(/\s[-–]\s|,/);
-  return (parts[parts.length-1]||'').trim()||'Ville non renseignée';
+  return String(c.ville||'').trim()||'Ville non renseignée';
 }
 // Campagne close : plus aucune vague a venir ET le concert est passe. Tant que
 // le concert est devant, l'absence de vague est un trou a combler, pas une fin.
@@ -7961,7 +8005,7 @@ function renderSponso(){
       +'<div class="sp-row-info" onclick="spOpenConcert(\''+escJs(c.id)+'\')" title="Ouvrir la sponso de ce concert">'
       +'<div class="sp-row-top"><div class="sp-row-art">'+esc(c.art||'Concert')+'</div>'
       +(tot?'<div class="sp-row-tot" title="Budget sponso de ce concert">'+esc(spEuro(tot))+'</div>':'')+'</div>'
-      +'<div class="sp-row-sub">'+esc([c.ville,c.dc?spFmtDate(c.dc):''].filter(Boolean).join(' · '))+'</div>'
+      +'<div class="sp-row-sub">'+esc([lieuTexte(c),c.dc?spFmtDate(c.dc):''].filter(Boolean).join(' · '))+'</div>'
       +(cible?'<div class="sp-row-cible">'+icon('map-pin')+' '+esc(cible)+'</div>':'')
       +(spSkipProd(c.id)?'<div class="sp-row-prod">'+icon('alert')+' Sponso prod</div>':'')
       +'</div>'
@@ -7987,7 +8031,7 @@ function renderSponso(){
         var nb=spRead(c).vagues.length,t=spTotal(c);
         return '<div class="sp-done-row" onclick="spOpenConcert(\''+escJs(c.id)+'\')">'
           +'<span class="sp-done-art">'+esc(c.art||'Concert')+'</span>'
-          +'<span class="sp-done-sub">'+esc([c.ville,c.dc?spFmtDate(c.dc):''].filter(Boolean).join(' · '))+'</span>'
+          +'<span class="sp-done-sub">'+esc([lieuTexte(c),c.dc?spFmtDate(c.dc):''].filter(Boolean).join(' · '))+'</span>'
           +'<span class="sp-done-meta">'+nb+' vague'+(nb>1?'s':'')+(t?' · '+esc(spEuro(t)):'')+'</span>'
           +'</div>';
       }).join('')
@@ -8108,14 +8152,10 @@ function normaliserConfigBudget(v){return syncIsPlain(v)&&v.version===2?v:syncCl
 
 // ── Regles ──
 function budNorm(s){return (s||'').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
-// « Arena - Reims » ou « Reims - Arena » -> {ville:'Reims', salle:'Arena'} :
-// meme detection de l'ordre que formatLieu(). Sans l'alias « Chenôve = Dijon »
-// de getVille() : le budget porte la vraie ville (« LE CÈDRE, Chenôve »).
-function lieuDe(ville){
-  var f=formatLieu(ville||''),p=f.split(' - ');
-  if(p.length<2)return {ville:f.trim(),salle:''};
-  return {ville:p[0].trim(),salle:p.slice(1).join(' - ').trim()};
-}
+// Salle et ville du concert (deux champs depuis le 26/09). Sans l'alias
+// « Chenôve = Dijon » des filtres (villeRegroupee) : le budget porte la vraie
+// ville (« LE CÈDRE, Chenôve »).
+function lieuDe(c){return {ville:String(c.ville||'').trim(),salle:estEvt(c)?'':String(c.salle||'').trim()};}
 // Une regle « salle » l'emporte sur une regle « ville », qui l'emporte sur
 // « Autres salles » (marquee defaut, pour qu'une regle en cours de saisie,
 // encore sans ville ni salle, ne soit jamais prise pour elle).
@@ -8136,7 +8176,7 @@ function budTotal(l){return !budVide(l.qte)&&!budVide(l.pu)?Math.round(l.qte*l.p
 function budArrondi(n,pas){pas=+pas||1;return Math.max(0,Math.round(n/pas)*pas);}
 function budLigne(o){return Object.assign({id:uid('bl'),nom:'',presta:'',qte:'',pu:'',total:'',type:'',com:'',statut:'Prévisionnel'},o);}
 function budProposer(c,m,cfg){
-  var lieu=lieuDe(c.ville),tr=budTranche(cfg,m);
+  var lieu=lieuDe(c),tr=budTranche(cfg,m);
   var sansAffiche=!!taskStates['skip-'+c.id+'-col'],sponsoProd=!!taskStates['skip-'+c.id+'-sp'];
   var street=sansAffiche?[]:(budRegleAffichage(cfg,lieu).lignes||[]).map(function(l){
     return budLigne({nom:l.nom,qte:budVide(l.qte)?'':+l.qte,pu:budVide(l.pu)?'':+l.pu,total:budVide(l.pu)&&!budVide(l.total)?+l.total:''});
@@ -8182,7 +8222,7 @@ async function openBudgetModal(){
 function closeBudgetModal(){document.getElementById('budget-modal').classList.remove('open');bud=null;}
 function budRendre(){
   var c=budConcert(),box=document.getElementById('budget-box');if(!c||!box)return;
-  var lieu=lieuDe(c.ville),salle=budLibelleSalle(lieu);
+  var lieu=lieuDe(c),salle=budLibelleSalle(lieu);
   var h='<div class="bud-head"><div class="bud-head-txt"><div class="tk-modal-title">Budget promo — '+esc((c.art||'').toUpperCase())+'</div>'
     +'<div class="modal-note">Copie de la trame « AAAAMMJJ - BUDGET COM TRAME », créée dans le Drive de Mathieu.</div></div>'
     +'<button class="fiche-close" data-bud="fermer" title="Fermer">'+icon('x')+'</button></div>';
@@ -8267,7 +8307,7 @@ function budResultatHtml(){
 function budDerniereVague(){var vs=bud.lignes.digital.filter(function(l){return /vague \d+$/.test(l.nom);});return vs[vs.length-1]||null;}
 async function budCreer(){
   var c=budConcert();if(!c||budBlocage()||bud.envoi)return;
-  var etat=bud,lieu=lieuDe(c.ville),nom=budNomFichier(c,lieu);
+  var etat=bud,lieu=lieuDe(c),nom=budNomFichier(c,lieu);
   function propre(ls){return ls.map(function(l){return {nom:l.nom,presta:l.presta,qte:l.qte,pu:l.pu,total:l.total,type:l.type,com:l.com,statut:l.statut};});}
   etat.envoi=true;etat.erreur='';budMajPied();
   try{
@@ -8452,7 +8492,7 @@ function cmdkRender(q){
   var today=new Date();today.setHours(0,0,0,0);
   var list=concerts.filter(function(c){
     if(!nq)return !c.supprime&&c.dc&&new Date(c.dc)>=today; // sans requete : les prochains concerts
-    return cmdkNorm(c.art).indexOf(nq)>=0||cmdkNorm(formatLieu(c.ville)).indexOf(nq)>=0||cmdkProg(c,nq).length>0;
+    return cmdkNorm(c.art).indexOf(nq)>=0||cmdkNorm(lieuTexte(c)).indexOf(nq)>=0||cmdkProg(c,nq).length>0;
   }).sort(function(a,b){
     // actifs d'abord (date croissante), puis passes (plus recents d'abord)
     if(!!a.supprime!==!!b.supprime)return a.supprime?1:-1;
@@ -8465,7 +8505,7 @@ function cmdkRender(q){
     // Un artiste trouve dans le programme d'un evenement : on le dit, et la
     // fiche s'ouvre sur le programme.
     var dansProg=nq&&cmdkNorm(c.art).indexOf(nq)<0?cmdkProg(c,nq):[];
-    items.push({type:'concert',title:c.art,sub:(dansProg.length?'Au programme : '+dansProg.map(function(p){return p.art;}).slice(0,2).join(', ')+' · ':(c.ville?formatLieu(c.ville)+' · ':''))+ds+(c.supprime?' · passé':''),action:function(){openFiche(c.id,null,false,dansProg.length?dansProg[0].id:undefined);}});
+    items.push({type:'concert',title:c.art,sub:(dansProg.length?'Au programme : '+dansProg.map(function(p){return p.art;}).slice(0,2).join(', ')+' · ':(lieuTexte(c)?lieuTexte(c)+' · ':''))+ds+(c.supprime?' · passé':''),action:function(){openFiche(c.id,null,false,dansProg.length?dansProg[0].id:undefined);}});
   });
   CMDK_TABS.forEach(function(t){
     // Ne pas proposer un onglet que showTab refusera : Process figure dans
