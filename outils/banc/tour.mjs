@@ -68,12 +68,14 @@ const CAPTEUR = "if(!window.__tourErreurs){window.__tourErreurs=[];"
   + "addEventListener('unhandledrejection',function(e){__tourErreurs.push('rejet : '+(e.reason&&e.reason.message||e.reason));});"
   + "var st=document.createElement('style');st.textContent='*,*::before,*::after{transition:none!important;animation:none!important}';document.head.appendChild(st);}";
 
-// Mesures dans la page. « police » : texte visible qui n'est ni en Geist ni en
-// Bricolage Grotesque (un bouton qui garde la police du navigateur, par exemple).
+// Mesures dans la page. « police » : texte visible qui n'est ni en Geist (Mono
+// compris), ni en Anton (noms d'artistes depuis la palette Braise du 26/09), ni
+// en Bricolage Grotesque (rapport PDF) : un bouton qui garde la police du
+// navigateur, par exemple.
 const MESURES = "var de=document.documentElement,W=de.clientWidth,police={};"
   + "document.querySelectorAll('body *').forEach(function(el){if(!el.offsetParent&&getComputedStyle(el).position!=='fixed')return;"
   + "var t=/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)&&el.type!=='checkbox'&&el.type!=='radio'||[].some.call(el.childNodes,function(n){return n.nodeType===3&&n.textContent.trim();});"
-  + "if(!t)return;var f=getComputedStyle(el).fontFamily;if(/Geist|Bricolage|monospace/.test(f))return;"
+  + "if(!t)return;var f=getComputedStyle(el).fontFamily;if(/Geist|Anton|Bricolage|monospace/.test(f))return;"
   + "var k=el.tagName.toLowerCase()+(typeof el.className==='string'&&el.className.trim()?'.'+el.className.trim().split(/\\s+/)[0]:'');police[k]=(police[k]||0)+1;});"
   + "return {largeur:W,contenu:de.scrollWidth,erreurs:(window.__tourErreurs||[]).slice(),police:Object.keys(police).map(function(k){return k+' ×'+police[k];})};";
 

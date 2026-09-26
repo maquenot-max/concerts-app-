@@ -7,6 +7,7 @@
      puis recalculer l'empreinte : curl -s <url> | openssl dgst -sha384 -binary | openssl base64 -A -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js" integrity="sha384-xPW3QHswsICVC2mW6BFNwMbhpLkbZ133fKOhxNx3QGGgAOJfL3O9t8r2aWn1aez6" crossorigin="anonymous"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#09090c">
 <title>Please Please Communication - Dashboard</title>
 <link rel="icon" type="image/x-icon" href="favicon_io/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
@@ -14,10 +15,16 @@
 <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,500..800&display=swap">
+<!-- Anton : noms d'artistes ; Geist Mono : compteurs et dates. Bricolage Grotesque
+     ne sert plus qu'au rapport de campagne (PDF), qui n'a pas change : le navigateur
+     ne telecharge une police que si un texte l'utilise. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,500..800&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<!-- Fond « Braise » : halos de projecteur (sous tout) et grain (sur tout), jamais cliquables -->
+<div class="halos" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="grain" aria-hidden="true"></div>
 <!-- Icones (Lucide, licence ISC) : un seul sprite, utilise via icon(nom) en JS ou <use> en HTML -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><symbol id="i-calendar" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol><symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol><symbol id="i-settings" viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></symbol><symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol><symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></symbol><symbol id="i-megaphone" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></symbol><symbol id="i-smartphone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></symbol><symbol id="i-dice" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M16 8h.01M8 8h.01M8 16h.01M16 16h.01M12 12h.01"/></symbol><symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M10 9H8M16 13H8M16 17H8"/></symbol><symbol id="i-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></symbol><symbol id="i-note" viewBox="0 0 24 24"><path d="M16 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V9Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol><symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol><symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol><symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol><symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol><symbol id="i-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></symbol><symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/></symbol><symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></symbol><symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></symbol><symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></symbol><symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7M12 19V5"/></symbol><symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14m7-7-7 7-7-7"/></symbol><symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol><symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14M5 2h14M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></symbol><symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9M13 17V5M8 17v-3"/></symbol><symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></symbol><symbol id="i-maximize" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></symbol><symbol id="i-minimize" viewBox="0 0 24 24"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></symbol><symbol id="i-rows" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M21 9H3M21 15H3"/></symbol><symbol id="i-keyboard" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></symbol><symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></symbol><symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol><symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol><symbol id="i-type" viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></symbol><symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol><symbol id="i-monitor" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8M12 17v4"/></symbol><symbol id="i-palette" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol><symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol><symbol id="i-newspaper" viewBox="0 0 24 24"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8V6Z"/></symbol><symbol id="i-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></symbol><symbol id="i-click" viewBox="0 0 24 24"><path d="M14 4.1 12 6M5.1 8l-2.9-.8M6 12l-1.9 2M7.2 2.2 8 5.1"/><path d="M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"/></symbol><symbol id="i-banner" viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2"/></symbol><symbol id="i-space" viewBox="0 0 24 24"><path d="M12 22v-6M12 8V2M4 12H2M10 12H8M16 12h-2M22 12h-2M15 19l-3 3-3-3M15 5l-3-3-3 3"/></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol><symbol id="i-crop" viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></symbol><symbol id="i-align-left" viewBox="0 0 24 24"><path d="M15 12H3M17 18H3M21 6H3"/></symbol><symbol id="i-align-center" viewBox="0 0 24 24"><path d="M17 12H7M19 18H5M21 6H3"/></symbol><symbol id="i-panel-top" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></symbol><symbol id="i-panel-bottom" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 15h18"/></symbol><symbol id="i-calendar-clock" viewBox="0 0 24 24"><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4M8 2v4M3 10h5"/><path d="M17.5 17.5 16 16.3V14"/><circle cx="16" cy="16" r="6"/></symbol><symbol id="i-sheet" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M3 15h18M9 9v12M15 9v12"/></symbol><symbol id="i-ticket" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/></symbol><symbol id="i-clipboard" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol><symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol></svg>
 <div id="load-error-overlay" style="display:none;position:fixed;inset:0;z-index:1000;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:2rem">
@@ -38,7 +45,7 @@
 </div>
 <div id="auth-screen" style="display:none">
   <div class="auth-box">
-    <div class="auth-brand"><img src="favicon_io/favicon-32x32.png" alt="">Please Please Communication</div>
+    <div class="auth-brand"><span class="auth-brand-logo" aria-hidden="true"></span>Please Please Communication</div>
     <h1 class="auth-title" id="auth-title">Connexion</h1>
     <form id="auth-form" onsubmit="return authSubmit(event)">
       <label>E-mail<input type="email" id="auth-email" autocomplete="username" required></label>
@@ -65,7 +72,7 @@
 </div>
 <div id="app">
   <header>
-    <h1 class="brand"><img src="favicon_io/favicon-32x32.png" class="brand-logo" alt=""><span class="h1-text">Please Please Communication</span><span class="h1-short">Please Please</span></h1>
+    <h1 class="brand"><span class="brand-logo" aria-hidden="true"></span><span class="h1-text">Please Please Communication</span><span class="h1-short">Please Please</span></h1>
     <nav class="nav">
       <button data-tab="rs" onclick="showTab('rs',this)"><span class="nav-long">Plannings RS</span><span class="nav-short">RS</span></button>
       <button class="active" data-tab="kanban" onclick="showTab('kanban',this)"><span class="nav-long">Tableau de bord</span><span class="nav-short">Tableau</span></button>
@@ -3434,6 +3441,7 @@ async function init(){
     }
     appDataLoaded=true;
     purgeOrphanTaskStates();
+    animerEntree(document.querySelector('.panel.active'));
     render();
     applyRoute();
     initRealtime();
@@ -3457,6 +3465,27 @@ var TAB_PARENT={past:'concerts',taches:'kanban'};
 // tapant #process ou #budgetconfig dans l'URL. La garde est ici, au seul
 // passage oblige pour afficher un onglet.
 var ADMIN_TABS={process:1,budgetconfig:1,team:1};
+// Entree d'une page (style.css, .entree) : ses blocs arrivent l'un apres
+// l'autre quand on l'ouvre, jamais quand elle se redessine (synchro, fiche
+// refermee). La classe tombe apres 1,6 s, le temps de la derniere carte.
+function animerEntree(panel){
+  if(!panel)return;
+  panel.classList.remove('entree');void panel.offsetWidth;panel.classList.add('entree');
+  clearTimeout(panel._entree);
+  panel._entree=setTimeout(function(){panel.classList.remove('entree');},1600);
+}
+// Voile gris qui suit la souris sur les cartes du tableau de bord (style.css,
+// .kb-card::before) : un seul ecouteur, pose une fois, souris seulement.
+(function(){
+  var w=document.getElementById('kanban-wrap');if(!w)return;
+  w.addEventListener('pointermove',function(e){
+    if(e.pointerType!=='mouse')return;
+    var c=e.target.closest&&e.target.closest('.kb-card');if(!c)return;
+    var r=c.getBoundingClientRect();
+    c.style.setProperty('--mx',Math.round(e.clientX-r.left)+'px');
+    c.style.setProperty('--my',Math.round(e.clientY-r.top)+'px');
+  },{passive:true});
+})();
 function showTab(id,btn){
   var panel=document.getElementById('tab-'+id);if(!panel)return;
   if(ADMIN_TABS[id]&&!isAdmin()){
@@ -3471,6 +3500,7 @@ function showTab(id,btn){
   document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('active');});
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
   if(btn)btn.classList.add('active');panel.classList.add('active');
+  animerEntree(panel);
   currentTab=id;
   if(id==='team')renderTeam();
   else renderTab(id); // render() ne dessine que l'onglet visible : on dessine celui qu'on ouvre
@@ -3914,6 +3944,12 @@ function openFiche(id,sec,voisin,sp){
   ficheAfficherOnglet();
   var ov=document.getElementById('overlay');
   if(autre||!ov.classList.contains('open'))document.getElementById('fiche').scrollTop=0;
+  // A l'ouverture seulement (pas en passant au concert voisin) : la photo se
+  // rapproche, le nom et les onglets montent (style.css, .ouverture).
+  if(!ov.classList.contains('open')){
+    ov.classList.add('ouverture');clearTimeout(ov._ouv);
+    ov._ouv=setTimeout(function(){ov.classList.remove('ouverture');},1600);
+  }
   ov.classList.add('open');
   document.body.style.overflow='hidden';
   ficheCompacte();
@@ -5673,9 +5709,24 @@ function proposerAnnulation(msg,annuler){
   var el=document.getElementById('undo-toast');if(!el)return;
   annulation=annuler;
   document.getElementById('undo-msg').textContent=msg;
+  // Retirer puis remettre la classe : l'entree et la barre des 7 s repartent
+  // de zero quand un message en remplace un autre.
+  el.classList.remove('show');void el.offsetWidth;
   el.classList.add('show');
   clearTimeout(el._t);
   el._t=setTimeout(function(){el.classList.remove('show');annulation=null;},7000);
+}
+// Case cochee dans une liste qui va la faire disparaitre (cartes du tableau de
+// bord, taches par projet) : la case se remplit, le nom se barre et la ligne
+// s'efface (style.css, .coche), puis l'action part et la liste se redessine
+// sans elle. Un second clic pendant ce temps est ignore. Sans animation
+// (reglage « reduire les animations »), l'action part tout de suite.
+function cocherAnime(btn,faire){
+  var l=btn&&btn.closest('.kb-task,.tkw-task');
+  if(!l||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)){faire();return;}
+  if(l.classList.contains('coche'))return;
+  l.classList.add('coche');
+  setTimeout(faire,620);
 }
 function annulerDerniere(){
   var f=annulation,el=document.getElementById('undo-toast');
@@ -5895,10 +5946,10 @@ function renderDashLine(today){
     var d=new Date(nextC.dc);d.setHours(0,0,0,0);
     var diff=Math.round((d-today)/86400000);
     var cnt=diff<0?'En cours':diff===0?"Aujourd'hui":diff===1?'Demain':'J-'+diff;
-    groups.push('<span class="dash-line-group"><span class="dash-line-label">Prochain concert</span>'
+    groups.push('<span class="dash-line-group prochain"><span class="dash-line-label">Prochain concert</span>'
       +'<a href="#" class="crow-name dash-line-art" onclick="event.preventDefault();openFiche(\''+escJs(nextC.id)+'\')">'+esc(nextC.art)+cancelBadge(nextC)+'</a>'
       +'<span class="dash-line-sub">'+(lieuTexte(nextC)?esc(lieuTexte(nextC))+' · ':'')+(estEvt(nextC)?esc(evtPlage(nextC)):esc(dateCourte(d)))+'</span>'
-      +'<span class="tag '+(diff<=7?'tag-amber':'tag-neutral')+'">'+cnt+'</span></span>');
+      +'<span class="tag '+(diff<=7?'dash-jx':'tag-neutral')+'">'+cnt+'</span></span>');
   }
   var todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
   var posts=rsPosts.filter(function(p){return p.date===todayStr;});
@@ -5949,7 +6000,7 @@ function renderKanban(){
         var d=calcDate(c,t);var isHl=!!taskStates['hl-'+c.id+'-'+t.id];
         var isNew=d?Math.floor((today-d)/86400000)<3:false;
         return '<div class="kb-task'+(isHl?' hl':'')+'" title="Surligner (la tâche remonte dans les tâches Please Please)" onclick="event.stopPropagation();toggleHighlight(\''+escJs(c.id)+'\','+tidLit(t)+')">'
-          +'<button type="button" class="kb-chk" aria-label="Marquer comme fait" onclick="event.stopPropagation();toggleTask(\''+escJs(c.id)+'\','+tidLit(t)+')"></button>'
+          +'<button type="button" class="kb-chk" aria-label="Marquer comme fait" onclick="event.stopPropagation();cocherAnime(this,function(){toggleTask(\''+escJs(c.id)+'\','+tidLit(t)+')})"></button>'
           +'<span class="kb-task-body"><span class="kb-task-name">'+esc(t.nom)+'</span><span class="pill '+cat.cls+'">'+cat.label+'</span></span>'
           +(isNew?'<span class="tag tag-amber">Nouveau</span>':'')
           +'</div>';
@@ -5967,10 +6018,14 @@ function renderKanban(){
     // Un evenement : une seule carte, ses dates du … au …, son programme en
     // une ligne (les ventes sont celles de chaque spectacle).
     if(evt)ds=evtPlage(c);
+    // Photo de l'artiste (ou visuel de l'evenement) en tete de carte, en 16:9
+    // comme partout ; le nom est pose dessus. Sans photo, l'en-tete habituel.
+    var nomHtml=evt?'<span class="kb-nom"><span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>'+evtTagHtml()+'</span>'
+      :'<span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>';
+    var photo=nlPhotoArtiste(c);
     var html='<div class="kb-card'+(c.annule?' is-cancelled':'')+'">'
       +'<div class="kb-head'+(hasLate?'':' only')+'" onclick="openFiche(\''+escJs(c.id)+'\')">'
-      +(evt?'<span class="kb-nom"><span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>'+evtTagHtml()+'</span>'
-        :'<span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>')
+      +(safeUrl(photo)?'<span class="kb-photo"><img src="'+escUrl(photo)+'" alt="" loading="lazy" decoding="async"><span class="kb-photo-nom">'+nomHtml+'</span></span>':nomHtml)
       +'<span class="kb-sub">'+(lieuTexte(c)?esc(lieuTexte(c))+' · ':'')+ds+'</span>'
       +(evt?'<span class="kb-evt">'+esc(evtResumeCourt(c))+'</span>':ventesHtml(c,'toggleVentes(event,\''+escJs(c.id)+'\')'))
       +'</div>'+body
@@ -6819,7 +6874,7 @@ function renderTkWidget(){
         ?"toggleTask('"+escJs(t.concertId)+"',"+tidLit({id:t.taskId})+");toggleHighlight('"+escJs(t.concertId)+"',"+tidLit({id:t.taskId})+")"
         :"tkToggleDone('"+escJs(t.id)+"')";
       html+='<div class="tkw-task'+(t.delegue?' delegue':'')+(t.isPinned?' pinned':'')+'"'+(t.isPinned?'':' onclick="tkEditTask(\''+escJs(t.id)+'\')"')+'>'
-        +'<button type="button" class="kb-chk" aria-label="Marquer comme fait" onclick="event.stopPropagation();'+onChk+'"></button>'
+        +'<button type="button" class="kb-chk" aria-label="Marquer comme fait" onclick="event.stopPropagation();cocherAnime(this,function(){'+onChk+'})"></button>'
         +'<span class="tkw-body"><span class="tkw-name">'+esc(t.nom)+'</span>'+meta+'</span>'
         +'</div>';
     });
