@@ -99,6 +99,14 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
   box-shadow:var(--shadow);outline:none;transition:border-color .15s;
 }
 .filters input{width:200px}
+/* Tout ce qui s'aligne dans une barre d'outils a la meme hauteur, 36 px
+   (le selecteur de vue faisait 40 px, les boutons 32 et le champ 34). */
+.filters>.btn,.filters>.filters-popover>.btn,.filters .search-field input,.filters>input,.filters>select,.filters>.hideok-toggle,.filters .month-nav-btn{height:36px}
+.filters>.btn,.filters>.filters-popover>.btn{padding-top:0;padding-bottom:0;display:inline-flex;align-items:center;gap:6px}
+.filters>.hideok-toggle{padding-top:0;padding-bottom:0}
+.filters .month-nav-btn{width:36px}
+.filters .view-toggle{height:36px;padding:3px}
+.filters .view-toggle-btn{padding-top:0;padding-bottom:0}
 .filters input:focus,.filters select:focus{border-color:var(--text-3)}
 .filters-popover{position:relative}
 .filters-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-left:6px;border-radius:var(--radius-pill);background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:700}
@@ -670,6 +678,7 @@ textarea.fiche-champ{padding:0}
 .ann-day{font-size:22px;font-weight:700;line-height:1;letter-spacing:-.02em;color:var(--text)}
 .ann-card.late .ann-day{color:var(--red)}
 .ann-card.nodate .ann-day{color:var(--text-3)}
+.ann-a-fixer{font-size:13px;font-weight:600;color:var(--text-3);line-height:22px}
 .ann-month{font-size:12px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em}
 .ann-body{display:flex;flex-direction:column;gap:3px;min-width:0}
 .ann-art{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -804,7 +813,9 @@ textarea.fiche-champ{padding:0}
 .rs-chip.auto{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)}
 .rs-chip.story{border-style:dashed}
 .rs-chip-validated{display:inline-flex;align-items:center;color:var(--green);margin-left:3px}
-.rs-add-day-btn{flex-shrink:0}
+.rs-add-day-btn{flex-shrink:0;opacity:0;transition:opacity .15s}
+.rs-day-header:hover .rs-add-day-btn,.rs-add-day-btn:focus-visible{opacity:1}
+@media (hover:none){.rs-add-day-btn{opacity:1}}
 .rs-posts-list{padding:12px 20px 16px 80px;display:flex;flex-direction:column;gap:10px;background:#f7f8fc;border-bottom:1px solid var(--border-light)}
 .rs-post{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
 .rs-post.posted{border-left:3px solid var(--accent);background:var(--accent-soft)}
@@ -1178,6 +1189,15 @@ button.tag:hover,a.tag:hover{border-color:var(--border-strong);color:var(--text)
 .cal-cell{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);min-height:110px;padding:6px;display:flex;flex-direction:column;gap:3px}
 .cal-cell.empty{background:var(--bg);border-color:transparent}
 .cal-cell.today{border-color:var(--accent)}
+/* Grille legere (26/09) : des filets d'un pixel plutot que 35 cases encadrees,
+   le week-end teinte comme dans le planning RS, les jours passes estompes. */
+.cal-cases{gap:1px;background:var(--border-light);border:1px solid var(--border-light);border-radius:var(--radius-sm);overflow:hidden}
+.cal-cases .cal-cell{border:0;border-radius:0}
+.cal-cases .cal-cell.we{background:var(--surface-2)}
+.cal-cases .cal-cell.empty{background:var(--bg)}
+.cal-cases .cal-cell.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.cal-cell.passe .cal-day{color:var(--text-4)}
+.cal-cell.passe .cal-ev{opacity:.6}
 .cal-day{font-size:12px;font-weight:500;color:var(--text-3)}
 .cal-cell.today .cal-day{color:var(--accent);font-weight:700}
 .cal-ev{display:flex;flex-direction:column;align-items:flex-start;padding:3px 6px;border-radius:var(--radius-xs);background:var(--bg);cursor:pointer;overflow:hidden;min-width:0;transition:background .15s}
@@ -1279,6 +1299,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .hdr-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid var(--border);border-radius:var(--radius-pill);background:var(--bg);color:var(--text-3);cursor:pointer;flex-shrink:0;transition:all .15s}
 .hdr-btn:hover{color:var(--text);background:var(--surface);border-color:var(--border-strong)}
 .hdr-btn .ico{width:15px;height:15px}
+.hdr-btn.a-initiale{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+.hdr-initiale{font-size:13px;font-weight:600;line-height:1}
 
 /* ── SQUELETTES DE CHARGEMENT ─────────────────────────── */
 .skel{background:linear-gradient(90deg,var(--border-light) 25%,var(--bg) 50%,var(--border-light) 75%);background-size:200% 100%;animation:shimmer 1.4s linear infinite;border-radius:4px}
@@ -1350,6 +1372,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
   /* Calendrier : des points dans les cases, la liste du jour touche dessous */
   .cal-wrap{padding:10px 10px 14px}
   .cal-grid{gap:4px}
+  .cal-grid.cal-cases{gap:1px}
   .cal-cell{min-height:52px;padding:4px;gap:4px;cursor:pointer}
   .cal-cell .cal-ev,.cal-cell .cal-more{display:none}
   .cal-cell.choisi{box-shadow:inset 0 0 0 2px var(--accent-mid)}

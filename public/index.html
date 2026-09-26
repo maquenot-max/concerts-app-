@@ -65,7 +65,7 @@
 </div>
 <div id="app">
   <header>
-    <h1 class="brand"><img src="favicon_io/favicon-32x32.png" class="brand-logo" alt=""><span class="h1-text">Please Please Communication &mdash; Dashboard</span><span class="h1-short">Please Please</span></h1>
+    <h1 class="brand"><img src="favicon_io/favicon-32x32.png" class="brand-logo" alt=""><span class="h1-text">Please Please Communication</span><span class="h1-short">Please Please</span></h1>
     <nav class="nav">
       <button data-tab="rs" onclick="showTab('rs',this)"><span class="nav-long">Plannings RS</span><span class="nav-short">RS</span></button>
       <button class="active" data-tab="kanban" onclick="showTab('kanban',this)"><span class="nav-long">Tableau de bord</span><span class="nav-short">Tableau</span></button>
@@ -124,7 +124,7 @@
     </div>
     <div id="tab-concerts" class="panel">
       <div class="filters" id="concerts-filters">
-        <input type="search" id="csearch" placeholder="Rechercher un artiste..." oninput="renderConcerts()">
+        <label class="search-field"><svg class="ico" aria-hidden="true"><use href="#i-search"></use></svg><span class="sr-only">Rechercher un artiste</span><input type="search" id="csearch" placeholder="Rechercher un artiste…" oninput="renderConcerts()"></label>
         <div class="filters-popover">
           <button class="btn" onclick="toggleFiltersPanel(event,'cfilters-panel')">Filtres<span class="filters-badge" id="cfilters-badge" style="display:none"></span></button>
           <div class="filters-panel" id="cfilters-panel" style="display:none">
@@ -166,7 +166,7 @@
     </div>
     <div id="tab-past" class="panel">
       <div class="filters">
-        <input type="search" id="pastsearch" placeholder="Rechercher un artiste..." oninput="renderPastConcerts()">
+        <label class="search-field"><svg class="ico" aria-hidden="true"><use href="#i-search"></use></svg><span class="sr-only">Rechercher un artiste</span><input type="search" id="pastsearch" placeholder="Rechercher un artiste…" oninput="renderPastConcerts()"></label>
         <div class="filters-popover">
           <button class="btn" onclick="toggleFiltersPanel(event,'pfilters-panel')">Filtres<span class="filters-badge" id="pfilters-badge" style="display:none"></span></button>
           <div class="filters-panel" id="pfilters-panel" style="display:none">
@@ -812,7 +812,14 @@ function renderUserMenu(){
   var email=currentUser?currentUser.email:'';
   var head=document.getElementById('user-menu-head');
   if(head)head.innerHTML='<div class="menu-head-name">'+esc(name||email)+'</div>'+(name?'<div class="menu-head-sub">'+esc(email)+'</div>':'')+(currentMember?'<div class="menu-head-sub">'+(currentMember.role==='admin'?'Administrateur':'Membre')+'</div>':'');
-  var btn=document.getElementById('user-btn');if(btn)btn.title=name||email;
+  // L'initiale du prenom plutot qu'une icone de compte generique.
+  var btn=document.getElementById('user-btn');
+  if(btn){
+    btn.title=name||email;
+    var ini=(name||email||'').trim().charAt(0).toUpperCase();
+    btn.innerHTML=ini?'<span class="hdr-initiale">'+esc(ini)+'</span>':icon('user');
+    btn.classList.toggle('a-initiale',!!ini);
+  }
   var admin=isAdmin();
   ['user-menu-team','user-menu-process','user-menu-budget'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.style.display=admin?'':'none';
@@ -6021,17 +6028,17 @@ function renderAnnonces(){
     var diff=da?Math.round((da-today)/86400000):null;
     var cls='ann-card'+(da&&diff<0?' late':'')+(!hasDate?' nodate':'')+(c.annule?' is-cancelled':'');
     var tag,tagCls;
-    if(!hasDate){tag='Sans date';tagCls='tag-neutral';}
+    if(!hasDate){tag='';tagCls='';}
     else if(diff<0){tag='En retard';tagCls='tag-red';}
     else if(diff===0){tag="Aujourd'hui";tagCls='tag-amber';}
     else if(diff===1){tag='Demain';tagCls='tag-amber';}
     else {tag='Dans '+diff+' jours';tagCls=diff<=7?'tag-amber':'tag-neutral';}
     return '<div class="'+cls+'" onclick="openFiche(\''+escJs(c.id)+'\')" title="'+esc(c.art)+'">'
-      +'<div class="ann-date"><span class="ann-day">'+(hasDate?da.getDate():'?')+'</span><span class="ann-month">'+(hasDate?da.toLocaleDateString('fr-FR',{month:'short'}):'—')+'</span></div>'
+      +'<div class="ann-date">'+(hasDate?'<span class="ann-day">'+da.getDate()+'</span><span class="ann-month">'+da.toLocaleDateString('fr-FR',{month:'short'})+'</span>':'<span class="ann-a-fixer">Date à fixer</span>')+'</div>'
       +'<div class="ann-body"><span class="ann-art">'+esc(c.art)+cancelBadge(c)+'</span>'
       +(lieuTexte(c)?'<span class="ann-lieu">'+esc(lieuTexte(c))+'</span>':'')
       +(estEvt(c)?'<span class="ann-evt">'+esc(evtProg(c).length?evtPluriel(evtProg(c).length,'spectacle'):'Événement')+'</span>':'')
-      +'<span class="tag '+tagCls+'">'+tag+'</span></div>'
+      +(tag?'<span class="tag '+tagCls+'">'+tag+'</span>':'')+'</div>'
       +'<button class="ann-done" onclick="event.stopPropagation();annonceDone(\''+escJs(c.id)+'\')" title="Marquer comme annoncé" aria-label="Marquer comme annoncé">'+icon('check')+'</button>'
       +'</div>';
   }).join('');
@@ -6370,7 +6377,8 @@ function renderConcertsCalendar(liste,el){
   for(var day=1;day<=nbDays;day++){
     var evs=parJour[day]||[];
     var isToday=ceMois&&todayD.getDate()===day;
-    cells+='<div class="cal-cell'+(isToday?' today':'')+(day===choisi?' choisi':'')+(evs.length?' plein':'')+'" onclick="calChoisirJour(new Date('+y+','+m+','+day+'))"><div class="cal-day">'+day+'</div>'
+    var dj=new Date(y,m,day),we=dj.getDay()===0||dj.getDay()===6;
+    cells+='<div class="cal-cell'+(isToday?' today':'')+(dj<todayD?' passe':'')+(we?' we':'')+(day===choisi?' choisi':'')+(evs.length?' plein':'')+'" onclick="calChoisirJour(new Date('+y+','+m+','+day+'))"><div class="cal-day">'+day+'</div>'
       +evs.slice(0,3).map(calElementHtml).join('')
       +(evs.length>3?'<div class="cal-more">+'+(evs.length-3)+' autre'+(evs.length-3>1?'s':'')+'</div>':'')
       +'<div class="cal-points" aria-hidden="true">'+evs.slice(0,6).map(function(x){return '<i class="cal-point cal-'+esc(x.type)+'"></i>';}).join('')+'</div>'
@@ -6393,7 +6401,7 @@ function renderConcertsCalendar(liste,el){
     +'</div>'
     +'<div class="cal-wrap">'
     +'<div class="cal-grid">'+jours.map(function(j){return '<div class="cal-dow">'+j+'</div>';}).join('')+'</div>'
-    +'<div class="cal-grid">'+cells+'</div>'
+    +'<div class="cal-grid cal-cases">'+cells+'</div>'
     +'<div class="cal-jour"><div class="cal-jour-titre">'+esc(evtCap(calJourChoisi.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})))+'</div>'
       +(duJour.length?duJour.map(calElementHtml).join(''):'<div class="cal-jour-vide">Rien ce jour-là.</div>')+'</div>'
     +'</div></div>';
