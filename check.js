@@ -7,7 +7,7 @@
  * qu'une page blanche en production. Contrairement a un hook Git, ca ne se
  * contourne pas avec --no-verify.
  *
- * Les six controles correspondent a des bugs reellement rencontres :
+ * Les controles correspondent a des defauts reellement rencontres :
  *  1. un bloc <script> qui ne compile plus  -> appli entierement blanche ;
  *  2. un getElementById() qui pointe dans le vide (btn-taches, 20/09) ;
  *  3. un id HTML en double -> le second devient inatteignable ;
@@ -19,7 +19,9 @@
  *     (revue du 23/09) ;
  *  7. des listes de cles d'app_data qui divergent entre l'appli et la
  *     sauvegarde nocturne (artist_photos et city_groups non sauvegardees
- *     du 22 au 23/09).
+ *     du 22 au 23/09) ;
+ *  8. une taille de texte hors de l'echelle de style.css (12,5 / 13,5 /
+ *     11,5 px arrives avec la newsletter et les evenements, revue du 25/09).
  *
  * Usage : node check.js
  */
@@ -162,6 +164,28 @@ if (backupKeys && cles) {
 if (backupKeys && saveKeys) {
   manquantes(saveKeys, backupKeys).forEach((k) => erreurs.push(`cle "${k}" synchronisee (ALL_SAVE_KEYS) mais absente de BACKUP_KEYS : ni exportee ni restauree`));
 }
+
+// ── 8. Tailles de texte : l'echelle de style.css ────────────────────────────
+// Des pixels entiers, jamais sous 12 px (plancher de lisibilite, §5 de la
+// passation), sauf les exceptions documentees : les touches de la recherche,
+// l'etiquette de montant des barres sponso et le rapport PDF. La revue du 25/09
+// avait trouve des 12,5 / 13,5 / 11,5 px et quatre textes sous le plancher
+// sans explication, arrives avec les modules recents.
+const FICHIER_CSS = path.join(__dirname, 'public', 'style.css');
+const EXCEPTIONS_12 = [/^\.cmdk-foot kbd$/, /^\.sp-bar$/, /^#bilan-report\b/, /^\.bilan-/, /^\.rpt-/];
+if (fs.existsSync(FICHIER_CSS)) {
+  // Commentaires blanchis (meme longueur) pour garder les numeros de ligne.
+  const css = fs.readFileSync(FICHIER_CSS, 'utf8').replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '));
+  const ligneCss = (idx) => css.slice(0, idx).split('\n').length;
+  for (const bloc of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const sel = bloc[1].trim().replace(/\s+/g, ' ');
+    for (const m of bloc[2].matchAll(/font-size:\s*([\d.]+)px/g)) {
+      const px = Number(m[1]), ligne = ligneCss(bloc.index + bloc[1].length + 1 + m.index);
+      if (!Number.isInteger(px)) erreurs.push(`public/style.css:${ligne}  font-size ${px}px (${sel}) : pixels entiers seulement (12, 13, 14…)`);
+      else if (px < 12 && !sel.split(',').every((x) => EXCEPTIONS_12.some((r) => r.test(x.trim())))) erreurs.push(`public/style.css:${ligne}  font-size ${px}px (${sel}) : sous le plancher de 12 px sans etre une exception documentee`);
+    }
+  }
+} else erreurs.push('public/style.css introuvable');
 
 // ── Verdict ─────────────────────────────────────────────────────────────────
 if (erreurs.length) {

@@ -186,7 +186,7 @@
       <div class="card">
         <div class="card-head">
           <h2>Tâches types</h2>
-          <button class="btn" onclick="addTask()">+ Tâche</button>
+          <button class="btn btn-primary" onclick="addTask()">+ Ajouter une tâche</button>
         </div>
         <div class="process-table-scroll">
           <div class="process-header">
@@ -600,10 +600,10 @@
     <div class="rs-modal-hint" id="rs-auto-hint" hidden>Post automatique : sa date est celle de l'annonce du concert, à changer dans sa fiche. Il reste sur le planning Please Please.</div>
     <div>
       <label>Format</label>
-      <div class="rs-modal-fmt">
-        <button type="button" class="rs-modal-fmt-btn post on" id="rs-fmt-post" onclick="rsToggleFmt('post')">Post</button>
-        <button type="button" class="rs-modal-fmt-btn story" id="rs-fmt-story" onclick="rsToggleFmt('story')">Story</button>
-        <button type="button" class="rs-modal-fmt-btn tirage" id="rs-fmt-tirage" onclick="rsToggleFmt('tirage')">Tirage au sort</button>
+      <div class="view-toggle compact rs-modal-fmt" role="group" aria-label="Format">
+        <button type="button" class="view-toggle-btn active" id="rs-fmt-post" aria-pressed="true" onclick="rsToggleFmt('post')">Post</button>
+        <button type="button" class="view-toggle-btn" id="rs-fmt-story" aria-pressed="false" onclick="rsToggleFmt('story')">Story</button>
+        <button type="button" class="view-toggle-btn" id="rs-fmt-tirage" aria-pressed="false" onclick="rsToggleFmt('tirage')">Tirage au sort</button>
       </div>
     </div>
     <div>
@@ -1929,7 +1929,7 @@ var NL_CORPS={
             +'<button type="button" class="nl-outil danger" data-nl="item-suppr" data-b="'+esc(id)+'" data-i="'+esc(iid)+'" title="Supprimer la carte">'+icon('trash')+'</button>'
           +'</div></div>';
       }).join('')+'</div>'
-      +'<button type="button" class="btn btn-sm nl-ajout-carte" data-nl="item-ajouter" data-b="'+esc(id)+'">'+icon('plus')+'Ajouter une carte</button>';
+      +'<button type="button" class="btn-ajout nl-ajout-carte" data-nl="item-ajouter" data-b="'+esc(id)+'">'+icon('plus')+'Ajouter une carte</button>';
   },
   concerts:function(b){
     var id=b.id,villes=nlCityList(),noms=Object.keys(villes).sort(),sel=nlVillesSel(b);
@@ -2010,13 +2010,13 @@ function nlListeConcerts(b){
 }
 function nlLigneConcert(b,c){
   var ph=nlPhotoArtiste(c),billet=nlBillet(c),exclu=!!b.exclus[c.id],cid=c.id;
-  var d=b.type==='annonces'?c.da:c.dc,dt=d?new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'';
+  var d=b.type==='annonces'?c.da:c.dc,dt=dateCourte(d);
   return '<div class="nl-crow'+(exclu?' exclu':'')+'">'
     +'<label class="nl-crow-lbl"><input type="checkbox" data-nl="excl" data-b="'+esc(b.id)+'" data-c="'+esc(cid)+'"'+(exclu?'':' checked')+'>'
       +(ph?'<img class="nl-cthumb" src="'+escUrl(ph)+'" alt="">':'<span class="nl-cthumb vide">'+icon('image')+'</span>')
       +'<span class="nl-cinfo"><b>'+esc(c.art)+'</b><span>'+(b.type==='annonces'?'annoncé le ':'')+esc(dt)+(c.ville?' · '+esc(c.ville):'')+'</span></span></label>'
     +'<span class="nl-cflags">'
-      +(c.ventes===4?'<span class="tag tag-red">Complet</span>':'')
+      +(c.ventes===4?'<span class="tag tag-green">Complet</span>':'')
       +(ph?'':(nlEnvoi['c:'+cid]?'<span class="tag tag-neutral">Envoi…</span>'
         :'<button type="button" class="tag tag-amber" data-nl="photo-artiste" data-c="'+esc(cid)+'" data-depot="1" title="Ajouter une photo de '+esc(c.art)+' (elle sert pour tous ses concerts)">'+icon('image')+'Photo</button>'))
       +(billet?'':'<button type="button" class="tag tag-amber" data-nl="billet" data-c="'+esc(cid)+'" title="Ajouter le lien billetterie (enregistré dans la fiche)">'+icon('link')+'Billetterie</button>')
@@ -2045,7 +2045,7 @@ function nlLigneSpectacle(b,c,p){
       +(ph?'<img class="nl-cthumb" src="'+escUrl(ph)+'" alt="">':'<span class="nl-cthumb vide">'+icon('image')+'</span>')
       +'<span class="nl-cinfo"><b>'+esc(p.art)+'</b><span>'+esc([evtHeure(p.h),evtLieu(p)].filter(Boolean).join(' · '))+'</span></span></label>'
     +'<span class="nl-cflags">'
-      +(evtVentes(p)===4?'<span class="tag tag-red">Complet</span>':'')
+      +(evtVentes(p)===4?'<span class="tag tag-green">Complet</span>':'')
       +(ph?'':(nlEnvoi[k]?'<span class="tag tag-neutral">Envoi…</span>'
         :'<button type="button" class="tag tag-amber" data-nl="photo-nom" data-a="'+esc(p.art)+'" data-depot="1" title="Ajouter une photo de '+esc(p.art)+' (elle sert pour toutes ses dates)">'+icon('image')+'Photo</button>'))
       +(billet?'':'<button type="button" class="tag tag-amber" data-nl="billet-prog" data-e="'+esc(c.id)+'" data-p="'+esc(p.id)+'" title="Ajouter le lien billetterie (enregistré dans le programme)">'+icon('link')+'Billetterie</button>')
@@ -2125,7 +2125,7 @@ function nlContenuHtml(){
   return '<div class="nl-liste">'+nlCarteFixe('entete')
     +nl.blocs.map(nlCarteBloc).join('')
     +'<div class="nl-ajout">'
-      +'<button type="button" class="nl-ajout-btn'+(nlAjoutOuvert?' on':'')+'" data-nl="ajout">'+icon(nlAjoutOuvert?'x':'plus')+(nlAjoutOuvert?'Fermer':'Ajouter un bloc')+'</button>'
+      +'<button type="button" class="btn-ajout nl-ajout-btn'+(nlAjoutOuvert?' on':'')+'" data-nl="ajout">'+icon(nlAjoutOuvert?'x':'plus')+(nlAjoutOuvert?'Fermer':'Ajouter un bloc')+'</button>'
       +(nlAjoutOuvert?'<div class="nl-ajout-grille">'+Object.keys(NL_BLOCS).map(function(k){
         var t=NL_BLOCS[k];
         return '<button type="button" data-nl="ajouter" data-t="'+esc(k)+'"><b>'+icon(t.icone)+esc(t.nom)+'</b><span>'+esc(t.desc)+'</span></button>';
@@ -2587,7 +2587,7 @@ async function renderTeam(){
     if(!d.members.length){el.innerHTML='<div class="empty-state">Aucun membre pour le moment.<br><button class="btn btn-primary" onclick="openTeamAddModal()">+ Ajouter un membre</button></div>';return;}
     el.innerHTML='<table class="team-table"><thead><tr><th>Membre</th><th>Rôle</th><th>2FA</th><th>Dernière connexion</th><th></th></tr></thead><tbody>'+d.members.map(function(m){
       var isMe=m.email===me;
-      var last=m.last_sign_in_at?new Date(m.last_sign_in_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'Jamais';
+      var last=m.last_sign_in_at?dateCourte(new Date(m.last_sign_in_at)):'Jamais';
       return '<tr>'
         +'<td><div class="team-name">'+esc(m.name||'—')+(isMe?' <span class="team-me">(toi)</span>':'')+'</div><div class="team-email">'+esc(m.email)+'</div></td>'
         +'<td><span class="team-role'+(m.role==='admin'?' admin':'')+'">'+(m.role==='admin'?'Administrateur':'Membre')+'</span></td>'
@@ -3576,10 +3576,17 @@ function cancelBadge(c){return c.annule?'<span class="cancel-badge">Annulé</spa
 // Resout le nom affiche d'un post RS a partir de concertId (source de verite,
 // suit un renommage) plutot que du texte fige p.concert (garde uniquement en
 // secours pour les posts crees avant l'ajout de concertId).
+// Le concert d'un post : son artiste, et sa ville quand l'artiste a plusieurs
+// dates (deux « Annonce · JOK'AIR » le meme jour ne se distinguaient pas).
 function rsResolveConcertLabel(p){
-  if(p.concertId){
-    var c=concerts.find(function(x){return x.id===p.concertId;});
-    if(c)return c.art;
+  // Les posts automatiques anciens n'ont que autoRef (l'id de leur concert).
+  var cid=p.concertId||p.autoRef;
+  if(cid){
+    var c=concerts.find(function(x){return x.id===cid;});
+    if(c){
+      var k=artKey(c.art),autres=concerts.some(function(x){return x!==c&&!x.supprime&&artKey(x.art)===k;});
+      return c.art+(autres&&c.ville?' · '+c.ville:'');
+    }
   }
   return p.concert||'';
 }
@@ -3658,7 +3665,23 @@ function majSuggestionsLieux(){
     el.innerHTML=Object.keys(x[1]).sort(function(a,b){return a.localeCompare(b,'fr');}).map(function(v){return '<option value="'+esc(v)+'">';}).join('');
   });
 }
-function fmt(d){return d?d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'-';}
+// Date courte, une seule regle pour toute l'appli (26/09) : « 25 sept. »,
+// l'annee seulement quand ce n'est pas l'annee en cours (« 5 févr. 2027 » ;
+// « Annonce le 17 oct. » pour une annonce de 2025 se lisait comme une annonce
+// a venir), le jour de la semaine sur demande (« jeu. 1 oct. »). Avant, la
+// meme date s'ecrivait « 25 sept. 2026 », « 25 sept. » ou « 25 sept » selon
+// l'ecran. Les formats longs (en-tete de fiche, budget, newsletter, rapport)
+// restent a part. x : date ISO (« 2026-09-25 ») ou objet Date.
+function dateCourte(x,avecJour){
+  if(!x)return '';
+  var d=x instanceof Date?x:new Date(String(x).slice(0,10)+'T00:00:00');
+  if(isNaN(d.getTime()))return '';
+  var o={day:'numeric',month:'short'};
+  if(avecJour)o.weekday='short';
+  if(d.getFullYear()!==new Date().getFullYear())o.year='numeric';
+  return d.toLocaleDateString('fr-FR',o);
+}
+function fmt(d){return d?dateCourte(d):'-';}
 function isLate(d){if(!d)return false;var n=new Date();n.setHours(0,0,0,0);return d<n;}
 function isToday(d){if(!d)return false;var n=new Date();n.setHours(0,0,0,0);var e=new Date(n);e.setDate(e.getDate()+1);return d>=n&&d<e;}
 function isSoon(d){if(!d)return false;var n=new Date();n.setHours(0,0,0,0);var s=new Date(n);s.setDate(s.getDate()+7);return d>=n&&d<=s;}
@@ -3850,16 +3873,7 @@ var FICHE_VENTES=['Pas en vente','Ventes faibles','Ventes moyennes','Bonnes vent
 var FICHE_VENTES_COURT=['Pas en vente','Faibles','Moyennes','Bonnes','Complet'];
 function ficheConcert(){return concerts.find(function(x){return x.id===currentFicheId;});}
 function ficheVentesNiveau(c){var v=parseInt(c.ventes,10);return v>=0&&v<VENTES.length?v:0;}
-// L'annee n'apparait que si elle differe de l'annee en cours : « Annonce le
-// 17 oct. » pour une annonce de 2025 se lisait comme une annonce a venir.
-function ficheCourt(iso,avecJour){
-  if(!iso)return '';
-  var d=new Date(iso+'T00:00:00');if(isNaN(d.getTime()))return '';
-  var o={day:'numeric',month:'short'};
-  if(avecJour)o.weekday='short';
-  if(d.getFullYear()!==new Date().getFullYear())o.year='numeric';
-  return d.toLocaleDateString('fr-FR',o);
-}
+function ficheCourt(iso,avecJour){return dateCourte(iso,avecJour);}
 function ficheDateLongue(iso){
   if(!iso)return '';
   var d=new Date(iso+'T00:00:00');if(isNaN(d.getTime()))return '';
@@ -4239,7 +4253,7 @@ function ficheTacheHtml(c,t,kind,sansActions){
       +'<button type="button" class="ftask-act" title="Décaler l\'échéance pour ce concert" aria-label="Décaler l\'échéance" onclick="event.stopPropagation();openDateOverrideModal('+arg+')">'+icon('calendar-clock')+'</button>'
       +'<button type="button" class="ftask-act" title="Marquer inutile pour ce concert" aria-label="Marquer inutile" onclick="event.stopPropagation();toggleTaskNA('+arg+')">'+icon('ban')+'</button></span>';
   }
-  var date=d?(kind==='soon'?d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}):fmt(d)):'Sans date';
+  var date=d?dateCourte(d,kind==='soon'):'Sans date';
   return '<div class="ftask ftask-'+kind+(fait?' done':'')+'"'+(na||bloque?'':' onclick="toggleFicheTask('+arg+')"')+'>'
     +chk
     +'<div class="ftask-body"><div class="ftask-name">'+esc(t.nom)+'</div>'
@@ -4258,7 +4272,7 @@ function ficheGroupeRepli(key,label,n,cls,extra){
 // Echeance de la premiere tache « a venir » (sortedProcess trie par date).
 function ficheProchaine(c,g){
   var d=g.future.length?calcDate(c,g.future[0]):null;
-  return d?d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}):'';
+  return d?dateCourte(d,true):'';
 }
 function renderFicheTasks(c){
   c=ficheCible(c);
@@ -4399,7 +4413,8 @@ function evtCompletsTxt(c){var k=evtComplets(c);return k?evtPluriel(k,'complet')
 function evtPlage(c,avecJour){
   var f=evtFin(c),d1=c.dc?new Date(c.dc+'T00:00:00'):null,d2=f?new Date(f+'T00:00:00'):null;
   if(!d1||isNaN(d1.getTime()))return '';
-  var o2={day:'numeric',month:'short',year:'numeric'};if(avecJour)o2.weekday='short';
+  var o2={day:'numeric',month:'short'};if(avecJour)o2.weekday='short';
+  if((d2&&!isNaN(d2.getTime())?d2:d1).getFullYear()!==new Date().getFullYear())o2.year='numeric';
   if(!d2||isNaN(d2.getTime())||f===c.dc)return d1.toLocaleDateString('fr-FR',o2);
   var memeAn=d1.getFullYear()===d2.getFullYear(),memeMois=memeAn&&d1.getMonth()===d2.getMonth();
   var o1={day:'numeric'};if(avecJour)o1.weekday='short';
@@ -4435,7 +4450,7 @@ function nbConcertsTxt(l){
 // Date d'une ligne de liste : « 12 → 15 nov. 2026 » pour un evenement.
 function concertDateTxt(c){
   if(estEvt(c))return evtPlage(c);
-  return c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
+  return c.dc?dateCourte(c.dc):'';
 }
 // Colonne Ventes d'un evenement : ses complets (chaque spectacle a sa jauge).
 function evtCompletsHtml(c){
@@ -4477,7 +4492,7 @@ function renderFicheProgramme(c){
     +'</div>'
     +'<span class="grow"></span>'
     +(prog.length?'<button type="button" class="btn-link evt-nl" data-ev="newsletter" title="Ouvrir l\'éditeur de newsletter avec le programme de l\'événement">'+icon('mail')+'Newsletter</button>':'')
-    +'<button type="button" class="btn btn-sm evt-ajouter" data-ev="ajouter" title="Ajouter un spectacle, ou coller tout le programme">'+icon('plus')+'Ajouter</button>'
+    +'<button type="button" class="btn-link evt-ajouter" data-ev="ajouter" title="Ajouter un spectacle, ou coller tout le programme">'+icon('plus')+'Ajouter</button>'
   +'</div>';
   if(!prog.length){
     el.innerHTML=h+'<div class="evt-vide"><p>Aucun spectacle pour l\'instant.</p>'
@@ -4487,11 +4502,13 @@ function renderFicheProgramme(c){
     return;
   }
   if(jours.length>1){
-    h+='<div class="evt-puces" role="group" aria-label="Filtrer par jour">'
-      +'<button type="button" class="evt-puce'+(evtJour?'':' on')+'" data-ev="jour" data-v="" aria-pressed="'+(evtJour?'false':'true')+'">Tous<span class="n">'+prog.length+'</span></button>'
+    // Meme dessin que les filtres « Toutes / En cours / À venir » de l'onglet
+    // Sponso : un choix unique, avec son nombre.
+    h+='<div class="view-toggle compact evt-puces" role="group" aria-label="Filtrer par jour">'
+      +'<button type="button" class="view-toggle-btn'+(evtJour?'':' active')+'" data-ev="jour" data-v="" aria-pressed="'+(evtJour?'false':'true')+'">Tous<span class="sp-pill-n">'+prog.length+'</span></button>'
       +jours.map(function(j){
         var on=evtJour===j;
-        return '<button type="button" class="evt-puce'+(on?' on':'')+'" data-ev="jour" data-v="'+esc(j)+'" aria-pressed="'+(on?'true':'false')+'">'+esc(evtJourCourt(j))+'<span class="n">'+evtParJour(prog,j).length+'</span></button>';
+        return '<button type="button" class="view-toggle-btn'+(on?' active':'')+'" data-ev="jour" data-v="'+esc(j)+'" aria-pressed="'+(on?'true':'false')+'">'+esc(evtJourCourt(j))+'<span class="sp-pill-n">'+evtParJour(prog,j).length+'</span></button>';
       }).join('')+'</div>';
   }
   var jv=evtJour?[evtJour]:jours;
@@ -4538,7 +4555,7 @@ function evtCarteHtml(p,e){
     +'<span class="evt-photo'+(ph?'':' vide')+'">'
       +(ph?'<img src="'+esc(ph)+'" alt="" loading="lazy">':icon('image')+'<span>Photo 16:9</span>')
       +(heure?'<span class="evt-heure">'+esc(heure)+'</span>':'')
-      +(v===4?'<span class="tag tag-red evt-complet">Complet</span>':'')
+      +(v===4?'<span class="tag tag-green evt-complet">Complet</span>':'')
     +'</span>'
     +'<span class="evt-carte-corps">'
       +'<span class="evt-art">'+esc(p.art||'Sans nom')+'</span>'
@@ -4559,7 +4576,7 @@ function evtLigneInterieur(p){
   return '<span class="evt-ligne-h">'+esc(evtHeure(p.h)||'—')+'</span>'
     +'<span class="evt-ligne-txt"><span class="evt-art">'+esc(p.art||'Sans nom')+'</span><span class="evt-lieu">'+esc(evtLieu(p)||'Lieu à préciser')+'</span></span>'
     +'<span class="evt-ligne-flags">'
-      +(v===4?'<span class="tag tag-red">Complet</span>':'')
+      +(v===4?'<span class="tag tag-green">Complet</span>':'')
       +(evtPhotoUrl(p)?'':'<span class="tag tag-amber" title="Pas de photo : la carte de la newsletter n\'en aura pas">Photo</span>')
       +(safeUrl(p.billet)?'':'<span class="tag tag-amber" title="Pas de lien billetterie">Billetterie</span>')
     +'</span>'
@@ -5034,7 +5051,7 @@ function evtEtapeDetailHtml(e,t,sps){
     var l=parJ[j],compte={},dRef=null,max=0;
     // La date du jour : la plus frequente (un spectacle decale garde la sienne).
     l.forEach(function(p){var d=calcDate(spSujet(e,p),t);if(!d)return;var k=+d;compte[k]=(compte[k]||0)+1;if(compte[k]>max){max=compte[k];dRef=d;}});
-    return '<div class="evp-detail-jour"><h4>'+esc(evtJourMoyen(j))+'</h4><p>'+esc(dRef?'à faire le '+dRef.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}):'sans date')+'</p>'
+    return '<div class="evp-detail-jour"><h4>'+esc(evtJourMoyen(j))+'</h4><p>'+esc(dRef?'à faire le '+dateCourte(dRef,true):'sans date')+'</p>'
       +l.map(function(p){
         var s=spSujet(e,p);
         if(sansEtapesSautees(s,[t]).length&&!isNA(s,t)&&!taskStates[tk(p.id,t.id)]&&isUnlocked(s,t))restants++;
@@ -5151,7 +5168,7 @@ function evtApercuSpHtml(e){
   if(!urg.length){
     var proch=null;
     etapes.forEach(function(r){r.dates.forEach(function(d){if(!proch||d<proch.d)proch={d:d,t:r.t};});});
-    return '<div class="fa-vide fa-note">'+icon('circle-check')+'<span>'+esc('Rien d\'urgent du côté des spectacles.'+(proch?' Prochaine tâche : '+proch.t.nom+', à partir du '+proch.d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'})+'.':''))+'</span></div>';
+    return '<div class="fa-vide fa-note">'+icon('circle-check')+'<span>'+esc('Rien d\'urgent du côté des spectacles.'+(proch?' Prochaine tâche : '+proch.t.nom+', à partir du '+dateCourte(proch.d,true)+'.':''))+'</span></div>';
   }
   return urg.map(function(r){
     var late=r.retard>0,cat=CATS[r.t.cat]||CATS.gen;
@@ -6031,17 +6048,17 @@ function renderDashLine(today){
     var cnt=diff<0?'En cours':diff===0?"Aujourd'hui":diff===1?'Demain':'J-'+diff;
     groups.push('<span class="dash-line-group"><span class="dash-line-label">Prochain concert</span>'
       +'<a href="#" class="crow-name dash-line-art" onclick="event.preventDefault();openFiche(\''+escJs(nextC.id)+'\')">'+esc(nextC.art)+cancelBadge(nextC)+'</a>'
-      +'<span class="dash-line-sub">'+(lieuTexte(nextC)?esc(lieuTexte(nextC))+' · ':'')+(estEvt(nextC)?esc(evtPlage(nextC)):d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}))+'</span>'
-      +'<span class="tag '+(diff<=7?'tag-red':diff<=30?'tag-amber':'tag-neutral')+'">'+cnt+'</span></span>');
+      +'<span class="dash-line-sub">'+(lieuTexte(nextC)?esc(lieuTexte(nextC))+' · ':'')+(estEvt(nextC)?esc(evtPlage(nextC)):esc(dateCourte(d)))+'</span>'
+      +'<span class="tag '+(diff<=7?'tag-amber':'tag-neutral')+'">'+cnt+'</span></span>');
   }
   var todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
   var posts=rsPosts.filter(function(p){return p.date===todayStr;});
   var chips=posts.length?posts.map(function(p){
     var t=RS_TYPES[p.type]||RS_TYPES.autre;
     var fmtLbl=p.format==='story'?'Story':p.format==='tirage'?'Tirage':'Post';
-    var title=(rsResolveConcertLabel(p)||p.note||t.label).substring(0,24);
+    var title=rsResolveConcertLabel(p)||p.note||t.label;
     var cls=p.status==='posted'?'tag-accent':p.status==='ready'?'tag-outline-accent':'tag-neutral';
-    return '<a href="#" class="tag '+cls+'" onclick="event.preventDefault();showTab(\'rs\');rsSetProj(\''+escJs(p.proj)+'\')" title="'+esc(t.label)+'">'+fmtLbl+' · '+esc(title)+'</a>';
+    return '<a href="#" class="tag tag-coupe '+cls+'" onclick="event.preventDefault();showTab(\'rs\');rsSetProj(\''+escJs(p.proj)+'\')" title="'+esc(t.label+' · '+title)+'"><span>'+fmtLbl+' · '+esc(title)+'</span></a>';
   }).join(''):'<span class="dash-line-sub">Rien de prévu</span>';
   groups.push('<span class="dash-line-group"><span class="dash-line-label">Posts du jour</span>'+chips+'</span>');
   el.innerHTML=groups.join('<span class="dash-line-sep"></span>');
@@ -6073,7 +6090,7 @@ function renderKanban(){
     // les siennes. Toujours une seule carte.
     var evt=estEvt(c),groupes=evt?evtUrgencesSp(c):[];
     var hasLate=lateTasks.length>0||groupes.length>0;
-    var ds=c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
+    var ds=dateCourte(c.dc);
     var shown=lateTasks.slice(0,4),gShown=groupes.slice(0,Math.max(0,4-shown.length));
     var reste=lateTasks.length-shown.length+groupes.length-gShown.length;
     var body='';
@@ -6162,7 +6179,7 @@ function renderConcerts(){
     +liste.map(function(c){
       var daDate=annonceDate(c),pending=annonceEnAttente(c);
       var ds=concertDateTxt(c),evt=estEvt(c);
-      var daFmt=daDate?daDate.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'';
+      var daFmt=daDate?dateCourte(daDate):'';
       var skipSp=!!taskStates['skip-'+c.id+'-sp'];
       var skipCol=!!taskStates['skip-'+c.id+'-col'];
       var bud=c.budget||'';
@@ -6435,7 +6452,7 @@ function closeCampaignWizard(){
 function renderWizardStep(){
   var sec=REPORT_SECTIONS[wizardStepIdx];
   document.getElementById('wizard-title').textContent=sec.title;
-  document.getElementById('wizard-progress').textContent='Étape '+(wizardStepIdx+1)+' / '+REPORT_SECTIONS.length+' — Ajoutez vos photos ou liens pour cette catégorie, ou passez si non concerné. Conservés '+MEDIA_RETENTION_DAYS+' jours puis supprimés automatiquement.';
+  document.getElementById('wizard-progress').textContent='Étape '+(wizardStepIdx+1)+' / '+REPORT_SECTIONS.length+' — Ajoute tes photos ou tes liens pour cette catégorie, ou passe à la suivante si elle ne te concerne pas. Conservés '+MEDIA_RETENTION_DAYS+' jours puis supprimés automatiquement.';
   var items=concertMedia.filter(function(m){return m.concertId===wizardConcertId&&sec.cats.indexOf(m.cat)>=0;});
   var gridEl=document.getElementById('wizard-step-grid');
   if(!items.length){gridEl.innerHTML='<div class="media-empty">Aucun contenu ajouté pour cette catégorie.</div>';}
@@ -6604,8 +6621,8 @@ function tkFmtDate(d){
   var dt=new Date(d);dt.setHours(0,0,0,0);
   var n=new Date();n.setHours(0,0,0,0);
   var diff=Math.round((dt-n)/(1000*60*60*24));
-  var fmt=dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
-  if(diff<0)return {cls:'late',txt:'En retard - '+fmt};
+  var fmt=dateCourte(dt);
+  if(diff<0)return {cls:'late',txt:'En retard · '+fmt};
   if(diff===0)return {cls:'today',txt:"Aujourd'hui"};
   if(diff<=7)return {cls:'soon',txt:fmt};
   return {cls:'future',txt:fmt};
@@ -6710,7 +6727,7 @@ function renderTaches(){
     });
     colEl.appendChild(tasksEl);
     // Bouton ajouter tâche
-    var addTaskBtn=document.createElement('button');addTaskBtn.className='tk-add-task-btn';addTaskBtn.textContent='+ Ajouter une tâche';
+    var addTaskBtn=document.createElement('button');addTaskBtn.className='btn-ajout tk-add-task-btn';addTaskBtn.textContent='+ Ajouter une tâche';
     addTaskBtn.addEventListener('click',function(){tkOpenModal(col.id);});
     colEl.appendChild(addTaskBtn);
     board.appendChild(colEl);
@@ -6895,7 +6912,7 @@ function renderTkWidget(){
       if(!t.isPinned){
         if(t.date){
           var dt=new Date(t.date);dt.setHours(0,0,0,0);var diff=Math.round((dt-today)/86400000);
-          meta='<span class="tkw-date'+(diff<0?' late':diff===0?' today':'')+'">'+(diff===0?"Aujourd'hui":dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}))+'</span>';
+          meta='<span class="tkw-date'+(diff<0?' late':diff===0?' today':'')+'">'+(diff===0?"Aujourd'hui":dateCourte(dt))+'</span>';
         } else meta='<span class="tkw-date">Sans date</span>';
       }
       // Deleguee : une etiquette explicite plutot qu'une icone discrete, on
@@ -6910,7 +6927,7 @@ function renderTkWidget(){
         +'<span class="tkw-body"><span class="tkw-name">'+esc(t.nom)+'</span>'+meta+'</span>'
         +'</div>';
     });
-    html+='<button type="button" class="tkw-add" onclick="tkWidgetAdd(\''+escJs(col.id)+'\',\''+escJs(col.nom)+'\')">+ Ajouter</button></div>';
+    html+='<button type="button" class="btn-link tkw-add" onclick="tkWidgetAdd(\''+escJs(col.id)+'\',\''+escJs(col.nom)+'\')">+ Ajouter</button></div>';
   });
   wrap.innerHTML=html+'</div>';
 }
@@ -7063,10 +7080,13 @@ function renderRS(){
     dayPosts.forEach(function(p){
       var t=RS_TYPES[p.type]||RS_TYPES.autre;
       var pcLabel=rsResolveConcertLabel(p);
-      var lbl=(p.autoRef?icon('megaphone'):(p.format==='story'?icon('smartphone'):p.format==='tirage'?icon('dice'):icon('file')))+' '+t.label+(pcLabel?' · '+esc(pcLabel.substring(0,12)):p.note?' · '+esc(p.note.substring(0,15)):'')+(p.validated?'<span class="rs-chip-validated" title="Validé">'+icon('check')+'</span>':'');
+      // Texte entier, coupe par le CSS avec « … » (il l'etait a 12 caracteres,
+      // sans rien pour le signaler : « EDDY DE PRET »).
+      var txt=t.label+(pcLabel?' · '+pcLabel:p.note?' · '+p.note:'');
+      var lbl=(p.autoRef?icon('megaphone'):(p.format==='story'?icon('smartphone'):p.format==='tirage'?icon('dice'):icon('file')))+'<span class="rs-chip-txt">'+esc(txt)+'</span>'+(p.validated?'<span class="rs-chip-validated" title="Validé">'+icon('check')+'</span>':'');
       var aussi=rsAutresPlannings(p);
       if(aussi.length)lbl+='<span class="rs-chip-aussi" title="Aussi sur le planning '+esc(aussi.map(function(x){return x.nom;}).join(', '))+'">+ '+esc(aussi.map(function(x){return x.court;}).join(' + '))+'</span>';
-      chips+='<span class="rs-chip'+(p.status==='posted'?' posted':p.ready?' ready':'')+(p.format==='story'?' story':'')+'" draggable="true" data-post="'+esc(p.id)+'">'+lbl+'</span>';
+      chips+='<span class="rs-chip'+(p.status==='posted'?' posted':p.ready?' ready':'')+(p.format==='story'?' story':'')+'" draggable="true" data-post="'+esc(p.id)+'" title="'+esc(txt)+'">'+lbl+'</span>';
     });
 
     var rowClick=hasContent?'rsToggleDay(\''+escJs(dateStr)+'\')':'rsOpenModal(\''+escJs(dateStr)+'\')';
@@ -7076,7 +7096,7 @@ function renderRS(){
       +'<span class="rs-day-date"><span class="rs-day-num">'+dayNum+'</span><span class="rs-day-month">'+monthName+'</span></span>'
       +'<span class="rs-day-weekname">'+dayName+'</span>'
       +'<div class="rs-chips">'+chips+'</div>'
-      +'<button class="rs-add-day-btn" onclick="event.stopPropagation();rsOpenModal(\''+escJs(dateStr)+'\')">+ Ajouter</button>'
+      +'<button class="btn-link discret rs-add-day-btn" onclick="event.stopPropagation();rsOpenModal(\''+escJs(dateStr)+'\')">+ Ajouter</button>'
       +'</div>'
       +'<div id="rslist-'+dateStr+'" style="display:none">';
 
@@ -7148,7 +7168,7 @@ function rsFenetre(){
   return {debut:debut,fin:fin};
 }
 function rsJourIso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-function rsJourLabel(ds){return new Date(ds+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});}
+function rsJourLabel(ds){return dateCourte(ds,true);}
 // Jours depliés, a rouvrir apres un redessin (renderRS() replie tout).
 function rsJoursOuverts(){
   return [].filter.call(document.querySelectorAll('#rs-wrap [id^="rslist-"]'),function(el){return el.style.display!=='none';})
@@ -7210,7 +7230,7 @@ function rsFillConcertSelect(sel, selectedVal){
   // concerts du meme artiste.
   var sorted=concerts.filter(function(c){return !c.supprime;}).sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
   sorted.forEach(function(c){
-    var dateStr=c.dc?new Date(c.dc).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}):'';
+    var dateStr=dateCourte(c.dc);
     var label=c.art+(dateStr?' — '+dateStr:'');
     html+='<option value="'+esc(c.id)+'">'+esc(label)+'</option>';
   });
@@ -7273,9 +7293,10 @@ function rsUpdateFmt(){
   var bp=document.getElementById('rs-fmt-post');
   var bs=document.getElementById('rs-fmt-story');
   var bt=document.getElementById('rs-fmt-tirage');
-  if(bp){bp.classList.toggle('on',rsFmt==='post');}
-  if(bs){bs.classList.toggle('on',rsFmt==='story');}
-  if(bt){bt.classList.toggle('on',rsFmt==='tirage');}
+  [[bp,'post'],[bs,'story'],[bt,'tirage']].forEach(function(x){
+    if(!x[0])return;
+    x[0].classList.toggle('active',rsFmt===x[1]);x[0].setAttribute('aria-pressed',rsFmt===x[1]?'true':'false');
+  });
 }
 
 // Date et plannings du post. Un post automatique garde la date d'annonce de
@@ -7554,7 +7575,7 @@ function spFmtDate(s){
   if(!s)return '';
   var d=new Date(s+'T00:00:00');
   if(isNaN(d.getTime()))return '';
-  return d.getDate()+' '+d.toLocaleDateString('fr-FR',{month:'short'}).replace('.','');
+  return dateCourte(d);
 }
 function spCible(s){
   if(!s.ville)return '';
@@ -7742,7 +7763,7 @@ function spFicheHtml(c){
     });
     h+='</div>';
   }else h+='<div class="sp-empty">Aucune vague. Une vague sans dates reste visible en « à programmer ».</div>';
-  h+='<button type="button" class="sp-add-btn" onclick="spFicheAjouter(\''+escJs(c.id)+'\')">+ Ajouter une vague</button>';
+  h+='<button type="button" class="btn-ajout sp-add-btn" onclick="spFicheAjouter(\''+escJs(c.id)+'\')">+ Ajouter une vague</button>';
   h+='<div class="fiche-props spf-brief">'
     +'<div class="fiche-prop"><span class="fiche-prop-l">Ciblage</span><span class="spf-cible">'
       +'<input type="text" class="fiche-champ" aria-label="Ville ciblée" placeholder="Ville" value="'+esc(s.ville||'')+'" onchange="spSetField(\''+escJs(c.id)+'\',\'ville\',this.value)">'
@@ -7784,7 +7805,7 @@ function spFicheFriseHtml(c){
   var mois='',deco='',barres='';
   for(var m=new Date(debut);m<fin;m=new Date(m.getFullYear(),m.getMonth()+1,1)){
     var l=pc(m.getTime()),r=pc(new Date(m.getFullYear(),m.getMonth()+1,1).getTime());
-    mois+='<div class="sp-head-m" style="left:'+l+'%;width:'+(r-l)+'%">'+esc(m.toLocaleDateString('fr-FR',{month:'short'}).replace('.',''))+'</div>';
+    mois+='<div class="sp-head-m" style="left:'+l+'%;width:'+(r-l)+'%">'+esc(m.toLocaleDateString('fr-FR',{month:'short'}))+'</div>';
     if(m.getTime()>a0)deco+='<div class="sp-sep" style="left:'+l+'%"></div>';
   }
   var tm=t.getTime();
@@ -7894,7 +7915,7 @@ function renderSponso(){
   var headM='';
   months.forEach(function(m,i){
     var l=pct(m.getTime()),r=pct(new Date(m.getFullYear(),m.getMonth()+1,1).getTime());
-    var lbl=m.toLocaleDateString('fr-FR',{month:'short'}).replace('.','');
+    var lbl=m.toLocaleDateString('fr-FR',{month:'short'});
     if(i===0||m.getMonth()===0)lbl+=' '+String(m.getFullYear()).slice(2);
     headM+='<div class="sp-head-m" style="left:'+l+'%;width:'+(r-l)+'%">'+lbl+'</div>';
   });
@@ -8348,7 +8369,7 @@ function renderBudgetConfig(){
         +'</table>':'<div class="bud-vide">Aucune ligne radio pour cette tranche.</div>')
       +'<button class="btn-link" data-cfg="ajout-radio" data-p="'+esc(p)+'.radio">+ Ligne radio</button></div>';
   });
-  h+='<button class="btn btn-sm" data-cfg="ajout-tranche">+ Tranche</button></div>';
+  h+='<button class="btn-ajout" data-cfg="ajout-tranche">+ Tranche</button></div>';
   // Parametres
   h+='<div class="bc-sec"><div class="nl-label">Sponso et DOOH</div><div class="bc-ligne">Vagues de sponso '+champ('vagues',cfg.vagues,{cls:'bc-num',num:1})+' · Arrondi '+champ('arrondi',cfg.arrondi,{cls:'bc-num',num:1})+' € · Prestataire DOOH '+champ('prestaDooh',cfg.prestaDooh,{cls:'bc-nom'})+'</div></div>';
   // Lignes offertes
@@ -8368,7 +8389,7 @@ function renderBudgetConfig(){
         +'</table>':'<div class="bud-vide">Aucune ligne d\'affichage.</div>')
       +'<button class="btn-link" data-cfg="ajout-affichage-ligne" data-p="'+esc(p)+'.lignes">+ Ligne</button></div>';
   });
-  h+='<button class="btn btn-sm" data-cfg="ajout-regle">+ Règle pour une ville ou une salle</button></div>';
+  h+='<button class="btn-ajout" data-cfg="ajout-regle">+ Règle pour une ville ou une salle</button></div>';
   el.innerHTML=h+'</div>';
 }
 function budChemin(o,ch){return ch===''?o:ch.split('.').reduce(function(x,k){return x==null?x:x[k];},o);}
