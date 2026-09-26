@@ -574,12 +574,13 @@
     </div>
   </div>
 </div>
+<!-- « + Ajouter une sponso » : choix du concert, dont la fiche s'ouvre ensuite sur son onglet Sponso -->
 <div class="rs-modal" id="sp-modal">
   <div class="rs-modal-box">
-    <div class="rs-modal-title" id="sp-modal-title">Sponso</div>
+    <div class="rs-modal-title" id="sp-modal-title">Ajouter une sponso</div>
     <div id="sp-modal-body"></div>
     <div class="rs-modal-actions">
-      <button class="btn" onclick="spCloseModal()">Fermer</button>
+      <button class="btn" onclick="spCloseModal()">Annuler</button>
     </div>
   </div>
 </div>
@@ -6523,7 +6524,6 @@ function toggleSkipFromList(cid, cat){
     if(c)renderFicheTasks(c);
     if(cat==='sp')spRenderFiche(cid);
   }
-  if(cat==='sp'&&spModalCid===cid)spOpenConcert(cid);
 }
 function toggleSkip(cat){
   var s=ficheSujet();if(!s)return;
@@ -7498,7 +7498,7 @@ var SP_MOIS_PX=140,SP_INFO_PX=215;
 // elargit la fenetre pour rester visible, mais jamais au-dela de cette limite,
 // sinon les mois se tassent et on retombe sur le probleme d'origine.
 var SP_MOIS_MAX=11;
-var spModalCid=null,spTerminesOuvert=false;
+var spTerminesOuvert=false;
 var spFiltre='tous',spVue='date';
 var SP_VIDE={billet:'',legende:'',crea:'',ville:'',rayon:'',vagues:[]};
 var SP_STATUTS={
@@ -7614,48 +7614,11 @@ function spEstTermine(c){
 // sans rien bloquer, il arrive qu'on en fasse quand meme.
 function spSkipProd(cid){return !!taskStates['skip-'+cid+'-sp'];}
 
-// ── Saisie (partagee entre la fiche concert et le modal de la timeline) ──
-function spBlockHtml(c){
-  var s=spRead(c);
-  var h='<div class="sp-block">';
-  if(spSkipProd(c.id))
-    h+='<div class="sp-warn">'+icon('alert')+' <span>Ce concert est marqué <b>« Sponso gérée par la prod »</b>. Tu peux quand même programmer des vagues ici.</span></div>';
-  if(s.vagues.length){
-    h+='<div class="sp-vagues">';
-    spVaguesTriees(c).forEach(function(v,i){
-      var st=spStatut(v),m=SP_STATUTS[st];
-      h+='<div class="sp-vague">'
-        +'<div class="sp-vague-head">'
-        +'<span class="sp-vague-num">Vague '+(i+1)+'</span>'
-        +'<span class="sp-badge '+m.cls+'" id="sp-st-'+esc(v.id)+'">'+m.label+'</span>'
-        +'<span class="grow"></span>'
-        +'<label class="sp-tr" id="sp-tr-'+esc(v.id)+'"'+(st==='programmee'?'':' style="display:none"')+'>'
-        +'<input type="checkbox"'+(v.transmise?' checked':'')+' onchange="spSetVague(\''+escJs(c.id)+'\',\''+escJs(v.id)+'\',\'transmise\',this.checked)"> Prestataire informé</label>'
-        +'<button class="rs-post-btn del" title="Supprimer la vague" onclick="spDelVague(\''+escJs(c.id)+'\',\''+escJs(v.id)+'\')">'+icon('x')+'</button>'
-        +'</div>'
-        +'<div class="sp-vague-fields">'
-        +'<label class="sp-f"><span>Budget</span><input type="number" min="0" step="50" placeholder="0" value="'+esc(v.budget||'')+'" onchange="spSetVague(\''+escJs(c.id)+'\',\''+escJs(v.id)+'\',\'budget\',this.value)"></label>'
-        +'<label class="sp-f"><span>Début</span><input type="date" value="'+esc(v.debut||'')+'" onchange="spSetVague(\''+escJs(c.id)+'\',\''+escJs(v.id)+'\',\'debut\',this.value)"></label>'
-        +'<label class="sp-f"><span>Fin</span><input type="date" value="'+esc(v.fin||'')+'" onchange="spSetVague(\''+escJs(c.id)+'\',\''+escJs(v.id)+'\',\'fin\',this.value)"></label>'
-        +'</div></div>';
-    });
-    h+='</div>';
-  } else {
-    h+='<div class="sp-empty">Aucune vague. Une vague sans dates reste visible en « à programmer ».</div>';
-  }
-  h+='<button class="sp-add-btn" onclick="spAddVague(\''+escJs(c.id)+'\')">+ Ajouter une vague</button>';
-  h+='<div class="sp-brief">'
-    +'<label class="sp-f wide"><span>Lien billetterie</span><input type="text" placeholder="https://..." value="'+esc(s.billet||'')+'" onchange="spSetField(\''+escJs(c.id)+'\',\'billet\',this.value)"></label>'
-    +'<label class="sp-f wide"><span>Lien de la créa</span><input type="text" placeholder="https://..." value="'+esc(s.crea||'')+'" onchange="spSetField(\''+escJs(c.id)+'\',\'crea\',this.value)"></label>'
-    +'<label class="sp-f"><span>Ville ciblée</span><input type="text" placeholder="Lyon" value="'+esc(s.ville||'')+'" onchange="spSetField(\''+escJs(c.id)+'\',\'ville\',this.value)"></label>'
-    +'<label class="sp-f"><span>Rayon (km)</span><input type="number" min="0" step="5" placeholder="30" value="'+esc(s.rayon||'')+'" onchange="spSetField(\''+escJs(c.id)+'\',\'rayon\',this.value)"></label>'
-    +'<label class="sp-f wide"><span>Légende<button class="rs-copy-btn" onclick="event.preventDefault();spCopyLegende(\''+escJs(c.id)+'\')" title="Copier la légende">'+icon('copy')+' Copier</button></span>'
-    +'<textarea rows="3" placeholder="Texte de la légende..." onchange="spSetField(\''+escJs(c.id)+'\',\'legende\',this.value)">'+esc(s.legende||'')+'</textarea></label>'
-    +'</div>';
-  h+='</div>';
-  return h;
-}
-
+// ── Saisie : une seule, l'onglet Sponso de la fiche ──
+// Jusqu'au 26/09, la frise ouvrait aussi sa propre fenetre de saisie
+// (spBlockHtml), au dessin different de la fiche pour les memes donnees.
+// Depuis, frise, liste des concerts et « + Ajouter une sponso » ouvrent la
+// fiche sur son onglet Sponso (spOpenConcert).
 function spSetField(cid,field,val){
   var c=spConcert(cid);if(!c)return;
   spWrite(c)[field]=val.trim();
@@ -7675,12 +7638,8 @@ function spSetVague(cid,vid,field,val){
   if(spOrdre(c)!==ordreAvant){spRefresh(cid);return;}
   // Sinon on met a jour le badge en place plutot que de reconstruire le bloc :
   // le champ suivant perdrait le focus quand on tabule d'un champ a l'autre.
-  // Badges du modal (sp-) et de la fiche (fsp-) : ids distincts, la fiche
-  // refermee garde son contenu et ne doit pas intercepter le modal.
   var st=spStatut(v),m=SP_STATUTS[st];
-  ['sp-st-','fsp-st-'].forEach(function(p){var el=document.getElementById(p+vid);if(el){el.textContent=m.label;el.className='sp-badge '+m.cls;}});
-  var tr=document.getElementById('sp-tr-'+vid);
-  if(tr)tr.style.display=st==='programmee'?'':'none';
+  var badge=document.getElementById('fsp-st-'+vid);if(badge){badge.textContent=m.label;badge.className='sp-badge '+m.cls;}
   var ftr=document.getElementById('fsp-tr-'+vid);
   if(ftr)ftr.hidden=st!=='programmee';
   var fd=document.getElementById('spf-d-'+vid);if(fd)fd.textContent=spPlage(v);
@@ -7707,10 +7666,6 @@ function spCopyLegende(cid){
   try{navigator.clipboard.writeText(t).then(function(){showToast('Légende copiée.');},function(){showToast('Sélectionne et copie la légende.');});}catch(e){showToast('Sélectionne et copie la légende.');}
 }
 function spRefresh(cid){
-  if(spModalCid===cid){
-    var c=spConcert(cid),body=document.getElementById('sp-modal-body');
-    if(c&&body)body.innerHTML=spBlockHtml(c);
-  }
   if(currentFicheId===cid)spRenderFiche(cid);
   spRenderVues();
 }
@@ -7725,7 +7680,7 @@ function spRenderVues(){
 // concert, trait du jour, memes classes), une ligne par vague qu'on deplie pour
 // la modifier, puis le brief (ciblage, crea, legende) en lignes modifiables sur
 // place comme l'onglet Infos. Le lien billetterie est dans Infos : il sert sur
-// toutes les dates. Le modal de l'onglet Sponso garde spBlockHtml().
+// toutes les dates. C'est la seule saisie de la sponso (voir spOpenConcert).
 var spFicheOuverte=null; // id de la vague depliee dans la fiche
 function spRenderFiche(cid){
   var c=spConcert(cid),el=document.getElementById('fiche-sponso');
@@ -7847,19 +7802,14 @@ function spFicheFriseHtml(c){
   return '<div class="spf-mois">'+mois+'</div><div class="spf-piste">'+deco+barres+'</div>';
 }
 
-// ── Modal ouvert depuis la timeline (saisie sans passer par la fiche) ──
-function spOpenConcert(cid){
+// ── Depuis la frise ou la liste : la fiche, sur son onglet Sponso ──
+// vid : la vague cliquee (barre, « à programmer »), depliee pour la modifier.
+function spOpenConcert(cid,vid){
   var c=spConcert(cid);if(!c)return;
-  spModalCid=cid;
-  document.getElementById('sp-modal-title').textContent='Sponso — '+(c.art||'Concert');
-  document.getElementById('sp-modal-body').innerHTML=spBlockHtml(c);
-  document.getElementById('sp-modal').classList.add('open');
+  openFiche(cid,'sponso');
+  if(vid){spFicheOuverte=vid;spRenderFiche(cid);}
 }
-function spCloseModal(){
-  document.getElementById('sp-modal').classList.remove('open');
-  spModalCid=null;
-  spRenderVues();
-}
+function spCloseModal(){document.getElementById('sp-modal').classList.remove('open');}
 document.getElementById('sp-modal').addEventListener('click',function(e){if(e.target===this)spCloseModal();});
 function spShift(sens){spMonthOffset+=sens*SP_PAS;renderSponso();}
 function spResetWindow(){spMonthOffset=0;renderSponso();}
@@ -7985,7 +7935,7 @@ function renderSponso(){
       // que si aucun budget n'a ete saisi - ce n'est pas un repli faute de
       // place, c'est qu'il n'y a rien a afficher.
       var lbl=v.budget?spEuroCourt(v.budget):'V'+n;
-      bars+='<div class="sp-bar '+SP_STATUTS[st].cls+(nt?' sp-nontransmise':'')+'" style="left:'+l+'%;width:'+w+'%" title="'+esc(tip)+'" onclick="spOpenConcert(\''+escJs(c.id)+'\')">'
+      bars+='<div class="sp-bar '+SP_STATUTS[st].cls+(nt?' sp-nontransmise':'')+'" style="left:'+l+'%;width:'+w+'%" title="'+esc(tip)+'" onclick="event.stopPropagation();spOpenConcert(\''+escJs(c.id)+'\',\''+escJs(v.id)+'\')">'
         +(lbl?'<span>'+esc(lbl)+'</span>':'')+'</div>';
     });
     // Repere de la date du concert : on voit d'un coup d'oeil si les vagues
@@ -7996,7 +7946,7 @@ function renderSponso(){
 
     var chips='';
     undated.forEach(function(u){
-      chips+='<button class="sp-chip" onclick="spOpenConcert(\''+escJs(c.id)+'\')">V'+u.n+(u.v.budget?' · '+esc(spEuro(u.v.budget)):'')+' · à programmer</button>';
+      chips+='<button class="sp-chip" onclick="spOpenConcert(\''+escJs(c.id)+'\',\''+escJs(u.v.id)+'\')">V'+u.n+(u.v.budget?' · '+esc(spEuro(u.v.budget)):'')+' · à programmer</button>';
     });
 
     var cible=spCible(s);
@@ -8061,13 +8011,12 @@ function spSetFiltre(f){spFiltre=f;renderSponso();}
 function spSetVue(v){spVue=v;renderSponso();}
 // Choix du concert avant d'ouvrir sa saisie : le modal sert de selecteur.
 function spOpenPicker(){
-  spModalCid=null;
   var opts=concerts.filter(function(c){return !c.supprime;})
     .sort(function(a,b){return new Date(a.dc||'2100-01-01')-new Date(b.dc||'2100-01-01');})
     .map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.art||'Concert')+(c.dc?' · '+spFmtDate(c.dc):'')+(spAVagues(c)?' · déjà une sponso':'')+'</option>';}).join('');
-  document.getElementById('sp-modal-title').textContent='Ajouter une sponso';
   document.getElementById('sp-modal-body').innerHTML='<label class="sp-f wide"><span>Concert</span>'
-    +'<select id="sp-picker" onchange="if(this.value)spOpenConcert(this.value)"><option value="">Choisir un concert…</option>'+opts+'</select></label>';
+    +'<select id="sp-picker" onchange="if(this.value){spCloseModal();spOpenConcert(this.value);}"><option value="">Choisir un concert…</option>'+opts+'</select></label>'
+    +'<p class="modal-note">Sa fiche s\'ouvre sur l\'onglet Sponso, pour y ajouter les vagues.</p>';
   document.getElementById('sp-modal').classList.add('open');
   setTimeout(function(){var s=document.getElementById('sp-picker');if(s)s.focus();},50);
 }

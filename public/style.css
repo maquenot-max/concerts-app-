@@ -1456,13 +1456,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .sp-key.sp-programmee{background:var(--accent-soft)}
 .sp-key.sp-terminee{background:var(--surface);border:1px solid var(--border)}
 .sp-key-dc{width:8px;height:8px;background:var(--text);transform:rotate(45deg);display:inline-block}
-/* Bloc de saisie sponso (fiche concert + modal timeline) */
-.sp-block{display:flex;flex-direction:column;gap:8px}
-.sp-vagues{display:flex;flex-direction:column;gap:6px}
-.sp-vague{display:flex;flex-direction:column;gap:6px;background:var(--bg);border-radius:var(--radius-sm);padding:8px 10px}
-.sp-vague-head{display:flex;align-items:center;gap:8px}
-.sp-vague-fields{display:flex;gap:6px;flex-wrap:wrap}
-.sp-vague-num{font-size:13px;font-weight:600;color:var(--text)}
+/* Champs de saisie sponso (vague depliee dans la fiche, choix du concert) */
 .sp-f{display:flex;flex-direction:column;gap:2px;flex:1;min-width:92px}
 .sp-f.wide{flex-basis:100%}
 .sp-f>span{font-size:12px;color:var(--text-2);font-weight:500;display:flex;align-items:center}
@@ -1474,13 +1468,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .sp-badge.sp-programmee{background:var(--accent-soft);color:var(--accent)}
 .sp-badge.sp-encours{background:var(--accent);color:var(--accent-ink)}
 .sp-badge.sp-terminee{background:var(--surface);color:var(--text-3);border:1px solid var(--border)}
-.sp-vague-head .sp-tr{display:inline-flex;align-items:center;gap:5px;margin:0;font-size:12px;font-weight:500;text-transform:none;letter-spacing:normal;color:var(--text-2);cursor:pointer;user-select:none;white-space:nowrap}
-.sp-vague-head .sp-tr input{width:auto;margin:0;padding:0;cursor:pointer}
 .sp-nontransmise{opacity:.45}
 .sp-add-btn{font-size:12px;font-weight:600;padding:4px 12px;border-radius:var(--radius-pill);border:1px dashed var(--border-strong);background:none;color:var(--text-3);cursor:pointer;align-self:flex-start;transition:all .15s}
 .sp-add-btn:hover{border-color:var(--accent);color:var(--accent)}
 .sp-empty{font-size:12px;color:var(--text-3);padding:2px 0}
-.sp-brief{display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border-light);padding-top:10px;margin-top:2px}
 .sp-warn{display:flex;align-items:flex-start;gap:7px;font-size:12px;line-height:1.4;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--radius-sm);padding:8px 10px}
 .sp-warn .ico{width:14px;height:14px;flex-shrink:0;margin-top:1px}
 /* Recap sponso dans la liste des concerts */
