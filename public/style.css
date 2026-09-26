@@ -376,7 +376,9 @@ button.tag.fiche-annoncer:hover{background:var(--accent-hover);border-color:var(
 .evt-barre .btn,.evt-barre .btn-link{display:inline-flex;align-items:center;gap:5px}
 .evt-barre .ico{width:14px;height:14px}
 .view-toggle.compact .view-toggle-btn,.nl-seg.petit button{padding:4px 11px;font-size:12px}
-.evt-puces{align-self:flex-start;flex-wrap:wrap;max-width:100%}
+.evt-puces{align-self:flex-start;flex-wrap:nowrap;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.evt-puces::-webkit-scrollbar{display:none}
+.evt-puces .view-toggle-btn{flex-shrink:0}
 .evt-jour{display:flex;flex-direction:column;gap:10px}
 .evt-jour-titre{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
 .evt-jour .evt-jour-titre::after{content:'';flex:1;height:1px;background:var(--border-light)}
@@ -600,7 +602,7 @@ textarea.fiche-champ{padding:0}
 .tk-task.done{opacity:.45}
 .tk-task.done .tk-task-name{text-decoration:line-through}
 .tk-task-name{font-size:13px;font-weight:500;color:var(--text);line-height:1.4}
-.tk-task-date{font-size:12px;font-weight:500}
+.tk-task-date{font-size:12px;font-weight:500;white-space:nowrap}
 .tk-task-date.late{color:var(--red)}
 .tk-task-date.today{color:var(--amber)}
 .tk-task-date.soon{color:var(--text-2)}
@@ -1778,7 +1780,7 @@ button.evp-c:hover{border-color:var(--accent-mid);background:var(--accent-soft);
 .evp-rep-l .view-toggle-btn{justify-content:center}
 .evp-rep-l .view-toggle-btn .ico{width:13px;height:13px}
 .evp-rep-pied{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 24px;border-top:1px solid var(--border-light);background:var(--surface-2)}
-.evp-rep-total{flex:1;min-width:0;font-size:13px;color:var(--text-2)}
+.evp-rep-total{flex:1 1 220px;min-width:0;font-size:13px;color:var(--text-2)}
 .evp-rep-total b{font-weight:600;color:var(--text)}
 
 /* Tableau de bord : taches des spectacles regroupees par tache */
