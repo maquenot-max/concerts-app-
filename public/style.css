@@ -171,16 +171,16 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .crow-sub{font-size:13px;color:var(--text-2);margin-top:2px}
 
 /* ── PROCESS ──────────────────────────────────────────── */
-.prow{display:grid;grid-template-columns:16px 1fr 58px 110px 110px 160px 28px;gap:6px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border-light)}
+.prow{display:grid;grid-template-columns:16px minmax(180px,1fr) 64px 170px 150px 230px 28px;gap:6px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border-light)}
 .prow:last-child{border-bottom:none}
 .prow input[type=text],.prow input[type=number]{padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--surface);outline:none;transition:border-color .15s}
 .prow input:focus{border-color:var(--text-3)}
 .prow input[type=text]{width:100%}
-.prow input[type=number]{width:58px}
+.prow input[type=number]{width:64px}
 .prow select{padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;width:100%;background:var(--surface);outline:none}
 .drag{color:var(--border-strong);cursor:grab;font-size:13px;user-select:none;display:inline-flex;align-items:center}
 .drag:active{cursor:grabbing}
-.process-header{display:grid;grid-template-columns:16px 1fr 58px 110px 110px 160px 28px;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:2px}
+.process-header{display:grid;grid-template-columns:16px minmax(180px,1fr) 64px 170px 150px 230px 28px;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:2px}
 .process-header span{font-size:12px;color:var(--text-3);font-weight:500}
 
 /* ── GROUP TITLES ─────────────────────────────────────── */
@@ -588,7 +588,7 @@ textarea.fiche-champ{padding:0}
 
 /* ── GESTIONNAIRE DE TACHES ──────────────────────────── */
 .tk-board{display:flex;gap:16px;align-items:flex-start;overflow-x:auto;padding-bottom:1rem}
-.tk-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);min-width:240px;width:240px;flex-shrink:0;box-shadow:var(--shadow)}
+.tk-col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);flex:1 1 0;min-width:240px;max-width:440px;box-shadow:var(--shadow)}
 .tk-tasks{padding:0 8px 6px;display:flex;flex-direction:column;gap:0;min-height:40px}
 .tk-task{background:transparent;border-bottom:1px solid var(--border-light);padding:11px 6px;cursor:default;transition:background .15s;display:flex;gap:8px;align-items:flex-start}
 .tk-task:last-child{border-bottom:none}
@@ -606,12 +606,13 @@ textarea.fiche-champ{padding:0}
 .tk-task-date.soon{color:var(--text-2)}
 .tk-task-date.future{color:var(--text-3)}
 /* Ligne meta d'une carte : date + priorite a gauche, actions (survol) a droite */
-.tk-task-meta{display:flex;align-items:center;gap:10px;margin-top:2px;min-height:22px;flex-wrap:wrap}
+.tk-task-meta{display:flex;align-items:flex-start;gap:10px;margin-top:2px;min-height:22px}
+.tk-task-infos{display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap;flex:1;min-width:0;min-height:22px}
 .tk-task-prio{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:var(--text-2)}
 .tk-task-prio::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0}
 .tk-prio-high::before{background:var(--red)}
 .tk-prio-low::before{background:var(--green)}
-.tk-task-actions{display:flex;gap:2px;margin-left:auto;opacity:0;transition:opacity .15s}
+.tk-task-actions{display:flex;gap:2px;margin-left:auto;flex-shrink:0;opacity:0;transition:opacity .15s}
 .tk-task:hover .tk-task-actions,.tk-task:focus-within .tk-task-actions{opacity:1}
 .tk-task-btn{font-size:12px;padding:2px 6px;border-radius:var(--radius-xs);border:none;background:none;cursor:pointer;color:var(--text-3);transition:all .15s;line-height:1.3}
 .tk-task-btn:hover{background:var(--surface);color:var(--text)}
@@ -1128,6 +1129,10 @@ button.tag:hover,a.tag:hover{border-color:var(--border-strong);color:var(--text)
 .crow-grid{display:grid;grid-template-columns:320px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 84px 150px 150px 28px;gap:16px;align-items:center;padding:12px 20px;min-height:64px}
 .crow-cols{min-height:0;padding:9px 20px;background:var(--surface-2);border-bottom:1px solid var(--border-light);font-size:12px;font-weight:500;color:var(--text-3);cursor:default}
 .crow-cols:hover{background:var(--surface-2)}
+/* Intertitre de mois (liste des concerts, concerts passes) */
+.crow-mois{padding:18px 20px 6px;font-size:12px;font-weight:600;color:var(--text-3);border-bottom:1px solid var(--border-light)}
+/* Texte d'une cellule : deux lignes au plus, le reste en infobulle */
+.crow-cell-txt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .crow-info{display:flex;flex-direction:column;gap:2px;min-width:0}
 .crow-info .crow-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .crow-info .tag{align-self:flex-start;margin-top:4px}
@@ -1181,6 +1186,27 @@ button.tag:hover,a.tag:hover{border-color:var(--border-strong);color:var(--text)
 .cal-ev.evt .cal-art{color:var(--accent)}
 .cal-ev-lieu{font-size:12px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .cal-more{font-size:12px;color:var(--text-3);padding:0 6px}
+/* Couches du calendrier (annonces, sponso, posts RS), a cocher dans l'en-tete */
+.cal-tete{flex-wrap:wrap;gap:10px}
+.cal-couches{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.cal-ev .ico{width:12px;height:12px;vertical-align:-2px;margin-right:4px;color:var(--text-3)}
+.cal-ev.cal-annonce{background:var(--amber-bg)}
+.cal-ev.cal-annonce .ico{color:var(--amber)}
+.cal-ev.cal-sponso,.cal-ev.cal-post{background:var(--surface);box-shadow:inset 0 0 0 1px var(--border)}
+.cal-ev.cal-sponso:hover,.cal-ev.cal-post:hover{background:var(--accent-soft)}
+.cal-sp-dot{display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--accent-mid);margin-right:5px}
+/* Sur ordinateur, les elements sont dans les cases ; points et liste du jour
+   ne servent que sur telephone. */
+.cal-points,.cal-jour{display:none}
+.cal-point{width:6px;height:6px;border-radius:50%;background:var(--text-3)}
+.cal-point.cal-evt{background:var(--accent)}
+.cal-point.cal-annonce{background:var(--amber)}
+.cal-point.cal-sponso{background:var(--accent-mid)}
+.cal-point.cal-post{background:var(--border-strong)}
+.cal-jour-titre{font-size:13px;font-weight:600;margin:6px 0 8px}
+.cal-jour .cal-ev{padding:8px 10px;margin-bottom:6px}
+.cal-jour .cal-art{font-size:13px !important}
+.cal-jour-vide{font-size:13px;color:var(--text-3)}
 .is-cancelled{opacity:.5}
 .cancel-badge{display:inline-block;font-size:12px;font-weight:700;color:var(--text-2);background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:1px 7px;margin-left:6px;text-transform:uppercase;letter-spacing:.03em;vertical-align:middle}
 
@@ -1318,6 +1344,16 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
   .search-field,.search-field input{width:100%}
   /* Liste des concerts en cartes : l'essentiel visible, le reste dans la fiche. */
   .crow-cols{display:none}
+  .crow-mois{padding:16px 16px 6px}
+  /* Calendrier : des points dans les cases, la liste du jour touche dessous */
+  .cal-wrap{padding:10px 10px 14px}
+  .cal-grid{gap:4px}
+  .cal-cell{min-height:52px;padding:4px;gap:4px;cursor:pointer}
+  .cal-cell .cal-ev,.cal-cell .cal-more{display:none}
+  .cal-cell.choisi{box-shadow:inset 0 0 0 2px var(--accent-mid)}
+  .cal-points{display:flex;flex-wrap:wrap;gap:3px}
+  .cal-jour{display:block;padding-top:6px}
+  .cal-couches{margin-left:0}
   .crow-grid{grid-template-columns:1fr auto;gap:6px 12px;padding:14px 16px;min-height:0}
   .crow-grid .crow-info{grid-column:1/-1}
   .crow-grid .crow-cell:nth-child(2),.crow-grid .crow-cell:nth-child(3),.crow-grid .crow-cell:nth-child(4),.crow-grid .crow-cell:nth-child(5),.crow-grid .crow-chevron{display:none}
@@ -1366,10 +1402,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
   .rs-chips:empty{display:none}
   .rs-add-day-btn{margin-left:auto}
   /* Periode sponso sur sa propre ligne, libelle flexible. */
-  .sp-period{flex:1 1 100%;margin-left:0}
+  .sp-period,.sp-scroll,.sp-card .sp-legend{display:none}
+  .sp-card .sp-tel{display:block}
   .sp-period .month-nav-label{flex:1;min-width:0;font-size:13px}
   .process-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .process-header,.prow{min-width:700px}
+  .process-header,.prow{min-width:900px}
 }
 
 
@@ -1464,7 +1501,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .sp-chip{display:inline-flex;align-items:center;height:22px;font-size:12px;font-weight:500;padding:0 9px;border-radius:var(--radius-pill);border:1px dashed var(--border-strong);background:none;color:var(--text-3);cursor:pointer;transition:all .15s;font-family:inherit}
 .sp-chip:hover{border-color:var(--accent);color:var(--accent)}
 .sp-none{padding:2.5rem 1rem;text-align:center;font-size:13px;color:var(--text-3)}
-.sp-legend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 20px;border-top:1px solid var(--border-light)}
+.sp-legend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 20px;border-bottom:1px solid var(--border-light)}
+/* Liste des vagues, a la place de la frise sur telephone */
+.sp-tel{display:none}
+.sp-tel-concert{display:flex;flex-direction:column;gap:6px;width:100%;padding:12px 16px;border:0;border-bottom:1px solid var(--border-light);background:none;font:inherit;text-align:left;color:inherit;cursor:pointer}
+.sp-tel-tete{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.sp-tel-vague{display:grid;grid-template-columns:28px minmax(0,1fr) auto auto;gap:8px;align-items:center;font-size:13px}
+.sp-tel-vague .spf-dates{color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sp-legend span{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-3)}
 .sp-key{width:11px;height:11px;border-radius:3px;display:inline-block}
 .sp-key.sp-encours{background:var(--accent)}

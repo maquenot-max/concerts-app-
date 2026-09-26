@@ -109,7 +109,7 @@
           <button class="btn" onclick="toggleFiltersPanel(event,'kfilters-panel')">Filtres<span class="filters-badge" id="kfilters-badge" style="display:none"></span></button>
           <div class="filters-panel" id="kfilters-panel" style="display:none">
             <select id="fville" onchange="renderKanban()"><option value="">Toutes les villes</option></select>
-            <select id="fperiode" onchange="renderKanban()"><option value="">Toutes les périodes</option></select>
+            <select id="fperiode" onchange="renderKanban()"><option value="">Toutes les années</option></select>
             <select id="fcat" onchange="renderKanban()" title="Affiche les concerts ayant une tâche urgente ou en retard dans cette catégorie"><option value="">Toutes les catégories</option></select>
             <select id="fventes" onchange="window._vf=this.value===''?null:parseInt(this.value);renderKanban()"><option value="">Toutes les ventes</option></select>
           </div>
@@ -129,7 +129,7 @@
           <button class="btn" onclick="toggleFiltersPanel(event,'cfilters-panel')">Filtres<span class="filters-badge" id="cfilters-badge" style="display:none"></span></button>
           <div class="filters-panel" id="cfilters-panel" style="display:none">
             <select id="cville" onchange="renderConcerts()"><option value="">Toutes les villes</option></select>
-            <select id="cperiode" onchange="renderConcerts()"><option value="">Toutes les périodes</option></select>
+            <select id="cperiode" onchange="renderConcerts()"><option value="">Toutes les années</option></select>
             <select id="ccat" onchange="renderConcerts()" title="Affiche les concerts ayant une tâche urgente ou en retard dans cette catégorie"><option value="">Toutes les catégories</option></select>
           </div>
         </div>
@@ -171,7 +171,7 @@
           <button class="btn" onclick="toggleFiltersPanel(event,'pfilters-panel')">Filtres<span class="filters-badge" id="pfilters-badge" style="display:none"></span></button>
           <div class="filters-panel" id="pfilters-panel" style="display:none">
             <select id="pastville" onchange="renderPastConcerts()"><option value="">Toutes les villes</option></select>
-            <select id="pastperiode" onchange="renderPastConcerts()"><option value="">Toutes les périodes</option></select>
+            <select id="pastperiode" onchange="renderPastConcerts()"><option value="">Toutes les années</option></select>
             <select id="pastcat" onchange="renderPastConcerts()" title="Affiche les concerts ayant une tâche urgente ou en retard dans cette catégorie"><option value="">Toutes les catégories</option></select>
           </div>
         </div>
@@ -190,7 +190,7 @@
         </div>
         <div class="process-table-scroll">
           <div class="process-header">
-            <span></span><span>Tâche</span><span>Jours</span><span>Référence</span><span>Catégorie</span><span>Prérequis</span><span></span>
+            <span></span><span>Tâche</span><span>Jours</span><span>Par rapport à</span><span>Catégorie</span><span>Prérequis</span><span></span>
           </div>
           <div id="plist"></div>
         </div>
@@ -3792,12 +3792,12 @@ function updateFilters(){
   var catOpts=Object.keys(CATS).map(function(k){return {value:k,label:CATS[k].label};});
   fillFilterSelect(document.getElementById('fville'),villeOpts,'Toutes les villes');
   fillFilterSelect(document.getElementById('cville'),villeOpts,'Toutes les villes');
-  fillFilterSelect(document.getElementById('fperiode'),periodeOpts,'Toutes les périodes');
+  fillFilterSelect(document.getElementById('fperiode'),periodeOpts,'Toutes les années');
   fillFilterSelect(document.getElementById('fcat'),catOpts,'Toutes les catégories');
-  fillFilterSelect(document.getElementById('cperiode'),periodeOpts,'Toutes les périodes');
+  fillFilterSelect(document.getElementById('cperiode'),periodeOpts,'Toutes les années');
   fillFilterSelect(document.getElementById('ccat'),catOpts,'Toutes les catégories');
   fillFilterSelect(document.getElementById('pastville'),villeOpts,'Toutes les villes');
-  fillFilterSelect(document.getElementById('pastperiode'),periodeOpts,'Toutes les périodes');
+  fillFilterSelect(document.getElementById('pastperiode'),periodeOpts,'Toutes les années');
   fillFilterSelect(document.getElementById('pastcat'),catOpts,'Toutes les catégories');
 }
 // Etats vides : proposer l'action utile (retirer les filtres, ou creer un concert)
@@ -4448,6 +4448,13 @@ function nbConcertsTxt(l){
   return [n||!e?n+' concert'+(n>1?'s':''):'',e?evtPluriel(e,'événement'):''].filter(Boolean).join(' · ');
 }
 // Date d'une ligne de liste : « 12 → 15 nov. 2026 » pour un evenement.
+// « Octobre 2026 » : intertitre de la liste des concerts.
+function moisDe(iso){
+  if(!iso)return '';
+  var d=new Date(String(iso).slice(0,10)+'T00:00:00');if(isNaN(d.getTime()))return '';
+  var t=d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  return t.charAt(0).toUpperCase()+t.slice(1);
+}
 function concertDateTxt(c){
   if(estEvt(c))return evtPlage(c);
   return c.dc?dateCourte(c.dc):'';
@@ -5193,11 +5200,17 @@ function ficheApercuSpHtml(s,g){
   var p=s.spectacle,e=s.evenement,pct=g.pct,v=evtVentes(p),ub=safeUrl(p.billet);
   var prio=g.late.map(function(t){return ficheTacheHtml(s,t,'late',true);}).join('')
     +g.soon.map(function(t){return ficheTacheHtml(s,t,'soon',true);}).join('');
+  // Evenement pas encore reparti : le spectacle n'a aucune tache, ce n'est pas
+  // pour autant « à jour » (la tuile l'affichait en vert, 0 / 0).
+  var aChoisir=!g.total&&!evtAReparti(e);
   if(!prio){
     var proch=ficheProchaine(s,g);
-    prio='<div class="fa-vide">'+icon('circle-check')+(proch?'Rien d\'urgent. Prochaine tâche : '+esc(proch)+'.':g.total>g.done.length?'Rien d\'urgent.':g.total?'Tout est fait.':'Aucune tâche pour ce spectacle.')+'</div>';
+    prio=aChoisir?'<div class="fa-vide fa-note">'+icon('list')+'<span>Les tâches de chaque spectacle ne sont pas encore choisies.</span><button type="button" class="btn-link" data-ap="repartir">Choisir</button></div>'
+      :'<div class="fa-vide">'+icon('circle-check')+(proch?'Rien d\'urgent. Prochaine tâche : '+esc(proch)+'.':g.total>g.done.length?'Rien d\'urgent.':g.total?'Tout est fait.':'Aucune tâche pour ce spectacle.')+'</div>';
   }
-  var planSous=g.late.length?'<span class="fa-s late">'+g.late.length+' en retard</span>'
+  var planSous=aChoisir?'<span class="fa-s">Tâches à choisir</span>'
+    :!g.total?'<span class="fa-s">Aucune tâche</span>'
+    :g.late.length?'<span class="fa-s late">'+g.late.length+' en retard</span>'
     :g.soon.length?'<span class="fa-s soon">'+g.soon.length+' cette semaine</span>'
     :'<span class="fa-s ok">À jour</span>';
   var memeJour=evtTrie(evtProg(e)).filter(function(x){return x.id!==p.id&&x.dc===p.dc&&!evtApart(x);});
@@ -5207,7 +5220,7 @@ function ficheApercuSpHtml(s,g){
     +'</section>'
     +'<div class="fa-tuiles">'
       +'<button type="button" class="fa-tuile" onclick="ficheOnglet(\'plan\')"><span class="fa-l">Plan</span>'
-        +'<span class="fa-v">'+g.done.length+'<small> / '+g.total+'</small></span>'
+        +'<span class="fa-v">'+(g.total?g.done.length+'<small> / '+g.total+'</small>':'—')+'</span>'
         +'<span class="fiche-jauge" aria-hidden="true"><i style="width:'+pct+'%"></i></span>'+planSous+'</button>'
       +'<button type="button" class="fa-tuile ventes-'+v+'" onclick="ficheVentes()" title="Statut des ventes : cliquer pour changer"><span class="fa-l">Ventes</span>'
         +'<span class="fa-v">'+FICHE_VENTES_COURT[v]+'</span>'
@@ -6035,6 +6048,22 @@ function updTask(id,field,val){
     if(field==='cat')renderProcess();
   }
 }
+// Ecart d'une etape : un nombre de jours et un sens, plutot qu'un nombre signe
+// et une reference (26/09). « -7 J après annonce » voulait dire 7 jours AVANT
+// l'annonce, et une etape J+1 apres le concert (report comm) s'affichait
+// « 1 J avant concert ». Les donnees ne changent pas : t.jours signe, t.ref.
+var ETAPE_SENS=[{v:'annonce-avant',l:'j avant l\'annonce'},{v:'annonce-apres',l:'j après l\'annonce'},{v:'concert-avant',l:'j avant le concert'},{v:'concert-apres',l:'j après le concert'}];
+function sensEtape(t){return (t.ref==='annonce'?'annonce':'concert')+((+t.jours||0)<0?'-avant':'-apres');}
+function updTaskEcart(id,champ,val){
+  var t=process.find(function(p){return p.id===id;});if(!t)return;
+  var n=Math.abs(parseInt(t.jours,10)||0),sens=sensEtape(t);
+  if(champ==='n')n=Math.abs(parseInt(val,10)||0);else sens=val;
+  var p=sens.split('-'),refAvant=t.ref;
+  t.ref=p[0];t.jours=p[1]==='avant'&&n?-n:n;
+  scheduleSave('process');
+  // Changement de reference : l'etape change de groupe.
+  if(champ==='sens'||t.ref!==refAvant)renderProcess();
+}
 function delTask(id){process=process.filter(function(p){return p.id!==id;});scheduleSave('process');renderProcess();}
 // Ligne fine sous les widgets : prochain concert et posts du jour.
 function renderDashLine(today){
@@ -6167,6 +6196,8 @@ function renderConcerts(){
   // Meme regle que le widget du tableau de bord (annonceEnAttente) : a filtres
   // egaux, les deux compteurs affichent desormais le meme nombre.
   var aVenir=liste.filter(annonceEnAttente).length;
+  // Un intertitre par mois : la liste compte une soixantaine de lignes.
+  var moisPrecedent=null;
 
   // Une grille par ligne, un seul en-tete de colonnes : les cellules ne
   // repetent plus leur libelle, une cellule vide n'affiche son invitation
@@ -6177,6 +6208,8 @@ function renderConcerts(){
     +'</div>'
     +'<div class="crow-grid crow-cols"><span>Concert</span><span>Médias</span><span>Jeu concours</span><span>Notes</span><span>Budget</span><span>Sponso</span><span>Ventes</span><span></span></div>'
     +liste.map(function(c){
+      var mois=moisDe(c.dc),sep=mois!==moisPrecedent?'<div class="crow-mois">'+esc(mois||'Sans date')+'</div>':'';
+      moisPrecedent=mois;
       var daDate=annonceDate(c),pending=annonceEnAttente(c);
       var ds=concertDateTxt(c),evt=estEvt(c);
       var daFmt=daDate?dateCourte(daDate):'';
@@ -6197,6 +6230,10 @@ function renderConcerts(){
       var flags=(skipSp?'<button class="tag tag-neutral on" onclick="event.stopPropagation();toggleSkipFromList(\''+escJs(c.id)+'\',\'sp\')" title="Sponso gérée par la prod : cliquer pour retirer">'+icon('circle-check')+' Sponso prod</button>':'')
         +(skipCol?'<button class="tag tag-neutral on" onclick="event.stopPropagation();toggleSkipFromList(\''+escJs(c.id)+'\',\'col\')" title="Pas d\'affiche disponible : cliquer pour retirer">'+icon('circle-check')+' Pas d\'affiche</button>':'');
 
+      // Deux lignes au plus dans la liste (une note contenant une adresse web
+      // etirait sa ligne sur une dizaine de lignes) ; le texte entier est en
+      // infobulle, dans la fiche et dans le champ quand on le modifie.
+      function texteCourt(v){return v?'<span class="crow-cell-txt" title="'+esc(v)+'">'+esc(v)+'</span>':'';}
       function cell(field,label,valueHtml){
         return '<div class="crow-cell" onclick="startCellEdit(event,\''+escJs(c.id)+'\',\''+escJs(field)+'\')">'
           +(valueHtml||'<span class="crow-cell-hint">+ '+label+'</span>')+'</div>';
@@ -6217,7 +6254,7 @@ function renderConcerts(){
           :'<span class="crow-cell-hint">+ Sponso</span>')
         +'</div>';
 
-      return '<div class="crow crow-grid'+(c.annule?' is-cancelled':'')+(c.medias||c.jeux||c.notes?'':' crow-sans-texte')+'" onclick="openFiche(\''+escJs(c.id)+'\')">'
+      return sep+'<div class="crow crow-grid'+(c.annule?' is-cancelled':'')+(c.medias||c.jeux||c.notes?'':' crow-sans-texte')+'" onclick="openFiche(\''+escJs(c.id)+'\')">'
         +'<div class="crow-info">'
         +(evt?'<span class="crow-nom"><span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>'+evtTagHtml()+'</span>'
           :'<span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>')
@@ -6225,9 +6262,9 @@ function renderConcerts(){
         +annonce
         +(flags?'<div class="crow-flags">'+flags+'</div>':'')
         +'</div>'
-        +cell('medias','Médias',c.medias?esc(c.medias):'')
-        +cell('jeux','Jeu concours',c.jeux?esc(c.jeux):'')
-        +cell('notes','Notes',c.notes?esc(c.notes):'')
+        +cell('medias','Médias',texteCourt(c.medias))
+        +cell('jeux','Jeu concours',texteCourt(c.jeux))
+        +cell('notes','Notes',texteCourt(c.notes))
         +cell('budget','Budget',budHtml)
         +spCell
         +'<div>'+(evt?evtCompletsHtml(c):ventesHtml(c,'toggleVentes(event,\''+escJs(c.id)+'\')'))+'</div>'
@@ -6264,70 +6301,101 @@ var calCurrentMonth=new Date();calCurrentMonth.setDate(1);
 function calPrevMonth(){calCurrentMonth.setMonth(calCurrentMonth.getMonth()-1);renderConcerts();}
 function calNextMonth(){calCurrentMonth.setMonth(calCurrentMonth.getMonth()+1);renderConcerts();}
 function calToday(){calCurrentMonth=new Date();calCurrentMonth.setDate(1);renderConcerts();}
-function renderConcertsCalendar(liste,el){
-  var y=calCurrentMonth.getFullYear(),m=calCurrentMonth.getMonth();
-  var byDay={};
+// Calendrier du mois. Les concerts, et sur demande (cases a cocher, retenues
+// sur l'appareil) trois couches qui en font le planning de la campagne :
+// annonces (date d'annonce), debuts des vagues de sponso, posts RS (hors posts
+// automatiques, deja donnes par les annonces). Sur telephone, une case ne
+// montre que des points : la toucher affiche ses elements sous la grille (les
+// noms, coupes a trois lettres, etaient illisibles).
+var calCouches=(function(){try{var o=JSON.parse(localStorage.getItem('pp_cal_couches')||'{}');return {annonces:!!o.annonces,sponso:!!o.sponso,posts:!!o.posts};}catch(e){return {annonces:false,sponso:false,posts:false};}})();
+var calJourChoisi=null;
+function calCouche(k,on){calCouches[k]=!!on;try{localStorage.setItem('pp_cal_couches',JSON.stringify(calCouches));}catch(e){}renderConcerts();}
+function calChoisirJour(d){calJourChoisi=d;renderConcerts();}
+function calElements(liste,y,m){
+  var parJour={};
+  function dansLeMois(iso){if(!iso)return 0;var d=new Date(String(iso).slice(0,10)+'T00:00:00');return !isNaN(d.getTime())&&d.getFullYear()===y&&d.getMonth()===m?d.getDate():0;}
+  function ajout(j,x){if(j)(parJour[j]=parJour[j]||[]).push(x);}
   liste.forEach(function(c){
     if(!c.dc)return;
     // Un evenement se montre sur chacun de ses jours, une seule fois par
     // jour, avec son nombre de spectacles (plutot que 4 ou 5 noms par case).
     if(estEvt(c)){
       evtJours(c).forEach(function(j){
-        var dj=new Date(j+'T00:00:00');
-        if(dj.getFullYear()!==y||dj.getMonth()!==m)return;
-        (byDay[dj.getDate()]=byDay[dj.getDate()]||[]).push({c:c,jour:j});
+        var n=evtParJour(evtProg(c),j).length;
+        ajout(dansLeMois(j),{type:'evt',c:c,titre:c.art,sous:n?evtPluriel(n,'spectacle'):(lieuTexte(c)||'Événement'),act:{fiche:c.id,onglet:'programme'}});
       });
-      return;
-    }
-    var d=new Date(c.dc);
-    if(d.getFullYear()!==y||d.getMonth()!==m)return;
-    var key=d.getDate();
-    if(!byDay[key])byDay[key]=[];
-    byDay[key].push({c:c});
+    } else ajout(dansLeMois(c.dc),{type:'concert',c:c,titre:c.art,sous:lieuTexte(c),act:{fiche:c.id}});
+    if(calCouches.annonces&&c.da)ajout(dansLeMois(c.da),{type:'annonce',c:c,titre:c.art,sous:'Annonce'+(lieuTexte(c)?' · '+lieuTexte(c):''),act:{fiche:c.id}});
+    if(calCouches.sponso)spVaguesTriees(c).forEach(function(v,i){
+      ajout(dansLeMois(v.debut),{type:'sponso',c:c,titre:c.art,sous:'Sponso V'+(i+1)+(v.budget?' · '+spEuro(v.budget):'')+(v.fin?' · jusqu\'au '+dateCourte(v.fin):''),act:{sponso:c.id,vague:v.id}});
+    });
   });
+  if(calCouches.posts){
+    var ids={};liste.forEach(function(c){ids[c.id]=1;});
+    var filtre=liste.length!==concerts.filter(function(c){return !c.supprime;}).length;
+    rsPosts.forEach(function(p){
+      if(p.autoRef)return;
+      var cid=p.concertId;
+      if(cid?!ids[cid]:filtre)return;
+      var t=RS_TYPES[p.type]||RS_TYPES.autre,fmtLbl=p.format==='story'?'Story':p.format==='tirage'?'Tirage':'Post';
+      var plans=rsPlanningsDe(p).map(function(k){return rsPlanning(k).court;}).join(' + ');
+      ajout(dansLeMois(p.date),{type:'post',titre:rsResolveConcertLabel(p)||p.note||t.label,sous:fmtLbl+' · '+t.label+' · '+plans,act:{rs:p.proj}});
+    });
+  }
+  return parJour;
+}
+function calElementHtml(x){
+  var ico={annonce:icon('megaphone'),sponso:'<i class="cal-sp-dot" aria-hidden="true"></i>',post:icon('smartphone')}[x.type]||'';
+  var a=x.act,clic=a.sponso?'spOpenConcert(\''+escJs(a.sponso)+'\',\''+escJs(a.vague)+'\')'
+    :a.rs?'showTab(\'rs\');rsSetProj(\''+escJs(a.rs)+'\')'
+    :'openFiche(\''+escJs(a.fiche)+'\',\''+escJs(a.onglet||'')+'\')';
+  return '<div class="cal-ev cal-'+esc(x.type)+(x.c&&x.c.annule?' is-cancelled':'')+'" onclick="event.stopPropagation();'+clic+'" title="'+esc(x.titre+(x.sous?' · '+x.sous:''))+'">'
+    +'<div class="cal-art">'+ico+esc(x.titre)+(x.c?cancelBadge(x.c):'')+'</div>'
+    +(x.sous?'<div class="cal-ev-lieu">'+esc(x.sous)+'</div>':'')
+    +'</div>';
+}
+function renderConcertsCalendar(liste,el){
+  var y=calCurrentMonth.getFullYear(),m=calCurrentMonth.getMonth();
+  var parJour=calElements(liste,y,m);
   var firstDow=(new Date(y,m,1).getDay()+6)%7;
   var nbDays=new Date(y,m+1,0).getDate();
   var todayD=new Date();todayD.setHours(0,0,0,0);
+  var ceMois=todayD.getFullYear()===y&&todayD.getMonth()===m;
+  if(!calJourChoisi||calJourChoisi.getFullYear()!==y||calJourChoisi.getMonth()!==m)calJourChoisi=new Date(y,m,ceMois?todayD.getDate():1);
+  var choisi=calJourChoisi.getDate();
   var monthLabel=calCurrentMonth.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
   monthLabel=monthLabel.charAt(0).toUpperCase()+monthLabel.slice(1);
   var cells='';
   for(var i=0;i<firstDow;i++)cells+='<div class="cal-cell empty"></div>';
   for(var day=1;day<=nbDays;day++){
-    var evs=byDay[day]||[];
-    var isToday=todayD.getFullYear()===y&&todayD.getMonth()===m&&todayD.getDate()===day;
-    cells+='<div class="cal-cell'+(isToday?' today':'')+'"><div class="cal-day">'+day+'</div>'
-      +evs.slice(0,3).map(function(x){
-        var c=x.c;
-        if(x.jour){
-          var n=evtParJour(evtProg(c),x.jour).length,sous=n?evtPluriel(n,'spectacle'):(lieuTexte(c)||'Événement');
-          return '<div class="cal-ev evt'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+escJs(c.id)+'\',\'programme\')" title="'+esc(c.art+' · '+sous)+'">'
-            +'<div class="cal-art">'+esc(c.art)+cancelBadge(c)+'</div>'
-            +'<div class="cal-ev-lieu">'+esc(sous)+'</div>'
-            +'</div>';
-        }
-        var lieu=lieuTexte(c);
-        return '<div class="cal-ev'+(c.annule?' is-cancelled':'')+'" onclick="openFiche(\''+escJs(c.id)+'\')" title="'+esc(c.art)+(lieu?' - '+esc(lieu):'')+'">'
-          +'<div class="cal-art">'+esc(c.art)+cancelBadge(c)+'</div>'
-          +(lieu?'<div class="cal-ev-lieu">'+esc(lieu)+'</div>':'')
-          +'</div>';
-      }).join('')
+    var evs=parJour[day]||[];
+    var isToday=ceMois&&todayD.getDate()===day;
+    cells+='<div class="cal-cell'+(isToday?' today':'')+(day===choisi?' choisi':'')+(evs.length?' plein':'')+'" onclick="calChoisirJour(new Date('+y+','+m+','+day+'))"><div class="cal-day">'+day+'</div>'
+      +evs.slice(0,3).map(calElementHtml).join('')
       +(evs.length>3?'<div class="cal-more">+'+(evs.length-3)+' autre'+(evs.length-3>1?'s':'')+'</div>':'')
+      +'<div class="cal-points" aria-hidden="true">'+evs.slice(0,6).map(function(x){return '<i class="cal-point cal-'+esc(x.type)+'"></i>';}).join('')+'</div>'
       +'</div>';
   }
   var totalCells=firstDow+nbDays;
   var trailing=(7-(totalCells%7))%7;
   for(var j=0;j<trailing;j++)cells+='<div class="cal-cell empty"></div>';
   var jours=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  var duJour=parJour[choisi]||[];
+  function couche(k,lbl){return '<label class="hideok-toggle"><input type="checkbox"'+(calCouches[k]?' checked':'')+' onchange="calCouche(\''+escJs(k)+'\',this.checked)"> '+lbl+'</label>';}
   el.innerHTML='<div class="card list-card">'
-    +'<div class="list-head"><div class="month-nav">'
+    +'<div class="list-head cal-tete"><div class="month-nav">'
     +'<button class="month-nav-btn" onclick="calPrevMonth()" aria-label="Mois précédent">'+icon('chevron-left')+'</button>'
     +'<span class="month-nav-label">'+monthLabel+'</span>'
     +'<button class="month-nav-btn" onclick="calNextMonth()" aria-label="Mois suivant">'+icon('chevron-right')+'</button>'
     +'<button class="btn btn-sm" onclick="calToday()">Aujourd\'hui</button>'
-    +'</div></div>'
+    +'</div>'
+    +'<div class="cal-couches">'+couche('annonces','Annonces')+couche('sponso','Sponso')+couche('posts','Posts RS')+'</div>'
+    +'</div>'
     +'<div class="cal-wrap">'
     +'<div class="cal-grid">'+jours.map(function(j){return '<div class="cal-dow">'+j+'</div>';}).join('')+'</div>'
     +'<div class="cal-grid">'+cells+'</div>'
+    +'<div class="cal-jour"><div class="cal-jour-titre">'+esc(evtCap(calJourChoisi.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})))+'</div>'
+      +(duJour.length?duJour.map(calElementHtml).join(''):'<div class="cal-jour-vide">Rien ce jour-là.</div>')+'</div>'
     +'</div></div>';
 }
 function renderPastConcerts(){
@@ -6347,12 +6415,14 @@ function renderPastConcerts(){
     if(!matchesCategoryFilter(c,pc))return false;
     return true;
   }).sort(function(a,b){return new Date(b.dc||0)-new Date(a.dc||0);});
+  var moisPrecedent=null;
   if(!liste.length){el.innerHTML='<div class="empty-state">Aucun concert passé pour le moment.<br><button class="btn" onclick="showTab(\'concerts\',document.getElementById(\'btn-concerts\'))">Retour aux concerts</button></div>';return;}
   el.innerHTML='<div class="card crow-list-card list-card">'
     +'<div class="list-head"><h2>'+liste.length+' concert'+(liste.length>1?'s':'')+' passé'+(liste.length>1?'s':'')+'</h2></div>'
     +liste.map(function(c){
-      var ds=concertDateTxt(c);
-      return '<div class="crow crow-simple" onclick="openFiche(\''+escJs(c.id)+'\')">'
+      var ds=concertDateTxt(c),mois=moisDe(c.dc),sep=mois!==moisPrecedent?'<div class="crow-mois">'+esc(mois||'Sans date')+'</div>':'';
+      moisPrecedent=mois;
+      return sep+'<div class="crow crow-simple" onclick="openFiche(\''+escJs(c.id)+'\')">'
         +'<div class="crow-info"><span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>'
         +'<span class="crow-sub">'+(lieuTexte(c)?esc(lieuTexte(c))+' · ':'')+ds+'</span></div>'
         +'<div class="crow-actions">'
@@ -6382,10 +6452,9 @@ function renderProcess(){
           ' ondrop="dragDrop(event,'+jsNum(t.id)+')">'+
           '<span class="drag">'+icon('grip')+'</span>'+
           '<input type="text" value="'+esc(t.nom)+'" onchange="updTask('+jsNum(t.id)+',\'nom\',this.value)">'+
-          '<input type="number" value="'+esc(t.jours)+'" onchange="updTask('+jsNum(t.id)+',\'jours\',this.value)">'+
-          '<select onchange="updTask('+jsNum(t.id)+',\'ref\',this.value)">'+
-          '<option value="concert"'+(t.ref==='concert'?' selected':'')+'>J avant concert</option>'+
-          '<option value="annonce"'+(t.ref==='annonce'?' selected':'')+'>J après annonce</option>'+
+          '<input type="number" min="0" value="'+esc(Math.abs(+t.jours||0))+'" aria-label="Nombre de jours" onchange="updTaskEcart('+jsNum(t.id)+',\'n\',this.value)">'+
+          '<select aria-label="Par rapport à" onchange="updTaskEcart('+jsNum(t.id)+',\'sens\',this.value)">'+
+          ETAPE_SENS.map(function(x){return '<option value="'+esc(x.v)+'"'+(sensEtape(t)===x.v?' selected':'')+'>'+esc(x.l)+'</option>';}).join('')+
           '</select>'+
           catSelect(t)+prereqSelect(t)+
           '<button class="dbtn" title="Supprimer" onclick="delTask('+jsNum(t.id)+')">'+icon('x')+'</button></div>';
@@ -6705,11 +6774,17 @@ function renderTaches(){
       body.appendChild(nameEl);
       // Ligne meta : date + priorite (seulement si Haute/Basse : "Normale" est
       // la valeur par defaut, l'afficher n'apporte rien) + actions au survol.
+      // Date, priorite et « Délégué » dans leur propre groupe, qui passe a la
+      // ligne si besoin : les actions restent sur la premiere ligne, a droite.
+      // Avant le 26/09, c'est elles qui passaient a la ligne, invisibles
+      // (opacite 0) mais gardant leur place : un bandeau vide sous les taches
+      // deleguees.
       var meta=document.createElement('div');meta.className='tk-task-meta';
-      if(df){var dateEl=document.createElement('span');dateEl.className='tk-task-date '+df.cls;dateEl.textContent=df.txt;meta.appendChild(dateEl);}
-      if(t.prio==='high'||t.prio==='low'){var pl=tkPrioLabel(t.prio);var prioEl=document.createElement('span');prioEl.className='tk-task-prio '+pl.cls;prioEl.textContent=pl.txt;meta.appendChild(prioEl);}
+      var infos=document.createElement('div');infos.className='tk-task-infos';meta.appendChild(infos);
+      if(df){var dateEl=document.createElement('span');dateEl.className='tk-task-date '+df.cls;dateEl.textContent=df.txt;infos.appendChild(dateEl);}
+      if(t.prio==='high'||t.prio==='low'){var pl=tkPrioLabel(t.prio);var prioEl=document.createElement('span');prioEl.className='tk-task-prio '+pl.cls;prioEl.textContent=pl.txt;infos.appendChild(prioEl);}
       // Meme etiquette que sur le tableau de bord : ce qui est delegue se voit.
-      if(t.delegue){var dl=document.createElement('span');dl.className='tag tag-accent tkw-tag';dl.innerHTML=icon('user')+' Délégué';meta.appendChild(dl);}
+      if(t.delegue){var dl=document.createElement('span');dl.className='tag tag-accent tkw-tag';dl.innerHTML=icon('user')+' Délégué';infos.appendChild(dl);}
       var actions=document.createElement('div');actions.className='tk-task-actions';
       var editBtn=document.createElement('button');editBtn.className='tk-task-btn';editBtn.innerHTML=icon('pencil');editBtn.title='Modifier';
       editBtn.addEventListener('click',function(e){e.stopPropagation();tkEditTask(t.id);});
@@ -8017,14 +8092,34 @@ function renderSponso(){
     +'<span><i class="sp-key-dc"></i>date du concert</span>'
     +'</div>';
 
+  // Sur telephone, la frise ne montrait qu'un mois a la fois : une liste des
+  // vagues de chaque concert la remplace (CSS), dans le meme filtre.
+  var villeTel=null;
+  var tel=rows.map(function(c){
+    var tot=spTotal(c),grp='';
+    if(spVue==='ville'){var vl=spVilleDe(c);if(vl!==villeTel){villeTel=vl;grp='<div class="sp-group">'+esc(vl)+'</div>';}}
+    return grp+'<button type="button" class="sp-tel-concert" onclick="spOpenConcert(\''+escJs(c.id)+'\')">'
+      +'<span class="sp-tel-tete"><span class="sp-row-art">'+esc(c.art||'Concert')+'</span>'+(tot?'<span class="sp-row-tot">'+esc(spEuro(tot))+'</span>':'')+'</span>'
+      +'<span class="sp-row-sub">'+esc([lieuTexte(c),c.dc?spFmtDate(c.dc):''].filter(Boolean).join(' · '))+'</span>'
+      +spVaguesTriees(c).map(function(v,i){
+        var st=spStatut(v),m=SP_STATUTS[st];
+        return '<span class="sp-tel-vague'+(spNonTransmise(v)?' sp-nontransmise':'')+'"><span class="spf-num">V'+(i+1)+'</span><span class="spf-dates">'+esc(spPlage(v))+'</span>'
+          +'<span class="spf-budget">'+esc(v.budget?spEuro(v.budget):'—')+'</span><span class="sp-badge '+m.cls+'">'+m.label+'</span></span>';
+      }).join('')
+      +'</button>';
+  }).join('')||'<div class="sp-none">'+(actifs.length?'Aucune sponso ne correspond à ce filtre.':'Aucune sponso pour l\'instant.')+'</div>';
+
+  // La legende avant la frise : en dessous, elle tombait hors de l'ecran des
+  // qu'une quinzaine de concerts avaient une sponso.
   wrap.innerHTML=toolbar
     +'<div class="sp-card">'
+    +legend
     +'<div class="sp-scroll">'
     +'<div class="sp-inner" style="min-width:'+largeurInner+'px">'
     +'<div class="sp-head"><div class="sp-head-info">Concert</div><div class="sp-head-track">'+headM+'</div></div>'
     +body
     +'</div></div>'
-    +legend
+    +'<div class="sp-tel">'+tel+'</div>'
     +finisHtml
     +'</div>';
 }
@@ -8457,6 +8552,12 @@ function openCmdK(){
   setTimeout(function(){inp.focus();},30);
 }
 function closeCmdK(){document.getElementById('cmdk-modal').classList.remove('open');}
+function cmdkRang(c,nq){
+  var a=cmdkNorm(c.art);
+  if(a.indexOf(nq)===0||a.indexOf(' '+nq)>=0)return 0;
+  if(a.indexOf(nq)>=0)return 1;
+  return cmdkProg(c,nq).length?2:3;
+}
 function cmdkRender(q){
   var nq=cmdkNorm(q).trim();
   var today=new Date();today.setHours(0,0,0,0);
@@ -8464,7 +8565,12 @@ function cmdkRender(q){
     if(!nq)return !c.supprime&&c.dc&&new Date(c.dc)>=today; // sans requete : les prochains concerts
     return cmdkNorm(c.art).indexOf(nq)>=0||cmdkNorm(lieuTexte(c)).indexOf(nq)>=0||cmdkProg(c,nq).length>0;
   }).sort(function(a,b){
-    // actifs d'abord (date croissante), puis passes (plus recents d'abord)
+    // Pertinence d'abord (26/09) : l'artiste qui commence par la saisie, puis
+    // celui qui la contient, puis un artiste du programme d'un evenement, et
+    // enfin le lieu. « jo » donnait EIFFEL (trouve dans « Dijon ») avant
+    // JOSMAN et JOK'AIR. A pertinence egale : actifs d'abord (date
+    // croissante), puis passes (plus recents d'abord).
+    if(nq){var ra=cmdkRang(a,nq),rb=cmdkRang(b,nq);if(ra!==rb)return ra-rb;}
     if(!!a.supprime!==!!b.supprime)return a.supprime?1:-1;
     var da=new Date(a.dc||0),db=new Date(b.dc||0);
     return a.supprime?db-da:da-db;
