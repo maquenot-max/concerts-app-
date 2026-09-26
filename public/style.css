@@ -366,76 +366,16 @@ button.tag.fiche-annoncer:hover{background:var(--accent-hover);border-color:var(
 .tag.fa-lien .ico{width:14px;height:14px;color:var(--text-3)}
 .fa-notes{font-size:13px;line-height:1.5;color:var(--text-2);white-space:pre-wrap;overflow-wrap:anywhere}
 /* ── EVENEMENT (25/09) : un festival = une fiche ; ses spectacles dans le
-   programme, en cartes par jour (une colonne par jour en fiche agrandie) ou
-   en liste modifiable sur place. Maquette : canevas « Événement — propositions ». */
-/* Cinq onglets : « Programme » (le deuxieme) a un peu plus de place (il
-   deborde a 375 px). Un spectacle n'en a que trois. */
-.fiche.est-evt .fiche-onglets{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) repeat(3,minmax(0,1fr))}
-.fiche.est-sp .fiche-onglets{grid-template-columns:repeat(3,minmax(0,1fr))}
+   menu de sa page (voir « EVENEMENT EN PLEINE PAGE »). Simplifie le 26/09 :
+   plus d'onglet Programme (cartes ou liste), un spectacle sans onglets. */
 .fiche-evt-tag{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;margin-bottom:2px;border-radius:var(--radius-pill);background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:600}
 .fiche-evt-tag .ico{width:12px;height:12px}
 .fiche.a-photo .fiche-evt-tag{background:var(--photo-verre);color:var(--photo-encre)}
-.fiche-evt-resume{font-weight:500}
 .evt-complets{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-3);white-space:nowrap}
 .tag.evt-complets{gap:6px;color:var(--text-2)}
 .evt-complets i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green)}
-.fiche-programme{display:flex;flex-direction:column;gap:14px}
-.evt-barre{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.evt-barre .btn,.evt-barre .btn-link{display:inline-flex;align-items:center;gap:5px}
-.evt-barre .ico{width:14px;height:14px}
 .view-toggle.compact .view-toggle-btn,.nl-seg.petit button{padding:4px 11px;font-size:12px}
-.evt-puces{align-self:flex-start;flex-wrap:nowrap;max-width:100%;overflow-x:auto;scrollbar-width:none}
-.evt-puces::-webkit-scrollbar{display:none}
-.evt-puces .view-toggle-btn{flex-shrink:0}
-.evt-jour{display:flex;flex-direction:column;gap:10px}
-.evt-jour-titre{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
-.evt-jour .evt-jour-titre::after{content:'';flex:1;height:1px;background:var(--border-light)}
-.evt-grille{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.evt-ajout-jour{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;margin-left:-10px}
-.evt-ajout-jour .ico{width:13px;height:13px}
-/* Carte d'un spectacle : photo 16:9 de l'artiste (la meme que la newsletter) */
-.evt-carte{min-width:0;display:flex;flex-direction:column;padding:0;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);font:inherit;text-align:left;color:var(--text);overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s}
-.evt-carte:hover{border-color:var(--border-strong);box-shadow:var(--shadow-md)}
-.evt-photo{position:relative;display:block;width:100%;aspect-ratio:16/9;background:var(--text);overflow:hidden}
-.evt-photo img{display:block;width:100%;height:100%;object-fit:cover}
-.evt-photo.vide{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:auto;margin:6px 6px 0;border:1.5px dashed var(--border-strong);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--text-3);font-size:12px;font-weight:600}
-.evt-photo.vide .ico{width:16px;height:16px}
-.evt-heure{position:absolute;top:8px;left:8px;display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:var(--radius-pill);background:rgba(255,255,255,.94);color:var(--text);font-size:12px;font-weight:600}
-.evt-photo.vide .evt-heure{top:6px;left:6px;border:1px solid var(--border);background:var(--surface)}
-.evt-complet{position:absolute;top:8px;right:8px}
-.evt-photo.vide .evt-complet{top:6px;right:6px}
-.evt-carte-corps{display:flex;flex-direction:column;gap:2px;min-width:0;padding:10px 12px 12px}
 .evt-art{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.evt-carte .evt-art{font-size:15px;line-height:1.25}
-.evt-lieu{font-size:13px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.evt-carte-pied{display:flex;align-items:center;gap:8px;margin-top:8px;min-height:22px}
-.evt-ventes{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-3);white-space:nowrap}
-.evt-billet{display:inline-flex;color:var(--text-3)}
-.evt-billet .ico{width:15px;height:15px}
-/* Fiche agrandie : une colonne par jour, comme une grille de festival */
-.evt-colonnes{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;align-items:start}
-.evt-colonne{min-width:0;display:flex;flex-direction:column;gap:8px}
-.evt-colonne .evt-jour-titre{padding-bottom:6px;border-bottom:1px solid var(--border-light)}
-.evt-colonne .evt-carte-corps{padding:8px 10px 10px}
-.evt-colonne .evt-carte .evt-art{font-size:13px}
-.evt-colonne .evt-lieu{font-size:12px}
-.evt-colonne .evt-carte-pied{margin-top:5px}
-.evt-colonne .evt-ventes{display:none}
-/* Liste : une ligne par spectacle, qui s'ouvre sur ses champs */
-.evt-liste{display:flex;flex-direction:column}
-.evt-liste-jour:first-child{padding-top:4px}
-.evt-ligne{display:grid;grid-template-columns:44px minmax(0,1fr) auto 92px 16px;align-items:center;gap:10px;width:calc(100% + 16px);padding:8px;margin:0 -8px;border:none;border-radius:var(--radius-sm);background:none;font:inherit;text-align:left;color:var(--text);cursor:pointer}
-.evt-ligne:hover,.evt-ligne.ouverte{background:var(--bg)}
-.evt-ligne-h{font-size:13px;font-weight:600}
-.evt-ligne-txt{display:flex;flex-direction:column;min-width:0}
-.evt-ligne .evt-art{font-size:13px;line-height:1.35}
-.evt-ligne .evt-lieu{font-size:12px;color:var(--text-3)}
-.evt-ligne-flags{display:flex;gap:4px}
-.evt-ligne-chev{display:inline-flex;color:var(--text-4);transition:transform .15s}
-.evt-ligne-chev .ico{width:14px;height:14px}
-.evt-ligne.ouverte .evt-ligne-chev{transform:rotate(90deg)}
-.evt-liste .evt-ajout-jour{margin-top:2px}
-.evt-edition{display:flex;flex-direction:column;gap:12px;margin:4px 0 10px;padding:14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface-2)}
 .evt-edition-l1{display:grid;grid-template-columns:minmax(0,1fr) 104px;gap:12px;align-items:end}
 .evt-edition-duo{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:12px}
 .evt-champ{display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -1406,15 +1346,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
   .fiche.wide .fiche-hero-img{left:0;width:100%;transform:none}
   .fiche-prop{grid-template-columns:118px minmax(0,1fr)}
   .fa-tuiles{gap:6px}
+  .fa-tuiles.fa-tuiles-evt{grid-template-columns:minmax(0,1fr)}
   .fa-tuile{padding:10px}
   .fiche-photo-vignette,.fiche-photo-vide{width:140px}
-  /* Programme d'un evenement : cartes plus compactes, liste sans la jauge. */
-  .evt-grille{gap:8px}
-  .evt-carte-corps{padding:8px 10px 10px}
-  .evt-carte .evt-art{font-size:14px}
-  .evt-carte .evt-ventes{display:none}
-  .evt-ligne{grid-template-columns:40px minmax(0,1fr) auto 16px}
-  .evt-ligne .evt-ventes{display:none}
   .evt-edition-l1,.evt-edition-duo{grid-template-columns:minmax(0,1fr)}
   .evt-apercu-l{grid-template-columns:52px 44px minmax(0,1fr) 64px}
   .evt-apercu-l>span:nth-child(4){display:none}
@@ -1636,7 +1570,8 @@ table.bud-lignes .w-x{width:40px}
 /* ── EVENEMENT EN PLEINE PAGE (25/09, suite) ─────────────────────────────
    La fiche d'un evenement (.pleine) prend tout l'ecran : a gauche un menu
    (l'evenement, puis ses spectacles jour par jour), a droite ce qu'on y a
-   choisi. Un spectacle (.est-sp) y a sa fiche : Apercu, Plan, Infos.
+   choisi. Un spectacle (.est-sp) y a sa fiche, sans onglets (26/09) : ses
+   taches, puis ses infos.
    Maquette validee le 25/09 : canevas « Événement pleine page — propositions ».
    Sur telephone, la page garde l'en-tete de la fiche ; le menu en devient
    l'ecran d'accueil (.vue-menu). */
@@ -1661,8 +1596,6 @@ table.bud-lignes .w-x{width:40px}
 .fiche-plan-evt .ico{width:14px;height:14px;flex-shrink:0}
 .fiche-prop-aide{flex-shrink:0;font-size:12px;color:var(--text-3);white-space:nowrap}
 .fsp-actions{margin-top:14px}
-.evt-carte.annule{opacity:.6}
-.evt-carte.annule .evt-art{text-decoration:line-through}
 
 /* Menu */
 .fm-l{display:grid;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;padding:6px 8px;border:none;border-radius:var(--radius-sm);background:none;font:inherit;text-align:left;color:var(--text);cursor:pointer}
@@ -1698,6 +1631,33 @@ table.bud-lignes .w-x{width:40px}
 .fm-tete-sous{font-size:13px;color:var(--text-2)}
 .fm-tete-puces{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 
+/* Evenement sans visuel (26/09) : pas d'emplacement 16:9 vide en tete ; le
+   visuel s'ajoute dans Infos. */
+.fiche.est-evt:not(.est-sp):not(.a-photo) .fiche-photo-ajout{display:none}
+/* Spectacle : une seule page, ses taches puis ses infos. */
+.fiche.est-sp .fiche-onglets-cadre,.fiche.pleine.est-sp .fiche-onglets-cadre{display:none}
+.fiche.est-sp #fp-plan{padding-bottom:0}
+.fiche.est-sp #fp-infos{padding-top:22px}
+.fsp-titre{margin-bottom:12px;padding-top:22px;border-top:1px solid var(--border-light)}
+
+/* Apercu de l'evenement : deux tuiles, Avancement (une ligne pour
+   l'evenement, une pour ses spectacles) et Programme. */
+.fa-tuiles-evt{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.fa-avancement{gap:10px;container-type:inline-size}
+.fa-ligne{display:grid;grid-template-columns:minmax(0,1fr) 72px 64px 112px;align-items:center;gap:12px;width:100%}
+.fa-ligne-l{font-size:13px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fa-ligne-v{font-size:15px;font-weight:600;white-space:nowrap}
+.fa-ligne-v small{font-size:12px;font-weight:500;color:var(--text-3)}
+.fa-ligne .fa-s{text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@container (max-width:420px){
+  .fa-ligne{grid-template-columns:minmax(0,1fr) auto auto;gap:10px}
+  .fa-ligne .fiche-jauge{display:none}
+}
+.fa-tuile.statique{cursor:default}
+.fa-tuile.statique:hover{border-color:var(--border)}
+.fa-manque{font-weight:600;color:var(--amber)}
+.fiche-apercu>.evt-vide{margin-bottom:24px}
+
 /* Apercu de l'evenement : ce qui presse du cote des spectacles */
 .fa-note{color:var(--text-3)}
 .fa-note .btn-link{margin-left:auto}
@@ -1709,8 +1669,6 @@ button.tag.fa-lien{cursor:pointer}
 .fiche-plan-sp{margin-top:32px;padding-top:22px;border-top:1px solid var(--border-light)}
 .evp-sec-tete{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-height:32px}
 .evp-sec-tete h3{font-size:15px;font-weight:600;letter-spacing:-.01em}
-.evp-sec-tete .view-toggle-btn{display:inline-flex;align-items:center;gap:6px}
-.evp-sec-tete .view-toggle-btn .ico{width:14px;height:14px}
 .evp-sec-aide{margin-top:2px;font-size:13px;line-height:1.5;color:var(--text-3)}
 .fiche-plan-sp .evt-vide{margin-top:10px}
 .evp-etapes{display:flex;flex-direction:column;margin-top:10px}
@@ -1752,39 +1710,6 @@ button.tag.fa-lien{cursor:pointer}
 .evp-detail-actions .ico{width:13px;height:13px}
 .evp-aide{font-size:12px;color:var(--text-3)}
 /* En tableau : les spectacles en lignes, les taches en colonnes */
-.evp-tab{margin-top:12px;border:1px solid var(--border);border-radius:var(--radius);overflow-x:auto;background:var(--surface)}
-.evp-tab table{width:100%;border-collapse:collapse;table-layout:fixed}
-.evp-tab th,.evp-tab td{border-bottom:1px solid var(--border-light)}
-.evp-tab thead th{padding:10px 3px 9px;background:var(--surface-2);border-bottom:1px solid var(--border);font-size:12px;font-weight:600;line-height:1.3;color:var(--text-2);text-align:center;vertical-align:bottom;overflow-wrap:anywhere;hyphens:auto}
-.evp-tab thead th small{display:block;margin-top:4px;font-size:12px;font-weight:500;color:var(--text-3);white-space:nowrap}
-.evp-tab thead th.evp-tab-sp{width:220px;padding-left:14px;text-align:left}
-.evp-tab th[scope=row],.evp-tab thead th.evp-tab-sp{position:sticky;left:0;z-index:1;background:var(--surface)}
-.evp-tab thead th.evp-tab-sp{background:var(--surface-2)}
-.evp-tab td{height:42px;padding:0 3px;text-align:center}
-.evp-tab th[scope=row]{padding:0;font-weight:400;text-align:left}
-.evp-tab tr.evp-tab-jour th{padding:14px 14px 6px;border-bottom:none;font-size:12px;font-weight:600;color:var(--text-2);text-align:left}
-.evp-tab-art{display:flex;align-items:center;gap:10px;width:100%;min-width:0;padding:6px 8px 6px 10px;border:none;background:none;font:inherit;text-align:left;color:var(--text);cursor:pointer}
-.evp-tab-art:hover .evt-art{color:var(--accent)}
-.evp-tab-art img,.evp-tab-vide{display:block;width:40px;aspect-ratio:16/9;flex-shrink:0;border-radius:4px;object-fit:cover;background:var(--border-light)}
-.evp-tab-vide{display:flex;align-items:center;justify-content:center;color:var(--text-4)}
-.evp-tab-vide .ico{width:13px;height:13px}
-.evp-tab-art>span:last-child{display:flex;flex-direction:column;min-width:0}
-.evp-tab-art .evt-art{font-size:13px;line-height:1.3}
-.evp-tab-art small{font-size:12px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.evp-tab tfoot th,.evp-tab tfoot td{height:38px;background:var(--surface-2);border-bottom:none;border-top:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-2)}
-.evp-tab tfoot th{padding-left:14px}
-.evp-c{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 6px;border:1px solid transparent;border-radius:6px;background:none;font:inherit;font-size:12px;font-weight:500;color:var(--text-3);white-space:nowrap}
-button.evp-c{cursor:pointer}
-button.evp-c:hover{border-color:var(--accent-mid);background:var(--accent-soft);color:var(--accent)}
-.evp-c.fait,button.evp-c.fait:hover{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.evp-c.fait .ico{width:13px;height:13px;stroke-width:3}
-.evp-c .ico{width:14px;height:14px}
-.evp-c.attente{color:var(--text-4)}
-.evp-c.retard{background:var(--red-bg);color:var(--red);font-weight:600}
-.evp-c.semaine{background:var(--amber-bg);color:var(--amber)}
-.evp-legende{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;margin-top:10px;font-size:12px;color:var(--text-3)}
-.evp-legende>span{display:inline-flex;align-items:center;gap:6px}
-.evp-legende .evp-c{min-width:20px;height:20px;padding:0 5px}
 
 /* Fenetre : repartir les taches */
 .tk-modal-box.evt-rep-box{width:640px;max-width:calc(100vw - 32px);max-height:calc(100vh - 48px);padding:0;gap:0;overflow:hidden}
@@ -1833,6 +1758,11 @@ button.evp-c:hover{border-color:var(--accent-mid);background:var(--accent-soft);
   .fiche.pleine .fiche-hero-img{inset:0;left:0;width:100%;height:100%;transform:none}
   .fiche.pleine .fiche-ident,.fiche.pleine.a-photo .fiche-ident{position:static;flex:1;min-width:0;padding:0;align-items:flex-end;gap:14px}
   .fiche.pleine .fiche-ident h2,.fiche.pleine.a-photo .fiche-ident h2{font-size:34px;color:var(--text)}
+  /* Evenement : nom plus petit ; l'etiquette « Evenement » est deja dans la
+     barre du haut. Sans visuel, les puces partent du bord. */
+  .fiche.pleine:not(.est-sp) .fiche-ident h2{font-size:28px}
+  .fiche.pleine .fiche-evt-tag{display:none}
+  .fiche.pleine:not(.est-sp):not(.a-photo) .fiche-puces{padding-left:40px}
   .fiche.pleine.a-photo .fiche-sub{color:var(--text-2)}
   .fiche.pleine.a-photo .fiche-autres{color:var(--text-3)}
   .fiche.pleine.a-photo .fiche-autre{color:var(--accent)}
@@ -1851,10 +1781,7 @@ button.evp-c:hover{border-color:var(--accent-mid);background:var(--accent-soft);
   .fiche.pleine .fiche-onglets-droite .btn{display:inline-flex;align-items:center;gap:6px}
   .fiche.pleine .fiche-panneau{padding:24px 40px 48px}
   .fiche.pleine .fiche-panneau>*{max-width:880px}
-  .fiche.pleine #fp-programme>*,.fiche.pleine #fiche-plan-sp.tableau{max-width:none}
   /* Une colonne par jour (--n, pose par le programme), sur toute la largeur. */
-  .fiche.pleine .evt-colonnes{grid-template-columns:repeat(var(--n,4),minmax(0,1fr));max-width:calc(var(--n,4) * 300px)}
-  .fiche.pleine .fa-tuiles{grid-template-columns:repeat(4,minmax(0,1fr))}
   .fiche.pleine .fiche-footer{padding:14px 40px}
   .fiche.pleine .fiche-footer .btn{flex:0 0 auto}
 }
@@ -1865,11 +1792,11 @@ button.evp-c:hover{border-color:var(--accent-mid);background:var(--accent-soft);
   .fiche.pleine .fiche-hero,.fiche.pleine .fiche-photo-ajout{width:160px}
   .fiche.pleine .fiche-ident h2,.fiche.pleine.a-photo .fiche-ident h2{font-size:28px}
   .fiche.pleine .fiche-puces{padding:10px 24px 14px 202px}
+  .fiche.pleine:not(.est-sp):not(.a-photo) .fiche-puces{padding-left:24px}
   .fiche.pleine .fiche-annule{margin:0 24px 12px}
   .fiche.pleine .fiche-onglets-cadre{padding:10px 24px}
   .fiche.pleine .fiche-panneau{padding:20px 24px 40px}
   .fiche.pleine .fiche-footer{padding:12px 24px}
-  .fiche.pleine .fa-tuiles{grid-template-columns:repeat(2,minmax(0,1fr))}
   .fiche.pleine .fm-l{grid-template-columns:40px minmax(0,1fr) auto;gap:8px}
   .fiche.pleine .fm-vis{width:40px}
   .evp-etape{grid-template-columns:20px minmax(0,1fr) 100px 16px}
@@ -1880,6 +1807,7 @@ button.evp-c:hover{border-color:var(--accent-mid);background:var(--accent-soft);
 @media (max-width:768px){
   .fiche.pleine .fiche-retour{display:inline-flex;align-items:center;gap:2px;margin-left:-6px;padding:6px 8px;font-size:13px}
   .fiche.pleine .fiche-retour .ico{width:16px;height:16px}
+  .fiche.pleine.a-photo:not(.compacte) .fiche-retour{color:var(--photo-encre)}
   .fiche.pleine.vue-menu .fiche-retour,.fiche.pleine.vue-menu .fiche-voisin{display:none}
   .fiche.pleine.vue-menu .fiche-corps{display:none}
   .fiche.pleine.vue-menu .fiche-evt-menu{display:flex;flex-direction:column;gap:1px;padding:0 8px 32px}
@@ -1894,8 +1822,6 @@ button.evp-c:hover{border-color:var(--accent-mid);background:var(--accent-soft);
   .evp-etape-prog .fiche-jauge,.evp-etape-etat{display:none}
   .evp-detail{margin-left:0}
   .evp-detail-jours{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
-  .evp-tab thead th.evp-tab-sp{width:150px}
-  .evp-tab-art img,.evp-tab-vide{display:none}
   .evp-rep-l{grid-template-columns:1fr}
   .evp-rep-l .view-toggle{justify-self:start}
   .fiche-prop-aide{white-space:normal}
