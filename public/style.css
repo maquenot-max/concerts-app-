@@ -90,12 +90,12 @@ body{font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
    passation), masques a l'impression. */
 .halos{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
 .halos i{position:absolute;display:block;border-radius:50%}
-.halos i:nth-child(1){left:-12%;top:-460px;width:980px;height:820px;background:radial-gradient(closest-side,rgba(255,128,92,.16),rgba(255,128,92,0));animation:halo1 18s ease-in-out infinite alternate}
-.halos i:nth-child(2){right:-14%;top:-480px;width:1040px;height:860px;background:radial-gradient(closest-side,rgba(139,108,255,.19),rgba(139,108,255,0));animation:halo2 23s ease-in-out infinite alternate}
-.halos i:nth-child(3){left:20%;bottom:-620px;width:1200px;height:820px;background:radial-gradient(closest-side,rgba(22,198,176,.08),rgba(22,198,176,0));animation:halo1 27s ease-in-out infinite alternate-reverse}
+.halos i:nth-child(1){left:-10%;top:-440px;width:980px;height:820px;background:radial-gradient(closest-side,rgba(255,128,92,.17),rgba(255,128,92,0));animation:halo1 16s ease-in-out infinite alternate}
+.halos i:nth-child(2){right:-12%;top:-480px;width:1040px;height:860px;background:radial-gradient(closest-side,rgba(139,108,255,.2),rgba(139,108,255,0));animation:halo2 21s ease-in-out infinite alternate}
+.halos i:nth-child(3){left:22%;bottom:-560px;width:1200px;height:800px;background:radial-gradient(closest-side,rgba(22,198,176,.08),rgba(22,198,176,0));animation:halo1 25s ease-in-out infinite alternate-reverse}
 @keyframes halo1{from{transform:translate(0,0)}to{transform:translate(140px,50px)}}
 @keyframes halo2{from{transform:translate(0,0)}to{transform:translate(-160px,70px)}}
-.grain{position:fixed;inset:0;z-index:1000;pointer-events:none;background:url(grain.png) 0 0/240px 240px;opacity:.09;mix-blend-mode:overlay}
+.grain{position:fixed;inset:0;z-index:1000;pointer-events:none;background:url(grain.png) 0 0/240px 240px;opacity:.1;mix-blend-mode:overlay}
 /* Liens : jamais soulignes par defaut (26/09). Avant, un lien <a> l'etait et
    son equivalent <button class="btn-link"> non : « Tout voir » souligne,
    « Tout le plan » non. Chaque composant donne sa couleur et son survol. */
@@ -118,20 +118,21 @@ header{
   background:rgba(9,9,12,.72);
   backdrop-filter:blur(16px) saturate(1.2);
   -webkit-backdrop-filter:blur(16px) saturate(1.2);
-  border-bottom:1px solid var(--border-light);
-  height:52px;padding:0 2rem;
-  display:flex;align-items:center;gap:1.5rem;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  height:68px;padding:0 40px;
+  display:flex;align-items:center;gap:24px;
 }
-header h1{font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--text);flex:1;min-width:0}
-.brand{display:flex;align-items:center;gap:8px}
+header h1{font-size:15px;font-weight:600;letter-spacing:-.01em;color:var(--text);flex:1;min-width:0}
+.brand{display:flex;align-items:center;gap:10px}
+.h1-suite{font-weight:400;color:var(--text-3)}
 /* Le logo (les deux etoiles de favicon_io) en masque, peint en corail :
    la marque elle-meme, sans la redessiner. */
-.brand-logo,.auth-brand-logo{display:inline-block;width:20px;height:20px;flex-shrink:0;background:var(--corail-plein);-webkit-mask:url(favicon_io/android-chrome-192x192.png) center/contain no-repeat;mask:url(favicon_io/android-chrome-192x192.png) center/contain no-repeat}
+.brand-logo,.auth-brand-logo{display:inline-block;width:22px;height:22px;flex-shrink:0;background:var(--corail-plein);-webkit-mask:url(favicon_io/android-chrome-192x192.png) center/contain no-repeat;mask:url(favicon_io/android-chrome-192x192.png) center/contain no-repeat}
 .h1-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .h1-short,.nav-short{display:none}
-.nav{display:flex;gap:2px;background:var(--verre);border:1px solid transparent;border-radius:var(--radius-pill);padding:3px}
+.nav{display:flex;gap:2px;background:var(--verre);border:1px solid transparent;border-radius:var(--radius-pill);padding:4px}
 .nav button{
-  padding:5px 14px;font-size:13px;border:1px solid transparent;background:transparent;
+  padding:8px 16px;font-size:13px;border:1px solid transparent;background:transparent;
   cursor:pointer;color:var(--text-2);border-radius:var(--radius-pill);font-weight:500;
   transition:color .2s,box-shadow .35s var(--sortie),background .2s;
 }
@@ -139,26 +140,30 @@ header h1{font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--text)
 .nav button:hover:not(.active){color:var(--text);box-shadow:var(--survol-ombre)}
 
 /* ── MAIN ─────────────────────────────────────────────── */
-main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
+main{padding:96px 40px 2rem;max-width:1600px;margin:0 auto}
 .panel{display:none}.panel.active{display:block}
 
 /* ── FILTERS ──────────────────────────────────────────── */
 /* Barre d'outils collee sous l'en-tete : un bandeau de verre (les halos du
    fond passent dessous) plutot qu'un aplat qui trancherait sur eux. */
-.filters{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;position:sticky;top:52px;z-index:15;background:rgba(9,9,12,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);padding:8px 0}
+.filters{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;position:sticky;top:68px;z-index:15;background:rgba(9,9,12,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);padding:8px 0}
 .filters input,.filters select{
   padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);
   font-size:13px;background:var(--surface);color:var(--text);
   box-shadow:var(--shadow);outline:none;transition:border-color .15s;
 }
 .filters input{width:200px}
-/* Tout ce qui s'aligne dans une barre d'outils a la meme hauteur, 36 px
-   (le selecteur de vue faisait 40 px, les boutons 32 et le champ 34). */
-.filters>.btn,.filters>.filters-popover>.btn,.filters .search-field input,.filters>input,.filters>select,.filters>.hideok-toggle,.filters .month-nav-btn{height:36px}
-.filters>.btn,.filters>.filters-popover>.btn{padding-top:0;padding-bottom:0;display:inline-flex;align-items:center;gap:6px}
+/* Tout ce qui s'aligne dans une barre d'outils a la meme hauteur, 38 px
+   depuis la maquette Braise (27/09 ; 36 px le 26/09 : le selecteur de vue
+   faisait 40 px, les boutons 32 et le champ 34), et le meme verre sombre. */
+.filters>.btn,.filters>.filters-popover>.btn,.filters .search-field input,.filters>input,.filters>select,.filters>.hideok-toggle,.filters .month-nav-btn{height:38px}
+.filters>.btn:not(.btn-primary),.filters>.filters-popover>.btn,.filters .search-field input,.filters>.hideok-toggle{border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(20,20,26,.72);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.filters>.btn-primary{border-radius:10px}
+.filters>.btn,.filters>.filters-popover>.btn{padding:0 14px;display:inline-flex;align-items:center;gap:8px}
+.filters>.btn .ico,.filters>.filters-popover>.btn .ico{width:15px;height:15px}
 .filters>.hideok-toggle{padding-top:0;padding-bottom:0}
-.filters .month-nav-btn{width:36px}
-.filters .view-toggle{height:36px;padding:3px}
+.filters .month-nav-btn{width:38px}
+.filters .view-toggle{height:38px;padding:3px}
 .filters .view-toggle-btn{padding-top:0;padding-bottom:0}
 .filters input:focus,.filters select:focus{border-color:var(--text-3)}
 .filters-popover{position:relative}
@@ -167,12 +172,18 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .filters-panel select{width:100%}
 /* Bascule "Cacher les concerts OK" : directement dans la barre de filtres
    (plutot que dans le panneau Filtres) pour un acces en un clic. */
-.hideok-toggle{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--surface);color:var(--text-2);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;user-select:none;white-space:nowrap}
+.hideok-toggle{display:inline-flex;align-items:center;gap:10px;height:38px;padding:0 14px 0 10px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:rgba(20,20,26,.72);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;transition:box-shadow .3s var(--sortie);user-select:none;white-space:nowrap}
 .hideok-toggle:hover{box-shadow:var(--survol-ombre)}
 /* [type=checkbox] pour l'emporter sur .filters input{width:100%} du telephone :
    Safari etirait la case sur toute la largeur et son texte sortait du cadre. */
 .hideok-toggle input[type=checkbox]{width:auto;margin:0}
-.hideok-toggle:has(input:checked){background:var(--accent-soft);border-color:transparent;color:var(--text)}
+/* La case est dessinee en interrupteur (maquette Braise, 27/09) : piste grise,
+   corail une fois cochee, pastille qui glisse avec un leger rebond. */
+.hideok-toggle input[type=checkbox]{-webkit-appearance:none;appearance:none;position:relative;flex-shrink:0;width:32px;height:18px;padding:0;border:none;border-radius:99px;background:rgba(255,255,255,.16);box-shadow:none;cursor:pointer;transition:background .25s}
+.hideok-toggle input[type=checkbox]::before{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:99px;background:#f4f2ec;transition:transform .4s var(--ressort),background .25s}
+.hideok-toggle input[type=checkbox]:checked{background:var(--corail-plein)}
+.hideok-toggle input[type=checkbox]:checked::before{transform:translateX(14px);background:#0a0a0d}
+.hideok-toggle input[type=checkbox]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* Menu d'actions (fiche) : meme popover, aligne a droite, items en liste */
 .fiche-menu{left:auto;right:0;min-width:240px;gap:0;padding:6px}
 .menu-item{display:block;width:100%;text-align:left;background:none;border:none;padding:8px 10px;font-size:13px;color:var(--text);cursor:pointer;border-radius:var(--radius-sm);font-family:inherit;white-space:nowrap}
@@ -259,9 +270,9 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
    haut, l'en-tete (photo de l'artiste en 16:9 quand elle existe), des puces
    d'etat, puis quatre onglets au dessin du selecteur Liste / Par salle /
    Calendrier. Tout defile d'un bloc ; la barre et les onglets restent colles. */
-.overlay{display:none;position:fixed;inset:0;background:rgba(4,4,8,.58);z-index:100;align-items:flex-start;justify-content:flex-end;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(5,5,8,.62);z-index:100;align-items:flex-start;justify-content:flex-end;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .overlay.open{display:flex}
-.fiche{position:relative;background:radial-gradient(720px 440px at 100% 46%,rgba(255,128,92,.08),rgba(255,128,92,0) 70%),radial-gradient(640px 520px at 0% 100%,rgba(139,108,255,.12),rgba(139,108,255,0) 70%),#0d0d11;border-left:1px solid rgba(255,255,255,.1);width:520px;max-width:100vw;height:100vh;overflow-y:auto;box-shadow:-24px 0 60px rgba(0,0,0,.5);display:flex;flex-direction:column}
+.fiche{position:relative;background:radial-gradient(720px 440px at 100% 46%,rgba(255,128,92,.08),rgba(255,128,92,0) 70%),radial-gradient(640px 520px at 0% 100%,rgba(139,108,255,.12),rgba(139,108,255,0) 70%),#0d0d11;border-left:1px solid rgba(255,255,255,.12);width:620px;max-width:100vw;height:100vh;overflow-y:auto;box-shadow:-24px 0 60px rgba(0,0,0,.5);display:flex;flex-direction:column}
 .fiche.wide{width:820px}
 .fiche [hidden]{display:none !important}
 .help-grid{display:grid;grid-template-columns:auto 1fr;gap:10px 14px;align-items:center;font-size:13px;color:var(--text-2)}
@@ -274,19 +285,19 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .fiche-close:hover{box-shadow:var(--survol-ombre);color:var(--text)}
 /* Barre du haut : transparente sur la photo, pleine avec le nom une fois
    l'en-tete passe (classe .compacte, posee au defilement). */
-.fiche-barre{position:sticky;top:0;z-index:12;flex-shrink:0;height:56px;padding:0 16px;display:flex;align-items:center;gap:6px;background:rgba(13,13,17,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid transparent;transition:background .15s,border-color .15s}
-.fiche.a-photo .fiche-barre{margin-bottom:-56px;background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
+.fiche-barre{position:sticky;top:0;z-index:12;flex-shrink:0;height:72px;padding:0 16px;display:flex;align-items:center;gap:6px;background:rgba(13,13,17,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid transparent;transition:background .15s,border-color .15s}
+.fiche.a-photo .fiche-barre{margin-bottom:-72px;background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
 .fiche.compacte .fiche-barre{background:rgba(13,13,17,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom-color:var(--border-light)}
 .fiche-barre-titre{flex:1;min-width:0;padding:0 6px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .15s}
 .fiche.compacte .fiche-barre-titre{opacity:1}
-.fiche-btn{width:32px;height:32px;flex-shrink:0;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:var(--radius-sm);background:none;color:var(--text-3);cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.fiche-btn{width:40px;height:40px;flex-shrink:0;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:12px;background:none;color:var(--text-3);cursor:pointer;transition:background .15s,color .15s,border-color .15s}
 .fiche-btn .ico{width:18px;height:18px}
 .fiche-btn:hover{box-shadow:var(--survol-ombre);color:var(--text)}
 .fiche-btn:disabled{opacity:.35;cursor:default;background:none}
 .fiche-voisin{border-color:var(--border);color:var(--text-2)}
 .fiche-voisin .ico{width:15px;height:15px}
-.fiche.a-photo:not(.compacte) .fiche-btn{background:var(--photo-verre);border-color:transparent;color:var(--photo-encre)}
-.fiche.a-photo:not(.compacte) .fiche-btn:hover:not(:disabled){background:var(--photo-verre-fort)}
+.fiche.a-photo:not(.compacte) .fiche-btn{background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-color:transparent;color:var(--photo-encre)}
+.fiche.a-photo:not(.compacte) .fiche-btn:hover:not(:disabled){background:rgba(255,255,255,.2)}
 /* En-tete. Avec photo : bandeau 16:9 (le format du recadrage et de la
    newsletter), jamais recadre autrement, voile sombre en bas pour le nom. En
    fiche agrandie, la photo reste entiere au centre, sur un fond flou d'elle-meme. */
@@ -300,7 +311,8 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .fiche.wide .fiche-hero{aspect-ratio:auto;height:292px}
 .fiche.wide .fiche-hero-fond{display:block;inset:-24px;width:calc(100% + 48px);height:calc(100% + 48px);object-fit:cover;filter:blur(24px) brightness(.55)}
 .fiche.wide .fiche-hero-img{left:50%;right:auto;width:auto;aspect-ratio:16/9;transform:translateX(-50%)}
-.fiche-ident{display:flex;align-items:center;gap:14px;padding:4px 24px 0}
+.fiche-ident{display:flex;align-items:center;gap:14px;padding:4px 28px 0}
+.fiche-nom-cadre{overflow:hidden;padding-bottom:4px;margin-bottom:-4px}
 .fiche-ident-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .fiche-ident h2{font-size:34px;line-height:1}
 .fiche-sub{font-size:13px;color:var(--text-2)}
@@ -309,9 +321,14 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .fiche-autre{display:inline-flex;align-items:center;gap:4px;padding:0;border:none;background:none;font:inherit;font-size:12px;font-weight:500;color:var(--accent);cursor:pointer}
 .fiche-autre:hover{text-decoration:underline}
 .fiche-autre .ico{width:12px;height:12px}
-.fiche.a-photo .fiche-ident{position:absolute;left:24px;right:24px;bottom:18px;padding:0;align-items:flex-end}
-.fiche.a-photo .fiche-ident h2{font-size:44px;color:var(--photo-encre)}
-.fiche.a-photo .fiche-sub,.fiche.a-photo .fiche-autres{color:var(--photo-encre-2)}
+.fiche.a-photo .fiche-ident{position:absolute;left:28px;right:28px;bottom:18px;padding:0;align-items:flex-end}
+/* Nom sur la photo : Anton 72 px en degrade metal (maquette Braise), plus
+   petit quand il est long (renderFiche pose .long ou .tres-long). */
+.fiche.a-photo .fiche-ident h2{font-size:72px;line-height:.95;background:linear-gradient(180deg,#fff 25%,#b3a6b8 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.fiche.a-photo .fiche-ident h2.long{font-size:56px}
+.fiche.a-photo .fiche-ident h2.tres-long{font-size:44px}
+.fiche.a-photo .fiche-sub{font-size:15px;color:var(--text-2)}
+.fiche.a-photo .fiche-autres{color:var(--photo-encre-2)}
 .fiche.a-photo .fiche-autre{color:var(--photo-encre)}
 .fiche-photo-pop{display:none;flex-shrink:0}
 .fiche.a-photo .fiche-photo-pop{display:block}
@@ -324,21 +341,34 @@ main{padding:72px 2rem 2rem;max-width:1600px;margin:0 auto}
 .fiche.a-photo .fiche-photo-ajout{display:none}
 .fiche-menu-note{padding:6px 10px 8px;max-width:240px;font-size:12px;line-height:1.4;color:var(--text-3);white-space:normal}
 /* Puces d'etat et bandeau « annule » */
-.fiche-puces{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:14px 24px 12px}
+.fiche-puces{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:6px 28px 18px}
+.fiche-puces .tag{height:auto;padding:5px 12px;font-size:13px;font-weight:400;border:1px solid rgba(255,255,255,.14);background:transparent;color:var(--text)}
+.fiche-puces .tag .ico{width:13px;height:13px}
+.fiche-puces .puce-annonce{gap:6px;border-color:transparent;background:rgba(255,128,92,.1);color:var(--accent)}
+.fiche-puces .tag-amber{border-color:transparent;background:var(--amber-bg);color:var(--amber)}
+.fiche-puces .tag-red{border-color:transparent;background:var(--red-bg);color:var(--red)}
+.fiche-puces .fiche-ventes{gap:8px}
+.fiche-puces .ventes-gauge i{height:11px}
 .tag.fiche-ventes{gap:7px}
 button.tag.fiche-annoncer{background:var(--corail-plein);border-color:transparent;color:var(--accent-ink);font-weight:600}
 button.tag.fiche-annoncer:hover{background:var(--corail-plein);border-color:transparent;color:var(--accent-ink);box-shadow:var(--corail-lueur)}
-.fiche-annule{display:flex;align-items:center;gap:10px;margin:0 24px 12px;padding:10px 12px;border-radius:var(--radius-sm);background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);font-size:13px;line-height:1.4}
+.fiche-annule{display:flex;align-items:center;gap:10px;margin:0 28px 12px;padding:10px 12px;border-radius:var(--radius-sm);background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);font-size:13px;line-height:1.4}
 .fiche-annule>.ico{width:16px;height:16px;flex-shrink:0}
 .fiche-annule span{flex:1}
 .fiche-annule .btn{flex-shrink:0;border-color:var(--red-border);color:var(--red);font-weight:600}
 /* Onglets */
-.fiche-onglets-cadre{position:sticky;top:56px;z-index:11;flex-shrink:0;padding:0 24px 12px;background:rgba(13,13,17,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--border-light)}
+.fiche-onglets-cadre{position:sticky;top:72px;z-index:11;flex-shrink:0;padding:0 28px;background:rgba(13,13,17,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+/* Onglets soulignes (maquette Braise, 27/09) plutot que le selecteur en pilules :
+   le courant en blanc, trait corail dessous ; les autres en gris. */
 .fiche-onglets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.fiche-onglets.view-toggle{display:flex;gap:28px;padding:0;border-radius:0;background:none;border-bottom:1px solid rgba(255,255,255,.08)}
 .fiche-onglet{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:6px 8px}
-.fiche-onglet-n{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:var(--radius-pill);background:var(--red-bg);color:var(--red);font-size:12px;font-weight:600;line-height:1}
-.fiche-panneau{flex:1 0 auto;padding:16px 24px 24px}
-.fiche-apercu{display:flex;flex-direction:column;gap:20px}
+.fiche-onglet.view-toggle-btn{padding:10px 0 12px;border:none;border-radius:0;background:none;box-shadow:none;font-size:14px;font-weight:500;color:var(--text-3)}
+.fiche-onglet.view-toggle-btn:hover:not(.active){color:var(--text);box-shadow:none}
+.fiche-onglet.view-toggle-btn.active{background:none;color:var(--text);font-weight:600;box-shadow:inset 0 -2px 0 var(--accent)}
+.fiche-onglet-n{display:inline-flex;align-items:center;justify-content:center;padding:0 6px;border-radius:var(--radius-pill);background:var(--red);color:var(--accent-ink);font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:500;line-height:1.4}
+.fiche-panneau{flex:1 0 auto;padding:18px 28px 24px}
+.fiche-apercu{display:flex;flex-direction:column;gap:18px}
 /* Onglet Plan */
 .fiche-plan-tete{display:flex;align-items:center;gap:10px;min-height:30px}
 .fiche-plan-tete .btn-link{margin-right:-10px}
@@ -371,7 +401,7 @@ button.tag.fiche-annoncer:hover{background:var(--corail-plein);border-color:tran
 .ftask{display:flex;align-items:flex-start;gap:12px;padding:10px 8px;margin:0 -8px;border-radius:var(--radius-sm);cursor:pointer}
 .ftask:hover{box-shadow:var(--survol-ombre)}
 .ftask-blocked,.ftask-na{cursor:default}
-.ftask-chk{width:18px;height:18px;flex-shrink:0;margin-top:1px;padding:0;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--border-strong);border-radius:4px;background:var(--surface);color:var(--accent-ink);cursor:pointer;position:relative}
+.ftask-chk{width:18px;height:18px;flex-shrink:0;margin-top:1px;padding:0;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,.3);border-radius:6px;background:transparent;color:var(--accent-ink);cursor:pointer;position:relative}
 .ftask-chk:hover{border-color:rgba(255,255,255,.65);box-shadow:var(--survol-ombre)}
 .ftask-chk.on,.ftask-chk.on:hover{background:var(--corail-plein);border-color:transparent;box-shadow:0 0 14px rgba(255,128,92,.5)}
 .ftask-chk.blocked,.ftask-chk.na{border-style:dashed;background:none;color:var(--text-4);cursor:default}
@@ -394,28 +424,34 @@ button.tag.fiche-annoncer:hover{background:var(--corail-plein);border-color:tran
 .ftask-reactiver{flex-shrink:0;border-radius:var(--radius-pill)}
 /* Onglet Apercu */
 .fa-bloc{display:flex;flex-direction:column;gap:8px}
-.fa-bloc h3{font-size:13px;font-weight:600}
+.fa-bloc h3{font-size:15px;font-weight:600}
 .fa-tete{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.fa-tete .btn-link{display:inline-flex;align-items:center;gap:4px;margin-right:-10px}
-.fa-tete .btn-link .ico{width:12px;height:12px}
+.fa-tete .btn-link{display:inline-flex;align-items:center;gap:6px;margin-right:-10px;font-size:13px;font-weight:500}
+.fa-tete .btn-link .ico{width:14px;height:14px}
 .fa-taches{display:flex;flex-direction:column;margin-top:-6px}
+/* Taches prioritaires : lignes separees par un filet, nom en 15 px. */
+.fa-taches .ftask{padding:11px 0;margin:0;gap:14px;border-radius:0;border-bottom:1px solid rgba(255,255,255,.06)}
+.fa-taches .ftask-chk{width:20px;height:20px}
+.fa-taches .ftask-name{font-size:15px;font-weight:400;line-height:1.35}
+.fa-taches .ftask-date{font-size:13px}
 .fa-vide{display:flex;align-items:center;gap:8px;padding:8px 0;font-size:13px;color:var(--green)}
 .fa-vide .ico{width:16px;height:16px;flex-shrink:0}
-.fa-tuiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.fa-tuile{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.015));font:inherit;text-align:left;color:var(--text);cursor:pointer;transition:border-color .15s,box-shadow .3s var(--sortie)}
+.fa-tuiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.fa-tuile{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px;border:1px solid rgba(255,255,255,.09);border-radius:16px;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.015));font:inherit;text-align:left;color:var(--text);cursor:pointer;transition:border-color .15s,box-shadow .3s var(--sortie)}
 .fa-tuile:hover{border-color:var(--border-strong);box-shadow:var(--survol-ombre)}
 .fa-l{font-size:12px;color:var(--text-3)}
-.fa-v{font-family:'Anton','Oswald',Impact,sans-serif;font-size:28px;font-weight:400;line-height:1.05;letter-spacing:.01em;text-transform:uppercase;background:linear-gradient(180deg,#fff 25%,#b3a6b8 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.fa-v small{font-family:'Geist',-apple-system,BlinkMacSystemFont,sans-serif;font-size:13px;font-weight:500;letter-spacing:0;text-transform:none;-webkit-text-fill-color:var(--text-3);color:var(--text-3)}
-.fa-tuile .fiche-jauge{width:100%}
-.fa-s{font-size:12px;font-weight:600;color:var(--text-3)}
+.fa-v{font-family:'Anton','Oswald',Impact,sans-serif;font-size:36px;font-weight:400;line-height:1;letter-spacing:.01em;text-transform:uppercase;background:linear-gradient(180deg,#fff 25%,#b3a6b8 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.fa-v small{font-family:'Geist Mono',ui-monospace,monospace;font-size:13px;font-weight:400;letter-spacing:0;text-transform:none;-webkit-text-fill-color:var(--text-3);color:var(--text-3)}
+.fa-tuile .fiche-jauge{width:100%;border-radius:9px;background:rgba(255,255,255,.1)}
+.fa-tuile .fiche-jauge i{border-radius:9px;box-shadow:0 0 12px rgba(255,128,92,.55)}
+.fa-s{font-size:12px;color:var(--text-3)}
 .fa-s.late{color:var(--red)}
 .fa-s.soon{color:var(--amber)}
 .fa-s.ok{color:var(--green)}
 .fa-s.accent{color:var(--accent)}
 .fa-s2{font-size:12px;color:var(--text-3)}
 .ventes-gauge.fa-jauge{gap:3px}
-.ventes-gauge.fa-jauge i{width:6px;height:16px}
+.ventes-gauge.fa-jauge i{width:18px;height:5px}
 .fa-liens{display:flex;flex-wrap:wrap;gap:6px}
 .tag.fa-lien{height:30px;padding:0 12px;gap:6px;color:var(--text);text-decoration:none;transition:border-color .15s}
 .tag.fa-lien:hover{border-color:var(--border-strong)}
@@ -550,30 +586,35 @@ textarea.fiche-champ{padding:0}
 .fiche-photo-meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
 .fiche-photo-note{font-size:12px;line-height:1.5;color:var(--text-2)}
 .fiche-photo-meta .media-add-row{flex-wrap:wrap;gap:6px}
-.fiche-footer{position:sticky;bottom:0;z-index:10;margin-top:auto;padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;background:rgba(13,13,17,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
-.fiche-footer .btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding-left:12px;padding-right:12px}
-.fiche-footer .btn .ico{width:15px;height:15px}
+.fiche-footer{position:sticky;bottom:0;z-index:10;margin-top:auto;padding:16px 28px;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:12px;background:rgba(13,13,17,.86);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.fiche-footer .btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:10px;height:46px;padding:0 12px;border-radius:12px;border-color:rgba(255,255,255,.14);background:transparent;font-size:14px}
+.fiche-footer .btn .ico{width:17px;height:17px}
 .fb-court{display:none}
 
 /* ── MISC ─────────────────────────────────────────────── */
 /* Notifications transitoires (sauvegarde, synchro, messages) : empilees en
    bas a droite. Le conteneur laisse passer les clics (pointer-events:none),
    donc meme si une tuile chevauche un bouton, elle ne genera jamais un clic. */
-.toast-stack{position:fixed;bottom:1.25rem;right:1.25rem;display:flex;flex-direction:column;align-items:flex-end;gap:6px;z-index:200;pointer-events:none;max-width:calc(100vw - 2rem)}
+.toast-stack{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:200;pointer-events:none;max-width:calc(100vw - 2rem)}
 .saving{display:none;position:relative;overflow:hidden;background:#f4f2ec;color:#0a0a0d;padding:7px 16px;border-radius:var(--radius-pill);font-size:12px;font-weight:500;box-shadow:0 18px 40px -12px rgba(0,0,0,.7);text-align:center;line-height:1.4;max-width:100%}
-.saving.show{display:block;animation:toastIn .5s var(--ressort) both}
+.saving.show{display:block;animation:toastIn .6s var(--ressort) both}
 /* #app-toast (showToast) porte toute l'information passagere, confirmations
    comprises : une pilule sombre bordee d'ambre plutot qu'un aplat jaune. */
 .toast-warn{background:#1f1f27;color:var(--text);box-shadow:inset 0 0 0 1px var(--amber-border),0 18px 40px -12px rgba(0,0,0,.7)}
 /* Message « Annuler » apres un geste d'un clic : lui seul capte les clics
    (son bouton), le reste de la pile les laisse passer. */
-.saving.toast-annuler{align-items:center;gap:10px;padding:5px 6px 5px 16px;text-align:left;pointer-events:auto}
+.saving.toast-annuler{align-items:center;gap:12px;padding:8px 8px 8px 16px;font-size:14px;text-align:left;white-space:nowrap;pointer-events:auto}
+.toast-ico{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:22px;height:22px;border-radius:99px;background:#0a0a0d;color:var(--accent)}
+.toast-ico .ico{width:13px;height:13px;stroke-width:3}
+#undo-titre{flex-shrink:0;font-weight:600}
+#undo-msg{min-width:0;max-width:280px;overflow:hidden;text-overflow:ellipsis;color:#55535c}
+#undo-msg:empty{display:none}
 .saving.toast-annuler.show{display:flex}
-.toast-annuler-btn{flex-shrink:0;border:0;background:#0a0a0d;color:var(--accent);font:inherit;font-weight:600;padding:5px 12px;border-radius:var(--radius-pill);cursor:pointer;transition:background .15s,color .15s}
+.toast-annuler-btn{flex-shrink:0;border:0;background:#0a0a0d;color:var(--accent);font:inherit;font-size:13px;font-weight:600;padding:8px 14px;border-radius:var(--radius-pill);cursor:pointer;transition:background .15s,color .15s}
 .saving.toast-annuler.show::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:#0a0a0d;transform-origin:left;animation:vidage 7s linear both;pointer-events:none}
 @keyframes vidage{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .toast-annuler-btn:hover{background:#26262e;color:var(--accent-hover)}
-@keyframes toastIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translateY(28px) scale(.94)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.saving.show{animation:none}}
 .empty-state{color:var(--text-3);font-size:13px;padding:3rem 0;text-align:center;line-height:1.6}
 .empty-state .btn{margin-top:10px}
@@ -662,8 +703,14 @@ textarea.fiche-champ{padding:0}
 .tk-recur-n{width:64px}
 
 /* ── TABLEAU DE BORD ─────────────────────────────────── */
-.dash-top{display:grid;grid-template-columns:1fr 2fr;gap:16px;margin-bottom:16px}
+.dash-top{display:grid;grid-template-columns:1fr 2fr;gap:20px;margin-bottom:20px}
 .list-head .btn-link{margin-left:auto}
+/* En-tete des deux blocs du tableau de bord : sans filet, comme la maquette. */
+.dash-card .list-head{padding:22px 24px 18px;border-bottom:none;min-height:0}
+#ann-count{font-family:'Geist Mono',ui-monospace,monospace;color:var(--accent)}
+.list-head .btn-link.voir-tout{display:inline-flex;align-items:center;gap:6px;margin-right:-10px;font-size:13px;font-weight:500;color:var(--text-2)}
+.list-head .btn-link.voir-tout:hover{color:var(--text)}
+.voir-tout .ico{width:14px;height:14px}
 .dash-card{margin-bottom:0}
 .dash-empty{padding:14px 20px;font-size:13px;color:var(--text-3)}
 .skel-lines{padding:12px 0;display:flex;flex-direction:column;gap:8px}
@@ -671,54 +718,54 @@ textarea.fiche-champ{padding:0}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 /* Annonces a venir : le jour en grands chiffres (Anton, degrade metal), le
    mois dessous, une tuile de verre clair par annonce. */
-.ann-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:12px 20px 18px}
-.ann-card{position:relative;display:flex;flex-direction:column;gap:6px;padding:14px 40px 14px 14px;border:1px solid rgba(255,255,255,.07);border-radius:14px;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.015));cursor:pointer;transition:border-color .15s,box-shadow .3s var(--sortie);min-width:0}
+.ann-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;padding:0 24px 24px}
+.ann-card{position:relative;display:flex;flex-direction:column;gap:10px;min-height:186px;box-sizing:border-box;padding:18px;border:1px solid rgba(255,255,255,.07);border-radius:14px;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.015));cursor:pointer;transition:border-color .15s,box-shadow .3s var(--sortie);min-width:0}
 .ann-card:hover{border-color:var(--border-strong);box-shadow:var(--survol-ombre)}
 .ann-card.late{border-color:var(--red-border)}
-.ann-date{display:flex;align-items:baseline;gap:6px;min-width:0}
-.ann-day{font-family:'Anton','Oswald',Impact,sans-serif;font-size:40px;font-weight:400;line-height:.9;letter-spacing:.01em;background:linear-gradient(180deg,#fff 25%,#b3a6b8 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ann-date{display:flex;align-items:baseline;gap:8px;min-width:0;padding-right:38px}
+.ann-day{font-family:'Anton','Oswald',Impact,sans-serif;font-size:68px;font-weight:400;line-height:.85;letter-spacing:.01em;background:linear-gradient(180deg,#fff 25%,#b3a6b8 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .ann-card.late .ann-day{background:none;color:var(--red)}
 .ann-card.nodate .ann-day{background:none;color:var(--text-3)}
-.ann-a-fixer{font-family:'Anton','Oswald',Impact,sans-serif;font-size:20px;font-weight:400;line-height:1.1;letter-spacing:.01em;text-transform:uppercase;color:var(--text-3)}
-.ann-month{font-family:'Anton','Oswald',Impact,sans-serif;font-size:16px;font-weight:400;color:var(--text-2);text-transform:uppercase;letter-spacing:.02em}
-.ann-body{display:flex;flex-direction:column;gap:4px;min-width:0}
-.ann-art{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ann-a-fixer{font-family:'Anton','Oswald',Impact,sans-serif;font-size:30px;font-weight:400;line-height:1;letter-spacing:.01em;text-transform:uppercase;color:var(--text-3)}
+.ann-month{font-family:'Anton','Oswald',Impact,sans-serif;font-size:22px;font-weight:400;color:var(--text-2);text-transform:uppercase;letter-spacing:.02em}
+.ann-body{display:flex;flex-direction:column;gap:10px;min-width:0;margin-top:auto}
+.ann-art{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.02}
 .ann-lieu{display:none;font-size:13px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ann-body .tag{align-self:flex-start;margin-top:2px}
-.ann-done{position:absolute;top:10px;right:10px;width:28px;height:28px;padding:0;border:1px solid var(--border-strong);border-radius:var(--radius-pill);background:rgba(255,255,255,.04);color:var(--text-2);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .15s,color .15s,box-shadow .3s var(--sortie)}
-.ann-done .ico{width:13px;height:13px}
+.ann-done{position:absolute;top:14px;right:14px;width:32px;height:32px;padding:0;border:1px solid rgba(255,255,255,.18);border-radius:var(--radius-pill);background:transparent;color:var(--text-2);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .15s,color .15s,box-shadow .3s var(--sortie)}
+.ann-done .ico{width:16px;height:16px}
 .ann-done:hover{border-color:rgba(255,255,255,.45);color:var(--text);box-shadow:var(--survol-ombre)}
 /* Taches par projet : titres de colonne en chasse fixe, nombre en corail. */
-.tkw-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
-.tkw-col{padding:10px 14px 14px;border-right:1px solid var(--border-light);display:flex;flex-direction:column;gap:2px;min-width:0}
+.tkw-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding-bottom:18px}
+.tkw-col{padding:0 14px;min-height:220px;border-right:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;min-width:0}
 .tkw-col:last-child{border-right:none}
-.tkw-title{font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);padding:2px 0 10px;margin-bottom:6px;border-bottom:1px solid var(--border-light)}
-.tkw-count{font-weight:600;color:var(--accent)}
-.tkw-task{display:flex;align-items:flex-start;gap:10px;padding:8px;margin:0 -8px;border-radius:var(--radius-sm);cursor:pointer;transition:box-shadow .3s var(--sortie),opacity .3s,transform .45s var(--sortie)}
+.tkw-title{font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);padding:2px 8px 12px;margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,.08)}
+.tkw-count{margin-left:4px;color:var(--accent)}
+.tkw-task{display:flex;align-items:flex-start;gap:12px;padding:10px 8px;margin:0 0 2px;border-radius:12px;cursor:pointer;transition:box-shadow .3s var(--sortie),opacity .3s,transform .45s var(--sortie)}
 .tkw-task:hover{box-shadow:var(--survol-ombre)}
 .tkw-task.pinned{cursor:default}
 .tkw-task.pinned .tkw-name{font-style:italic;color:var(--text-2)}
 .tkw-task.delegue{background:rgba(255,128,92,.07);box-shadow:inset 0 0 0 1px rgba(255,128,92,.18)}
 .tkw-task.delegue:hover{box-shadow:inset 0 0 0 1px rgba(255,128,92,.18),var(--survol-ombre)}
-.tkw-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.tkw-tag{height:21px;padding:0 8px;font-weight:600;gap:4px}
-.tkw-tag .ico{width:11px;height:11px}
-.tkw-body{display:flex;flex-direction:column;min-width:0}
-.tkw-name{font-size:13px;font-weight:500;line-height:1.35;color:var(--text);transition:color .3s}
+.tkw-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tkw-delegue{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--accent)}
+.tkw-delegue .ico{width:12px;height:12px}
+.tkw-body{display:flex;flex-direction:column;gap:3px;min-width:0}
+.tkw-name{font-size:14px;font-weight:400;line-height:1.35;color:var(--text);transition:color .3s}
 .tkw-date{font-size:12px;color:var(--text-3)}
 .tkw-date.late{color:var(--red)}
 .tkw-date.today{color:var(--amber)}
-.tkw-empty{font-size:12px;color:var(--text-4);padding:4px 0}
-.tkw-add{margin-top:auto;align-self:flex-start;margin-left:-10px}
+.tkw-empty{font-size:13px;color:var(--text-3);padding:10px 8px}
+.btn-link.tkw-add{margin-top:auto;align-self:stretch;padding:8px;border-radius:8px;text-align:left;font-size:13px;font-weight:500;color:var(--text-2)}
+.btn-link.tkw-add:hover{color:var(--text)}
 /* Case a cocher partagee (cartes de concert, taches par projet). Cochee, elle
    se remplit de corail et une coche se dessine (::before, ancre sur la case :
    voir le §9 de la passation), le nom se barre, puis la ligne s'efface avant
    que la liste ne soit redessinee (cocherAnime). */
-.kb-chk{position:relative;width:18px;height:18px;flex-shrink:0;margin-top:1px;border:1.5px solid var(--border-strong);border-radius:6px;background:rgba(255,255,255,.02);cursor:pointer;padding:0;transition:background .2s,border-color .2s,box-shadow .3s,transform .4s cubic-bezier(.34,1.56,.64,1)}
-.kb-chk:hover{border-color:rgba(255,255,255,.65);box-shadow:var(--survol-ombre)}
+.kb-chk{position:relative;width:18px;height:18px;flex-shrink:0;margin-top:1px;border:1.5px solid rgba(255,255,255,.3);border-radius:6px;background:transparent;cursor:pointer;padding:0;transition:background .2s,border-color .2s,box-shadow .3s,transform .4s cubic-bezier(.34,1.56,.64,1)}
+.kb-chk:hover{border-color:rgba(255,255,255,.7);box-shadow:var(--survol-ombre)}
 .kb-chk::before{content:'';position:absolute;left:5px;top:1.5px;width:4px;height:9px;border:solid var(--accent-ink);border-width:0 2px 2px 0;transform:rotate(45deg) scale(0);transition:transform .3s var(--ressort) .06s;pointer-events:none}
-.tkw-task .kb-chk{width:16px;height:16px;margin-top:2px}
-.tkw-task .kb-chk::before{left:4.5px;top:1px;height:8px}
+.tkw-task .kb-chk{margin-top:2px}
 .coche .kb-chk{background:var(--corail-plein);border-color:transparent;transform:scale(1.12);box-shadow:0 0 14px rgba(255,128,92,.55)}
 .coche .kb-chk::before{transform:rotate(45deg) scale(1)}
 .coche .kb-task-name,.coche .tkw-name{color:var(--text-3);text-decoration:line-through;text-decoration-color:var(--accent)}
@@ -727,26 +774,30 @@ textarea.fiche-champ{padding:0}
 /* Ligne prochain concert / posts du jour : un bandeau de verre qui s'allume
    en corail a gauche, un point qui pulse, le J-x en corail. */
 .card.dash-line{background:linear-gradient(90deg,rgba(255,128,92,.12),rgba(255,128,92,0) 42%) padding-box,var(--verre)}
-.dash-line{display:flex;align-items:center;gap:12px;min-height:56px;padding:6px 20px;margin-bottom:14px;flex-wrap:wrap}
+.dash-line{display:flex;align-items:center;gap:14px;min-height:60px;padding:6px 24px;margin-bottom:20px;border-radius:16px;flex-wrap:wrap}
 .dash-line:empty{display:none}
-.dash-line-group{display:inline-flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
-.dash-line-group.prochain::before{content:'';width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--accent);animation:pouls 2.2s ease-out infinite}
+.dash-line-group{display:inline-flex;align-items:center;gap:14px;min-width:0;flex-wrap:wrap}
+.dash-line-group.prochain::before{content:'';width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--accent);animation:pouls 2s ease-out infinite}
 @keyframes pouls{0%{box-shadow:0 0 0 0 rgba(255,138,100,.6)}70%{box-shadow:0 0 0 10px rgba(255,138,100,0)}100%{box-shadow:0 0 0 0 rgba(255,138,100,0)}}
-.dash-line-label{font-size:12px;font-weight:500;color:var(--text-3);white-space:nowrap}
-.dash-line-art{font-size:20px;color:var(--text)}
+.dash-line-label{font-size:13px;color:var(--text-3);white-space:nowrap}
+.dash-line-art{font-size:24px;line-height:1;color:var(--text)}
 .dash-line-art:hover,.crow-budget-link:hover{text-decoration:underline}
-.dash-line-sub{font-size:13px;color:var(--text-2)}
-.dash-line-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
+.dash-line-sub{font-size:14px;color:var(--text-2)}
+.dash-line-sep{width:1px;height:24px;margin:0 8px;background:rgba(255,255,255,.1);flex-shrink:0}
 .tag.dash-jx{background:var(--corail-plein);border-color:transparent;color:var(--accent-ink);font-family:'Geist Mono',ui-monospace,monospace;font-weight:600;box-shadow:var(--corail-lueur)}
-.dash-filters{margin-bottom:14px}
-.dash-filters .list-head-sub{white-space:nowrap}
+.dash-filters{margin-bottom:12px}
+/* « 62 concerts · 1 événement · 54 avec des tâches à faire » : en Geist Mono,
+   les deux nombres en degrade metal ; ils montent a l'ouverture de la page. */
+.dash-filters .list-head-sub{white-space:nowrap;font-family:'Geist Mono',ui-monospace,monospace;font-size:13px;color:var(--text-3)}
+.kb-n{font-weight:600;background:linear-gradient(180deg,#fff 25%,#b3a6b8 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.kb-n-evt{color:var(--text)}
 /* Cartes de concert : la photo de l'artiste en tete (16:9, jamais recadree
    autrement), le nom pose dessus ; sans photo, l'en-tete habituel. Au survol,
    la carte se leve, la photo s'approche et un voile gris suit la souris
    (--mx, --my, poses par un seul ecouteur sur #kanban-wrap). */
-.kb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:16px;align-items:start}
+.kb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:20px;align-items:start}
 .kb-card{position:relative;isolation:isolate;display:flex;flex-direction:column;background:var(--verre);border:1px solid transparent;border-radius:var(--radius);overflow:hidden;min-width:0;transition:transform .55s var(--ressort),box-shadow .55s var(--sortie)}
-.kb-card:hover{transform:translateY(-4px);box-shadow:0 24px 46px -22px rgba(0,0,0,.75)}
+.kb-card:hover{transform:translateY(-5px);box-shadow:0 24px 46px -22px rgba(0,0,0,.75)}
 .kb-card::before{content:'';position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .45s;background:radial-gradient(360px circle at var(--mx,50%) var(--my,0%),rgba(214,208,222,.07),rgba(214,208,222,0) 80%)}
 .kb-card:hover::before{opacity:1}
 /* Cartes a jour en retrait, en noir et blanc : la couleur revient au survol.
@@ -757,34 +808,36 @@ textarea.fiche-champ{padding:0}
 .kb-card:not(.a-faire):hover>*{filter:none}
 .kb-card.a-faire::after{content:'';position:absolute;top:12px;right:12px;z-index:2;width:8px;height:8px;border-radius:50%;background:var(--corail-plein);box-shadow:0 0 0 2px rgba(9,9,12,.4),0 0 10px rgba(255,128,92,.65);pointer-events:none}
 .kb-card.a-faire .kb-head>.crow-name,.kb-card.a-faire .kb-head>.kb-nom{padding-right:16px}
-.kb-head{padding:12px 14px 12px;display:flex;flex-direction:column;gap:4px;cursor:pointer;background:transparent;border-bottom:1px solid var(--border-light);transition:box-shadow .3s var(--sortie)}
+.kb-head{padding:14px 16px 12px;display:flex;flex-direction:column;gap:8px;cursor:pointer;background:transparent;border-bottom:1px solid var(--border-light);transition:box-shadow .3s var(--sortie)}
 .kb-head.only{border-bottom:none}
 .kb-head:hover{box-shadow:var(--survol-ombre)}
 .kb-head .crow-name{font-size:19px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kb-photo{position:relative;display:block;margin:-12px -14px 8px;aspect-ratio:21/9;overflow:hidden;background:var(--surface-2)}
+.kb-photo{position:relative;display:block;margin:-14px -16px 6px;aspect-ratio:21/9;overflow:hidden;background:var(--surface-2)}
 .kb-photo img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 30%;transition:transform 1.4s var(--sortie)}
 .kb-head:hover .kb-photo img{transform:scale(1.06)}
 .kb-photo::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(9,9,12,0) 35%,rgba(9,9,12,.9) 100%),linear-gradient(135deg,rgba(255,128,92,.1),rgba(139,108,255,.14))}
-.kb-photo-nom{position:absolute;left:14px;right:14px;bottom:10px;z-index:1;display:flex;align-items:center;gap:6px;min-width:0}
-.kb-head .kb-photo-nom .crow-name{font-size:24px;line-height:1;color:var(--photo-encre);white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.kb-photo-nom{position:absolute;left:16px;right:16px;bottom:12px;z-index:1;display:flex;align-items:center;gap:6px;min-width:0}
+.kb-head .kb-photo-nom .crow-name{font-size:25px;line-height:1;color:var(--photo-encre);white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .kb-photo-nom .evt-tag{background:var(--photo-verre-fort);color:var(--photo-encre)}
 .kb-sub{font-size:13px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kb-head .ventes-badge{margin-top:4px;padding:0;align-self:flex-start}
+.kb-head .ventes-badge{padding:0;gap:8px;align-self:flex-start}
+.kb-head .ventes-gauge{gap:3px}
+.kb-head .ventes-gauge i{width:5px;height:13px}
 .kb-tasks{display:flex;flex-direction:column}
-.kb-task{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border-light);cursor:pointer;transition:box-shadow .3s var(--sortie)}
+.kb-task{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border-light);cursor:pointer;transition:box-shadow .3s var(--sortie)}
 .kb-task:last-child{border-bottom:none}
 .kb-task:hover{box-shadow:var(--survol-ombre)}
 .kb-task.hl{background:rgba(255,128,92,.07);box-shadow:inset 0 0 0 1px rgba(255,128,92,.18)}
 .kb-task.hl:hover{box-shadow:inset 0 0 0 1px rgba(255,128,92,.18),var(--survol-ombre)}
-.kb-task>.tag-amber{background:transparent;border-color:rgba(255,138,100,.45);color:var(--accent)}
+.kb-task>.tag-amber{height:auto;padding:1px 8px;line-height:1.4;background:transparent;border-color:rgba(255,128,92,.4);color:var(--accent)}
 .kb-task-body{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
-.kb-task-name{font-size:13px;font-weight:500;line-height:1.35;transition:color .3s}
+.kb-task-name{font-size:14px;font-weight:400;line-height:1.35;transition:color .3s}
 .kb-task .tag{flex-shrink:0}
-.kb-more{display:block;padding:10px 14px;font-size:12px;font-weight:600;color:var(--accent);border-top:1px solid var(--border-light);transition:box-shadow .3s var(--sortie)}
+.kb-more{display:block;padding:12px 16px;font-size:13px;font-weight:500;color:var(--accent);border-top:1px solid var(--border-light);transition:box-shadow .3s var(--sortie)}
 .kb-more:hover{box-shadow:var(--survol-ombre)}
 .search-field{position:relative;display:flex;align-items:center}
-.search-field .ico{position:absolute;left:11px;width:14px;height:14px;color:var(--text-4);pointer-events:none}
-.search-field input{height:34px;width:220px;padding:0 12px 0 32px;border:1px solid var(--border);border-radius:var(--radius-sm);font:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
+.search-field .ico{position:absolute;z-index:1;left:12px;width:16px;height:16px;color:var(--text-3);pointer-events:none}
+.search-field input{height:34px;width:280px;padding:0 12px 0 36px;border:1px solid var(--border);border-radius:var(--radius-sm);font:inherit;font-size:13px;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
 .search-field input:focus{border-color:var(--text-3)}
 
 .btn-link{border:none;background:none;padding:6px 10px;border-radius:var(--radius-sm);font:inherit;font-size:12px;font-weight:600;color:var(--accent);cursor:pointer;white-space:nowrap;flex-shrink:0}
@@ -1311,7 +1364,7 @@ button.tag:hover,a.tag:hover{border-color:var(--border-strong);color:var(--text)
    change avec l'interface. */
 .rpt-cover h1,.bilan-header h1{font-family:'Bricolage Grotesque','Geist',-apple-system,BlinkMacSystemFont,sans-serif;font-stretch:88%;font-weight:700;letter-spacing:.005em;text-transform:uppercase}
 .crow-name{font-size:15px}
-.ann-art{font-size:18px}
+.ann-art{font-size:26px}
 .cal-art{font-size:12px !important}
 .cmdk-title.artist{font-size:14px}
 .rpt-cover h1{font-size:40px}
@@ -1338,31 +1391,72 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
    - survols : 150 a 450 ms ; cases cochees : un ressort. */
 .overlay.open{animation:voileIn .35s ease both}
 @keyframes voileIn{from{opacity:0}to{opacity:1}}
-.overlay.open .fiche{animation:ficheIn .65s var(--ressort) both}
+.overlay.open .fiche{animation:ficheIn .7s var(--ressort) both}
 @keyframes ficheIn{from{transform:translateX(100%)}to{transform:none}}
-.overlay.ouverture .fiche-hero-img{animation:approche 1.5s var(--sortie) both}
-@keyframes approche{from{transform:scale(1.18)}to{transform:none}}
-.overlay.ouverture .fiche-ident{animation:entree .8s var(--sortie) .2s both}
-.overlay.ouverture .fiche-puces,.overlay.ouverture .fiche-onglets-cadre{animation:entree .7s var(--sortie) .3s both}
-.overlay.ouverture .fiche-panneau{animation:entree .7s var(--sortie) .38s both}
-@keyframes entree{from{opacity:0;transform:translateY(14px);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+.overlay.ouverture .fiche-hero-img{animation:approche 1.6s var(--sortie) both}
+@keyframes approche{from{transform:scale(1.25)}to{transform:none}}
+/* Maquette Braise (27/09) : le nom monte de derriere un cache, puis le lieu,
+   les puces, les onglets ; dans l'Apercu, chaque tache puis les tuiles, dont
+   les chiffres montent (compterJusqua) et la jauge se remplit. */
+.overlay.ouverture .fiche-nom-cadre h2{animation:montee .9s var(--sortie) .15s both}
+@keyframes montee{from{transform:translateY(105%)}to{transform:none}}
+.overlay.ouverture .fiche-sub,.overlay.ouverture .fiche-autres,.overlay.ouverture .fiche-photo-pop,.overlay.ouverture .fiche-photo-ajout{animation:entree .8s var(--sortie) .28s both}
+.overlay.ouverture .fiche-puces{animation:entree .8s var(--sortie) .34s both}
+.overlay.ouverture .fiche-onglets-cadre{animation:entree .8s var(--sortie) .4s both}
+.overlay.ouverture .fiche-panneau{animation:entree .8s var(--sortie) .44s both}
+.overlay.ouverture #fp-apercu{animation:none}
+.overlay.ouverture #fp-apercu>*,.overlay.ouverture #fp-apercu .fa-tete{animation:entree .8s var(--sortie) .44s both}
+.overlay.ouverture #fp-apercu>section:first-of-type{animation:none}
+.overlay.ouverture #fp-apercu .fa-taches>*{animation:entree .8s var(--sortie) .48s both}
+.overlay.ouverture #fp-apercu .fa-taches>:nth-child(2){animation-delay:.54s}
+.overlay.ouverture #fp-apercu .fa-taches>:nth-child(3){animation-delay:.6s}
+.overlay.ouverture #fp-apercu .fa-taches>:nth-child(4){animation-delay:.66s}
+.overlay.ouverture #fp-apercu .fa-taches>:nth-child(n+5){animation-delay:.72s}
+.overlay.ouverture #fp-apercu>.fa-tuiles{animation-delay:.62s}
+.overlay.ouverture #fp-apercu>.fa-tuiles~*{animation-delay:.68s}
+.overlay.ouverture .fa-tuile .fiche-jauge i{animation:jauge 1s cubic-bezier(.33,1,.68,1) .45s both}
+@keyframes jauge{from{width:0}}
+/* Fermeture : la fiche repart vers la droite et le voile s'eteint (0,32 s) ;
+   la page, elle, a deja repris la main (closeFicheBtn). */
+.overlay.fermeture{display:flex;pointer-events:none;animation:voileOut .3s ease both}
+.overlay.fermeture .fiche{animation:ficheOut .32s cubic-bezier(.7,0,.84,0) both}
+@keyframes voileOut{from{background-color:rgba(5,5,8,.62)}to{background-color:rgba(5,5,8,0)}}
+@keyframes ficheOut{from{transform:none}to{transform:translateX(104%)}}
+@keyframes entree{from{opacity:0;transform:translateY(16px);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
 @keyframes rideau{from{clip-path:inset(0 0 100% 0)}to{clip-path:inset(0 0 0 0)}}
-.panel.entree>:not(.dash-top):not(#kanban-wrap),.panel.entree .dash-top>*,.panel.entree .kb-grid>.kb-card{animation:entree .75s var(--sortie) both}
+.panel.entree>:not(.dash-top):not(#kanban-wrap),.panel.entree .dash-top>*,.panel.entree .kb-grid>.kb-card{animation:entree .8s var(--sortie) both}
 .panel.entree>:nth-child(2){animation-delay:.08s}
 .panel.entree>:nth-child(3){animation-delay:.16s}
 .panel.entree>:nth-child(4){animation-delay:.22s}
 .panel.entree>:nth-child(n+5){animation-delay:.28s}
-.panel.entree .dash-top>:nth-child(2){animation-delay:.08s}
-.panel.entree .kb-grid>.kb-card{animation-delay:.34s}
-.panel.entree .kb-grid>.kb-card:nth-child(2){animation-delay:.39s}
-.panel.entree .kb-grid>.kb-card:nth-child(3){animation-delay:.44s}
-.panel.entree .kb-grid>.kb-card:nth-child(4){animation-delay:.49s}
-.panel.entree .kb-grid>.kb-card:nth-child(5){animation-delay:.54s}
-.panel.entree .kb-grid>.kb-card:nth-child(6){animation-delay:.59s}
-.panel.entree .kb-grid>.kb-card:nth-child(7){animation-delay:.64s}
-.panel.entree .kb-grid>.kb-card:nth-child(8){animation-delay:.69s}
-.panel.entree .kb-grid>.kb-card:nth-child(n+9){animation-delay:.74s}
-.panel.entree .kb-photo{animation:rideau 1.1s var(--sortie) .45s both}
+/* Tableau de bord, rythme de la maquette Braise (27/09) : les deux blocs,
+   la ligne du prochain concert, la barre d'outils, puis les cartes toutes
+   les 80 ms ; chaque photo se devoile (rideau) et recule (recul) 120 ms
+   apres sa carte. .entree reste 2,6 s (animerEntree). */
+.panel.entree .dash-top>:nth-child(1){animation-delay:.08s}
+.panel.entree .dash-top>:nth-child(2){animation-delay:.16s}
+#tab-kanban.entree>.dash-line{animation-delay:.24s}
+#tab-kanban.entree>.dash-filters{animation-delay:.3s}
+.panel.entree .kb-grid>.kb-card{animation-delay:.44s}
+.panel.entree .kb-grid>.kb-card:nth-child(2){animation-delay:.52s}
+.panel.entree .kb-grid>.kb-card:nth-child(3){animation-delay:.6s}
+.panel.entree .kb-grid>.kb-card:nth-child(4){animation-delay:.68s}
+.panel.entree .kb-grid>.kb-card:nth-child(5){animation-delay:.76s}
+.panel.entree .kb-grid>.kb-card:nth-child(6){animation-delay:.84s}
+.panel.entree .kb-grid>.kb-card:nth-child(7){animation-delay:.92s}
+.panel.entree .kb-grid>.kb-card:nth-child(8){animation-delay:1s}
+.panel.entree .kb-grid>.kb-card:nth-child(n+9){animation-delay:1.08s}
+.panel.entree .kb-photo{animation:rideau 1.1s var(--sortie) .56s both}
+.panel.entree .kb-photo img{animation:recul 1.8s var(--sortie) .56s both}
+@keyframes recul{from{transform:scale(1.22)}to{transform:none}}
+.panel.entree .kb-grid>.kb-card:nth-child(2) .kb-photo,.panel.entree .kb-grid>.kb-card:nth-child(2) .kb-photo img{animation-delay:.64s}
+.panel.entree .kb-grid>.kb-card:nth-child(3) .kb-photo,.panel.entree .kb-grid>.kb-card:nth-child(3) .kb-photo img{animation-delay:.72s}
+.panel.entree .kb-grid>.kb-card:nth-child(4) .kb-photo,.panel.entree .kb-grid>.kb-card:nth-child(4) .kb-photo img{animation-delay:.8s}
+.panel.entree .kb-grid>.kb-card:nth-child(5) .kb-photo,.panel.entree .kb-grid>.kb-card:nth-child(5) .kb-photo img{animation-delay:.88s}
+.panel.entree .kb-grid>.kb-card:nth-child(6) .kb-photo,.panel.entree .kb-grid>.kb-card:nth-child(6) .kb-photo img{animation-delay:.96s}
+.panel.entree .kb-grid>.kb-card:nth-child(7) .kb-photo,.panel.entree .kb-grid>.kb-card:nth-child(7) .kb-photo img{animation-delay:1.04s}
+.panel.entree .kb-grid>.kb-card:nth-child(8) .kb-photo,.panel.entree .kb-grid>.kb-card:nth-child(8) .kb-photo img{animation-delay:1.12s}
+.panel.entree .kb-grid>.kb-card:nth-child(n+9) .kb-photo,.panel.entree .kb-grid>.kb-card:nth-child(n+9) .kb-photo img{animation-delay:1.2s}
 .filters-panel{animation:popIn .12s ease}
 .tk-modal.open .tk-modal-box,.tk-modal.open .cmdk-box,.rs-modal.open .rs-modal-box{animation:popIn .16s ease}
 @keyframes popIn{from{opacity:0;transform:translateY(-4px) scale(.99)}to{opacity:1;transform:none}}
@@ -1371,14 +1465,15 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 @keyframes tick{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
 .ann-card,.ftask,.menu-item,.cmdk-item{transition:background .15s}
 @media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
+  *,*::before,*::after{animation-duration:.001ms !important;animation-delay:0s !important;animation-iteration-count:1 !important;transition-duration:.001ms !important}
 }
 
 /* ── BOUTON D'EN-TETE (menu utilisateur) ──────────────── */
 .hdr-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:1px solid var(--border);border-radius:var(--radius-pill);background:var(--bg);color:var(--text-3);cursor:pointer;flex-shrink:0;transition:all .15s}
 .hdr-btn:hover{color:var(--text);box-shadow:var(--survol-ombre);border-color:var(--border-strong)}
 .hdr-btn .ico{width:15px;height:15px}
-.hdr-btn.a-initiale{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+.hdr-btn.a-initiale{background:#1a1a21;border-color:rgba(255,255,255,.14);color:var(--text);font-size:14px;font-weight:600}
+#user-btn{width:38px;height:38px}
 .hdr-initiale{font-size:13px;font-weight:600;line-height:1}
 
 /* ── SQUELETTES DE CHARGEMENT ─────────────────────────── */
@@ -1439,11 +1534,26 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
   .cmdk-foot{display:none}
   .cmdk-box{margin-top:-30vh}
   .dash-top{grid-template-columns:1fr}
+  /* Annonces et taches par projet : le style de la maquette, en plus serre
+     (sur ordinateur, une annonce fait 186 px de haut). */
+  .dash-card .list-head{padding:16px 16px 12px}
+  .ann-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 16px 16px}
+  .ann-card{min-height:0;padding:14px;gap:8px}
+  .ann-date{padding-right:30px}
+  .ann-done{top:10px;right:10px;width:28px;height:28px}
+  .ann-day{font-size:46px}
+  .ann-month{font-size:18px}
+  .ann-a-fixer{font-size:20px}
+  .ann-art{font-size:20px}
+  .tkw-col{min-height:0;padding-bottom:14px}
+  .tkw-board{row-gap:12px}
   .tkw-board{grid-template-columns:repeat(2,minmax(0,1fr))}
   .tkw-col:nth-child(2n){border-right:none}
   .kb-grid{grid-template-columns:1fr}
   .dash-line{padding:10px 16px}
   .search-field,.search-field input{width:100%}
+  /* Compteur en Geist Mono, plus large : il passe a la ligne plutot que deborder. */
+  .dash-filters .list-head-sub{white-space:normal;font-size:12px}
   /* Liste des concerts en cartes : l'essentiel visible, le reste dans la fiche. */
   .crow-cols{display:none}
   .crow-mois{padding:16px 16px 6px}
@@ -1466,16 +1576,36 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
   /* Fiche en plein ecran, marges de 16 px. */
   .fiche,.fiche.wide{width:100vw}
   .fiche-expand{display:none}
-  .fiche-barre{padding:0 10px}
-  .fiche-ident{padding-left:16px;padding-right:16px}
+  .fiche-barre{padding:0 14px}
+  .fiche-btn{width:44px;height:44px;border-radius:14px}
+  .fiche.a-photo .fiche-hero{aspect-ratio:auto;height:340px}
+  .fiche-ident{padding-left:20px;padding-right:20px}
   .fiche-ident h2{font-size:24px}
-  .fiche.a-photo .fiche-ident{left:16px;right:16px;bottom:14px}
-  .fiche.a-photo .fiche-ident h2{font-size:26px}
-  .fiche-puces,.fiche-onglets-cadre{padding-left:16px;padding-right:16px}
-  .fiche-annule{margin-left:16px;margin-right:16px}
+  .fiche.a-photo .fiche-ident{left:20px;right:20px;bottom:14px}
+  .fiche.a-photo .fiche-ident h2{font-size:80px}
+  .fiche.a-photo .fiche-ident h2.long{font-size:60px}
+  .fiche.a-photo .fiche-ident h2.tres-long{font-size:46px}
+  .fiche-puces,.fiche-onglets-cadre{padding-left:20px;padding-right:20px}
+  .fiche-puces{padding-top:14px}
+  .fiche-annule{margin-left:20px;margin-right:20px}
   .fiche-onglet{padding:6px 4px}
-  .fiche-panneau{padding:14px 16px 20px}
-  .fiche-footer{padding-left:16px;padding-right:16px}
+  .fiche-onglets.view-toggle{justify-content:space-between;gap:0}
+  .fiche-onglet.view-toggle-btn{padding:12px 0 13px;font-size:15px}
+  .fiche-panneau{padding:18px 20px 20px}
+  .fa-bloc h3{font-size:16px}
+  .fa-tete .btn-link{min-height:44px;font-size:14px}
+  .fa-taches .ftask{padding:12px 0}
+  .fa-taches .ftask-chk{width:22px;height:22px;border-radius:7px}
+  .fa-taches .ftask-date{font-size:12px}
+  /* Bas de la fiche : verre sombre, « Rapport » en bouton principal. */
+  .fiche-footer{padding:14px 20px 22px;gap:10px;background:rgba(9,9,12,.72);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+  .fiche-footer .btn{height:48px;border-radius:14px;gap:8px;white-space:nowrap}
+  .fiche-footer .btn .ico-muted{display:none}
+  .fiche-footer .btn:last-child{border-color:transparent;background:var(--corail-plein);color:var(--accent-ink);font-weight:600;box-shadow:0 0 24px rgba(255,128,92,.35)}
+  /* Notification au-dessus du bas de la fiche quand elle est ouverte. */
+  .saving.toast-annuler{width:calc(100vw - 40px);gap:10px;padding-left:14px}
+  #undo-msg{flex:1;max-width:none}
+  body:has(.overlay.open) .toast-stack{bottom:100px}
   .fb-long{display:none}
   .fb-court{display:inline}
   /* « Agrandir » n'existe pas sur telephone : la photo reprend son 16:9. */
@@ -1483,11 +1613,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
   .fiche.wide .fiche-hero-fond{display:none}
   .fiche.wide .fiche-hero-img{left:0;width:100%;transform:none}
   .fiche-prop{grid-template-columns:118px minmax(0,1fr)}
-  .fa-tuiles{gap:6px}
+  .fa-tuiles{gap:10px}
   .fa-tuiles.fa-tuiles-evt{grid-template-columns:minmax(0,1fr)}
-  .fa-tuile{padding:10px}
+  .fa-tuile{padding:14px 12px}
+  .fa-v{font-size:30px}
   /* Anton en capitales est plus large que l'ancien texte : « MOYENNES » debordait de sa tuile. */
-  .fa-v{font-size:22px}
+  .fa-tuile[class*=ventes-] .fa-v{font-size:20px;line-height:1.2}
+  .ventes-gauge.fa-jauge i{width:14px}
   .fiche-photo-vignette,.fiche-photo-vide{width:140px}
   .evt-edition-l1,.evt-edition-duo{grid-template-columns:minmax(0,1fr)}
   .evt-apercu-l{grid-template-columns:52px 44px minmax(0,1fr) 64px}
@@ -1892,8 +2024,8 @@ button.tag.fa-lien{cursor:pointer}
   .fiche.pleine.a-photo:not(.compacte) .fiche-btn{background:none;border-color:transparent;color:var(--text-3)}
   .fiche.pleine.a-photo:not(.compacte) .fiche-btn:hover:not(:disabled){box-shadow:var(--survol-ombre);color:var(--text)}
   .fiche.pleine.a-photo:not(.compacte) .fiche-voisin{border-color:var(--border);color:var(--text-2)}
-  .fiche.pleine .fiche-evt-menu{display:flex;flex-direction:column;gap:1px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;overscroll-behavior:contain;padding:12px 10px 24px;border-right:1px solid var(--border-light);background:var(--surface-2)}
-  .fiche.pleine .fiche-corps{min-height:calc(100vh - 56px)}
+  .fiche.pleine .fiche-evt-menu{display:flex;flex-direction:column;gap:1px;position:sticky;top:72px;height:calc(100vh - 72px);overflow-y:auto;overscroll-behavior:contain;padding:12px 10px 24px;border-right:1px solid var(--border-light);background:var(--surface-2)}
+  .fiche.pleine .fiche-corps{min-height:calc(100vh - 72px)}
   .fiche.pleine .fiche-tete{display:flex;align-items:flex-end;gap:24px;padding:28px 40px 0}
   .fiche.pleine .fiche-hero{width:240px;height:auto;flex-shrink:0;aspect-ratio:16/9;border-radius:var(--radius)}
   .fiche.pleine .fiche-hero::after,.fiche.pleine .fiche-hero-fond{display:none}
@@ -1916,7 +2048,7 @@ button.tag.fa-lien{cursor:pointer}
   .fiche.pleine .fiche-photo-btn:hover{box-shadow:var(--survol-ombre);color:var(--text)}
   .fiche.pleine .fiche-puces{padding:12px 40px 16px 304px}
   .fiche.pleine .fiche-annule{margin:0 40px 14px}
-  .fiche.pleine .fiche-onglets-cadre{display:flex;align-items:center;gap:12px;padding:10px 40px;top:56px}
+  .fiche.pleine .fiche-onglets-cadre{display:flex;align-items:center;gap:12px;padding:10px 40px;top:72px}
   .fiche.pleine .fiche-onglets{display:flex;gap:2px}
   .fiche.pleine .fiche-onglet{padding:6px 14px}
   .fiche.pleine .fiche-onglets-droite{display:flex;gap:8px;margin-left:auto}
