@@ -38,7 +38,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const AIDES = "var C=function(n){return concerts.find(function(x){return x.art===n;});};"
   + "var E=function(){return concerts.find(estEvt);};";
 const ECRANS = [
-  ['01-tableau-de-bord', "showTab('kanban')"],
+  ['01-tableau-de-bord', "showTab('kanban');setDashVue('cartes')"],
+  ['01b-tableau-de-bord-liste', "showTab('kanban');setDashVue('liste')"],
   ['02-concerts-liste', "showTab('concerts')"],
   ['03-concerts-salles', "showTab('concerts');setConcertsView('salle')"],
   ['04-concerts-calendrier', "showTab('concerts');setConcertsView('calendar')"],

@@ -99,6 +99,7 @@
       <div id="rs-wrap"></div>
     </div>
     <div id="tab-kanban" class="panel active">
+      <div class="card list-card dash-card dash-afaire" id="dash-afaire" hidden></div>
       <div class="dash-top">
         <div class="card list-card dash-card" id="ann-widget">
           <div class="list-head"><h2>Annonces à venir</h2><span class="list-head-sub" id="ann-count"></span></div>
@@ -126,6 +127,10 @@
         </label>
         <span class="grow"></span>
         <span class="list-head-sub" id="kanban-sub"></span>
+        <div class="view-toggle" role="group" aria-label="Présentation du tableau de bord">
+          <button type="button" class="view-toggle-btn active" id="dvue-cartes" aria-pressed="true" onclick="setDashVue('cartes')"><svg class="ico" aria-hidden="true"><use href="#i-grid"></use></svg>Cartes</button>
+          <button type="button" class="view-toggle-btn" id="dvue-liste" aria-pressed="false" onclick="setDashVue('liste')"><svg class="ico" aria-hidden="true"><use href="#i-list"></use></svg>Liste</button>
+        </div>
       </div>
       <div id="kanban-wrap"><div class="kb-grid" aria-hidden="true"><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-block"></div></div><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div><div class="skel skel-block"></div></div><div class="skel-card"><div class="skel skel-line w60"></div><div class="skel skel-line w80"></div></div></div></div>
     </div>
@@ -6011,6 +6016,73 @@ function renderDashLine(today){
   groups.push('<span class="dash-line-group"><span class="dash-line-label">Posts du jour</span>'+chips+'</span>');
   el.innerHTML=groups.join('<span class="dash-line-sep"></span>');
 }
+// Tableau de bord en deux presentations (27/09), au choix de chacun et gardee
+// dans ce navigateur :
+// - « Cartes » (par defaut) : une carte par concert, la photo en vignette a
+//   cote du nom, les taches a faire dessous, cochables sur place ;
+// - « Liste » : toutes les taches des concerts en tete, dans l'ordre des
+//   concerts, puis les annonces et les projets resserres, puis le mur des
+//   concerts en bandeau photo, sans liste (le point corail suffit).
+var dashVue=(function(){try{return localStorage.getItem('pp_dash_vue')==='liste'?'liste':'cartes';}catch(e){return 'cartes';}})();
+function setDashVue(v){
+  dashVue=v==='liste'?'liste':'cartes';
+  try{localStorage.setItem('pp_dash_vue',dashVue==='liste'?'liste':'');}catch(e){}
+  appliquerVueDash();
+  renderKanban();
+  window.scrollTo(0,0);
+}
+// La barre d'outils se place au-dessus de ce qu'elle filtre : le mur en
+// « Cartes », la liste en « Liste » (elle reste collee en haut en defilant).
+function appliquerVueDash(){
+  var p=document.getElementById('tab-kanban'),af=document.getElementById('dash-afaire');if(!p||!af)return;
+  var liste=dashVue==='liste',focus=document.activeElement;
+  var haut=p.querySelector('.dash-top'),ligne=document.getElementById('dash-line'),barre=p.querySelector('.dash-filters'),mur=document.getElementById('kanban-wrap');
+  (liste?[barre,af,haut,ligne,mur]:[af,haut,ligne,barre,mur]).forEach(function(n){p.appendChild(n);});
+  if(focus&&barre.contains(focus))focus.focus({preventScroll:true});
+  p.classList.toggle('vue-liste',liste);
+  af.hidden=!liste;
+  if(!liste)af.innerHTML='';
+  ['cartes','liste'].forEach(function(k){
+    var b=document.getElementById('dvue-'+k);if(!b)return;
+    b.classList.toggle('active',dashVue===k);b.setAttribute('aria-pressed',String(dashVue===k));
+  });
+}
+// Une tache a faire, dans une carte ou dans la liste (le concert dessous).
+// Clic sur la ligne : la surligner ; sur la case : la marquer faite.
+function kbTacheHtml(c,t,today,meta){
+  var d=calcDate(c,t),isHl=!!taskStates['hl-'+c.id+'-'+t.id];
+  var isNew=d?Math.floor((today-d)/86400000)<3:false;
+  return '<div class="kb-task'+(isHl?' hl':'')+'" title="Surligner (la tâche remonte dans les tâches Please Please)" onclick="event.stopPropagation();toggleHighlight(\''+escJs(c.id)+'\','+tidLit(t)+')">'
+    +'<button type="button" class="kb-chk" aria-label="Marquer comme fait" onclick="event.stopPropagation();cocherAnime(this,function(){toggleTask(\''+escJs(c.id)+'\','+tidLit(t)+')})"></button>'
+    +'<span class="kb-task-body"><span class="kb-task-name">'+esc(t.nom)+'</span>'+(meta||'')+'</span>'
+    +(isNew?'<span class="tag tag-amber">Nouveau</span>':'')
+    +'</div>';
+}
+// Evenement : une etape a faire pour plusieurs de ses spectacles.
+function kbGroupeHtml(c,g,meta){
+  var seul=g.sps.length===1;
+  return '<a href="#" class="kb-groupe" onclick="event.preventDefault();event.stopPropagation();evtOuvrirUrgence(\''+escJs(c.id)+'\',\''+escJs(g.t.id)+'\',\''+escJs(seul?g.sps[0].id:'')+'\')" title="'+esc(seul?'Ouvrir la fiche du spectacle':'Voir cette tâche pour chaque spectacle')+'">'
+    +'<span class="kb-groupe-ico" aria-hidden="true">'+icon('list')+'</span>'
+    +'<span class="kb-task-body"><span class="kb-task-name">'+esc(g.t.nom)+'</span><span class="kb-groupe-sp">'+esc(evtNomsCourts(g.sps))+'</span>'+(meta||'')+'</span>'
+    +'<span class="tag '+(g.retard?'tag-red':'tag-neutral')+'">'+esc(evtPluriel(g.sps.length,'spectacle'))+'</span></a>';
+}
+// Sous une tache de la liste : vignette, artiste (lien vers la fiche, sauf
+// dans une ligne qui est deja un lien), ville et date.
+function afConcertHtml(c,lien){
+  var ph=nlPhotoArtiste(c),evt=estEvt(c);
+  var ou=[evt?lieuTexte(c):String(c.ville||'').trim(),evt?evtPlage(c):dateCourte(c.dc)].filter(Boolean).join(' · ');
+  var art=esc(c.art)+cancelBadge(c);
+  return '<span class="af-meta">'+(safeUrl(ph)?'<img class="af-vignette" src="'+escUrl(ph)+'" alt="" loading="lazy" decoding="async">':'<span class="af-vignette vide"></span>')
+    +(lien?'<a href="#" class="af-art" onclick="event.preventDefault();event.stopPropagation();openFiche(\''+escJs(c.id)+'\')">'+art+'</a>':'<span class="af-art">'+art+'</span>')
+    +'<span class="af-ou">'+esc(ou)+'</span></span>';
+}
+function renderDashAFaire(lignes){
+  var el=document.getElementById('dash-afaire');if(!el)return;
+  var n=lignes.length;
+  el.innerHTML='<div class="list-head"><h2>À faire sur les concerts</h2>'+(n?'<span class="af-n" data-n="'+n+'">'+n+'</span>':'')+'</div>'
+    +(n?'<div class="af-liste">'+lignes.join('')+'</div>':'<div class="dash-empty">'+(kanbanFiltersActive()?'Aucune tâche à faire pour ces filtres.':'Rien à faire sur les concerts.')+'</div>');
+  if(el.closest('.panel.entree'))compterJusqua(el,400,1000);
+}
 // Cartes de concert cote a cote : l'en-tete, puis les taches a faire (en
 // retard ou du jour) cochables directement. Une carte sans tache s'arrete a
 // son en-tete : c'est l'absence de liste qui dit que tout est a jour.
@@ -6027,10 +6099,12 @@ function renderKanban(){
   updateFiltersBadge('kfilters-badge',['fville','fperiode','fcat','fventes']);
   var hideOkEl=document.getElementById('fhideok');
   var hideOk=!!(hideOkEl&&hideOkEl.checked);
+  var liste=dashVue==='liste';
   var list=filtered();
   var wrap=document.getElementById('kanban-wrap');
   var sub=document.getElementById('kanban-sub');
-  if(!list.length){if(sub)sub.textContent='';wrap.innerHTML=emptyConcertsHtml(kanbanFiltersActive(),'resetKanbanFilters()');return;}
+  if(!list.length){if(sub)sub.textContent='';if(liste)renderDashAFaire([]);wrap.innerHTML=emptyConcertsHtml(kanbanFiltersActive(),'resetKanbanFilters()');return;}
+  var lignes=[];
   var cards=list.map(function(c){
     var sorted=sansEtapesSautees(c,sortedProcess(c)).filter(function(t){return !isNA(c,t);});
     var lateTasks=sorted.filter(function(t){var d=calcDate(c,t);return !taskStates[tk(c.id,t.id)]&&isUnlocked(c,t)&&(isLate(d)||isToday(d));});
@@ -6039,41 +6113,38 @@ function renderKanban(){
     var evt=estEvt(c),groupes=evt?evtUrgencesSp(c):[];
     var hasLate=lateTasks.length>0||groupes.length>0;
     var ds=dateCourte(c.dc);
-    var shown=lateTasks.slice(0,4),gShown=groupes.slice(0,Math.max(0,4-shown.length));
-    var reste=lateTasks.length-shown.length+groupes.length-gShown.length;
     var body='';
-    if(hasLate){
-      body='<div class="kb-tasks">'+shown.map(function(t){
-        var d=calcDate(c,t);var isHl=!!taskStates['hl-'+c.id+'-'+t.id];
-        var isNew=d?Math.floor((today-d)/86400000)<3:false;
-        return '<div class="kb-task'+(isHl?' hl':'')+'" title="Surligner (la tâche remonte dans les tâches Please Please)" onclick="event.stopPropagation();toggleHighlight(\''+escJs(c.id)+'\','+tidLit(t)+')">'
-          +'<button type="button" class="kb-chk" aria-label="Marquer comme fait" onclick="event.stopPropagation();cocherAnime(this,function(){toggleTask(\''+escJs(c.id)+'\','+tidLit(t)+')})"></button>'
-          +'<span class="kb-task-body"><span class="kb-task-name">'+esc(t.nom)+'</span></span>'
-          +(isNew?'<span class="tag tag-amber">Nouveau</span>':'')
-          +'</div>';
-      }).join('')
-      +gShown.map(function(g){
-        var seul=g.sps.length===1;
-        return '<a href="#" class="kb-groupe" onclick="event.preventDefault();event.stopPropagation();evtOuvrirUrgence(\''+escJs(c.id)+'\',\''+escJs(g.t.id)+'\',\''+escJs(seul?g.sps[0].id:'')+'\')" title="'+esc(seul?'Ouvrir la fiche du spectacle':'Voir cette tâche pour chaque spectacle')+'">'
-          +'<span class="kb-groupe-ico" aria-hidden="true">'+icon('list')+'</span>'
-          +'<span class="kb-task-body"><span class="kb-task-name">'+esc(g.t.nom)+'</span><span class="kb-groupe-sp">'+esc(evtNomsCourts(g.sps))+'</span></span>'
-          +'<span class="tag '+(g.retard?'tag-red':'tag-neutral')+'">'+esc(evtPluriel(g.sps.length,'spectacle'))+'</span></a>';
-      }).join('')
-      +(reste?'<a href="#" class="kb-more" onclick="event.preventDefault();openFiche(\''+escJs(c.id)+'\',\'plan\')">+ '+reste+(reste>1?' autres tâches':' autre tâche')+'</a>':'')
-      +'</div>';
+    if(liste){
+      // Toutes les taches partent dans la liste ; la carte garde son point.
+      if(lateTasks.length){var mt=afConcertHtml(c,true);lateTasks.forEach(function(t){lignes.push(kbTacheHtml(c,t,today,mt));});}
+      if(groupes.length){var mg=afConcertHtml(c,false);groupes.forEach(function(g){lignes.push(kbGroupeHtml(c,g,mg));});}
+    }else if(hasLate){
+      var shown=lateTasks.slice(0,4),gShown=groupes.slice(0,Math.max(0,4-shown.length));
+      var reste=lateTasks.length-shown.length+groupes.length-gShown.length;
+      body='<div class="kb-tasks">'+shown.map(function(t){return kbTacheHtml(c,t,today);}).join('')
+        +gShown.map(function(g){return kbGroupeHtml(c,g);}).join('')
+        +(reste?'<a href="#" class="kb-more" onclick="event.preventDefault();openFiche(\''+escJs(c.id)+'\',\'plan\')">+ '+reste+(reste>1?' autres tâches':' autre tâche')+'</a>':'')
+        +'</div>';
     }
     // Un evenement : une seule carte, ses dates du … au …, son programme en
     // une ligne (les ventes sont celles de chaque spectacle).
     if(evt)ds=evtPlage(c);
-    // Photo de l'artiste (ou visuel de l'evenement) en tete de carte, en bandeau
-    // 21:9 (plus bas que le 16:9 de la fiche, 26/09) ; le nom est pose dessus.
-    // Sans photo, l'en-tete habituel.
     var nomHtml=evt?'<span class="kb-nom"><span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>'+evtTagHtml()+'</span>'
       :'<span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>';
-    var photo=nlPhotoArtiste(c);
+    var photo=nlPhotoArtiste(c),tete;
+    if(liste){
+      // Photo de l'artiste (ou visuel de l'evenement) en bandeau 21:9, le nom
+      // pose dessus (26/09) ; sans photo, l'en-tete habituel.
+      tete=safeUrl(photo)?'<span class="kb-photo"><img src="'+escUrl(photo)+'" alt="" loading="lazy" decoding="async"><span class="kb-photo-nom">'+nomHtml+'</span></span>':nomHtml;
+    }else{
+      // Vignette 16:9 a cote du nom : la tache reste ce qui se voit d'abord.
+      // Sans photo, l'initiale de l'artiste.
+      tete=(safeUrl(photo)?'<span class="kb-vignette"><img src="'+escUrl(photo)+'" alt="" loading="lazy" decoding="async"></span>'
+        :'<span class="kb-vignette vide" aria-hidden="true">'+esc(String(c.art||'?').trim().charAt(0))+'</span>')+nomHtml;
+    }
     var html='<div class="kb-card'+(hasLate?' a-faire':'')+(c.annule?' is-cancelled':'')+'">'
-      +'<div class="kb-head'+(hasLate?'':' only')+'" onclick="openFiche(\''+escJs(c.id)+'\')">'
-      +(safeUrl(photo)?'<span class="kb-photo"><img src="'+escUrl(photo)+'" alt="" loading="lazy" decoding="async"><span class="kb-photo-nom">'+nomHtml+'</span></span>':nomHtml)
+      +'<div class="kb-head'+(liste?'':' vign')+(body?'':' only')+'" onclick="openFiche(\''+escJs(c.id)+'\')">'
+      +tete
       +'<span class="kb-sub">'+(lieuTexte(c)?esc(lieuTexte(c))+' · ':'')+ds+'</span>'
       +(evt?'<span class="kb-evt">'+esc(evtResumeCourt(c))+'</span>':ventesHtml(c,'toggleVentes(event,\''+escJs(c.id)+'\')'))
       +'</div>'+body
@@ -6081,6 +6152,7 @@ function renderKanban(){
       +'</div>';
     return {hasLate:hasLate,html:html};
   });
+  if(liste)renderDashAFaire(lignes);
   var nbLate=cards.filter(function(x){return x.hasLate;}).length;
   if(sub){
     sub.innerHTML=nbConcertsHtml(list)+(nbLate?' · <b class="kb-n" data-n="'+esc(String(nbLate))+'">'+nbLate+'</b> avec des tâches à faire':'');
@@ -8586,6 +8658,7 @@ function toggleFicheWide(){
   try{localStorage.setItem('pp_fiche_wide',w?'1':'');}catch(e){}
 }
 (function(){var w='';try{w=localStorage.getItem('pp_fiche_wide')||'';}catch(e){}applyFicheWide(!!w);})();
+appliquerVueDash();
 // Onglet demande dans l'URL (la fiche attendra le chargement des donnees)
 if(!location.hash)pushRoute('kanban',null,true);
 applyRoute();
