@@ -37,6 +37,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // son etat initial), puis ce code est joue dans la page.
 const AIDES = "var C=function(n){return concerts.find(function(x){return x.art===n;});};"
   + "var E=function(){return concerts.find(estEvt);};";
+const RP_DEMO = "var a=rpNouvelleAction(c,'dooh',{quand:{mode:'periode',du:'2026-08-14',au:'2026-09-10'},texte:'Zone Cormontreuil et Reims.'});a.chiffres[0].n='8';"
+  + "var b=rpNouvelleAction(c,'radio',{support:'N Radio',quand:{mode:'mois',mois:'2026-09'}});b.chiffres[0].n='80+';b.chiffres[1].n='10+';";
 const ECRANS = [
   ['01-tableau-de-bord', "showTab('kanban');setDashVue('cartes')"],
   ['01b-tableau-de-bord-liste', "showTab('kanban');setDashVue('liste')"],
@@ -58,6 +60,11 @@ const ECRANS = [
   ['17-spectacle', "showTab('concerts');openFiche(E().id);ficheChoisirSpectacle(E().prog[0].id)"],
   ['18-newsletter', "showTab('kanban');openNewsletterModal()"],
   ['19-aide', "showTab('kanban');openHelp()"],
+  // Report de communication (30/09) : editeur pleine page, avec deux actions
+  // de demonstration (la fausse base n'en contient pas).
+  ['20-report-editeur', "showTab('concerts');var c=C('EIFFEL');" + RP_DEMO + "openFiche(c.id);rpOuvrir(c.id);rpSel=a.id;rpRendu()"],
+  ['21-report-ajouter', "showTab('concerts');var c=C('EIFFEL');openFiche(c.id);rpOuvrir(c.id);rpSel='ajouter';rpRendu()"],
+  ['22-report-pages', "showTab('concerts');var c=C('EIFFEL');" + RP_DEMO + "openFiche(c.id);rpOuvrir(c.id);rpTout=true;rpRendu()"],
 ].filter(([n]) => n.includes(FILTRE));
 
 // Transitions et animations coupees : une fenetre Safari cachee derriere
@@ -71,12 +78,12 @@ const CAPTEUR = "if(!window.__tourErreurs){window.__tourErreurs=[];"
 
 // Mesures dans la page. « police » : texte visible qui n'est ni en Geist (Mono
 // compris), ni en Anton (noms d'artistes depuis la palette Braise du 26/09), ni
-// en Bricolage Grotesque (rapport PDF) : un bouton qui garde la police du
-// navigateur, par exemple.
+// en Helvetica (pages du report de communication, 30/09) : un bouton qui garde
+// la police du navigateur, par exemple.
 const MESURES = "var de=document.documentElement,W=de.clientWidth,police={};"
   + "document.querySelectorAll('body *').forEach(function(el){if(!el.offsetParent&&getComputedStyle(el).position!=='fixed')return;"
   + "var t=/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)&&el.type!=='checkbox'&&el.type!=='radio'||[].some.call(el.childNodes,function(n){return n.nodeType===3&&n.textContent.trim();});"
-  + "if(!t)return;var f=getComputedStyle(el).fontFamily;if(/Geist|Anton|Bricolage|monospace/.test(f))return;"
+  + "if(!t)return;var f=getComputedStyle(el).fontFamily;if(/Geist|Anton|Helvetica|monospace/.test(f))return;"
   + "var k=el.tagName.toLowerCase()+(typeof el.className==='string'&&el.className.trim()?'.'+el.className.trim().split(/\\s+/)[0]:'');police[k]=(police[k]||0)+1;});"
   + "return {largeur:W,contenu:de.scrollWidth,erreurs:(window.__tourErreurs||[]).slice(),police:Object.keys(police).map(function(k){return k+' ×'+police[k];})};";
 
