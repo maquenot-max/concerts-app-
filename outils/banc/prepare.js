@@ -61,6 +61,9 @@ fs.copyFileSync(path.join(DEPOT, 'public', 'style.css'), path.join(SITE, 'style.
 // Texture du fond (identite Braise, 26/09) : sans elle, le banc n'a pas de grain.
 fs.copyFileSync(path.join(DEPOT, 'public', 'grain.png'), path.join(SITE, 'grain.png'));
 fs.cpSync(path.join(DEPOT, 'public', 'favicon_io'), path.join(SITE, 'favicon_io'), { recursive: true });
+// Report de communication (30/09) : logo Familyy et police de secours des pages.
+fs.cpSync(path.join(DEPOT, 'public', 'img'), path.join(SITE, 'img'), { recursive: true });
+fs.cpSync(path.join(DEPOT, 'public', 'fonts'), path.join(SITE, 'fonts'), { recursive: true });
 fs.copyFileSync(path.join(ICI, 'harness.js'), path.join(SITE, 'harness.js'));
 fs.writeFileSync(path.join(SITE, 'data.js'), 'window.__BANC_DATA=' + JSON.stringify(lignes) + ';\n');
 
