@@ -15,10 +15,10 @@
 <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Anton : noms d'artistes ; Geist Mono : compteurs et dates. Bricolage Grotesque
-     ne sert plus qu'au rapport de campagne (PDF), qui n'a pas change : le navigateur
-     ne telecharge une police que si un texte l'utilise. -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,500..800&display=swap">
+<!-- Anton : noms d'artistes et titres du report ; Geist Mono : compteurs et dates.
+     Le report de communication (PDF) est en Helvetica Neue, avec TeX Gyre Heros
+     (fonts/) en secours sur les appareils qui n'ont pas Helvetica. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -26,7 +26,7 @@
 <div class="halos" aria-hidden="true"><i></i><i></i><i></i></div>
 <div class="grain" aria-hidden="true"></div>
 <!-- Icones (Lucide, licence ISC) : un seul sprite, utilise via icon(nom) en JS ou <use> en HTML -->
-<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><symbol id="i-calendar" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol><symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol><symbol id="i-settings" viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></symbol><symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol><symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></symbol><symbol id="i-megaphone" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></symbol><symbol id="i-smartphone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></symbol><symbol id="i-dice" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M16 8h.01M8 8h.01M8 16h.01M16 16h.01M12 12h.01"/></symbol><symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M10 9H8M16 13H8M16 17H8"/></symbol><symbol id="i-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></symbol><symbol id="i-note" viewBox="0 0 24 24"><path d="M16 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V9Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol><symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol><symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol><symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol><symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol><symbol id="i-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></symbol><symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/></symbol><symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></symbol><symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></symbol><symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></symbol><symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7M12 19V5"/></symbol><symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14m7-7-7 7-7-7"/></symbol><symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol><symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14M5 2h14M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></symbol><symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9M13 17V5M8 17v-3"/></symbol><symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></symbol><symbol id="i-maximize" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></symbol><symbol id="i-minimize" viewBox="0 0 24 24"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></symbol><symbol id="i-rows" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M21 9H3M21 15H3"/></symbol><symbol id="i-keyboard" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></symbol><symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></symbol><symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol><symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol><symbol id="i-type" viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></symbol><symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol><symbol id="i-monitor" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8M12 17v4"/></symbol><symbol id="i-palette" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol><symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol><symbol id="i-newspaper" viewBox="0 0 24 24"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8V6Z"/></symbol><symbol id="i-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></symbol><symbol id="i-click" viewBox="0 0 24 24"><path d="M14 4.1 12 6M5.1 8l-2.9-.8M6 12l-1.9 2M7.2 2.2 8 5.1"/><path d="M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"/></symbol><symbol id="i-banner" viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2"/></symbol><symbol id="i-space" viewBox="0 0 24 24"><path d="M12 22v-6M12 8V2M4 12H2M10 12H8M16 12h-2M22 12h-2M15 19l-3 3-3-3M15 5l-3-3-3 3"/></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol><symbol id="i-crop" viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></symbol><symbol id="i-align-left" viewBox="0 0 24 24"><path d="M15 12H3M17 18H3M21 6H3"/></symbol><symbol id="i-align-center" viewBox="0 0 24 24"><path d="M17 12H7M19 18H5M21 6H3"/></symbol><symbol id="i-panel-top" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></symbol><symbol id="i-panel-bottom" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 15h18"/></symbol><symbol id="i-calendar-clock" viewBox="0 0 24 24"><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4M8 2v4M3 10h5"/><path d="M17.5 17.5 16 16.3V14"/><circle cx="16" cy="16" r="6"/></symbol><symbol id="i-sheet" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M3 15h18M9 9v12M15 9v12"/></symbol><symbol id="i-ticket" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/></symbol><symbol id="i-clipboard" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol><symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol><symbol id="i-filtre" viewBox="0 0 24 24"><path d="M3 6h18M7 12h10M10 18h4"/></symbol></svg>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><symbol id="i-calendar" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol><symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol><symbol id="i-settings" viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></symbol><symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol><symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></symbol><symbol id="i-megaphone" viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></symbol><symbol id="i-smartphone" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></symbol><symbol id="i-dice" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M16 8h.01M8 8h.01M8 16h.01M16 16h.01M12 12h.01"/></symbol><symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M10 9H8M16 13H8M16 17H8"/></symbol><symbol id="i-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></symbol><symbol id="i-note" viewBox="0 0 24 24"><path d="M16 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V9Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol><symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol><symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol><symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol><symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol><symbol id="i-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></symbol><symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/></symbol><symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></symbol><symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></symbol><symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></symbol><symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7M12 19V5"/></symbol><symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14m7-7-7 7-7-7"/></symbol><symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol><symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M5 22h14M5 2h14M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></symbol><symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9M13 17V5M8 17v-3"/></symbol><symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></symbol><symbol id="i-maximize" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></symbol><symbol id="i-minimize" viewBox="0 0 24 24"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></symbol><symbol id="i-rows" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M21 9H3M21 15H3"/></symbol><symbol id="i-keyboard" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></symbol><symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></symbol><symbol id="i-map-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol><symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></symbol><symbol id="i-type" viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></symbol><symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol><symbol id="i-monitor" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8M12 17v4"/></symbol><symbol id="i-palette" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol><symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol><symbol id="i-newspaper" viewBox="0 0 24 24"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8V6Z"/></symbol><symbol id="i-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></symbol><symbol id="i-click" viewBox="0 0 24 24"><path d="M14 4.1 12 6M5.1 8l-2.9-.8M6 12l-1.9 2M7.2 2.2 8 5.1"/><path d="M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"/></symbol><symbol id="i-banner" viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2"/></symbol><symbol id="i-space" viewBox="0 0 24 24"><path d="M12 22v-6M12 8V2M4 12H2M10 12H8M16 12h-2M22 12h-2M15 19l-3 3-3-3M15 5l-3-3-3 3"/></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol><symbol id="i-crop" viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></symbol><symbol id="i-align-left" viewBox="0 0 24 24"><path d="M15 12H3M17 18H3M21 6H3"/></symbol><symbol id="i-align-center" viewBox="0 0 24 24"><path d="M17 12H7M19 18H5M21 6H3"/></symbol><symbol id="i-panel-top" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></symbol><symbol id="i-panel-bottom" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 15h18"/></symbol><symbol id="i-calendar-clock" viewBox="0 0 24 24"><path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/><path d="M16 2v4M8 2v4M3 10h5"/><path d="M17.5 17.5 16 16.3V14"/><circle cx="16" cy="16" r="6"/></symbol><symbol id="i-sheet" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M3 15h18M9 9v12M15 9v12"/></symbol><symbol id="i-ticket" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/></symbol><symbol id="i-clipboard" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol><symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol><symbol id="i-filtre" viewBox="0 0 24 24"><path d="M3 6h18M7 12h10M10 18h4"/></symbol><symbol id="i-radio" viewBox="0 0 24 24"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5M19.1 4.9C23 8.8 23 15.1 19.1 19"/><circle cx="12" cy="12" r="2"/></symbol><symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></symbol></svg>
 <div id="load-error-overlay" style="display:none;position:fixed;inset:0;z-index:1000;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:2rem">
   <div style="font-size:36px;color:var(--amber)"><svg class="ico" aria-hidden="true"><use href="#i-alert"></use></svg></div>
   <div style="font-size:16px;font-weight:700;max-width:420px">Impossible de charger les données</div>
@@ -343,12 +343,25 @@
     </div>
     <div class="fiche-footer">
       <button class="btn" id="fi-budget-btn" onclick="openBudgetModal()" title="Créer ou ouvrir le budget promo (Google Sheet)">Budget promo</button>
-      <button class="btn" onclick="openCampaignWizard(currentFicheId)" title="Questionnaire guidé pour générer le rapport de campagne (PDF)"><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg><span class="fb-long">Rapport de campagne</span><span class="fb-court">Rapport</span></button>
+      <button class="btn" onclick="rpOuvrir(currentFicheId)" title="Préparer le report de communication envoyé à la production (PDF)"><svg class="ico" aria-hidden="true"><use href="#i-chart"></use></svg><span class="fb-long">Report de communication</span><span class="fb-court">Report</span></button>
     </div>
     </div>
   </div>
 </div>
-<div id="bilan-report"></div>
+<!-- Report de communication (30/09) : editeur pleine page, et pages 16:9
+     posees ici le temps de l'impression (seules visibles, voir style.css). -->
+<div class="rp" id="rp" aria-hidden="true" role="dialog" aria-label="Report de communication">
+  <div class="rp-barre" id="rp-barre"></div>
+  <div class="rp-corps">
+    <nav class="rp-liste" id="rp-liste" aria-label="Pages du report"></nav>
+    <section class="rp-centre" id="rp-centre"></section>
+    <aside class="rp-form" id="rp-form"></aside>
+  </div>
+  <input type="file" id="rp-fichiers" accept="image/*" multiple hidden>
+  <input type="file" id="rp-camera" accept="image/*" capture="environment" hidden>
+  <input type="file" id="rp-logo" accept="image/*" hidden>
+</div>
+<div id="rp-print" aria-hidden="true"></div>
 <div class="tk-modal" id="tk-modal">
   <div class="tk-modal-box">
     <div class="tk-modal-title" id="tk-modal-title">Nouvelle tâche</div>
@@ -525,36 +538,6 @@
     <div class="tk-modal-actions">
       <button class="btn" id="confirm-modal-cancel">Annuler</button>
       <button class="btn btn-danger" id="confirm-modal-ok">Confirmer</button>
-    </div>
-  </div>
-</div>
-<div class="tk-modal" id="media-link-modal">
-  <div class="tk-modal-box w-380">
-    <div class="tk-modal-title">Ajouter un lien</div>
-    <div><label>URL</label><input type="text" id="media-link-url" placeholder="https://..."></div>
-    <div><label>Légende (optionnel)</label><input type="text" id="media-link-caption" placeholder="ex: Article L'Union"></div>
-    <div class="tk-modal-actions">
-      <button class="btn" onclick="document.getElementById('media-link-modal').classList.remove('open')">Annuler</button>
-      <button class="btn btn-primary" onclick="wizardSaveLink()">Ajouter</button>
-    </div>
-  </div>
-</div>
-<div class="tk-modal" id="wizard-modal">
-  <div class="tk-modal-box w-560">
-    <div class="tk-modal-title" id="wizard-title">Rapport de campagne</div>
-    <div class="modal-note mb12" id="wizard-progress"></div>
-    <div class="media-grid" id="wizard-step-grid"></div>
-    <div class="media-add-row">
-      <input type="file" id="wizard-file-input" accept="image/*" style="display:none" onchange="wizardUploadFile(this)">
-      <button class="btn" onclick="document.getElementById('wizard-file-input').click()"><svg class="ico" aria-hidden="true"><use href="#i-camera"></use></svg> Ajouter une photo</button>
-      <button class="btn" onclick="wizardAddLinkPrompt()"><svg class="ico" aria-hidden="true"><use href="#i-link"></use></svg> Ajouter un lien</button>
-    </div>
-    <div class="tk-modal-actions between">
-      <button class="btn" id="wizard-prev-btn" onclick="wizardPrev()"><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"></use></svg> Précédent</button>
-      <div class="modal-actions-group">
-        <button class="btn" onclick="closeCampaignWizard()">Fermer</button>
-        <button class="btn btn-primary" id="wizard-next-btn" onclick="wizardNext()">Suivant <svg class="ico" aria-hidden="true"><use href="#i-arrow-right"></use></svg></button>
-      </div>
     </div>
   </div>
 </div>
@@ -2733,7 +2716,7 @@ var CROP_ORIG_MAX=2400;
 var cropState=null,cropDrag=null;
 // Reduit une image a maxDim px de cote au plus, en JPEG sur fond blanc
 // (un PNG transparent ressortait sur fond noir). Renvoie null si illisible.
-// Sert aux photos de la newsletter et a celles du rapport de campagne.
+// Sert aux photos de la newsletter et a celles du report de communication.
 var IMAGE_ILLISIBLE='Image illisible (format non pris en charge ? Les photos HEIC d\'iPhone doivent être converties en JPEG).';
 function downscaleImage(file,maxDim){
   return new Promise(function(resolve){
@@ -3003,10 +2986,12 @@ function userIsEditing(){
 // Re-affichage apres une fusion : tout de suite si l'utilisateur ne fait rien,
 // sinon des qu'il a ferme sa fenetre ou quitte son champ.
 function requestRender(){
+  if(rpOuvert())rpDemandeRendu();
   if(isAnyModalOpen()||userIsEditing()){_renderPending=true;return;}
   _renderPending=false;render();
 }
 function flushPendingRender(){
+  if(rpRenduAttente&&!userIsEditing())rpDemandeRendu();
   if(_renderPending&&!isAnyModalOpen()&&!userIsEditing()){_renderPending=false;render();}
 }
 function initRealtime(){
@@ -3319,6 +3304,7 @@ async function flushSave(){
     toSave.forEach(function(k){if(pendingSaveKeys[k]===marques[k])delete pendingSaveKeys[k];});
     if(!Object.keys(pendingSaveKeys).length)el.classList.remove('show');
     hideSaveError();
+    rpMajEnregistre();
     if(fusion){
       showSyncBanner('Enregistré avec les modifications d\'un collègue',true);
       requestRender();
@@ -3402,7 +3388,7 @@ function purgeOrphanTaskStates(){
   var ids={};concerts.forEach(function(c){ids[String(c.id)]=1;});
   var limite=Date.now()-86400000,n=0;
   Object.keys(taskStates).forEach(function(k){
-    var m=/^(?:annonce-|skip-|na-|datemod-|hl-)?(\d{10,})(?:-|$)/.exec(k);
+    var m=/^(?:annonce-|skip-|na-|datemod-|hl-|fait-)?(\d{10,})(?:-|$)/.exec(k);
     if(!m||ids[m[1]]||+m[1]>limite)return;
     delete taskStates[k];n++;
   });
@@ -3451,7 +3437,7 @@ async function init(){
     applyRoute();
     initRealtime();
     checkArchiveSuggestion();
-    sweepExpiredMedia();
+    rpPurger();
   }catch(e){
     console.error('Echec du chargement initial',e);
     appDataLoaded=false;
@@ -3554,7 +3540,8 @@ function parseRoute(){
   if(!hsh||hsh.indexOf('access_token')>=0)return null; // retour OAuth Google : pas une route
   var parts=hsh.split('/');
   if(TAB_IDS.indexOf(parts[0])<0)return null;
-  return {tab:parts[0],fiche:parts[1]||null,sp:parts[2]||null};
+  var report=parts[2]==='report';
+  return {tab:parts[0],fiche:parts[1]||null,sp:report?null:(parts[2]||null),report:report};
 }
 function applyRoute(){
   var r=parseRoute();
@@ -3564,9 +3551,14 @@ function applyRoute(){
     if(r.tab!==currentTab||!document.getElementById('tab-'+r.tab).classList.contains('active'))showTab(r.tab);
     if(r.fiche){
       if(appDataLoaded&&currentFicheId!==r.fiche)openFiche(r.fiche,null,false,r.sp);
-      else if(appDataLoaded&&r.sp!==ficheSpId)ficheChoisirSpectacle(r.sp);
+      else if(appDataLoaded&&!r.report&&r.sp!==ficheSpId)ficheChoisirSpectacle(r.sp);
+      if(appDataLoaded&&r.report&&!rpOuvert())rpOuvrir(r.fiche,true);
+      else if(!r.report&&rpOuvert())rpFermer(true);
     }
-    else if(currentFicheId)closeFicheBtn();
+    else{
+      if(rpOuvert())rpFermer(true);
+      if(currentFicheId)closeFicheBtn();
+    }
   }finally{_routing=false;}
 }
 window.addEventListener('popstate',applyRoute);
@@ -3576,6 +3568,7 @@ document.addEventListener('keydown',function(e){
   var hm=document.getElementById('help-modal');if(hm&&hm.classList.contains('open')){closeHelp();return;}
   var sm=document.getElementById('sp-modal');if(sm&&sm.classList.contains('open')){spCloseModal();return;}
   if(document.querySelector('.tk-modal.open,.rs-modal.open'))return;
+  if(rpOuvert()){if(rpTout){rpTout=false;rpRendu();}else rpFermer();return;}
   var menus=['fiche-menu','fiche-photo-menu'].map(function(id){return document.getElementById(id);});
   if(menus.some(function(m){return m&&m.style.display!=='none';})){closeFicheMenu();return;}
   if(document.getElementById('overlay').classList.contains('open'))closeFicheBtn();
@@ -4827,7 +4820,7 @@ function evtPlageDates(l){
 // Un spectacle retire du programme : ses coches, dates decalees, taches
 // ajoutees a la main (comme pour un concert supprime definitivement).
 function oublierSujet(id){
-  var motif=new RegExp('^(?:annonce-|skip-|na-|datemod-|hl-)?'+String(id).replace(/[^0-9a-zA-Z]/g,'\\$&')+'(?:-|$)'),n=0;
+  var motif=new RegExp('^(?:annonce-|skip-|na-|datemod-|hl-|fait-)?'+String(id).replace(/[^0-9a-zA-Z]/g,'\\$&')+'(?:-|$)'),n=0;
   Object.keys(taskStates).forEach(function(k){if(motif.test(k)){delete taskStates[k];n++;}});
   var avant=customTasks.length;
   customTasks=customTasks.filter(function(t){return t.concertId!==id;});
@@ -5074,8 +5067,8 @@ function evtToutCocher(e,t){
     cles.push(tk(p.id,t.id));
   });
   if(!cles.length)return;
-  var avant=photoEtats(cles);
-  cles.forEach(function(k){taskStates[k]=true;});
+  var avant=photoEtats(cles.concat(cles.map(function(k){return 'fait-'+k;})));
+  cles.forEach(function(k){taskStates[k]=true;rpNoterCoche(k,t,true);});
   scheduleSave('taskstates');
   apresChangementTaches();
   proposerAnnulation('Tâche cochée pour '+evtPluriel(cles.length,'spectacle'),t.nom,function(){
@@ -5538,104 +5531,1188 @@ function evtAjouterColle(c){
     fermerEvtModal();
   });
 })();
-var REPORT_SECTIONS=[
-  {title:'Diffusion & Affichage',cats:['col','affp']},
-  {title:'Médias & Presse',cats:['press','radio']},
-  {title:'Réseaux sociaux',cats:['rs','jx']},
-  {title:'Sponsorisation',cats:['sp']},
-  {title:'Newsletters',cats:['newsletter']},
-  {title:'Agenda & Digital',cats:['web']},
-  {title:'Divers',cats:['gen']}
+// ── REPORT DE COMMUNICATION (refait le 30/09/2026) ─────────────────────
+// Le document envoye aux productions apres le concert (etape « Envoyer
+// report comm », J+1) : toutes les actions lancees, rubrique par rubrique,
+// avec des dates precises et sans prix, sauf la depense sponso, qui explique
+// les resultats (decision de Mathieu du 30/09). Remplace le questionnaire en
+// 7 etapes et son PDF (13/09), qui n'avaient servi qu'une fois.
+// Maquette retenue : https://claude.ai/artifact/RMqgD5zGUsiftbrYWDb5Cz
+//
+// Donnees : dans concert_media (cle deja autorisee en base, synchronisee et
+// sauvegardee la nuit : aucune migration), une liste d'elements identifies,
+// fusionnes par id comme le reste :
+//   action  {id,type:'action',concertId,rub,modele,titre,support,quand,chiffres,
+//            texte,lien,detail,modeDetail,vagues,source,cree}
+//   photo   {id,type:'photo',concertId,actionId,path,url,w,h,ordre,cree,expiresAt}
+//   support {id,type:'support',nom,path,url}   bibliotheque de logos, jamais purgee
+//   ignore  {id,type:'ignore',concertId,source} suggestion ecartee
+// Les photos restent des elements a part, avec path et expiresAt : la forme
+// que lisent l'ancienne purge du navigateur et purge-media. Un onglet reste
+// ouvert sur l'ancienne version, ou un deploiement de l'ancienne purge-media,
+// ne supprimerait donc que des photos reellement expirees.
+// Tout disparait 60 jours apres le concert, et jamais moins de 60 jours apres
+// sa creation (une date de concert saisie avec la mauvaise annee ne vide pas
+// le report) : le PDF envoye sert d'archive (decision du 30/09). La cle est
+// renvoyee entiere a chaque modification : sans purge, elle grossirait
+// d'environ 500 Ko par an.
+var RP_JOURS=60;
+var RP_PHOTO_PX=1600; // 1600 px suffisent a une page de 1440 px de large
+var RP_LOGO='img/logo-familyy-bleu.png';
+var RP_RUBRIQUES=[
+  {id:'diffusion',num:'01',nom:'Diffusion'},
+  {id:'affichage',num:'02',nom:'Affichage'},
+  {id:'medias',num:'03',nom:'Médias & opé'},
+  {id:'rs',num:'04',nom:'Réseaux sociaux'},
+  {id:'sponso',num:'05',nom:'Sponsorisation'},
+  {id:'newsletter',num:'06',nom:'Newsletters'},
+  {id:'agenda',num:'07',nom:'Agenda & digital'}
 ];
-function reportMediaGridHtml(items){
-  return '<div class="rpt-grid">'+items.map(function(m){
-    if(m.type==='image'){
-      return '<div class="rpt-card"><img src="'+escUrl(m.url)+'">'+(m.caption?'<div class="rpt-caption">'+esc(m.caption)+'</div>':'')+'</div>';
-    }
-    return '<div class="rpt-card"><div class="rpt-card-link">'+icon('link')+' '+esc(m.caption||m.url)+'</div></div>';
+// Les 15 cases de « Ajouter une action » : rubrique, titre et chiffres deja
+// remplis, il ne reste qu'a dire quand et a ajouter les photos. photos:1 =
+// une action qu'on attend illustree (point ambre tant qu'elle ne l'est pas).
+var RP_MODELES=[
+  {id:'flyers',rub:'diffusion',titre:'Dépôt de flyers',ico:'file',quand:'periode',chiffres:['flyers','lieux de dépôt'],teinte:'brick',photos:1},
+  {id:'sauvage',rub:'diffusion',titre:'Affichage sauvage',ico:'image',quand:'periode',chiffres:['affiches'],teinte:'brick',photos:1},
+  {id:'dooh',rub:'affichage',titre:'Affichage protégé',support:'Écrans digitaux · DOOH',ico:'monitor',quand:'periode',chiffres:['faces'],teinte:'brick',photos:1},
+  {id:'ecrans',rub:'affichage',titre:'Écrans géants',ico:'banner',quand:'periode',chiffres:['passages par jour'],teinte:'brick',photos:1},
+  {id:'presse',rub:'medias',titre:'Article de presse',ico:'newspaper',quand:'jour',chiffres:[],teinte:'blue'},
+  {id:'interview',rub:'medias',titre:'Interview · phoner',ico:'mic',quand:'jour',chiffres:[],teinte:'blue'},
+  {id:'radio',rub:'medias',titre:'Opé radio',ico:'radio',quand:'periode',chiffres:['promos antenne','speaks animateurs'],teinte:'amber'},
+  {id:'jeu',rub:'medias',titre:'Jeu concours',ico:'ticket',quand:'periode',chiffres:['places à gagner'],teinte:'amber'},
+  {id:'fbevent',rub:'rs',titre:'Événement Facebook',ico:'calendar',quand:'jour',chiffres:[],teinte:'blue'},
+  {id:'posts',rub:'rs',titre:'Posts & stories',support:'Facebook et Instagram',ico:'smartphone',quand:'',chiffres:[],teinte:'blue'},
+  {id:'sponso',rub:'sponso',titre:'Sponsorisation',ico:'chart',quand:'',chiffres:[],teinte:'green'},
+  {id:'newsletter',rub:'newsletter',titre:'Newsletter',ico:'send',quand:'jour',chiffres:['contacts'],teinte:'blue'},
+  {id:'agenda',rub:'agenda',titre:'Agenda en ligne',ico:'list',quand:'jour',chiffres:[],teinte:'blue'},
+  {id:'site',rub:'agenda',titre:'Site web',ico:'globe',quand:'jour',chiffres:[],teinte:'blue'},
+  {id:'autre',rub:'medias',titre:'',ico:'more',quand:'jour',chiffres:[],teinte:'gris',libre:true}
+];
+// Etapes du process qui proposent une action une fois cochees (nom normalise :
+// l'id d'une etape change si un administrateur la recree). Le jour de la coche
+// est note pour elles seules (taskStates 'fait-<sujet>-<etape>') : quelques
+// dizaines de cles, au lieu d'une par tache cochee.
+var RP_ETAPES={
+  'creer evenement fb':{modele:'fbevent'},
+  'ajouter date sur site web':{modele:'site',support:'Please Please Familyy'},
+  'envoyer cp':{modele:'presse',titre:'Communiqué de presse'},
+  'proposer phoner / interview':{modele:'interview'},
+  'commander / livrer affiche':{modele:'sauvage'},
+  'gestion affichage protege':{modele:'dooh'},
+  'gestion flyer multi-artiste':{modele:'flyers'},
+  'lancer jeux concours':{modele:'jeu'}
+};
+var RP_MESURES=[['depense','Dépenses'],['impressions','Impressions'],['couverture','Couverture'],['clics','Clics'],['vues','Vues de vidéo']];
+var RP_MOIS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
+function rpNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim();}
+function rpEtape(t){return t&&!t.isCustom?RP_ETAPES[rpNorm(t.nom)]||null:null;}
+function rpModele(id){return RP_MODELES.find(function(m){return m.id===id;})||RP_MODELES[RP_MODELES.length-1];}
+function rpRub(id){return RP_RUBRIQUES.find(function(r){return r.id===id;})||RP_RUBRIQUES[2];}
+function rpRubIndex(id){var i=RP_RUBRIQUES.findIndex(function(r){return r.id===id;});return i<0?2:i;}
+function rpAuj(){return spTodayStr();}
+function rpPlusJours(iso,n){var d=new Date(String(iso).slice(0,10)+'T00:00:00');if(isNaN(d.getTime()))return null;d.setDate(d.getDate()+n);return evtIso(d);}
+function rpFin(c){return estEvt(c)?evtFin(c):c.dc;}
+// Jour a partir duquel un element du report est supprime : 60 jours apres le
+// concert, et jamais moins de 60 jours apres sa creation. Sans date de
+// concert : garde (null).
+function rpLimite(c,cree){
+  var f=rpFin(c),a=f?rpPlusJours(f,RP_JOURS):null;
+  if(!a)return null;
+  var b=cree?rpPlusJours(cree,RP_JOURS):null;
+  return b&&b>a?b:a;
+}
+function rpExpire(c,cree){var l=rpLimite(c,cree);return l?l+'T23:59:59':undefined;}
+function rpTous(type){return concertMedia.filter(function(m){return m&&m.type===type;});}
+function rpDe(cid,type){return concertMedia.filter(function(m){return m&&m.type===type&&m.concertId===cid;});}
+function rpTrouve(id){return concertMedia.find(function(m){return m&&m.id===id;})||null;}
+function rpPhotos(aid){return concertMedia.filter(function(m){return m&&m.type==='photo'&&m.actionId===aid;}).sort(function(a,b){return (a.ordre||0)-(b.ordre||0);});}
+function rpSupports(){return rpTous('support').sort(function(a,b){return String(a.nom).localeCompare(String(b.nom),'fr');});}
+function rpSupportDe(nom){var n=rpNorm(nom);if(!n)return null;return rpTous('support').find(function(s){return rpNorm(s.nom)===n;})||null;}
+function rpSauver(){scheduleSave('concert_media');rpMajEnregistre();}
+
+// ── Dates et chiffres d'une action ──
+function rpJoursEntre(du,au){
+  var a=new Date(du+'T00:00:00'),b=new Date((au||du)+'T00:00:00');
+  if(isNaN(a.getTime())||isNaN(b.getTime())||b<a)return 1;
+  return Math.round((b-a)/86400000)+1;
+}
+function rpNombre(v){var n=parseFloat(String(v==null?'':v).replace(/[\s  ]/g,'').replace(',','.'));return isFinite(n)?n:null;}
+function rpFmtNombre(n){return (Math.round(n*100)/100).toLocaleString('fr-FR');}
+function rpLignes(a){return (a.detail||[]).filter(function(l){return l&&l.du&&rpNombre(l.n)!==null&&String(l.quoi||'').trim();});}
+function rpDetailActif(a){return !!a.modeDetail&&rpLignes(a).length>0;}
+function rpTotalLigne(l){return rpNombre(l.n)*(l.total?1:rpJoursEntre(l.du,l.au));}
+// Quand l'action a-t-elle eu lieu ? Calcule d'apres le detail s'il est rempli.
+// null : a preciser (la ligne « Periode » n'est alors pas imprimee).
+function rpQuand(a){
+  if(rpDetailActif(a)){
+    var l=rpLignes(a),du=l[0].du,au=l[0].au||l[0].du;
+    l.forEach(function(x){var f=x.au||x.du;if(x.du<du)du=x.du;if(f>au)au=f;});
+    return du===au?{mode:'jour',du:du}:{mode:'periode',du:du,au:au};
+  }
+  var q=a.quand||{};
+  if(q.mode==='jour'&&q.du)return {mode:'jour',du:q.du};
+  if(q.mode==='periode'&&q.du){
+    if(!q.au||q.au===q.du)return {mode:'jour',du:q.du};
+    return q.au<q.du?{mode:'periode',du:q.au,au:q.du}:{mode:'periode',du:q.du,au:q.au};
+  }
+  if(q.mode==='mois'&&/^\d{4}-\d{2}$/.test(q.mois||''))return {mode:'mois',mois:q.mois};
+  if(q.mode==='texte'&&String(q.texte||'').trim())return {mode:'texte',texte:String(q.texte).trim()};
+  return null;
+}
+function rpDebut(q){if(!q)return null;if(q.du)return q.du;if(q.mois)return q.mois+'-01';return null;}
+function rpFinQ(q){
+  if(!q)return null;if(q.au)return q.au;if(q.du)return q.du;
+  if(q.mois){var d=new Date(q.mois+'-01T00:00:00');d.setMonth(d.getMonth()+1);d.setDate(0);return evtIso(d);}
+  return null;
+}
+function rpChiffres(a){
+  if(rpDetailActif(a)){
+    var tot={},ordre=[];
+    rpLignes(a).forEach(function(l){
+      var k=rpNorm(l.quoi);
+      if(!(k in tot)){tot[k]={n:0,l:String(l.quoi).trim()};ordre.push(k);}
+      tot[k].n+=rpTotalLigne(l);
+    });
+    return ordre.map(function(k){return {n:rpFmtNombre(tot[k].n),l:tot[k].l};});
+  }
+  // Un libelle pre-rempli sans nombre (« flyers ») n'est pas imprime.
+  return (a.chiffres||[]).map(function(x){return {n:String(x.n||'').trim(),l:String(x.l||'').trim()};}).filter(function(x){return x.n;});
+}
+function rpJJMM(iso){return iso.slice(8,10)+'/'+iso.slice(5,7);}
+function rpJJMMAAAA(iso){return rpJJMM(iso)+'/'+iso.slice(0,4);}
+function rpMoisTexte(m){var i=+m.slice(5,7)-1;return RP_MOIS[i]?evtCap(RP_MOIS[i])+' '+m.slice(0,4):m;}
+// Pour le report : « 14/03 → 10/04/2026 », « 13 → 20/03/2026 », « Avril 2026 ».
+function rpFmtQuand(q){
+  if(!q)return '';
+  if(q.mode==='jour')return rpJJMMAAAA(q.du);
+  if(q.mode==='periode'){
+    var a=q.du,b=q.au;
+    if(a.slice(0,7)===b.slice(0,7))return a.slice(8,10)+' → '+rpJJMMAAAA(b);
+    if(a.slice(0,4)===b.slice(0,4))return rpJJMM(a)+' → '+rpJJMMAAAA(b);
+    return rpJJMMAAAA(a)+' → '+rpJJMMAAAA(b);
+  }
+  if(q.mode==='mois')return rpMoisTexte(q.mois);
+  return q.texte||'';
+}
+// Dans l'editeur, comme le reste de l'appli : « 14 mars → 10 avr. ».
+function rpFmtQuandCourt(q){
+  if(!q)return '';
+  if(q.mode==='jour')return dateCourte(q.du);
+  if(q.mode==='periode')return dateCourte(q.du)+' → '+dateCourte(q.au);
+  if(q.mode==='mois')return rpMoisTexte(q.mois).toLowerCase();
+  return q.texte||'';
+}
+// « 4 semaines · jusqu'à 15 jours avant le concert »
+function rpSousQuand(q,c){
+  if(!q||q.mode!=='periode')return '';
+  var n=rpJoursEntre(q.du,q.au),t=n%7===0?(n/7)+' semaine'+(n>7?'s':''):n+' jours';
+  if(c&&c.dc&&q.au<c.dc){
+    var j=rpJoursEntre(q.au,c.dc)-1;
+    t+=' · jusqu\'à '+(j===1?'la veille du concert':j+' jours avant le concert');
+  }
+  return t;
+}
+// Nom a afficher : le support en grand quand il est precis (« N RADIO »,
+// type « Opé radio » en etiquette), sinon le titre (« AFFICHAGE PROTÉGÉ »,
+// support « Écrans digitaux · DOOH » en etiquette).
+function rpNoms(a){
+  var m=rpModele(a.modele),titre=String(a.titre||'').trim(),sup=String(a.support||'').trim();
+  var supPrecis=sup&&sup!==(m.support||'');
+  if(supPrecis&&(!titre||titre===m.titre))return {grand:sup,puce:titre,ligne:sup+(titre?' · '+titre:'')};
+  var g=titre||sup||m.titre||'Action';
+  var p=titre&&sup?sup:'';
+  return {grand:g,puce:p,ligne:g+(p?' · '+p:'')};
+}
+// Ce qui manque encore (point ambre). Le PDF peut partir quand meme : une
+// information absente n'y est simplement pas imprimee.
+function rpManque(a){
+  if(a.modele==='posts')return '';
+  if(a.modele==='sponso'){
+    var v=a.vagues||{};
+    var rempli=Object.keys(v).some(function(k){return RP_MESURES.some(function(m){return m[0]!=='depense'&&String(v[k][m[0]]||'').trim();});});
+    return rempli?'':'Chiffres à saisir';
+  }
+  if(!rpQuand(a))return 'Période à préciser';
+  if(rpModele(a.modele).photos&&!rpPhotos(a.id).length)return 'Aucune photo';
+  return '';
+}
+// Tri : par rubrique, puis par date (les actions sans date a la fin).
+function rpActions(c){
+  return rpDe(c.id,'action').slice().sort(function(a,b){
+    var r=rpRubIndex(a.rub)-rpRubIndex(b.rub);if(r)return r;
+    var x=rpDebut(rpQuand(a))||'9999',y=rpDebut(rpQuand(b))||'9999';
+    if(x!==y)return x<y?-1:1;
+    return String(a.cree||'').localeCompare(String(b.cree||''))||String(a.id).localeCompare(String(b.id));
+  });
+}
+function rpLien(u){
+  u=String(u||'').trim();
+  if(/^www\./i.test(u))u='https://'+u;
+  return /^https?:\/\/[^\s"<>]+$/i.test(u)?u:'';
+}
+function rpLienTexte(u){var t=u.replace(/^https?:\/\/(www\.)?/i,'').replace(/\/$/,'');return t.length>60?t.slice(0,57)+'…':t;}
+
+// ── Suggestions : calculees a l'affichage, jamais ajoutees toutes seules ──
+function rpPostsPublies(c){
+  return rsPosts.filter(function(p){return p&&(p.concertId===c.id||p.autoRef===c.id)&&p.status==='posted'&&p.date;})
+    .sort(function(a,b){return String(a.date).localeCompare(String(b.date));});
+}
+// Etape cochee pour ce concert (ou, dans un evenement, pour l'un de ses
+// spectacles) : le jour de la coche s'il est connu, sinon l'echeance prevue.
+function rpEtapeFaite(c,t){
+  var sujets=[c];
+  if(estEvt(c))evtProg(c).forEach(function(p){if(!evtApart(p))sujets.push(spSujet(c,p));});
+  var best=null;
+  sujets.forEach(function(s){
+    var k=tk(s.id,t.id);if(!taskStates[k])return;
+    var d=taskStates['fait-'+k],exacte=!!d;
+    if(!d){var dd=calcDate(s,t);d=dd&&!isNaN(dd.getTime())?evtIso(dd):'';}
+    if(!best||(d&&(!best.date||d<best.date)))best={date:d,exacte:exacte};
+  });
+  return best;
+}
+function rpSuggestions(c){
+  var pris={},ign={},out=[];
+  rpDe(c.id,'action').forEach(function(a){if(a.source)pris[a.source]=1;});
+  rpDe(c.id,'ignore').forEach(function(i){ign[i.source]=1;});
+  function ajoute(s){if(!pris[s.source]&&!ign[s.source])out.push(s);}
+  if(spAVagues(c)){
+    var vs=spVaguesTriees(c);
+    ajoute({source:'sponso',modele:'sponso',titre:'Sponsorisation · '+evtPluriel(vs.length,'vague'),
+      origine:'D\'après l\'onglet Sponso de la fiche : dates, ciblage et budget de chaque vague.',
+      detail:vs.map(function(v){return v.debut&&v.fin?rpFmtQuandCourt({mode:'periode',du:v.debut,au:v.fin}):'à programmer';}).join(' · ')});
+  }
+  var posts=rpPostsPublies(c);
+  if(posts.length)ajoute({source:'posts',modele:'posts',titre:'Posts & stories',
+    origine:'D\'après le planning RS : '+evtPluriel(posts.length,'post publié','posts publiés')+' pour ce concert.',
+    detail:rpFmtQuandCourt(posts.length>1?{mode:'periode',du:posts[0].date,au:posts[posts.length-1].date}:{mode:'jour',du:posts[0].date})});
+  process.forEach(function(t){
+    var e=rpEtape(t);if(!e)return;
+    var f=rpEtapeFaite(c,t);if(!f)return;
+    var m=rpModele(e.modele);
+    ajoute({source:'etape-'+t.id,modele:m.id,titre:e.titre||m.titre,support:e.support||'',date:f.date,
+      origine:'D\'après l\'étape « '+t.nom+' », cochée dans le plan.',
+      detail:f.date?(f.exacte?'cochée le ':'échéance prévue le ')+dateCourte(f.date):''});
+  });
+  return out;
+}
+function rpNouvelleAction(c,modeleId,extra){
+  var m=rpModele(modeleId),auj=rpAuj();
+  var a={id:uid('ra'),type:'action',concertId:c.id,rub:m.rub,modele:m.id,titre:m.titre||'',support:m.support||'',
+    quand:{mode:m.quand||'jour'},chiffres:(m.chiffres||[]).map(function(l){return {id:uid('rc'),n:'',l:l};}),
+    texte:'',lien:'',detail:[],modeDetail:false,cree:auj};
+  if(m.id==='sponso'){
+    a.vagues={};
+    spRead(c).vagues.forEach(function(v){a.vagues[v.id]={depense:v.budget||''};});
+  }
+  // Sponso et posts creees depuis les cases : la suggestion correspondante
+  // disparait aussi (sinon on pouvait les ajouter deux fois).
+  if(m.id==='sponso'||m.id==='posts')a.source=m.id;
+  if(extra)Object.keys(extra).forEach(function(k){a[k]=extra[k];});
+  concertMedia.push(a);
+  rpSauver();
+  return a;
+}
+function rpAccepter(c,source){
+  var s=rpSuggestions(c).find(function(x){return x.source===source;});if(!s)return null;
+  var extra={source:s.source};
+  if(s.modele==='sponso')extra.titre='Sponsorisation';
+  else if(s.modele==='posts')extra.titre='Posts & stories';
+  else{
+    extra.titre=s.titre;
+    if(s.support)extra.support=s.support;
+    if(s.date)extra.quand={mode:'jour',du:s.date};
+  }
+  return rpNouvelleAction(c,s.modele,extra);
+}
+function rpIgnorer(c,source){
+  if(rpDe(c.id,'ignore').some(function(i){return i.source===source;}))return;
+  concertMedia.push({id:uid('ri'),type:'ignore',concertId:c.id,source:source,cree:rpAuj()});
+  rpSauver();
+}
+// Jour de la coche, pour les seules etapes qui alimentent le report.
+function rpNoterCoche(k,t,fait){
+  if(!rpEtape(t))return;
+  if(fait)taskStates['fait-'+k]=rpAuj();else delete taskStates['fait-'+k];
+}
+
+// ── Purge, a l'ouverture de l'appli ──
+// Retire ce qui a passe sa date (60 jours apres le concert, 60 jours au moins
+// apres sa creation), les elements d'un concert supprime definitivement, et
+// les medias de l'ancien questionnaire (avant le 30/09). Recalcule la date
+// d'expiration des photos quand la date du concert a change. Les fichiers
+// sont supprimes sans attendre : si un appel echoue, purge-media (fonction
+// serveur) rattrape l'oubli.
+function rpPurger(){
+  if(!concerts.length)return;
+  var auj=rpAuj(),parId={},fichiers=[],change=false;
+  concerts.forEach(function(c){parId[c.id]=c;});
+  concertMedia=concertMedia.filter(function(m){
+    if(!m||typeof m!=='object')return false;
+    if(m.type==='support')return true;
+    if(m.type==='image'||m.type==='link'){if(m.path)fichiers.push(m.path);change=true;return false;}
+    var c=parId[m.concertId];
+    var lim=c?rpLimite(c,m.cree):null;
+    if(!c||(lim&&lim<auj)){if(m.type==='photo'&&m.path)fichiers.push(m.path);change=true;return false;}
+    if(m.type==='photo'){var exp=rpExpire(c,m.cree);if(m.expiresAt!==exp){if(exp)m.expiresAt=exp;else delete m.expiresAt;change=true;}}
+    return true;
+  });
+  if(change)scheduleSave('concert_media');
+  fichiers.forEach(function(p){storageDelete(p);});
+}
+
+// ── Les pages du report ──
+// Une page par action, sauf :
+// - les petites actions sans photo (texte court, deux chiffres au plus), par
+//   3 sur une page de cartes ;
+// - les petites actions a une seule photo (agendas, sites), par 4 ;
+// - les photos au-dela de ce qu'une page montre, sur des pages « (suite) ».
+function rpGabarit(a){
+  if(a.modele==='sponso')return 'sponso';
+  if(a.modele==='posts')return 'posts';
+  if(rpDetailActif(a))return 'detail';
+  var n=rpPhotos(a.id).length,t=String(a.texte||'').trim().length,ch=rpChiffres(a).length;
+  if(!n)return t<=220&&ch<=2?'carte':'texte';
+  if(n===1)return t<=140&&ch<=1?'vignette':'photo';
+  return 'galerie';
+}
+function rpPages(c){
+  var acts=rpActions(c),pages=[{type:'couv'},{type:'camp',actions:acts}];
+  RP_RUBRIQUES.forEach(function(r){
+    var l=acts.filter(function(a){return a.rub===r.id;});
+    if(!l.length)return;
+    pages.push({type:'rub',rub:r,actions:l});
+    var gab=l.map(function(a){return rpGabarit(a);});
+    var cartes=l.filter(function(a,i){return gab[i]==='carte';});
+    var vign=l.filter(function(a,i){return gab[i]==='vignette';});
+    var faitC=false,faitV=false;
+    l.forEach(function(a,i){
+      var k=gab[i];
+      if(k==='carte'&&cartes.length>1){
+        if(!faitC){faitC=true;for(var x=0;x<cartes.length;x+=3)pages.push({type:'cartes',rub:r,actions:cartes.slice(x,x+3)});}
+        return;
+      }
+      if(k==='vignette'&&vign.length>1){
+        if(!faitV){faitV=true;for(var y=0;y<vign.length;y+=4)pages.push({type:'vignettes',rub:r,actions:vign.slice(y,y+4)});}
+        return;
+      }
+      if(k==='carte')k='texte';
+      if(k==='vignette')k='photo';
+      pages.push({type:k,rub:r,actions:[a]});
+      var montrees={photo:1,galerie:6,posts:4}[k]||0,ph=rpPhotos(a.id);
+      for(var z=montrees;z<ph.length;z+=9)pages.push({type:'suite',rub:r,actions:[a],photos:ph.slice(z,z+9)});
+    });
+  });
+  return pages;
+}
+function rpPageDe(pages,sel){
+  if(sel==='couv')return 0;
+  if(sel==='camp')return 1;
+  if(String(sel).indexOf('rub:')===0){var r=sel.slice(4);var i=pages.findIndex(function(p){return p.type==='rub'&&p.rub.id===r;});return i<0?0:i;}
+  var j=pages.findIndex(function(p){return p.type!=='rub'&&p.type!=='camp'&&(p.actions||[]).some(function(a){return a.id===sel;});});
+  return j<0?0:j;
+}
+function rpSelDePage(p){
+  if(!p||p.type==='couv')return 'couv';
+  if(p.type==='camp')return 'camp';
+  if(p.type==='rub')return 'rub:'+p.rub.id;
+  return p.actions[0].id;
+}
+var RP_BANDE=(function(){var s='';for(var i=0;i<16;i++)s+=i%2?'<i>PLEASE</i> ':'PLEASE ';return '<div class="rpp-bande" aria-hidden="true"><span>'+s+'</span></div>';})();
+function rpDeux(n){return (n<10?'0':'')+n;}
+function rpDatePoints(iso){return iso.slice(8,10)+'.'+iso.slice(5,7)+'.'+iso.slice(0,4);}
+function rpQui(c){
+  var d='';
+  if(c.dc){
+    d=rpDatePoints(c.dc);
+    var f=rpFin(c);
+    if(f&&f!==c.dc)d=c.dc.slice(8,10)+(c.dc.slice(0,7)===f.slice(0,7)?'':'.'+c.dc.slice(5,7))+' → '+rpDatePoints(f);
+  }
+  return [c.art,c.ville,d].map(function(x){return String(x||'').trim();}).filter(Boolean).join(' · ');
+}
+function rpDateLongue(c){
+  if(!c.dc)return '';
+  var o={weekday:'long',day:'numeric',month:'long',year:'numeric'},d=new Date(c.dc+'T00:00:00'),f=rpFin(c);
+  if(isNaN(d.getTime()))return '';
+  if(f&&f!==c.dc){
+    var e=new Date(f+'T00:00:00');
+    return 'Du '+d.toLocaleDateString('fr-FR',{day:'numeric',month:c.dc.slice(0,7)===f.slice(0,7)?undefined:'long'})+' au '+e.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  }
+  return evtCap(d.toLocaleDateString('fr-FR',o));
+}
+function rpPage(c,cls,rubTexte,contenu,num){
+  var ciel=cls.indexOf('rpp-ciel')>=0;
+  return '<div class="rpp '+cls+'">'+RP_BANDE
+    +'<div class="rpp-tete"><span class="rpp-rub">'+esc(rubTexte)+'</span><span class="rpp-qui">'+esc(rpQui(c))+'</span></div>'
+    +'<div class="rpp-corps">'+contenu+'</div>'
+    +'<div class="rpp-pied">'+(ciel?'':'<img class="rpp-logo" src="'+RP_LOGO+'" alt="Please Please Familyy">')+'<span class="rpp-num">'+rpDeux(num)+'</span></div></div>';
+}
+function rpRubTexte(r){return r.num+' — '+r.nom;}
+function rpTailleTitre(t,long,tres){var n=String(t||'').length;return n>tres?' tres-long':n>long?' long':'';}
+// Un lien ne devient cliquable que dans le PDF : dans l'apercu (bouton de
+// l'editeur), un <a> dans un <button> serait invalide.
+function rpLienHtml(u,apercu){
+  var l=rpLien(u);if(!l)return '';
+  return apercu?'<span class="rpp-lien">'+esc(rpLienTexte(l))+'</span>':'<a class="rpp-lien" href="'+esc(l)+'">'+esc(rpLienTexte(l))+'</a>';
+}
+function rpMarque(a){
+  var s=rpSupportDe(a.support),u=s&&s.url?safeUrl(s.url):'';
+  return u?'<img class="rpp-marque" src="'+esc(u)+'" alt="">':'';
+}
+function rpChiffresHtml(ch,cls){
+  if(!ch.length)return '';
+  return '<div class="rpp-chiffres'+(cls||'')+(ch.length>2?' serres':'')+'">'+ch.slice(0,4).map(function(x){
+    return '<div class="rpp-chiffre">'+(x.n?'<b>'+esc(x.n)+'</b>':'')+(x.l?'<span>'+esc(x.l)+'</span>':'')+'</div>';
   }).join('')+'</div>';
 }
-function exportCampaignReport(id){
-  var c=concerts.find(function(x){return x.id===id;});
-  if(!c)return;
-  function fmtFull(d){return d?d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'-';}
-  var sorted=sortedProcess(c);
-  var skipSp=!!taskStates['skip-'+c.id+'-sp'];
-  var skipCol=!!taskStates['skip-'+c.id+'-col'];
-  if(skipSp||skipCol){sorted=sorted.filter(function(t){
-    if(skipSp&&t.cat==='sp')return false;
-    if(skipCol&&(t.cat==='col'||t.cat==='affp'))return false;
-    return true;
-  });}
-  sorted=sorted.filter(function(t){return !isNA(c,t);});
-  var doneCount=sorted.filter(function(t){return !!taskStates[tk(c.id,t.id)];}).length;
-  var tasksRows=sorted.map(function(t){
-    var d=calcDate(c,t);var isDone=!!taskStates[tk(c.id,t.id)];var blocked=!isUnlocked(c,t);
-    var cat=CATS[t.cat]||{label:'?'};
-    var statusHtml;
-    if(isDone)statusHtml='<span class="bilan-badge ok">Fait</span>';
-    else if(blocked)statusHtml='<span class="bilan-badge muted">En attente</span>';
-    else if(!d)statusHtml='<span class="bilan-badge muted">Sans date</span>';
-    else if(isLate(d))statusHtml='<span class="bilan-badge late">En retard</span>';
-    else if(isSoon(d))statusHtml='<span class="bilan-badge warn">Cette semaine</span>';
-    else statusHtml='<span class="bilan-badge muted">À venir</span>';
-    return '<tr><td>'+esc(t.nom)+'</td><td>'+esc(cat.label)+'</td><td>'+(d?fmt(d):'-')+'</td><td>'+statusHtml+'</td></tr>';
-  }).join('');
-  var rsForConcert=rsPosts.filter(function(p){return p.concertId===c.id||p.autoRef===c.id;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
-  var postedCount=rsForConcert.filter(function(p){return p.status==='posted';}).length;
-  function netLabel(p){
-    var nets=[];
-    if(p.fb)nets.push('Facebook');if(p.insta)nets.push('Instagram');if(p.tiktok)nets.push('TikTok');if(p.linkedin)nets.push('LinkedIn');
-    return nets.length?nets.join(', '):'-';
+// Bloc de gauche d'une page d'action : support, titre, periode, chiffres, texte, lien.
+function rpInfos(a,c,o){
+  o=o||{};
+  var n=rpNoms(a),q=rpQuand(a),h='',marque=rpMarque(a);
+  if(marque||n.puce)h+='<div class="rpp-marque-l">'+marque+(n.puce?'<span class="rpp-puce">'+esc(n.puce)+'</span>':'')+'</div>';
+  var taille=rpTailleTitre(n.grand,18,30);
+  h+='<h2 class="rpp-titre'+taille+'">'+esc(n.grand)+'</h2>';
+  if(q){
+    h+='<div class="rpp-lbl rpp-espace">Période</div><div class="rpp-quand'+(q.mode==='texte'?' texte':'')+'">'+esc(rpFmtQuand(q))+'</div>';
+    var s=rpSousQuand(q,c);if(s)h+='<div class="rpp-sous">'+esc(s)+'</div>';
   }
-  var rsRows=rsForConcert.map(function(p){
-    var t=RS_TYPES[p.type]||RS_TYPES.autre;
-    var statusHtml=p.status==='posted'?'<span class="bilan-badge ok">Posté</span>':p.status==='ready'?'<span class="bilan-badge warn">Prêt</span>':'<span class="bilan-badge muted">À faire</span>';
-    return '<tr><td>'+fmt(new Date(p.date))+'</td><td>'+esc(t.label)+'</td><td>'+(p.format==='story'?'Story':'Post')+'</td><td>'+esc(netLabel(p))+'</td><td>'+statusHtml+'</td></tr>';
-  }).join('');
-  var ventes=VENTES[c.ventes||0];
-  var html='<div class="rpt-cover"><div class="rpt-brand">Please Please Communication</div><h1 class="artist">'+esc(c.art)+'</h1><div class="rpt-cover-sub">'+esc(lieuTexte(c))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div>';
-  var mediaForConcert=concertMedia.filter(function(m){return m.concertId===c.id;});
-  REPORT_SECTIONS.forEach(function(sec){
-    var items=mediaForConcert.filter(function(m){return sec.cats.indexOf(m.cat)>=0;});
-    if(!items.length)return;
-    html+='<div class="rpt-divider"><h2>'+esc(sec.title)+'</h2></div>';
-    html+='<div class="rpt-section">'+reportMediaGridHtml(items)+'</div>';
+  if(!o.sansChiffres)h+=rpChiffresHtml(rpChiffres(a),' rpp-espace');
+  if(!o.sansTexte&&String(a.texte||'').trim())h+='<div class="rpp-texte rpp-espace">'+esc(a.texte)+'</div>';
+  if(!o.sansTexte)h+=rpLienHtml(a.lien,o.apercu);
+  return '<div class="rpp-infos">'+h+'</div>';
+}
+function rpCadre(p,maxW,maxH){
+  var w=+p.w||4,h=+p.h||3,s=Math.min(maxW/w,maxH/h);
+  return {w:Math.round(w*s),h:Math.round(h*s)};
+}
+function rpImg(p,cls,styleWH){return '<img class="'+cls+'" src="'+escUrl(p.url)+'" alt=""'+(styleWH?' style="'+styleWH+'"':'')+'>';}
+function rpCouverture(c){
+  var ph=artistPhotos[artKey(c.art)],url=ph&&ph.url?safeUrl(ph.url):'';
+  var lieu=String(c.salle||c.ville||'').trim(),date=rpDateLongue(c);
+  var sous=[c.salle&&c.ville?String(c.ville).trim():'',date].filter(Boolean).join(' · ');
+  var auj=rpAuj(),tailleArt=rpTailleTitre(c.art,10,16);
+  return '<div class="rpp rpp-ciel rpp-couv'+(url?'':' sans-photo')+'">'+RP_BANDE
+    +'<div class="rpp-couv-g"><img class="rpp-couv-logo" src="'+RP_LOGO+'" alt="Please Please Familyy"><div class="rpp-vide"></div>'
+    +'<div class="rpp-couv-sur">Report de communication</div>'
+    +'<h1 class="rpp-couv-art'+tailleArt+'">'+esc(c.art)+'</h1>'
+    +(lieu?'<div class="rpp-couv-lieu">'+esc(lieu)+'</div>':'')
+    +(sous?'<div class="rpp-couv-date">'+esc(sous)+'</div>':'')
+    +'<div class="rpp-vide"></div><div class="rpp-couv-pied"><span>Please Please Communication</span><span>Édité le '+esc(rpDatePoints(auj))+'</span></div></div>'
+    +(url?'<div class="rpp-couv-photo"><img src="'+esc(url)+'" alt=""></div>':'')
+    +'</div>';
+}
+// Page « La campagne en un coup d'oeil » : le nombre d'actions par rubrique,
+// puis une frise des actions datees jusqu'au concert.
+function rpCampagne(c,acts,num){
+  var h='<div class="rpp-h"><h2 class="rpp-titre rpp-titre-page">La campagne en un coup d\'œil</h2><div class="rpp-h-note">'+esc(evtPluriel(acts.length,'action'))+'</div></div>';
+  h+='<div class="rpp-comptes">'+RP_RUBRIQUES.map(function(r){
+    var l=acts.filter(function(a){return a.rub===r.id;});
+    var noms=l.map(function(a){return rpNoms(a).grand;}),res=noms.slice(0,3).join(', ')+(noms.length>3?'…':'');
+    return '<div class="rpp-compte'+(l.length?'':' vide')+'"><b>'+l.length+'</b><span>'+esc(r.nom)+'</span><em>'+esc(res)+'</em></div>';
+  }).join('')+'</div>';
+  h+=rpFrise(c,acts);
+  return rpPage(c,'','La campagne',h,num);
+}
+function rpFrise(c,acts){
+  var lignes=[],hors=[];
+  acts.forEach(function(a){
+    if(a.modele==='sponso'){
+      spVaguesTriees(c).forEach(function(v,i){if(v.debut&&v.fin)lignes.push({nom:'Sponso · vague '+(i+1),du:v.debut,au:v.fin,exact:true});});
+      return;
+    }
+    if(a.modele==='posts'){
+      var ps=rpPostsPublies(c);
+      if(ps.length)lignes.push({nom:'Posts publiés',du:ps[0].date,au:ps[ps.length-1].date,points:ps.map(function(p){return p.date;})});
+      return;
+    }
+    var q=rpQuand(a);
+    if(!q||q.mode==='texte'){hors.push(rpNoms(a).grand);return;}
+    lignes.push({nom:rpNoms(a).grand,du:rpDebut(q),au:rpFinQ(q),exact:q.mode!=='mois',quand:q});
   });
-  html+='<div class="rpt-divider"><h2>Suivi & avancement</h2></div>';
-  html+='<div class="bilan-header" style="margin-top:24px"><div><h1 class="artist">'+esc(c.art)+'</h1><div class="bilan-sub">'+esc(lieuTexte(c))+(c.dc?' &middot; '+fmtFull(new Date(c.dc)):'')+'</div></div><div class="bilan-date">Please Please Communication<br>Rapport généré le '+fmtFull(new Date())+'</div></div>';
-  html+='<div class="bilan-section"><h2>Informations générales</h2><div class="bilan-infos">'
-    +'<div><span>Salle</span>'+esc(lieuTexte(c)||'-')+'</div>'
-    +'<div><span>Date du concert</span>'+(c.dc?fmtFull(new Date(c.dc)):'-')+'</div>'
-    +'<div><span>Date d\'annonce</span>'+(c.da?fmtFull(new Date(c.da)):'-')+'</div>'
-    +'<div><span>Statut des ventes</span>'+esc(ventes.label)+'</div>'
-    +'<div style="grid-column:1/-1"><span>Budget prévisionnel</span>'+(c.budget?esc(c.budget):'<span class="bilan-empty">Non renseigné</span>')+'</div>'
-    +'</div></div>';
-  if(c.medias||c.jeux){
-    html+='<div class="bilan-section"><h2>Médias &amp; partenariats</h2>';
-    if(c.medias)html+='<div class="bilan-text">'+esc(c.medias)+'</div>';
-    if(c.jeux)html+='<div class="bilan-text" style="margin-top:8px">'+esc(c.jeux)+'</div>';
-    html+='</div>';
+  if(!lignes.length)return '';
+  lignes.sort(function(a,b){return a.du<b.du?-1:a.du>b.du?1:0;});
+  var trop=lignes.length>8?lignes.length-8:0;
+  lignes=lignes.slice(0,8);
+  var debut=lignes.reduce(function(m,l){return l.du<m?l.du:m;},lignes[0].du);
+  var fin=lignes.reduce(function(m,l){return l.au>m?l.au:m;},lignes[0].au);
+  var fc=rpFin(c);if(fc&&fc>fin)fin=fc;
+  var d0=new Date(debut.slice(0,7)+'-01T00:00:00'),d1=new Date(fin.slice(0,7)+'-01T00:00:00');
+  d1.setMonth(d1.getMonth()+1);
+  var mois=(d1.getFullYear()-d0.getFullYear())*12+d1.getMonth()-d0.getMonth();
+  if(mois>12){d0=new Date(d1);d0.setMonth(d0.getMonth()-12);mois=12;}
+  var total=Math.round((d1-d0)/86400000),W=1000,px=W/total;
+  function x(iso){var d=new Date(iso+'T00:00:00');return Math.max(0,Math.min(W,Math.round((d-d0)/86400000*px)));}
+  var axe='';
+  for(var i=0,m=new Date(d0);i<mois;i++,m.setMonth(m.getMonth()+1)){
+    if(mois>8&&i%2)continue;
+    axe+='<span style="left:'+x(evtIso(m))+'px">'+esc(m.toLocaleDateString('fr-FR',{month:'short'}))+'</span>';
   }
-  if(c.notes){
-    html+='<div class="bilan-section"><h2>Notes</h2><div class="bilan-text">'+esc(c.notes)+'</div></div>';
+  var h='<div class="rpp-frise"><div class="rpp-frise-l rpp-frise-axe"><span class="rpp-frise-nom">Actions datées</span><div class="rpp-frise-piste">'+axe+'</div></div>';
+  lignes.forEach(function(l){
+    var piste='';
+    if(l.points)piste=l.points.map(function(p){return '<i class="rpp-trait" style="left:'+x(p)+'px"></i>';}).join('');
+    else{var a=x(l.du),b=x(l.au)+Math.max(1,Math.round(px)),w=Math.max(8,b-a);piste='<i class="rpp-barre'+(l.exact?'':' approx')+'" style="left:'+a+'px;width:'+w+'px"></i>';}
+    var dates=l.quand?rpFmtQuandCourt(l.quand):rpFmtQuandCourt(l.du===l.au?{mode:'jour',du:l.du}:{mode:'periode',du:l.du,au:l.au});
+    h+='<div class="rpp-frise-l"><span class="rpp-frise-nom">'+esc(l.nom)+' <em>'+esc(dates)+'</em></span><div class="rpp-frise-piste">'+piste+'</div></div>';
+  });
+  if(c.dc){
+    var xc=x(c.dc);
+    h+='<i class="rpp-frise-concert" style="left:'+(312+xc)+'px"></i><span class="rpp-frise-concert-t" style="left:'+(312+xc)+'px">'+esc(rpJJMM(c.dc))+' concert</span>';
   }
-  html+='<div class="bilan-section"><h2>Plan de communication ('+doneCount+'/'+sorted.length+' réalisées)</h2>';
-  html+=sorted.length?('<table class="bilan-table"><thead><tr><th>Tâche</th><th>Catégorie</th><th>Échéance</th><th>Statut</th></tr></thead><tbody>'+tasksRows+'</tbody></table>'):'<div class="bilan-empty">Aucune tâche.</div>';
-  html+='</div>';
-  html+='<div class="bilan-section"><h2>Réseaux sociaux ('+postedCount+'/'+rsForConcert.length+' publiés)</h2>';
-  html+=rsForConcert.length?('<table class="bilan-table"><thead><tr><th>Date</th><th>Type</th><th>Format</th><th>Réseaux</th><th>Statut</th></tr></thead><tbody>'+rsRows+'</tbody></table>'):'<div class="bilan-empty">Aucun post lié à ce concert.</div>';
-  html+='</div>';
-  document.getElementById('bilan-report').innerHTML=html;
+  h+='</div>';
+  var notes=[];
+  if(trop)notes.push('+ '+evtPluriel(trop,'autre action datée','autres actions datées'));
+  if(hors.length)notes.push('Hors frise : '+hors.slice(0,5).join(', ')+(hors.length>5?'…':''));
+  h+='<div class="rpp-frise-leg"><span><i class="rpp-barre"></i>Dates exactes</span><span><i class="rpp-barre approx"></i>Mois ou période approximative</span><span class="rpp-vide"></span><span>'+esc(notes.join(' · '))+'</span></div>';
+  return h;
+}
+function rpPageRub(c,p,num,numeros){
+  var r=p.rub,l=p.actions;
+  var lignes=l.slice(0,7).map(function(a){
+    var q=rpQuand(a),ch=rpChiffres(a)[0];
+    var meta=[q?rpFmtQuand(q):'',ch?(ch.n+' '+ch.l).trim():''].filter(Boolean).join(' · ');
+    return '<div class="rpp-somm-l"><div class="rpp-somm-t">'+esc(rpNoms(a).ligne)+'</div><div class="rpp-somm-p">p. '+rpDeux(numeros[a.id]||num)+'</div>'
+      +(meta?'<div class="rpp-somm-m">'+esc(meta)+'</div>':'')+'</div>';
+  }).join('');
+  if(l.length>7)lignes+='<div class="rpp-somm-plus">+ '+evtPluriel(l.length-7,'autre action','autres actions')+'</div>';
+  var h='<div class="rpp-rubrique"><div><div class="rpp-rub-num">'+esc(r.num)+'</div><h2 class="rpp-rub-nom'+(r.nom.length>9?' long':'')+'">'+esc(r.nom)+'</h2></div>'
+    +'<div class="rpp-somm"><div class="rpp-lbl">Dans cette partie</div>'+lignes+'</div></div>';
+  return rpPage(c,'rpp-ciel',rpRubTexte(r),h,num);
+}
+function rpPagePhoto(c,p,num,ap){
+  var a=p.actions[0],ph=rpPhotos(a.id)[0];
+  var portrait=(+ph.h||3)>(+ph.w||4)*1.05,d=rpCadre(ph,portrait?520:700,600),wh='width:'+d.w+'px;height:'+d.h+'px';
+  var h='<div class="rpp-deux">'+rpInfos(a,c,{apercu:ap})+rpImg(ph,'rpp-photo',wh)+'</div>';
+  return rpPage(c,'',rpRubTexte(p.rub),h,num);
+}
+function rpPageGalerie(c,p,num,ap){
+  var a=p.actions[0],ph=rpPhotos(a.id).slice(0,6),n=ph.length;
+  var h='<div class="rpp-deux rpp-deux-g">'+rpInfos(a,c,{apercu:ap})
+    +'<div class="rpp-grille g'+n+'">'+ph.map(function(x){return rpImg(x,'');}).join('')+'</div></div>';
+  return rpPage(c,'',rpRubTexte(p.rub),h,num);
+}
+function rpPageSuite(c,p,num){
+  var a=p.actions[0],n=rpNoms(a);
+  var h='<div class="rpp-h"><h2 class="rpp-titre rpp-titre-page">'+esc(n.grand)+' <span class="rpp-suite">(suite)</span></h2></div>'
+    +'<div class="rpp-grille-suite">'+p.photos.map(function(x){return rpImg(x,'');}).join('')+'</div>';
+  return rpPage(c,'',rpRubTexte(p.rub),h,num);
+}
+function rpPageTexte(c,p,num,ap){
+  var a=p.actions[0],ch=rpChiffres(a),t=String(a.texte||'').trim(),lien=rpLienHtml(a.lien,ap);
+  var droite=ch.length||t||lien?'<div class="rpp-carte-texte">'+rpChiffresHtml(ch,'')+(t?'<div class="rpp-texte'+(ch.length?' rpp-espace':'')+'">'+esc(t)+'</div>':'')+lien+'</div>':'';
+  var h='<div class="rpp-deux rpp-deux-t">'+rpInfos(a,c,{sansChiffres:true,sansTexte:true,apercu:ap})+droite+'</div>';
+  return rpPage(c,'',rpRubTexte(p.rub),h,num);
+}
+function rpDatesLigne(l){
+  function j(iso){return new Date(iso+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'});}
+  var au=l.au&&l.au>l.du?l.au:l.du;
+  if(au===l.du)return j(l.du)+'/'+l.du.slice(5,7);
+  if(au.slice(0,7)===l.du.slice(0,7))return j(l.du)+' → '+j(au)+'/'+au.slice(5,7);
+  return j(l.du)+'/'+l.du.slice(5,7)+' → '+j(au)+'/'+au.slice(5,7);
+}
+function rpPageDetail(c,p,num,ap){
+  var a=p.actions[0],l=rpLignes(a).slice().sort(function(x,y){return x.du<y.du?-1:x.du>y.du?1:0;});
+  var rows=l.slice(0,7).map(function(x){
+    var jrs=rpJoursEntre(x.du,x.au),n=rpNombre(x.n),quoi=String(x.quoi).trim();
+    var desc=x.total?rpFmtNombre(n)+' '+quoi:rpFmtNombre(n)+' '+quoi+' / jour × '+evtPluriel(jrs,'jour');
+    return '<tr><td><b>'+esc(rpDatesLigne(x))+'</b><span>'+esc(evtPluriel(jrs,'jour'))+'</span></td><td>'+esc(desc)+'</td><td class="n">'+esc(rpFmtNombre(rpTotalLigne(x))+' '+quoi)+'</td></tr>';
+  }).join('');
+  var t=String(a.texte||'').trim();
+  var h='<div class="rpp-deux rpp-deux-d">'+rpInfos(a,c,{sansTexte:true,apercu:ap})
+    +'<div class="rpp-carte-texte"><div class="rpp-carte-t">Détail de la diffusion</div><table class="rpp-detail"><thead><tr><th>Dates</th><th>Diffusion</th><th class="n">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'
+    +(l.length>7?'<div class="rpp-sous">+ '+evtPluriel(l.length-7,'autre ligne','autres lignes')+'</div>':'')
+    +(t?'<div class="rpp-texte petit rpp-espace">'+esc(t)+'</div>':'')+rpLienHtml(a.lien,ap)+'</div></div>';
+  return rpPage(c,'',rpRubTexte(p.rub),h,num);
+}
+// Titre d'une page qui regroupe plusieurs actions : leur titre commun
+// (« Opé radio ») ou, a defaut, la rubrique.
+function rpTitreGroupe(p){
+  var t=p.actions.map(function(a){return String(a.titre||'').trim();});
+  return t[0]&&t.every(function(x){return x===t[0];})?t[0]:p.rub.nom;
+}
+function rpPageCartes(c,p,num,ap){
+  var nb=p.actions.length,h='<div class="rpp-h"><h2 class="rpp-titre rpp-titre-page">'+esc(rpTitreGroupe(p))+'</h2><div class="rpp-h-note">'+esc(evtPluriel(p.actions.length,'action'))+'</div></div>'
+    +'<div class="rpp-cartes n'+nb+'">'+p.actions.map(function(a){
+      var n=rpNoms(a),q=rpQuand(a),t=String(a.texte||'').trim();
+      return '<div class="rpp-carte"><div class="rpp-carte-nom">'+rpMarque(a)+'<span>'+esc(n.grand)+'</span></div>'
+        +(n.puce?'<span class="rpp-puce rpp-espace-p">'+esc(n.puce)+'</span>':'')
+        +(q?'<div class="rpp-lbl rpp-espace">Période</div><div class="rpp-quand-c">'+esc(rpFmtQuand(q))+'</div>':'')
+        +rpChiffresHtml(rpChiffres(a),' rpp-espace petits')
+        +(t?'<div class="rpp-texte petit rpp-espace">'+esc(t)+'</div>':'')+rpLienHtml(a.lien,ap)+'</div>';
+    }).join('')+'</div>';
+  return rpPage(c,'',rpRubTexte(p.rub),h,num);
+}
+function rpPageVignettes(c,p,num,ap){
+  var nb=p.actions.length,h='<div class="rpp-h"><h2 class="rpp-titre rpp-titre-page">'+esc(rpTitreGroupe(p))+'</h2><div class="rpp-h-note">'+esc(evtPluriel(p.actions.length,'action'))+'</div></div>'
+    +'<div class="rpp-vignettes n'+nb+'">'+p.actions.map(function(a){
+      var n=rpNoms(a),q=rpQuand(a),ph=rpPhotos(a.id)[0],ch=rpChiffres(a)[0],t=String(a.texte||'').trim();
+      return '<div class="rpp-vignette">'+rpImg(ph,'')+'<div class="rpp-vignette-t">'+rpMarque(a)
+        +'<div class="rpp-vignette-nom">'+esc(n.grand)+'</div>'+(n.puce?'<div class="rpp-vignette-type">'+esc(n.puce)+'</div>':'')
+        +(q?'<div class="rpp-vignette-date">'+esc(rpFmtQuand(q))+'</div>':'')
+        +(ch?'<div class="rpp-vignette-type">'+esc((ch.n+' '+ch.l).trim())+'</div>':'')
+        +(t?'<div class="rpp-vignette-type">'+esc(t)+'</div>':'')+rpLienHtml(a.lien,ap)+'</div></div>';
+    }).join('')+'</div>';
+  return rpPage(c,'',rpRubTexte(p.rub),h,num);
+}
+function rpPageSponso(c,p,num){
+  var a=p.actions[0],vs=spVaguesTriees(c),mes=a.vagues||{},s=spRead(c);
+  var cible=spCible(s)||String(c.ville||'').trim();
+  var cols=RP_MESURES.filter(function(m){return vs.some(function(v){return rpNombre((mes[v.id]||{})[m[0]])!==null;});});
+  function val(k,n){return n===null?'':rpFmtNombre(n)+(k==='depense'?' €':'');}
+  var tot={};cols.forEach(function(m){tot[m[0]]=vs.reduce(function(t,v){var n=rpNombre((mes[v.id]||{})[m[0]]);return n===null?t:t+n;},0);});
+  var h='<div class="rpp-h"><h2 class="rpp-titre rpp-titre-page">'+esc(rpNoms(a).grand)+'</h2><div class="rpp-h-note">'+esc(evtPluriel(vs.length,'vague'))+(cols.length?' · résultats cumulés':'')+'</div></div>';
+  var ncols=cols.length;
+  if(ncols)h+='<div class="rpp-kpis n'+ncols+'">'+cols.map(function(m){
+    return '<div class="rpp-kpi"><span>'+esc(m[0]==='couverture'&&vs.length>1?'Couverture cumulée':m[1])+'</span><b>'+esc(val(m[0],tot[m[0]]))+'</b></div>';
+  }).join('')+'</div>';
+  var rows=vs.map(function(v,i){
+    var d=mes[v.id]||{},nom=String(d.nom||'').trim();
+    return '<tr><td><b>Vague '+(i+1)+'</b>'+(nom?'<span>'+esc(nom)+'</span>':'')+'</td><td>'+esc(v.debut&&v.fin?rpFmtQuand({mode:'periode',du:v.debut,au:v.fin}):'À programmer')+'</td><td>'+esc(cible)+'</td>'
+      +cols.map(function(m){return '<td class="n">'+esc(val(m[0],rpNombre(d[m[0]])))+'</td>';}).join('')+'</tr>';
+  }).join('');
+  h+='<div class="rpp-table"><table><thead><tr><th>Vague</th><th>Période</th><th>Ciblage</th>'+cols.map(function(m){return '<th class="n">'+esc(m[1])+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody>'
+    +(cols.length&&vs.length>1?'<tfoot><tr><td>Total</td><td></td><td></td>'+cols.map(function(m){return '<td class="n">'+esc(val(m[0],tot[m[0]]))+'</td>';}).join('')+'</tr></tfoot>':'')+'</table></div>';
+  var notes=[];
+  if(String(a.texte||'').trim())notes.push(String(a.texte).trim());
+  if(cols.some(function(m){return m[0]==='couverture';})&&vs.length>1)notes.push('Couverture cumulée : une même personne peut avoir vu plusieurs vagues.');
+  if(notes.length)h+='<div class="rpp-note">'+esc(notes.join(' '))+'</div>';
+  return rpPage(c,'',rpRubTexte(p.rub),h,num);
+}
+function rpReseaux(p){return [p.fb&&'Facebook',p.insta&&'Instagram',p.tiktok&&'TikTok',p.linkedin&&'LinkedIn'].filter(Boolean).join(', ');}
+function rpPagePosts(c,p,num,ap){
+  var a=p.actions[0],ps=rpPostsPublies(c),ph=rpPhotos(a.id).slice(0,4),n=rpNoms(a),taille=rpTailleTitre(n.grand,18,30),nph=ph.length;
+  var max=ph.length?10:16,liste=ps.slice(0,max).map(function(x){
+    var t=(RS_TYPES[x.type]||RS_TYPES.autre).label,r=rpReseaux(x);
+    return '<div class="rpp-post"><b>'+esc(rpJJMM(x.date))+'</b><span>'+esc([t,x.format==='story'?'story':'post',r].filter(Boolean).join(' · '))+'</span></div>';
+  }).join('');
+  var gauche='<div class="rpp-infos">'+(n.puce?'<div class="rpp-marque-l"><span class="rpp-puce">'+esc(n.puce)+'</span></div>':'')
+    +'<h2 class="rpp-titre'+taille+'">'+esc(n.grand)+'</h2>'
+    +'<div class="rpp-lbl rpp-espace">'+esc(evtPluriel(ps.length,'post publié','posts publiés'))+'</div>'
+    +'<div class="rpp-posts'+(ph.length?'':' deux-col')+'">'+liste+'</div>'
+    +(ps.length>max?'<div class="rpp-sous">+ '+evtPluriel(ps.length-max,'autre post','autres posts')+'</div>':'')
+    +(String(a.texte||'').trim()?'<div class="rpp-texte petit rpp-espace">'+esc(a.texte)+'</div>':'')+rpLienHtml(a.lien,ap)+'</div>';
+  var h='<div class="rpp-deux rpp-deux-g'+(ph.length?'':' seul')+'">'+gauche+(nph?'<div class="rpp-grille g'+nph+'">'+ph.map(function(x){return rpImg(x,'');}).join('')+'</div>':'')+'</div>';
+  return rpPage(c,'',rpRubTexte(p.rub),h,num);
+}
+function rpPageHtml(c,pages,i,ap){
+  var p=pages[i],num=i+1;
+  if(p.type==='couv')return rpCouverture(c);
+  if(p.type==='camp')return rpCampagne(c,p.actions,num);
+  if(p.type==='rub'){
+    var numeros={};
+    pages.forEach(function(x,j){if(x.type!=='rub'&&x.type!=='camp')(x.actions||[]).forEach(function(a){if(!numeros[a.id])numeros[a.id]=j+1;});});
+    return rpPageRub(c,p,num,numeros);
+  }
+  var f={photo:rpPagePhoto,galerie:rpPageGalerie,suite:rpPageSuite,texte:rpPageTexte,detail:rpPageDetail,cartes:rpPageCartes,vignettes:rpPageVignettes,sponso:rpPageSponso,posts:rpPagePosts}[p.type];
+  return f?f(c,p,num,ap):'';
+}
+
+// ── L'editeur, en pleine page ──
+var rpCid=null,rpSel='couv',rpTout=false,rpTel='liste',rpRenduAttente=false,rpEnvoi=null,rpOptions=false,rpApercuTimer=null;
+function rpOuvert(){var el=document.getElementById('rp');return !!(el&&el.classList.contains('open'));}
+function rpConcert(){return rpCid?concerts.find(function(x){return x.id===rpCid;})||null:null;}
+function rpEstTel(){return !!(window.matchMedia&&matchMedia('(max-width: 768px)').matches);}
+function rpOuvrir(cid,depuisRoute){
+  var c=concerts.find(function(x){return x.id===cid;});if(!c)return;
+  rpCid=cid;rpSel='couv';rpTout=false;rpTel='liste';rpOptions=false;
+  var el=document.getElementById('rp');
+  el.classList.add('open');el.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+  rpRendu();
+  if(!depuisRoute&&!_routing)history.pushState({tab:currentTab,fiche:cid,report:true},'',routeHash(currentTab,cid)+'/report');
+}
+function rpFermer(depuisRoute){
+  if(!rpOuvert())return;
+  var el=document.getElementById('rp');
+  el.classList.remove('open','tout','tel-page','mode-ajout');el.setAttribute('aria-hidden','true');
+  rpCid=null;rpRenduAttente=false;
+  if(!document.getElementById('overlay').classList.contains('open'))document.body.style.overflow='';
+  if(!depuisRoute&&!_routing){
+    if(history.state&&history.state.report)history.back();
+    else pushRoute(currentTab,currentFicheId,true,ficheSpId);
+  }
+  flushPendingRender();
+}
+// Mise a jour venue d'un collegue : l'editeur se redessine, sauf pendant une
+// saisie (comme le reste de l'appli, voir requestRender).
+function rpDemandeRendu(){
+  if(!rpOuvert())return;
+  if(userIsEditing()){rpRenduAttente=true;return;}
+  rpRenduAttente=false;rpRendu();
+}
+function rpRemplacer(id,html){
+  var el=document.getElementById(id);if(!el)return;
+  var d=el.querySelector('.rp-defil'),y=d?d.scrollTop:0,y2=el.scrollTop;
+  el.innerHTML=html;
+  var d2=el.querySelector('.rp-defil');if(d2)d2.scrollTop=y;
+  el.scrollTop=y2;
+}
+function rpRendu(){
+  var c=rpConcert();if(!c){rpFermer(true);return;}
+  var el=document.getElementById('rp');
+  if(rpSel!=='couv'&&rpSel!=='camp'&&rpSel!=='ajouter'&&String(rpSel).indexOf('rub:')!==0&&!rpTrouve(rpSel))rpSel='couv';
+  var ajout=rpSel==='ajouter'&&!rpTout;
+  el.classList.toggle('tout',rpTout);
+  el.classList.toggle('tel-page',rpTel==='page');
+  el.classList.toggle('mode-ajout',ajout);
+  document.getElementById('rp-barre').innerHTML=rpHtmlBarre(c);
+  rpRemplacer('rp-liste',rpHtmlListe(c));
+  rpRemplacer('rp-centre',ajout?rpHtmlAjout(c):rpHtmlCentre(c));
+  rpRemplacer('rp-form',ajout||rpTout?'':rpHtmlForm(c));
+  var det=document.querySelector('#rp-form details.rp-options');
+  if(det)det.addEventListener('toggle',function(){rpOptions=det.open;});
+  rpEchelle();rpMajEnregistre();
+}
+function rpMajApercu(){
+  var c=rpConcert();if(!c||!rpOuvert())return;
+  rpRemplacer('rp-liste',rpHtmlListe(c));
+  if(rpSel!=='ajouter'){rpRemplacer('rp-centre',rpHtmlCentre(c));rpEchelle();}
+  var t=document.getElementById('rp-form-titre'),a=rpTrouve(rpSel);
+  if(t&&a)t.textContent=rpNoms(a).grand||'Nouvelle action';
+}
+function rpPlanifierApercu(){clearTimeout(rpApercuTimer);rpApercuTimer=setTimeout(rpMajApercu,150);}
+function rpEchelle(){
+  document.querySelectorAll('#rp .rp-apercu').forEach(function(f){var w=f.clientWidth;if(w)f.style.setProperty('--k',(w/1440).toFixed(4));});
+}
+function rpMajEnregistre(){
+  var el=document.getElementById('rp-etat');if(!el)return;
+  var enCours=!!pendingSaveKeys.concert_media;
+  el.innerHTML=enCours?'Enregistrement…':icon('check','rp-ok')+'Enregistré';
+}
+function rpHtmlBarre(c){
+  var retourPage=rpTel==='page'&&rpEstTel();
+  return '<button type="button" class="btn rp-retour" data-a="fermer">'+icon('arrow-left')+'<span>'+(retourPage?'Report':'Fiche')+'</span></button>'
+    +'<div class="rp-titre"><span class="rp-art">'+esc(c.art)+'</span><span class="rp-sous">Report · '+esc([lieuTexte(c),c.dc?dateCourte(c.dc,true):''].filter(Boolean).join(' · '))+'</span></div>'
+    +'<span class="rp-etat" id="rp-etat"></span>'
+    +'<button type="button" class="btn rp-b-tout" data-a="tout">'+icon(rpTout?'pencil':'eye')+'<span>'+(rpTout?'Revenir à l\'édition':'Voir tout le report')+'</span></button>'
+    +'<button type="button" class="btn btn-primary rp-b-pdf" data-a="pdf">'+icon('download')+'<span class="fb-long">Télécharger le PDF</span><span class="fb-court">PDF</span></button>';
+}
+function rpVignette(a){
+  var m=rpModele(a.modele),ph=rpPhotos(a.id)[0];
+  if(ph)return '<img class="rp-vign" src="'+escUrl(ph.url)+'" alt="">';
+  return '<span class="rp-vign t-'+esc(m.teinte)+'">'+icon(m.ico)+'</span>';
+}
+function rpHtmlListe(c){
+  var acts=rpActions(c),sug=rpSuggestions(c).length,ph=artistPhotos[artKey(c.art)];
+  function item(id,vign,nom,fin){
+    return '<button type="button" class="rp-item'+(rpSel===id?' actif':'')+'" data-a="sel" data-id="'+esc(id)+'">'+vign+'<span class="rp-item-nom">'+esc(nom)+'</span>'+fin+'</button>';
+  }
+  var h='<div class="rp-defil">';
+  if(sug)h+='<button type="button" class="rp-b-sugg'+(rpSel==='ajouter'?' actif':'')+'" data-a="ajouter"><span class="rp-point corail"></span><span>'+esc(evtPluriel(sug,'suggestion'))+' de l\'appli</span><b>Voir</b></button>';
+  h+='<div class="rp-groupe">Début</div>';
+  h+=item('couv',ph&&ph.url?'<img class="rp-vign" src="'+escUrl(ph.url)+'" alt="">':'<span class="rp-vign ciel"></span>','Couverture','<span class="rp-auto">auto</span>');
+  h+=item('camp','<span class="rp-vign blanc"></span>','La campagne','<span class="rp-auto">auto</span>');
+  RP_RUBRIQUES.forEach(function(r){
+    var l=acts.filter(function(a){return a.rub===r.id;});if(!l.length)return;
+    h+='<div class="rp-groupe">'+esc(r.num+' '+r.nom)+'</div>';
+    l.forEach(function(a){
+      var manque=rpManque(a);
+      h+=item(a.id,rpVignette(a),rpNoms(a).grand||'Nouvelle action',manque?'<span class="rp-point" title="'+esc(manque)+'"></span>':'');
+    });
+  });
+  if(!acts.length)h+='<p class="rp-vide-liste">Aucune action pour l\'instant. Ajoute la première avec le bouton ci-dessous.</p>';
+  h+='</div><div class="rp-liste-pied"><button type="button" class="btn-ajout rp-b-ajout'+(rpSel==='ajouter'?' actif':'')+'" data-a="ajouter">'+icon('plus')+'Ajouter une action</button></div>';
+  return h;
+}
+function rpHtmlCentre(c){
+  var pages=rpPages(c);
+  if(rpTout){
+    return '<div class="rp-centre-tete"><span class="rp-meta">'+esc(evtPluriel(pages.length,'page'))+' · clique une page pour la modifier</span></div>'
+      +'<div class="rp-toutes">'+pages.map(function(p,i){return '<button type="button" class="rp-apercu" data-a="aller" data-i="'+i+'" aria-label="Page '+(i+1)+'">'+rpPageHtml(c,pages,i,true)+'</button>';}).join('')+'</div>';
+  }
+  var idx=rpPageDe(pages,rpSel);
+  var h='<div class="rp-centre-tete"><span class="rp-meta">Page '+(idx+1)+' sur '+pages.length+' · aperçu en direct</span><div class="rp-fleches">'
+    +'<button type="button" class="rp-ico" data-a="prec" aria-label="Page précédente"'+(idx<=0?' disabled':'')+'>'+icon('chevron-left')+'</button>'
+    +'<button type="button" class="rp-ico" data-a="suiv" aria-label="Page suivante"'+(idx>=pages.length-1?' disabled':'')+'>'+icon('chevron-right')+'</button></div></div>'
+    +'<div class="rp-apercu">'+rpPageHtml(c,pages,idx,true)+'</div>';
+  var manques=rpActions(c).map(function(a){var m=rpManque(a);return m?{a:a,m:m}:null;}).filter(Boolean);
+  if(manques.length){
+    h+='<div class="rp-a-completer"><span class="rp-point"></span><div><b>'+esc(evtPluriel(manques.length,'action à compléter','actions à compléter'))+'</b> : '
+      +esc(manques.slice(0,4).map(function(x){return rpNoms(x.a).grand+' ('+x.m.toLowerCase()+')';}).join(', ')+(manques.length>4?'…':''))
+      +'. Le PDF peut partir quand même : ce qui manque n\'y est pas imprimé.</div></div>';
+  }
+  return h;
+}
+function rpHtmlAjout(c){
+  var sugg=rpSuggestions(c),ign=rpDe(c.id,'ignore').length;
+  var h='<div class="rp-ajout rp-defil"><h2 class="rp-ajout-titre">Qu\'est-ce qui a été fait ?</h2>'
+    +'<p class="rp-ajout-sous">Choisis une case : l\'action se range dans la bonne rubrique, titre déjà rempli. Il ne reste qu\'à dire quand, et à ajouter les photos.</p>';
+  if(sugg.length){
+    h+='<div class="rp-ajout-h">Suggestions de l\'appli <b>'+sugg.length+'</b></div><div class="rp-suggs">'+sugg.map(function(s){
+      var m=rpModele(s.modele);
+      return '<div class="rp-sugg"><div class="rp-sugg-t"><span class="rp-point t-'+esc(m.teinte)+'"></span>'+esc(s.titre)+'</div>'
+        +'<p>'+esc(s.origine)+'</p>'+(s.detail?'<div class="rp-sugg-d">'+esc(s.detail)+'</div>':'')
+        +'<div class="rp-sugg-b"><button type="button" class="btn btn-primary" data-a="sugg-ok" data-s="'+esc(s.source)+'">Ajouter au report</button>'
+        +'<button type="button" class="btn" data-a="sugg-non" data-s="'+esc(s.source)+'">Ignorer</button></div></div>';
+    }).join('')+'</div>';
+  }
+  if(ign)h+='<button type="button" class="btn-link discret rp-revoir" data-a="revoir">'+esc(evtPluriel(ign,'suggestion ignorée','suggestions ignorées'))+' · Les revoir</button>';
+  h+='<div class="rp-ajout-h">'+(sugg.length?'Ou choisis dans la liste':'Choisis dans la liste')+'</div><div class="rp-tuiles">'+RP_MODELES.map(function(m){
+    return '<button type="button" class="rp-tuile" data-a="modele" data-m="'+esc(m.id)+'">'+icon(m.ico,'t-'+m.teinte)
+      +'<span class="rp-tuile-n">'+esc(m.libre?'Autre chose':m.titre)+'</span><span class="rp-tuile-r">'+esc(m.libre?'Rubrique au choix':rpRub(m.rub).nom)+'</span></button>';
+  }).join('')+'</div></div>';
+  return h;
+}
+function rpInfoForm(sur,titre,texte,alerte){
+  return '<div class="rp-form-tete"><div class="rp-meta">'+esc(sur)+'</div><div class="rp-form-titre">'+esc(titre)+'</div></div>'
+    +'<div class="rp-defil rp-form-defil"><p class="rp-aide grand">'+esc(texte)+'</p>'+(alerte?'<p class="rp-alerte">'+esc(alerte)+'</p>':'')+'</div>';
+}
+function rpHtmlForm(c){
+  if(rpSel==='couv'){
+    var ph=artistPhotos[artKey(c.art)];
+    return rpInfoForm('Début','Couverture','Page créée toute seule avec la photo de l\'artiste, son nom, la salle et la date du concert.',ph&&ph.url?'':'Pas encore de photo d\'artiste : ajoute-la dans la fiche du concert, elle apparaîtra ici.');
+  }
+  if(rpSel==='camp')return rpInfoForm('Début','La campagne','Page créée toute seule : le nombre d\'actions de chaque rubrique, puis une frise des actions datées jusqu\'au concert. Une action sans date n\'apparaît pas dans la frise.');
+  if(String(rpSel).indexOf('rub:')===0){var r=rpRub(rpSel.slice(4));return rpInfoForm(r.num+' '+r.nom,'Page de rubrique','Page créée toute seule : le sommaire de la rubrique, avec les dates et le numéro de page de chaque action.');}
+  var a=rpTrouve(rpSel);if(!a)return '';
+  return rpHtmlFormAction(c,a);
+}
+function rpHtmlFormAction(c,a){
+  var m=rpModele(a.modele),r=rpRub(a.rub);
+  var h='<div class="rp-form-tete"><div class="rp-meta">'+esc(r.num+' '+r.nom)+'</div><div class="rp-form-titre" id="rp-form-titre">'+esc(rpNoms(a).grand||'Nouvelle action')+'</div></div><div class="rp-defil rp-form-defil">';
+  h+='<label class="rp-champ">C\'est quoi ?<input class="rp-in" type="text" data-f="titre" value="'+esc(a.titre)+'" placeholder="'+esc(m.titre||'Ex. : opé radio, collage, stand…')+'"></label>';
+  var rubSel='<label class="rp-champ">Rubrique<select class="rp-in" data-f="rub">'+RP_RUBRIQUES.map(function(x){return '<option value="'+esc(x.id)+'"'+(x.id===a.rub?' selected':'')+'>'+esc(x.num+' · '+x.nom)+'</option>';}).join('')+'</select></label>';
+  if(m.libre)h+=rubSel;
+  if(a.modele!=='sponso'){
+    h+='<div class="rp-champ"><label for="rp-support">Avec qui, sur quel support ?</label>'
+      +'<input class="rp-in" id="rp-support" type="text" list="rp-supports" data-f="support" value="'+esc(a.support)+'" placeholder="Ex. : L\'Union, N Radio, JDS…" autocomplete="off">'
+      +'<datalist id="rp-supports">'+rpSupports().map(function(s){return '<option value="'+esc(s.nom)+'">';}).join('')+'</datalist>'
+      +'<div id="rp-support-extra">'+rpHtmlSupportExtra(a)+'</div></div>';
+  }
+  if(a.modele==='sponso')h+=rpHtmlSponso(c,a);
+  else if(a.modele==='posts')h+=rpHtmlPosts(c);
+  else{
+    h+='<div id="rp-quand-bloc">'+rpHtmlQuand(c,a)+'</div>';
+    h+=a.modeDetail?rpHtmlDetail(a):rpHtmlChiffres(a);
+  }
+  h+='<label class="rp-champ">En quelques mots<textarea class="rp-in" data-f="texte" rows="3" placeholder="Ex. : zone Cormontreuil et Reims.">'+esc(a.texte)+'</textarea></label>';
+  h+=rpHtmlPhotos(c,a);
+  h+='<details class="rp-options"'+(rpOptions||a.lien?' open':'')+'><summary>Plus d\'options</summary><div class="rp-options-c">'
+    +'<label class="rp-champ">Lien, cliquable dans le PDF<input class="rp-in" type="url" data-f="lien" value="'+esc(a.lien)+'" placeholder="https://…"></label>'
+    +(m.libre?'':rubSel)
+    +'<button type="button" class="btn btn-danger" data-a="supprimer">Retirer du report</button></div></details>';
+  h+='</div>';
+  return h;
+}
+// Logo du support et raccourcis vers la bibliotheque. Redessine a part, pendant
+// la saisie du support, pour ne pas retirer le champ sous les doigts.
+function rpHtmlSupportExtra(a){
+  var sup=rpSupportDe(a.support),cur=rpNorm(a.support);
+  var autres=rpSupports().filter(function(s){return rpNorm(s.nom)!==cur;}).sort(function(x,y){return (y.url?1:0)-(x.url?1:0);}).slice(0,6);
+  var h='';
+  if(String(a.support||'').trim())h+='<div class="rp-logo-l">'+(sup&&sup.url?'<img class="rp-logo" src="'+escUrl(sup.url)+'" alt="">':'')
+    +'<button type="button" class="btn-link" data-a="logo">'+(sup&&sup.url?'Changer le logo':'Ajouter un logo')+'</button>'
+    +(sup&&sup.url?'':'<span class="rp-aide">gardé pour les prochains reports</span>')+'</div>';
+  if(autres.length)h+='<div class="rp-puces">'+autres.map(function(s){
+    return '<button type="button" class="rp-puce" data-a="support" data-nom="'+esc(s.nom)+'">'+(s.url?'<img src="'+escUrl(s.url)+'" alt="">':'')+esc(s.nom)+'</button>';
+  }).join('')+'</div>';
+  return h;
+}
+function rpHtmlQuand(c,a){
+  if(a.modeDetail&&rpDetailActif(a))return '<div class="rp-champ"><span>Quand ?</span><div class="rp-calcule" id="rp-quand-calc">'+esc(rpFmtQuandCourt(rpQuand(a)))+'</div></div>';
+  var q=a.quand||{},mode=q.mode||rpModele(a.modele).quand||'jour';
+  var h='<div class="rp-champ"><span>Quand ?</span><div class="view-toggle rp-seg" role="group" aria-label="Type de date">'
+    +[['jour','Un jour'],['periode','Du… au…'],['mois','Un mois'],['texte','Autre']].map(function(o){
+      return '<button type="button" class="view-toggle-btn'+(mode===o[0]?' active':'')+'" data-a="quand" data-v="'+esc(o[0])+'" aria-pressed="'+(mode===o[0]?'true':'false')+'">'+o[1]+'</button>';
+    }).join('')+'</div>';
+  if(mode==='jour')h+='<input class="rp-in" type="date" data-f="q-du" value="'+esc(q.du||'')+'" aria-label="Date">';
+  else if(mode==='periode'){
+    h+='<div class="rp-dates"><input class="rp-in" type="date" data-f="q-du" value="'+esc(q.du||'')+'" aria-label="Du"><span aria-hidden="true">→</span><input class="rp-in" type="date" data-f="q-au" value="'+esc(q.au||'')+'" aria-label="Au"></div>';
+    h+='<div class="rp-aide" id="rp-quand-sous">'+esc(rpSousQuand(rpQuand(a),c))+'</div>';
+  }
+  else if(mode==='mois'){
+    var mm=(q.mois||'').slice(5,7),aa=(q.mois||'').slice(0,4),base=+(c.dc||rpAuj()).slice(0,4);
+    var ans=[base-1,base,base+1];if(aa&&ans.indexOf(+aa)<0)ans.push(+aa);
+    h+='<div class="rp-dates rp-mois"><select class="rp-in" data-f="q-mois-m" aria-label="Mois"><option value="">Mois…</option>'+RP_MOIS.map(function(n,i){var v=(i<9?'0':'')+(i+1);return '<option value="'+v+'"'+(v===mm?' selected':'')+'>'+evtCap(n)+'</option>';}).join('')+'</select>'
+      +'<select class="rp-in" data-f="q-mois-a" aria-label="Année">'+ans.map(function(y){return '<option value="'+y+'"'+(String(y)===(aa||String(base))?' selected':'')+'>'+y+'</option>';}).join('')+'</select></div>';
+  }
+  else h+='<input class="rp-in" type="text" data-f="q-texte" value="'+esc(q.texte||'')+'" placeholder="Ex. : plusieurs passages entre janvier et mai" aria-label="Quand">';
+  return h+'</div>';
+}
+function rpHtmlChiffres(a){
+  var h='<div class="rp-champ"><span>Les chiffres</span>'+(a.chiffres||[]).map(function(x,i){
+    return '<div class="rp-chiffre"><input class="rp-in" type="text" data-f="c-n" data-i="'+i+'" value="'+esc(x.n)+'" placeholder="80+" aria-label="Nombre">'
+      +'<input class="rp-in" type="text" data-f="c-l" data-i="'+i+'" value="'+esc(x.l)+'" placeholder="Ce qui est compté" aria-label="Ce qui est compté">'
+      +'<button type="button" class="rp-ico" data-a="c-moins" data-i="'+i+'" aria-label="Retirer ce chiffre">'+icon('x')+'</button></div>';
+  }).join('')
+    +'<button type="button" class="btn-link rp-gauche" data-a="c-plus">+ Ajouter un chiffre</button><p class="rp-aide">Un ordre de grandeur suffit : « 80+ », « environ 40 ».</p></div>';
+  h+='<button type="button" class="rp-detailler" data-a="detail-on"><span>Détailler jour par jour <em>· facultatif</em></span><b>+ Détailler</b></button>';
+  return h;
+}
+function rpResLigne(l){
+  var n=rpNombre(l.n);if(n===null||!l.du)return '';
+  return '= '+rpFmtNombre(rpTotalLigne(l))+' '+String(l.quoi||'').trim();
+}
+function rpHtmlCalcul(a){
+  var q=rpQuand(a),ch=rpChiffres(a);
+  if(!rpDetailActif(a))return '<p class="rp-aide">Remplis au moins une ligne (date, nombre, quoi) : la période et les totaux se calculent tout seuls.</p>';
+  return '<div class="rp-calcul"><div class="rp-calcul-t">Calculé d\'après le détail</div><div><b>Quand :</b> '+esc(rpFmtQuandCourt(q))+'</div><div><b>Chiffres :</b> '+esc(ch.map(function(x){return x.n+' '+x.l;}).join(' · '))+'</div></div>';
+}
+function rpHtmlDetail(a){
+  var h='<div class="rp-champ"><div class="rp-champ-t"><span>Détail jour par jour</span><button type="button" class="btn-link discret" data-a="detail-off">Revenir au simple</button></div>'
+    +(a.detail||[]).map(function(l,i){
+      return '<div class="rp-ligne"><div class="rp-dates"><input class="rp-in" type="date" data-f="l-du" data-i="'+i+'" value="'+esc(l.du||'')+'" aria-label="Du"><span aria-hidden="true">→</span><input class="rp-in" type="date" data-f="l-au" data-i="'+i+'" value="'+esc(l.au||'')+'" aria-label="Au"></div>'
+        +'<div class="rp-ligne-q"><input class="rp-in" type="text" inputmode="decimal" data-f="l-n" data-i="'+i+'" value="'+esc(l.n||'')+'" placeholder="12" aria-label="Nombre">'
+        +'<input class="rp-in" type="text" data-f="l-quoi" data-i="'+i+'" value="'+esc(l.quoi||'')+'" placeholder="promos" aria-label="Quoi">'
+        +'<select class="rp-in" data-f="l-total" data-i="'+i+'" aria-label="Par jour ou au total"><option value="">par jour</option><option value="1"'+(l.total?' selected':'')+'>au total</option></select>'
+        +'<button type="button" class="rp-ico" data-a="l-moins" data-i="'+i+'" aria-label="Retirer cette ligne">'+icon('x')+'</button></div>'
+        +'<div class="rp-ligne-res" data-res="'+i+'">'+esc(rpResLigne(l))+'</div></div>';
+    }).join('')
+    +'<button type="button" class="btn-link rp-gauche" data-a="l-plus">+ Ajouter une ligne</button><div id="rp-calcul">'+rpHtmlCalcul(a)+'</div></div>';
+  return h;
+}
+function rpHtmlSponso(c,a){
+  var vs=spVaguesTriees(c),mes=a.vagues||{};
+  if(!vs.length)return '<p class="rp-alerte">Aucune vague dans l\'onglet Sponso de la fiche : ajoute-les là-bas, elles apparaîtront ici.</p>';
+  return '<div class="rp-champ"><span>Résultats par vague</span>'+vs.map(function(v,i){
+    var d=mes[v.id]||{},vid=v.id;
+    return '<div class="rp-vague"><div class="rp-vague-t">Vague '+(i+1)+' <span>'+esc(v.debut&&v.fin?rpFmtQuandCourt({mode:'periode',du:v.debut,au:v.fin}):'à programmer')+'</span></div>'
+      +'<input class="rp-in" type="text" data-f="v-nom" data-v="'+esc(vid)+'" value="'+esc(d.nom||'')+'" placeholder="Objectif, facultatif : vente de billets…" aria-label="Objectif de la vague">'
+      +'<div class="rp-mesures">'+RP_MESURES.map(function(mm){
+        var k=mm[0];
+        return '<label class="rp-mesure">'+esc(mm[1])+(k==='depense'?' (€)':'')+'<input class="rp-in" type="text" inputmode="decimal" data-f="v-'+k+'" data-v="'+esc(vid)+'" value="'+esc(d[k]||'')+'"></label>';
+      }).join('')+'</div></div>';
+  }).join('')+'<p class="rp-aide">Dates et ciblage viennent de l\'onglet Sponso. Les chiffres : ceux du gestionnaire de publicités.</p></div>';
+}
+function rpHtmlPosts(c){
+  var ps=rpPostsPublies(c);
+  var l=ps.slice(0,6).map(function(p){return '<li><b>'+esc(dateCourte(p.date))+'</b> '+esc((RS_TYPES[p.type]||RS_TYPES.autre).label)+'</li>';}).join('');
+  return '<div class="rp-champ"><span>Posts publiés</span><p class="rp-aide">Les posts publiés du planning RS liés à ce concert s\'affichent tout seuls dans le report.</p>'
+    +(ps.length?'<ul class="rp-posts">'+l+'</ul>'+(ps.length>6?'<p class="rp-aide">+ '+esc(evtPluriel(ps.length-6,'autre post','autres posts'))+'</p>':''):'<p class="rp-alerte">Aucun post publié pour l\'instant dans le planning RS.</p>')+'</div>';
+}
+function rpHtmlPhotos(c,a){
+  var ph=rpPhotos(a.id),exp=rpLimite(c,rpAuj());
+  var h='<div class="rp-champ"><span>Photos</span><div class="rp-photos">'+ph.map(function(p,i){
+    return '<div class="rp-photo"><img src="'+escUrl(p.url)+'" alt="Photo '+(i+1)+'"><div class="rp-photo-b">'
+      +(i>0?'<button type="button" class="rp-mini" data-a="ph-g" data-id="'+esc(p.id)+'" aria-label="Avancer la photo">'+icon('chevron-left')+'</button>':'<span></span>')
+      +'<button type="button" class="rp-mini" data-a="ph-x" data-id="'+esc(p.id)+'" aria-label="Supprimer la photo">'+icon('x')+'</button>'
+      +(i<ph.length-1?'<button type="button" class="rp-mini" data-a="ph-d" data-id="'+esc(p.id)+'" aria-label="Reculer la photo">'+icon('chevron-right')+'</button>':'<span></span>')
+      +'</div></div>';
+  }).join('')+'<button type="button" class="rp-photo-ajout" data-a="ph-ajout">'+icon('plus')+'<span>Ajouter</span></button></div>'
+    +'<button type="button" class="btn rp-b-camera" data-a="ph-camera">'+icon('camera')+'Prendre une photo</button>';
+  if(rpEnvoi&&rpEnvoi.aid===a.id)h+='<p class="rp-aide">Envoi… '+rpEnvoi.fait+' / '+rpEnvoi.total+'</p>';
+  h+='<p class="rp-aide">'+(ph.length>1?'La première est la plus grande. ':'')+(exp?'Gardées jusqu\'au '+esc(dateCourte(exp))+', 60 jours après le concert.':'')+'</p></div>';
+  return h;
+}
+
+// ── Evenements de l'editeur : un seul ecouteur, des attributs data-a ──
+// (pas d'onclick ecrit dans le HTML : aucune valeur a echapper pour du JS).
+function rpAction(nom,b){
+  var c=rpConcert();if(!c)return;
+  var a=rpTrouve(rpSel),i=+b.getAttribute('data-i');
+  switch(nom){
+    case 'fermer':
+      if(rpEstTel()&&rpTel==='page'){rpTel='liste';rpRendu();}else rpFermer();
+      return;
+    case 'tout':rpTout=!rpTout;rpRendu();return;
+    case 'pdf':rpPdf();return;
+    case 'sel':rpSel=b.getAttribute('data-id');rpTout=false;rpOptions=false;if(rpEstTel())rpTel='page';rpRendu();rpHaut();return;
+    case 'aller':rpSel=rpSelDePage(rpPages(c)[i]);rpTout=false;rpRendu();rpHaut();return;
+    case 'prec':case 'suiv':{
+      var pages=rpPages(c),j=rpPageDe(pages,rpSel)+(nom==='prec'?-1:1);
+      if(pages[j]){rpSel=rpSelDePage(pages[j]);rpRendu();rpHaut();}
+      return;
+    }
+    case 'ajouter':rpSel='ajouter';rpTout=false;if(rpEstTel())rpTel='page';rpRendu();rpHaut();return;
+    case 'modele':{var na=rpNouvelleAction(c,b.getAttribute('data-m'));rpSel=na.id;rpRendu();rpHaut();rpFocus('[data-f="titre"]',!na.titre);return;}
+    case 'sugg-ok':{var sa=rpAccepter(c,b.getAttribute('data-s'));if(sa){rpSel=sa.id;rpRendu();rpHaut();}return;}
+    case 'sugg-non':rpIgnorer(c,b.getAttribute('data-s'));rpRendu();return;
+    case 'revoir':concertMedia=concertMedia.filter(function(m){return !(m&&m.type==='ignore'&&m.concertId===c.id);});rpSauver();rpRendu();return;
+    case 'logo':document.getElementById('rp-logo').click();return;
+    case 'ph-ajout':document.getElementById('rp-fichiers').click();return;
+    case 'ph-camera':document.getElementById('rp-camera').click();return;
+  }
+  if(!a||a.type!=='action')return;
+  switch(nom){
+    case 'support':a.support=b.getAttribute('data-nom')||'';break;
+    case 'quand':{
+      var q=a.quand||(a.quand={}),v=b.getAttribute('data-v');
+      if(v==='mois'&&!q.mois){var src=q.du||c.dc||rpAuj();q.mois=src.slice(0,7);}
+      if(v==='periode'&&q.du&&!q.au)q.au=q.du;
+      q.mode=v;break;
+    }
+    case 'c-plus':(a.chiffres||(a.chiffres=[])).push({id:uid('rc'),n:'',l:''});rpSauver();rpRendu();rpFocus('.rp-chiffre:last-of-type [data-f="c-n"]',true);return;
+    case 'c-moins':if(a.chiffres)a.chiffres.splice(i,1);break;
+    case 'detail-on':{
+      a.modeDetail=true;
+      if(!a.detail||!a.detail.length){var q0=rpQuand(a)||{};a.detail=[{id:uid('rl'),du:q0.du||'',au:q0.au||q0.du||'',n:'',quoi:(a.chiffres&&a.chiffres[0]&&a.chiffres[0].l)||'',total:false}];}
+      break;
+    }
+    case 'detail-off':a.modeDetail=false;break;
+    case 'l-plus':{var dl=a.detail||(a.detail=[]),der=dl[dl.length-1]||{};dl.push({id:uid('rl'),du:der.au||der.du||'',au:der.au||der.du||'',n:'',quoi:der.quoi||'',total:!!der.total});break;}
+    case 'l-moins':if(a.detail)a.detail.splice(i,1);break;
+    case 'ph-g':case 'ph-d':{
+      var ph=rpPhotos(a.id),k=ph.findIndex(function(p){return p.id===b.getAttribute('data-id');}),o=k+(nom==='ph-g'?-1:1);
+      if(k<0||!ph[o])return;
+      ph.forEach(function(p,n){p.ordre=n+1;});
+      var t=ph[k].ordre;ph[k].ordre=ph[o].ordre;ph[o].ordre=t;
+      break;
+    }
+    case 'ph-x':{
+      var pid=b.getAttribute('data-id');
+      customConfirm('Supprimer cette photo ?','Supprimer').then(function(ok){
+        if(!ok)return;
+        var p=rpTrouve(pid);if(!p)return;
+        concertMedia=concertMedia.filter(function(m){return m!==p;});
+        rpSauver();if(p.path)storageDelete(p.path);rpDemandeRendu();
+      });
+      return;
+    }
+    case 'supprimer':rpSupprimerAction(c,a);return;
+    default:return;
+  }
+  rpSauver();rpRendu();
+}
+function rpChamp(t,change){
+  var a=rpTrouve(rpSel);if(!a||a.type!=='action')return;
+  var f=t.getAttribute('data-f'),i=+t.getAttribute('data-i'),v=t.value;
+  function q(){return a.quand||(a.quand={mode:rpModele(a.modele).quand||'jour'});}
+  if(f==='titre')a.titre=v;
+  else if(f==='support'){a.support=v;var ex=document.getElementById('rp-support-extra');if(ex)ex.innerHTML=rpHtmlSupportExtra(a);}
+  else if(f==='texte')a.texte=v;
+  else if(f==='lien')a.lien=v.trim();
+  else if(f==='rub'){a.rub=v;rpSauver();rpRendu();return;}
+  else if(f==='q-du'){q().du=v;}
+  else if(f==='q-au'){q().au=v;}
+  else if(f==='q-mois-m'||f==='q-mois-a'){
+    var p=t.closest('.rp-dates'),m=p.querySelector('[data-f="q-mois-m"]').value,y=p.querySelector('[data-f="q-mois-a"]').value;
+    q().mois=m&&y?y+'-'+m:'';
+  }
+  else if(f==='q-texte')q().texte=v;
+  else if(f==='c-n'||f==='c-l'){var ch=(a.chiffres||[])[i];if(!ch)return;ch[f==='c-n'?'n':'l']=v;}
+  else if(f.indexOf('l-')===0){
+    var l=(a.detail||[])[i];if(!l)return;
+    if(f==='l-total')l.total=!!v;else l[f.slice(2)]=v;
+    var res=document.querySelector('#rp [data-res="'+i+'"]');if(res)res.textContent=rpResLigne(l);
+    var cal=document.getElementById('rp-calcul');if(cal)cal.innerHTML=rpHtmlCalcul(a);
+  }
+  else if(f.indexOf('v-')===0){
+    var vid=t.getAttribute('data-v');if(!vid)return;
+    a.vagues=a.vagues||{};a.vagues[vid]=a.vagues[vid]||{};a.vagues[vid][f.slice(2)]=v;
+  }
+  var sous=document.getElementById('rp-quand-sous');if(sous&&(f==='q-du'||f==='q-au'))sous.textContent=rpSousQuand(rpQuand(a),rpConcert());
+  rpSauver();
+  // Detail devenu complet (ou incomplet) : seul le bloc « Quand ? » change,
+  // le reste du formulaire garde le champ en cours de saisie.
+  if(f.indexOf('l-')===0&&rpDetailActif(a)!==!!document.getElementById('rp-quand-calc')){var qb=document.getElementById('rp-quand-bloc');if(qb)qb.innerHTML=rpHtmlQuand(rpConcert(),a);}
+  rpPlanifierApercu();
+}
+function rpHaut(){var d=document.querySelector('#rp-form .rp-defil');if(d)d.scrollTop=0;if(rpEstTel()){var cp=document.querySelector('#rp .rp-corps');if(cp)cp.scrollTop=0;}}
+function rpFocus(sel,vide){if(!vide||rpEstTel())return;var el=document.querySelector('#rp '+sel);if(el)el.focus();}
+async function rpSupprimerAction(c,a){
+  if(!await customConfirm('Retirer « '+(rpNoms(a).grand||'cette action')+' » du report ? Ses photos seront supprimées.','Retirer'))return;
+  var ph=rpPhotos(a.id);
+  concertMedia=concertMedia.filter(function(m){return m&&m.id!==a.id&&!(m.type==='photo'&&m.actionId===a.id);});
+  // Une suggestion acceptee puis retiree ne revient pas d'elle-meme.
+  if(a.source&&!rpDe(c.id,'ignore').some(function(x){return x.source===a.source;}))concertMedia.push({id:uid('ri'),type:'ignore',concertId:c.id,source:a.source,cree:rpAuj()});
+  rpSauver();
+  ph.forEach(function(p){if(p.path)storageDelete(p.path);});
+  rpSel='couv';rpRendu();
+}
+function rpDimensions(blob){
+  return new Promise(function(res){
+    var u=URL.createObjectURL(blob),img=new Image();
+    img.onload=function(){URL.revokeObjectURL(u);res({w:img.naturalWidth,h:img.naturalHeight});};
+    img.onerror=function(){URL.revokeObjectURL(u);res({w:4,h:3});};
+    img.src=u;
+  });
+}
+// Photos : reduites a 1600 px (JPEG) avant l'envoi, plusieurs a la fois.
+async function rpEnvoyerPhotos(input){
+  var files=Array.prototype.slice.call(input.files||[]);input.value='';
+  var c=rpConcert(),a=rpTrouve(rpSel);if(!c||!a||a.type!=='action'||!files.length)return;
+  var cid=c.id,aid=a.id,base=rpPhotos(aid).reduce(function(m,p){return Math.max(m,p.ordre||0);},0);
+  rpEnvoi={aid:aid,fait:0,total:files.length};rpDemandeRendu();
+  for(var i=0;i<files.length;i++){
+    try{
+      var blob=await downscaleImage(files[i],RP_PHOTO_PX);
+      if(!blob){showToast(IMAGE_ILLISIBLE,8000);}
+      else{
+        var dim=await rpDimensions(blob),path='report/'+cid+'/'+aid+'/'+uid('')+'.jpg';
+        var url=await storageUpload(path,blob),cc=concerts.find(function(x){return x.id===cid;}),auj=rpAuj();
+        concertMedia.push({id:uid('rf'),type:'photo',concertId:cid,actionId:aid,path:path,url:url,w:dim.w,h:dim.h,ordre:base+i+1,cree:auj,expiresAt:cc?rpExpire(cc,auj):undefined});
+        rpSauver();
+      }
+    }catch(e){console.error(e);showToast('Échec de l\'envoi d\'une photo : '+e.message);}
+    rpEnvoi.fait=i+1;rpDemandeRendu();
+  }
+  rpEnvoi=null;rpDemandeRendu();
+}
+// Logo d'un support : garde dans la bibliotheque, pour tous les reports.
+async function rpEnvoyerLogo(input){
+  var f=input.files&&input.files[0];input.value='';
+  var a=rpTrouve(rpSel),nom=a&&String(a.support||'').trim();if(!f||!nom)return;
+  var blob=await downscaleImage(f,400);if(!blob){showToast(IMAGE_ILLISIBLE,8000);return;}
+  var path='report-logos/'+uid('')+'.jpg',url;
+  try{url=await storageUpload(path,blob);}catch(e){console.error(e);showToast('Échec de l\'envoi du logo : '+e.message);return;}
+  var s=rpSupportDe(nom),ancien=s&&s.path;
+  if(s){s.path=path;s.url=url;}
+  else concertMedia.push({id:uid('rsu'),type:'support',nom:nom,path:path,url:url,cree:rpAuj()});
+  rpSauver();
+  if(ancien)storageDelete(ancien);
+  rpDemandeRendu();
+}
+
+// ── PDF : l'impression du navigateur, une page 16:9 par feuille ──
+// Texte net, liens cliquables, polices integrees. Safari ignore le format de
+// page demande (@page size) et reduirait les pages sur du A4 : on le dit.
+function rpEstSafari(){var u=navigator.userAgent;return /safari/i.test(u)&&!/chrome|chromium|crios|fxios|edg|opr|android/i.test(u);}
+function rpNomFichier(c){
+  var d=c.dc?c.dc.slice(8,10)+c.dc.slice(5,7)+c.dc.slice(2,4):'';
+  return ('REPORT '+String(c.art||'').toUpperCase()+(c.ville?' - '+String(c.ville).toUpperCase():'')+(d?' '+d:'')).replace(/[\\/:*?"<>|]/g,' ').replace(/\s+/g,' ').trim();
+}
+function rpAttendreImages(box,ms){
+  var imgs=Array.prototype.slice.call(box.querySelectorAll('img'));
+  var tout=Promise.all(imgs.map(function(img){
+    if(img.complete)return Promise.resolve();
+    return new Promise(function(r){img.addEventListener('load',r,{once:true});img.addEventListener('error',r,{once:true});});
+  }));
+  return Promise.race([tout,new Promise(function(r){setTimeout(r,ms);})]);
+}
+async function rpPdf(){
+  var c=rpConcert();if(!c)return;
+  if(rpEstSafari()){
+    try{await navigator.clipboard.writeText(location.href);}catch(e){}
+    if(!await customConfirm('Safari ne sait pas imprimer au format 16:9 : les pages sortiraient réduites sur du A4. Le lien de ce report est copié : colle-le dans Chrome pour un PDF au bon format.','Imprimer quand même'))return;
+  }
+  var pages=rpPages(c),box=document.getElementById('rp-print');
+  box.innerHTML=pages.map(function(p,i){return rpPageHtml(c,pages,i,false);}).join('');
+  document.body.classList.add('rp-impression');
+  showToast('Préparation du PDF…',2500);
+  await rpAttendreImages(box,12000);
+  try{await document.fonts.ready;}catch(e){}
+  var titre=document.title,fini=false;
+  function fin(){
+    if(fini)return;fini=true;
+    document.title=titre;document.body.classList.remove('rp-impression');box.innerHTML='';
+    window.removeEventListener('afterprint',fin);
+  }
+  window.addEventListener('afterprint',fin);
+  document.title=rpNomFichier(c);
   window.print();
 }
+(function(){
+  var rp=document.getElementById('rp');
+  rp.addEventListener('click',function(e){
+    var b=e.target.closest('[data-a]');
+    if(!b||!rp.contains(b)||b.disabled)return;
+    rpAction(b.getAttribute('data-a'),b);
+  });
+  rp.addEventListener('input',function(e){var t=e.target;if(t.getAttribute&&t.getAttribute('data-f'))rpChamp(t,false);});
+  rp.addEventListener('change',function(e){var t=e.target;if(t.getAttribute&&t.getAttribute('data-f'))rpChamp(t,true);});
+  document.getElementById('rp-fichiers').addEventListener('change',function(){rpEnvoyerPhotos(this);});
+  document.getElementById('rp-camera').addEventListener('change',function(){rpEnvoyerPhotos(this);});
+  document.getElementById('rp-logo').addEventListener('change',function(){rpEnvoyerLogo(this);});
+  window.addEventListener('resize',function(){if(rpOuvert())rpEchelle();});
+})();
 async function resetFicheTasks(){
   var c=ficheSujet();if(!c)return;
   // Evenement : ses taches a lui ; celles de ses spectacles restent.
   if(!await customConfirm('Réinitialiser toutes les tâches de '+c.art+' ?'+(estEvt(c)?' Celles de ses spectacles ne changent pas.':'')))return;
   // Taches du process ET taches ajoutees a la main sur ce concert (avant le
   // 23/09, ces dernieres restaient cochees), surlignage compris.
-  sortedProcess(c).forEach(function(t){['','na-','datemod-','hl-'].forEach(function(pre){delete taskStates[pre?pre+c.id+'-'+t.id:tk(c.id,t.id)];});});
+  sortedProcess(c).forEach(function(t){['','na-','datemod-','hl-','fait-'].forEach(function(pre){delete taskStates[pre?pre+c.id+'-'+t.id:tk(c.id,t.id)];});});
   scheduleSave('taskstates');ficheApresTache();renderKanban();renderConcerts();
 }
 var customTaskEditCid=null,customTaskEditId=null;
@@ -5732,8 +6809,8 @@ function toggleFicheTask(cid,tid){
   var k=tk(cid,tid),fait=!taskStates[k];
   var ta=etapeAnnonceDe(c);
   if(ta&&ta===t&&(fait||taskStates['annonce-'+cid])){annonceMarquer(cid,fait);return;}
-  var avant=photoEtats([k]);
-  taskStates[k]=fait;scheduleSave('taskstates');
+  var avant=photoEtats([k,'fait-'+k]);
+  taskStates[k]=fait;rpNoterCoche(k,t,fait);scheduleSave('taskstates');
   apresChangementTaches();
   proposerAnnulation('Tâche '+(fait?'faite':'remise à faire'),t.nom+nomSujet(c),function(){
     remettreEtats(avant);scheduleSave('taskstates');apresChangementTaches();
@@ -5861,7 +6938,7 @@ async function permanentlyDeleteConcert(id){
   customTasks=customTasks.filter(function(t){return t.concertId!==id;});
   // Ses coches, surlignages, dates decalees... (avant le 23/09 ces cles
   // restaient orphelines dans taskStates, voir purgeOrphanTaskStates).
-  var motif=new RegExp('^(?:annonce-|skip-|na-|datemod-|hl-)?'+String(id).replace(/[^0-9a-zA-Z]/g,'\\$&')+'(?:-|$)');
+  var motif=new RegExp('^(?:annonce-|skip-|na-|datemod-|hl-|fait-)?'+String(id).replace(/[^0-9a-zA-Z]/g,'\\$&')+'(?:-|$)');
   Object.keys(taskStates).forEach(function(k){if(motif.test(k))delete taskStates[k];});
   if(estEvt(c))evtProg(c).forEach(function(p){oublierSujet(p.id);});
   cleanupArtistPhotoIfOrphan(c.art);
@@ -5869,7 +6946,7 @@ async function permanentlyDeleteConcert(id){
   // posts des concerts recents introuvables, qui peuvent etre en transit).
   rsPosts=rsPosts.filter(function(p){return !(p.autoRef===id&&p.proj==='pp');});
   scheduleSave('concerts','concert_media','concert_tasks','taskstates','rsposts');
-  orphanMedia.forEach(function(m){if(m.type==='image'&&m.path)storageDelete(m.path);});
+  orphanMedia.forEach(function(m){if((m.type==='photo'||m.type==='image')&&m.path)storageDelete(m.path);});
   if(currentFicheId===id)closeFicheBtn();else render();
 }
 function annonceDone(cid){annonceMarquer(cid,true);}
@@ -6490,112 +7567,6 @@ function ventesHtml(c,onclick){
   var v=VENTES[c.ventes||0];
   return '<span class="ventes-badge '+v.cls+'" onclick="'+onclick+'">'
     +'<span class="ventes-gauge" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'+v.label+'</span>';
-}
-var MEDIA_RETENTION_DAYS=7;
-function mediaGenId(){return uid('md');}
-function mediaExpiryDate(){var d=new Date();d.setDate(d.getDate()+MEDIA_RETENTION_DAYS);return d.toISOString();}
-// Purge les medias temporaires (photos/liens du questionnaire) expires depuis
-// plus de MEDIA_RETENTION_DAYS jours. Execute a chaque ouverture de l'app par
-// l'un des utilisateurs : pas de cron serveur, mais l'app est ouverte plusieurs
-// fois par jour donc le nettoyage reste rapide en pratique.
-function sweepExpiredMedia(){
-  var now=Date.now();
-  var expired=concertMedia.filter(function(m){return m.expiresAt&&new Date(m.expiresAt).getTime()<now;});
-  if(!expired.length)return;
-  concertMedia=concertMedia.filter(function(m){return !(m.expiresAt&&new Date(m.expiresAt).getTime()<now);});
-  scheduleSave('concert_media');
-  expired.forEach(function(m){if(m.type==='image'&&m.path)storageDelete(m.path);});
-}
-var wizardConcertId=null,wizardStepIdx=0;
-function openCampaignWizard(id){
-  if(!id)return;
-  wizardConcertId=id;
-  wizardStepIdx=0;
-  document.getElementById('wizard-modal').classList.add('open');
-  renderWizardStep();
-}
-function closeCampaignWizard(){
-  document.getElementById('wizard-modal').classList.remove('open');
-}
-function renderWizardStep(){
-  var sec=REPORT_SECTIONS[wizardStepIdx];
-  document.getElementById('wizard-title').textContent=sec.title;
-  document.getElementById('wizard-progress').textContent='Étape '+(wizardStepIdx+1)+' / '+REPORT_SECTIONS.length+' — Ajoute tes photos ou tes liens pour cette catégorie, ou passe à la suivante si elle ne te concerne pas. Conservés '+MEDIA_RETENTION_DAYS+' jours puis supprimés automatiquement.';
-  var items=concertMedia.filter(function(m){return m.concertId===wizardConcertId&&sec.cats.indexOf(m.cat)>=0;});
-  var gridEl=document.getElementById('wizard-step-grid');
-  if(!items.length){gridEl.innerHTML='<div class="media-empty">Aucun contenu ajouté pour cette catégorie.</div>';}
-  else{
-    gridEl.innerHTML=items.map(function(m){
-      if(m.type==='image'){
-        return '<div class="media-card"><img src="'+escUrl(m.url)+'" onclick="window.open(\''+escJs(safeUrl(m.url))+'\',\'_blank\')">'
-          +(m.caption?'<div class="media-caption">'+esc(m.caption)+'</div>':'')
-          +'<button class="media-del" onclick="event.stopPropagation();wizardDeleteItem(\''+escJs(m.id)+'\')" title="Supprimer">'+icon('x')+'</button></div>';
-      }
-      return '<div class="media-card media-link" onclick="window.open(\''+escJs(safeUrl(m.url))+'\',\'_blank\')">'
-        +'<div class="media-link-icon">'+icon('link')+'</div><div class="media-link-url">'+esc(m.caption||m.url)+'</div>'
-        +'<button class="media-del" onclick="event.stopPropagation();wizardDeleteItem(\''+escJs(m.id)+'\')" title="Supprimer">'+icon('x')+'</button></div>';
-    }).join('');
-  }
-  document.getElementById('wizard-prev-btn').style.visibility=wizardStepIdx===0?'hidden':'visible';
-  document.getElementById('wizard-next-btn').innerHTML=(wizardStepIdx===REPORT_SECTIONS.length-1)?'Générer le PDF':'Suivant '+icon('arrow-right');
-}
-function wizardPrev(){if(wizardStepIdx>0){wizardStepIdx--;renderWizardStep();}}
-function wizardNext(){
-  if(wizardStepIdx<REPORT_SECTIONS.length-1){wizardStepIdx++;renderWizardStep();}
-  else{closeCampaignWizard();exportCampaignReport(wizardConcertId);}
-}
-// Les photos du rapport sont reduites avant l'envoi, comme celles de la
-// newsletter : une photo de telephone depasse souvent 5 Mo (5,7 Mo constates
-// le 13/09), inutile pour un PDF, lente a envoyer, et le bucket refusait
-// au-dela de 10 Mo avec une erreur HTTP brute. 1600 px suffisent a l'impression.
-var MEDIA_MAX_PX=1600;
-async function wizardUploadFile(input){
-  var file=input.files&&input.files[0];
-  if(!file)return;
-  var cat=REPORT_SECTIONS[wizardStepIdx].cats[0];
-  var cid=wizardConcertId; // le questionnaire a pu changer de concert pendant l'envoi
-  input.disabled=true;
-  try{
-    var blob=await downscaleImage(file,MEDIA_MAX_PX);
-    if(!blob){showToast(IMAGE_ILLISIBLE,8000);return;}
-    var path=cid+'/'+cat+'/'+Date.now()+'.jpg';
-    var url=await storageUpload(path,blob);
-    concertMedia.push({id:mediaGenId(),concertId:cid,cat:cat,type:'image',url:url,path:path,caption:'',addedAt:new Date().toISOString(),expiresAt:mediaExpiryDate()});
-    scheduleSave('concert_media');
-    renderWizardStep();
-  }catch(e){
-    console.error(e);
-    showToast('Échec de l\'envoi de la photo : '+e.message);
-  }finally{
-    input.disabled=false;
-    input.value='';
-  }
-}
-function wizardAddLinkPrompt(){
-  document.getElementById('media-link-url').value='';
-  document.getElementById('media-link-caption').value='';
-  document.getElementById('media-link-modal').classList.add('open');
-}
-function wizardSaveLink(){
-  var url=document.getElementById('media-link-url').value.trim();
-  if(!url)return;
-  var caption=document.getElementById('media-link-caption').value.trim();
-  var cat=REPORT_SECTIONS[wizardStepIdx].cats[0];
-  concertMedia.push({id:mediaGenId(),concertId:wizardConcertId,cat:cat,type:'link',url:url,caption:caption,addedAt:new Date().toISOString(),expiresAt:mediaExpiryDate()});
-  scheduleSave('concert_media');
-  document.getElementById('media-link-modal').classList.remove('open');
-  renderWizardStep();
-}
-function wizardDeleteItem(id){
-  var m=concertMedia.find(function(x){return x.id===id;});
-  if(!m)return;
-  customConfirm('Supprimer ce média ?','Supprimer').then(function(ok){
-    if(!ok)return;
-    concertMedia=concertMedia.filter(function(x){return x.id!==id;});
-    scheduleSave('concert_media');
-    if(m.type==='image'&&m.path)storageDelete(m.path);
-    renderWizardStep();
-  });
 }
 function toggleSkipFromList(cid, cat){
   var key='skip-'+cid+'-'+cat;
@@ -8616,6 +9587,9 @@ function cmdkPick(i){var it=cmdkItems[i];if(!it)return;closeCmdK();it.action();}
   });
   document.addEventListener('keydown',function(e){
     var isMod=e.metaKey||e.ctrlKey;
+    // Editeur du report ouvert : aucun raccourci global (ils changeraient
+    // d'onglet ou de fiche sous l'editeur). Echap le ferme (ecouteur plus haut).
+    if(rpOuvert())return;
     if(isMod&&(e.key==='k'||e.key==='K')){e.preventDefault();if(document.getElementById('cmdk-modal').classList.contains('open'))closeCmdK();else openCmdK();return;}
     var t=document.activeElement,tag=t&&t.tagName;
     var enSaisie=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(t&&t.isContentEditable);

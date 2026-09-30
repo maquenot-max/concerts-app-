@@ -167,12 +167,13 @@ if (backupKeys && saveKeys) {
 
 // ── 8. Tailles de texte : l'echelle de style.css ────────────────────────────
 // Des pixels entiers, jamais sous 12 px (plancher de lisibilite, §5 de la
-// passation), sauf les exceptions documentees : les touches de la recherche,
-// l'etiquette de montant des barres sponso et le rapport PDF. La revue du 25/09
+// passation), sauf les exceptions documentees : les touches de la recherche et
+// l'etiquette de montant des barres sponso (le report de communication du
+// 30/09 n'en a plus besoin : ses pages font 1 440 px de large). La revue du 25/09
 // avait trouve des 12,5 / 13,5 / 11,5 px et quatre textes sous le plancher
 // sans explication, arrives avec les modules recents.
 const FICHIER_CSS = path.join(__dirname, 'public', 'style.css');
-const EXCEPTIONS_12 = [/^\.cmdk-foot kbd$/, /^\.sp-bar$/, /^#bilan-report\b/, /^\.bilan-/, /^\.rpt-/];
+const EXCEPTIONS_12 = [/^\.cmdk-foot kbd$/, /^\.sp-bar$/];
 if (fs.existsSync(FICHIER_CSS)) {
   // Commentaires blanchis (meme longueur) pour garder les numeros de ligne.
   const css = fs.readFileSync(FICHIER_CSS, 'utf8').replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '));
