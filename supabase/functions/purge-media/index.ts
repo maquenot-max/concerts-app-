@@ -16,7 +16,9 @@
 //   a plus de GRACE_HEURES (un envoi en cours ecrit le fichier avant la ligne
 //   de donnees). Chaque photo est une entree {type:'photo', path, expiresAt} ;
 //   l'appli fixe expiresAt a 60 jours apres le concert (jamais moins de 60
-//   jours apres l'envoi) et la recalcule si la date du concert change ;
+//   jours apres l'envoi) et la recalcule si la date du concert change. Une
+//   photo recadree garde son originale dans orig.path (meme dossier, meme
+//   date d'expiration) : elle aussi est referencee ;
 // - photos de newsletter (article, annonces) : apres NEWSLETTER_JOURS. Elles ne
 //   sont referencees nulle part en base (le formulaire n'est pas sauvegarde),
 //   mais les newsletters envoyees pointent vers elles : les supprimer tout de
@@ -86,9 +88,14 @@ Deno.serve(async (req: Request) => {
     const maintenant = Date.now();
     const references = new Set<string>();
     for (const m of medias as Record<string, unknown>[]) {
-      const path = typeof m?.path === "string" ? m.path : "";
       const exp = typeof m?.expiresAt === "string" ? Date.parse(m.expiresAt) : NaN;
-      if (path && !(exp < maintenant)) references.add(path);
+      if (exp < maintenant) continue;
+      // Photo recadree (30/09) : path est la version recadree, orig.path
+      // l'originale gardee pour recadrer autrement. Les deux sont referencees.
+      const orig = m?.orig as Record<string, unknown> | undefined;
+      for (const path of [m?.path, orig?.path]) {
+        if (typeof path === "string" && path) references.add(path);
+      }
     }
 
     // 3. Inventaire du bucket, hors prefixes permanents

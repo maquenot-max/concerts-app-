@@ -154,6 +154,14 @@
       return rep([{ email: 'test@banc.local', name: 'Banc', role: B.role }]);
     }
     if (p.indexOf('/storage/v1/object/public/') === 0) {
+      // Lecture d'une image (recadrage du report, 30/09) : celle envoyee dans
+      // cette session si elle existe ; sinon la vraie si le script de test
+      // la fournit (__banc.imagesReelles = true, images servies par
+      // Playwright) ; sinon une image unie de 800 x 600.
+      var ch = decodeURIComponent(p.replace('/storage/v1/object/public/concert-media/', ''));
+      var up = B.uploads.filter(function (u) { return u.path === ch && u.blob; }).pop();
+      if (up) return new Response(up.blob, { status: 200, headers: { 'Content-Type': up.type || 'image/jpeg' } });
+      if (B.imagesReelles) return realFetch(input, init);
       var cv = document.createElement('canvas'); cv.width = 800; cv.height = 600;
       var ctx = cv.getContext('2d'); ctx.fillStyle = '#2a4a9e'; ctx.fillRect(0, 0, 800, 600);
       var blob = await new Promise(function (r) { cv.toBlob(r, 'image/png'); });

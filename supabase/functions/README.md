@@ -52,6 +52,13 @@ avec l'accord de Mathieu. Marche à suivre, à faire soi-même :
    Contrôle : `net._http_response` le lendemain matin, comme pour la
    sauvegarde (`supprimes`, `rapports`, `newsletter` et la liste `fichiers`).
 
+**Recadrage des photos du report (30/09)** : une photo recadree garde son
+originale (`orig.path`, dans le meme dossier `report/`). `purge-media` compte
+ces originales parmi les fichiers references depuis le 30/09 : deployer cette
+version-la, pas une copie anterieure (qui supprimerait les originales au bout
+de 24 h ; les photos recadrees resteraient, seul « Photo entiere » ne
+marcherait plus).
+
 **Photos de newsletter, 6 mois (23/09)** : elles ne sont référencées nulle
 part en base, mais les e-mails envoyés pointent vers elles ; on les garde le
 temps qu'une newsletter soit lue, puis `purge-media` les supprime. Les photos

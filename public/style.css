@@ -2251,7 +2251,53 @@ select.rp-in{padding-right:8px}
 .rp-mini:hover{background:rgba(9,9,12,.85)}
 .rp-photo-ajout{height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1px dashed var(--border-strong);border-radius:var(--radius-sm);background:none;color:var(--accent);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .rp-photo-ajout .ico{width:18px;height:18px}
+.rp-photo-ajout em{font-size:12px;font-style:normal;font-weight:400;color:var(--text-3)}
 .rp-photo-ajout:hover{box-shadow:var(--survol-ombre)}
+.rp-photo-img{display:block;width:100%;height:100%;padding:0;border:none;background:none;cursor:zoom-in}
+.rp-mini-rc{position:absolute;top:4px;right:4px}
+/* Glisser-deposer : la zone visee s'entoure, un message la couvre */
+[data-depot]{position:relative}
+.rp-depot-t{position:absolute;inset:0;z-index:2;display:none;align-items:center;justify-content:center;gap:8px;border:2px dashed var(--accent);border-radius:inherit;background:rgba(20,20,24,.78);color:#fff;font-size:14px;font-weight:600;pointer-events:none}
+.rp-depot-t .ico{width:18px;height:18px}
+[data-depot].survol>.rp-depot-t{display:flex}
+.rp-apercu .rp-depot-t{font-size:16px}
+/* Couverture : la photo au format de son cadre */
+.rp-couv-zone{border-radius:var(--radius-sm);overflow:hidden;aspect-ratio:760/730;max-height:320px;background:var(--surface-2);border:1px solid var(--border)}
+.rp-couv-img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 30%}
+.rp-couv-vide{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--text-3);font-size:13px}
+.rp-couv-vide .ico{width:22px;height:22px}
+.rp-couv-b{display:flex;flex-wrap:wrap;gap:8px}
+.rp-couv-b .btn{display:inline-flex;align-items:center;gap:8px}
+.rp-couv-b .ico{width:15px;height:15px}
+/* Newsletter : « Le 5 de chaque mois, du ... au ... » */
+.rp-mensuel{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:400;color:var(--text)}
+.rp-mensuel .rp-in{width:72px;text-align:center}
+/* Recadrage : par-dessus l'editeur */
+.rp-rc{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(9,9,12,.72)}
+.rp-rc[hidden]{display:none}
+.rp-rc-boite{display:flex;flex-direction:column;gap:14px;width:min(1100px,100%);height:min(820px,100%);padding:20px 22px;border:1px solid var(--border-light);border-radius:16px;background:var(--surface);box-shadow:var(--shadow-md)}
+.rp-rc-tete{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;font-size:16px}
+.rp-rc-tete b{font-weight:600}
+.rp-rc-scene{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none}
+.rp-rc-img{position:relative}
+.rp-rc-voile{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.rp-rc-trou{position:absolute;box-shadow:0 0 0 9999px rgba(9,9,12,.6)}
+.rp-rc-img img{display:block;width:100%;height:100%;pointer-events:none}
+.rp-rc-cadre{position:absolute;outline:2px solid #fff;cursor:move;touch-action:none;background-image:linear-gradient(rgba(255,255,255,.35),rgba(255,255,255,.35)),linear-gradient(rgba(255,255,255,.35),rgba(255,255,255,.35)),linear-gradient(90deg,rgba(255,255,255,.35),rgba(255,255,255,.35)),linear-gradient(90deg,rgba(255,255,255,.35),rgba(255,255,255,.35));background-size:100% 1px,100% 1px,1px 100%,1px 100%;background-position:0 33.33%,0 66.66%,33.33% 0,66.66% 0;background-repeat:no-repeat}
+.rp-rc-cadre i{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border:3px solid #fff;border-radius:50%;background:var(--accent);touch-action:none}
+.rp-rc-cadre i[data-p="nw"]{left:0;top:0;cursor:nwse-resize}
+.rp-rc-cadre i[data-p="ne"]{left:100%;top:0;cursor:nesw-resize}
+.rp-rc-cadre i[data-p="sw"]{left:0;top:100%;cursor:nesw-resize}
+.rp-rc-cadre i[data-p="se"]{left:100%;top:100%;cursor:nwse-resize}
+.rp-rc-cadre i[data-p="n"]{left:50%;top:0;cursor:ns-resize}
+.rp-rc-cadre i[data-p="s"]{left:50%;top:100%;cursor:ns-resize}
+.rp-rc-cadre i[data-p="e"]{left:100%;top:50%;cursor:ew-resize}
+.rp-rc-cadre i[data-p="w"]{left:0;top:50%;cursor:ew-resize}
+.rp-rc-cadre.fixe i[data-p="n"],.rp-rc-cadre.fixe i[data-p="s"],.rp-rc-cadre.fixe i[data-p="e"],.rp-rc-cadre.fixe i[data-p="w"]{display:none}
+.rp-rc-formats{display:flex;justify-content:center;min-height:38px;flex-shrink:0}
+.rp-rc-formats .view-toggle-btn{padding:8px 12px;min-height:36px}
+.rp-rc-pied{display:flex;align-items:center;gap:8px}
+.rp-rc-vide{flex:1}
 .rp-b-camera{display:none}
 .rp-options{border-top:1px solid var(--border-light);padding-top:14px}
 .rp-options summary{cursor:pointer;font-size:13px;font-weight:500;color:var(--text-2);list-style-position:inside}
@@ -2294,6 +2340,9 @@ select.rp-in{padding-right:8px}
   .rp-tuiles{grid-template-columns:repeat(2,minmax(0,1fr))}
   .rp-in{font-size:16px} /* iOS : pas de zoom a la saisie sous 16 px */
   .rp-ligne-q{grid-template-columns:64px minmax(0,1fr) 96px 36px}
+  .rp-rc{position:fixed;padding:0}
+  .rp-rc-boite{height:100%;border-radius:0;padding:14px}
+  .rp-rc-formats{overflow-x:auto;justify-content:flex-start}
 }
 
 /* ── REPORT DE COMMUNICATION : les pages 16:9 (PDF envoye a la production) ──
@@ -2305,7 +2354,7 @@ select.rp-in{padding-right:8px}
    moins sur une page de 1 440 px. */
 @font-face{font-family:'TeX Gyre Heros';src:url(fonts/tex-gyre-heros-regular.woff2) format('woff2');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'TeX Gyre Heros';src:url(fonts/tex-gyre-heros-bold.woff2) format('woff2');font-weight:700;font-style:normal;font-display:swap}
-.rpp{--rp-bleu:#264194;--rp-ciel:#92d2fe;--rp-pale:#d1ecff;--rp-pale-2:#eef7ff;--rp-encre:#14234f;--rp-gris:#4d5a7c;--rp-filet:#d6e9f8;--rp-rouge:#ff4b4b;position:relative;width:1440px;height:810px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;background:#fff;color:var(--rp-encre);font-family:'Helvetica Neue',Helvetica,'TeX Gyre Heros',Arial,sans-serif;font-size:18px;font-weight:400;line-height:1.35;letter-spacing:normal;text-align:left;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+.rpp{--rp-bleu:#264194;--rp-ciel:#92d2fe;--rp-pale:#d1ecff;--rp-pale-2:#eef7ff;--rp-encre:#14234f;--rp-gris:#56648f;--rp-filet:#d6e9f8;--rp-rouge:#ff4b4b;position:relative;width:1440px;height:810px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;background:#fff;color:var(--rp-encre);font-family:'Helvetica Neue',Helvetica,'TeX Gyre Heros',Arial,sans-serif;font-size:18px;font-weight:400;line-height:1.35;letter-spacing:normal;text-align:left;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 .rpp-ciel{background:var(--rp-ciel);color:var(--rp-bleu)}
 .rpp-bande{position:absolute;left:0;top:0;bottom:0;width:30px;overflow:hidden;display:flex;justify-content:center}
 .rpp-bande span{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font-size:13px;font-weight:800;letter-spacing:.08em;line-height:30px;color:var(--rp-bleu)}
@@ -2320,10 +2369,10 @@ select.rp-in{padding-right:8px}
 .rpp-num{margin-left:auto;font-size:13px;letter-spacing:.08em;color:var(--rp-gris)}
 .rpp-ciel .rpp-num{color:var(--rp-bleu)}
 .rpp-vide{flex:1}
-.rpp-titre{font-family:'Anton','Oswald',Impact,sans-serif;font-size:96px;font-weight:400;line-height:.95;letter-spacing:.01em;text-transform:uppercase;color:var(--rp-bleu);overflow-wrap:anywhere}
-.rpp-titre.long{font-size:76px}
-.rpp-titre.tres-long{font-size:58px}
-.rpp-titre-page{font-size:72px}
+.rpp-titre{font-family:'Anton','Oswald',Impact,sans-serif;font-size:84px;font-weight:400;line-height:.96;letter-spacing:.01em;text-transform:uppercase;color:var(--rp-bleu);overflow-wrap:anywhere}
+.rpp-titre.long{font-size:68px}
+.rpp-titre.tres-long{font-size:54px}
+.rpp-titre-page{font-size:64px}
 .rpp-suite{font-size:40px;color:var(--rp-gris)}
 .rpp-h{display:flex;justify-content:space-between;align-items:flex-end;gap:24px}
 .rpp-h-note{flex-shrink:0;font-size:17px;color:var(--rp-gris)}
@@ -2331,21 +2380,24 @@ select.rp-in{padding-right:8px}
 .rpp-marque{width:76px;height:76px;flex-shrink:0;border-radius:50%;object-fit:cover;background:#fff;box-shadow:0 0 0 1px var(--rp-filet)}
 .rpp-puce{display:inline-flex;align-self:flex-start;align-items:center;padding:7px 14px;border-radius:999px;background:var(--rp-pale);font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--rp-bleu)}
 .rpp-lbl{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--rp-gris)}
-.rpp-espace{margin-top:34px}
+.rpp-espace{margin-top:30px}
 .rpp-espace-p{margin-top:14px}
-.rpp-quand{margin-top:8px;font-size:46px;font-weight:700;line-height:1.1}
-.rpp-quand.texte{font-size:30px;line-height:1.25}
-.rpp-sous{margin-top:6px;font-size:18px;color:var(--rp-gris)}
+.rpp-quand{margin-top:8px;font-size:34px;font-weight:700;line-height:1.15;letter-spacing:-.005em;color:var(--rp-bleu)}
+.rpp-quand.texte{font-size:28px;line-height:1.25}
+.rpp-sous{margin-top:6px;font-size:17px;line-height:1.4;color:var(--rp-gris)}
+/* Fleche des periodes, dessinee (voir RP_FLECHE) : de la couleur du texte */
+.rpp-fl{display:inline-block;width:.8em;height:.42em;margin:0 .24em;vertical-align:.12em;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.rpp-sous .rpp-fl,.rpp-tete .rpp-fl,.rpp-table .rpp-fl,.rpp-detail .rpp-fl{stroke-width:2}
 .rpp-chiffres{display:flex;flex-wrap:wrap;gap:24px 56px}
-.rpp-chiffre b{display:block;font-family:'Anton','Oswald',Impact,sans-serif;font-size:96px;font-weight:400;line-height:.9;color:var(--rp-bleu)}
-.rpp-chiffre span{display:block;margin-top:8px;font-size:19px;font-weight:500}
+.rpp-chiffre b{display:block;font-family:'Anton','Oswald',Impact,sans-serif;font-size:76px;font-weight:400;line-height:.92;color:var(--rp-bleu)}
+.rpp-chiffre span{display:block;margin-top:8px;font-size:17px;font-weight:500;line-height:1.3}
 .rpp-chiffres.serres{gap:20px 40px}
-.rpp-chiffres.serres .rpp-chiffre b{font-size:72px}
-.rpp-chiffres.petits .rpp-chiffre b{font-size:60px}
-.rpp-chiffres.petits .rpp-chiffre span{font-size:17px}
-.rpp-texte{font-size:19px;line-height:1.5;white-space:pre-line}
-.rpp-texte.petit{font-size:17px}
-.rpp-lien{display:inline-block;margin-top:14px;font-size:17px;font-weight:700;color:var(--rp-bleu);text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
+.rpp-chiffres.serres .rpp-chiffre b{font-size:62px}
+.rpp-chiffres.petits .rpp-chiffre b{font-size:54px}
+.rpp-chiffres.petits .rpp-chiffre span{font-size:16px}
+.rpp-texte{font-size:18px;line-height:1.5;white-space:pre-line}
+.rpp-texte.petit{font-size:16px}
+.rpp-lien{display:inline-block;margin-top:14px;font-size:16px;font-weight:700;color:var(--rp-bleu);text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
 .rpp-note{margin-top:14px;font-size:15px;line-height:1.5;color:var(--rp-gris)}
 /* Page d'action : infos a gauche, visuel ou detail a droite */
 .rpp-deux{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:64px;align-items:center}
@@ -2380,9 +2432,9 @@ select.rp-in{padding-right:8px}
 .rpp-cartes{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:26px}
 .rpp-cartes.n2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .rpp-carte{display:flex;flex-direction:column;min-height:0;overflow:hidden;padding:28px 28px 30px;border:1px solid var(--rp-pale);border-radius:24px;background:var(--rp-pale-2)}
-.rpp-carte-nom{display:flex;align-items:center;gap:14px;font-size:28px;font-weight:700;line-height:1.15}
+.rpp-carte-nom{display:flex;align-items:center;gap:14px;font-size:26px;font-weight:700;line-height:1.15;color:var(--rp-bleu)}
 .rpp-carte-nom .rpp-marque{width:64px;height:64px}
-.rpp-quand-c{margin-top:6px;font-size:26px;font-weight:700}
+.rpp-quand-c{margin-top:6px;font-size:22px;font-weight:700;color:var(--rp-bleu)}
 .rpp-vignettes{flex:1;min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);gap:20px;margin-top:24px}
 .rpp-vignette{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:22px;min-height:0;overflow:hidden;padding:16px;border:1px solid var(--rp-pale);border-radius:18px;background:var(--rp-pale-2)}
 .rpp-vignette>img{width:100%;height:100%;min-height:0;object-fit:cover;object-position:50% 0;border-radius:12px;display:block}
@@ -2390,9 +2442,9 @@ select.rp-in{padding-right:8px}
 .rpp-vignettes.n2 .rpp-vignette-t{padding:0 8px 8px}
 .rpp-vignette-t{display:flex;flex-direction:column;justify-content:center;gap:8px;min-width:0}
 .rpp-vignette-t .rpp-marque{width:52px;height:52px}
-.rpp-vignette-nom{font-size:26px;font-weight:700;line-height:1.15}
+.rpp-vignette-nom{font-size:24px;font-weight:700;line-height:1.15;color:var(--rp-bleu)}
 .rpp-vignette-type{font-size:16px;color:var(--rp-gris)}
-.rpp-vignette-date{font-size:20px;font-weight:700}
+.rpp-vignette-date{font-size:18px;font-weight:700;color:var(--rp-bleu)}
 /* Sponsorisation */
 .rpp-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;margin-top:28px}
 .rpp-kpis.n1{grid-template-columns:minmax(0,300px)}
@@ -2409,7 +2461,16 @@ select.rp-in{padding-right:8px}
 .rpp-table td b{display:block;font-weight:700}
 .rpp-table td span{display:block;margin-top:2px;font-size:15px;color:var(--rp-gris)}
 .rpp-table tfoot td{border-bottom:none;background:var(--rp-bleu);color:#fff;font-weight:700}
-/* Reseaux sociaux : posts publies du planning RS */
+/* Posts & stories : les visuels en une rangee, entiers, legende dessous
+   (tailles calculees par rpPagesPosts) */
+.rpp-rangee{flex:1;min-height:0;display:flex;justify-content:center;align-items:center;gap:24px;margin-top:20px}
+.rpp-tuile{display:flex;flex-direction:column;gap:12px;margin:0;flex-shrink:0}
+.rpp-tuile img{display:block;border-radius:16px;object-fit:cover;box-shadow:0 0 0 1px var(--rp-filet)}
+.rpp-tuile figcaption{min-height:22px;font-size:16px;font-weight:500;line-height:1.35}
+.rpp-tuile figcaption span{display:block;margin-top:2px;font-size:15px;font-weight:700;color:var(--rp-bleu)}
+.rpp-posts-seuls{flex:1;min-height:0;margin-top:28px;max-width:1000px}
+.rpp-liens{display:flex;flex-wrap:wrap;gap:0 28px}
+/* Reseaux sociaux : posts publies du planning RS (page sans visuel) */
 .rpp-posts{display:grid;grid-template-columns:1fr;gap:10px;margin-top:14px}
 .rpp-posts.deux-col{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:40px}
 .rpp-post{display:grid;grid-template-columns:76px minmax(0,1fr);gap:14px;align-items:baseline;font-size:17px}
@@ -2428,42 +2489,38 @@ select.rp-in{padding-right:8px}
 .rpp-couv-pied{display:flex;justify-content:space-between;gap:16px;padding-top:18px;border-top:1.5px solid rgba(38,65,148,.35);font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
 .rpp-couv-photo{min-height:0;padding:40px 40px 40px 0}
 .rpp-couv-photo img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;border-radius:28px;display:block}
+.rpp-couv-photo.choisie img{object-position:50% 50%}
 /* La campagne en un coup d'oeil : compteurs et frise */
 .rpp-comptes{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:16px;margin-top:24px}
 .rpp-compte{padding-top:12px;border-top:2px solid var(--rp-bleu)}
+.rpp-compte-n{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .rpp-compte b{display:block;font-family:'Anton','Oswald',Impact,sans-serif;font-size:52px;font-weight:400;line-height:1;color:var(--rp-bleu)}
-.rpp-compte span{display:block;margin-top:8px;font-size:16px;font-weight:700}
-.rpp-compte em{display:block;margin-top:2px;font-size:14px;font-style:normal;line-height:1.35;color:var(--rp-gris)}
+.rpp-compte i{font-size:13px;font-style:normal;letter-spacing:.06em;color:var(--rp-gris)}
+.rpp-compte span{display:block;margin-top:8px;font-size:16px;font-weight:700;color:var(--rp-bleu)}
+.rpp-compte em{display:-webkit-box;margin-top:3px;overflow:hidden;-webkit-line-clamp:3;-webkit-box-orient:vertical;font-size:14px;font-style:normal;line-height:1.35;color:var(--rp-gris)}
 .rpp-compte.vide{opacity:.4}
-.rpp-frise{position:relative;margin-top:26px}
-.rpp-frise-l{display:grid;grid-template-columns:312px 1000px;align-items:center;height:38px;border-top:1px solid #dde8f3}
-.rpp-frise-l:last-of-type{border-bottom:1px solid #dde8f3}
+/* Frise : une ligne par famille d'actions. Colonne des noms 252 px + piste
+   1 060 px = 1 312 px (largeur utile) ; rpFrise place la ligne du concert
+   avec ces memes 252 px. */
+.rpp-frise{position:relative;margin-top:28px}
+.rpp-frise-l{position:relative;display:grid;grid-template-columns:252px 1060px;align-items:center;height:var(--rh,36px);border-top:1px solid #dde8f3}
+.rpp-frise-corps{position:relative;border-bottom:1px solid #dde8f3}
+.rpp-frise-grille{position:absolute;left:252px;top:0;bottom:0;width:1060px;pointer-events:none}
+.rpp-frise-mois{position:absolute;top:0;bottom:0;width:1px;background:#e3eef8}
 .rpp-frise-axe{height:26px;border-top:none;align-items:end;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--rp-gris)}
-.rpp-frise-nom{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:12px}
-.rpp-frise-nom em{font-size:13px;font-style:normal;color:var(--rp-gris)}
+.rpp-frise-nom{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:16px}
+.rpp-frise-axe .rpp-frise-nom{font-size:13px;font-weight:700}
 .rpp-frise-piste{position:relative;height:100%}
-.rpp-frise-axe .rpp-frise-piste span{position:absolute;bottom:6px}
-.rpp-barre{position:absolute;top:12px;height:14px;border-radius:7px;background:var(--rp-bleu)}
+.rpp-frise-axe .rpp-frise-piste span{position:absolute;bottom:6px;padding-left:6px}
+.rpp-barre{position:absolute;top:50%;height:14px;margin-top:-7px;border-radius:7px;background:var(--rp-bleu)}
 .rpp-barre.approx{background:repeating-linear-gradient(135deg,rgba(38,65,148,.38) 0 6px,rgba(38,65,148,.12) 6px 12px)}
-.rpp-trait{position:absolute;top:10px;width:4px;height:18px;border-radius:2px;background:var(--rp-bleu)}
-.rpp-frise-concert{position:absolute;top:20px;bottom:-8px;width:2px;background:var(--rp-rouge)}
-.rpp-frise-concert-t{position:absolute;bottom:-28px;transform:translateX(-50%);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#d42a2a;white-space:nowrap}
-.rpp-frise-leg{display:flex;align-items:center;gap:28px;margin-top:34px;font-size:14px;color:var(--rp-gris)}
+.rpp-point{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--rp-bleu)}
+.rpp-frise-concert{position:absolute;top:-6px;bottom:-8px;width:2px;margin-left:-1px;background:var(--rp-rouge)}
+.rpp-frise-concert-t{position:absolute;bottom:-30px;transform:translateX(-50%);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#d42a2a;white-space:nowrap}
+.rpp-frise-concert-t.fin{transform:translateX(-100%)}
+.rpp-frise-leg{display:flex;align-items:center;gap:28px;margin-top:40px;font-size:14px;color:var(--rp-gris)}
 .rpp-frise-leg span{display:flex;align-items:center;gap:8px}
-.rpp-frise-leg .rpp-barre{position:static;display:inline-block;width:28px;height:10px}
-/* Page de rubrique : son sommaire */
-.rpp-rubrique{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 600px;gap:56px;align-items:center}
-.rpp-rub-num{font-family:'Anton','Oswald',Impact,sans-serif;font-size:220px;line-height:1.05;color:transparent;-webkit-text-stroke:2.5px var(--rp-bleu)}
-.rpp-rub-nom{margin-top:4px;font-family:'Anton','Oswald',Impact,sans-serif;font-size:168px;font-weight:400;line-height:.9;letter-spacing:.01em;text-transform:uppercase;color:var(--rp-bleu)}
-.rpp-rub-nom.long{font-size:112px}
-.rpp-somm{display:flex;flex-direction:column;padding:30px 34px;border-radius:28px;background:#fff}
-.rpp-somm .rpp-lbl{margin-bottom:8px}
-.rpp-somm-l{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 24px;padding:16px 0;border-bottom:1px solid var(--rp-filet)}
-.rpp-somm-l:last-child{border-bottom:none}
-.rpp-somm-t{font-size:23px;font-weight:700;color:var(--rp-encre);overflow-wrap:anywhere}
-.rpp-somm-p{align-self:center;font-size:15px;color:var(--rp-gris)}
-.rpp-somm-m{font-size:18px;font-weight:500;color:var(--rp-bleu)}
-.rpp-somm-plus{padding-top:12px;font-size:16px;color:var(--rp-gris)}
+.rpp-frise-leg .rpp-barre{position:static;display:inline-block;width:28px;height:10px;margin-top:0}
 
 /* Impression : seules les pages du report, une par feuille 16:9. Chrome
    respecte ce format ; Safari l'ignore (l'editeur le dit avant d'imprimer). */
