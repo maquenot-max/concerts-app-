@@ -13,7 +13,7 @@ rien ne synchronise les deux automatiquement.
 |---|---|---|
 | `backup-daily` | Sauvegarde quotidienne de `app_data` dans le bucket privé `backups`, rétention 30 jours | la tâche `pg_cron` `sauvegarde-app`, chaque nuit à 03h15 UTC |
 | `team-admin` | Gestion de l'équipe (ajout, mot de passe, rôle, 2FA) | la page *Équipe* de l'application |
-| `purge-media` | Supprime du bucket public `concert-media` les photos de rapport expirées ou plus référencées, et les photos de newsletter de plus de 6 mois (jamais `artist-photos/`) | **pas encore déployée** — voir ci-dessous |
+| `purge-media` | Supprime du bucket public `concert-media` les photos du report de communication expirées (60 jours après le concert) ou plus référencées, et les photos de newsletter de plus de 6 mois (jamais `artist-photos/` ni `report-logos/`) | **pas encore déployée** — voir ci-dessous |
 
 **`purge-media` n'est pas déployée.** Le code est prêt (23/09) ; l'IA n'a pas
 le droit de déployer une fonction qui supprime des fichiers en masse, même

@@ -10,9 +10,13 @@
 // qui reste la seule a nettoyer les LIGNES de concert_media.
 //
 // Ce qui est supprime :
-// - photos de rapport : tout fichier qui n'est reference par aucune entree NON
-//   expiree de concert_media, et qui a plus de GRACE_HEURES (un envoi en cours
-//   ecrit le fichier avant la ligne de donnees) ;
+// - photos du report de communication (report/<concert>/<action>/, depuis le
+//   30/09 ; <concert>/<categorie>/ pour l'ancien questionnaire) : tout fichier
+//   qui n'est reference par aucune entree NON expiree de concert_media, et qui
+//   a plus de GRACE_HEURES (un envoi en cours ecrit le fichier avant la ligne
+//   de donnees). Chaque photo est une entree {type:'photo', path, expiresAt} ;
+//   l'appli fixe expiresAt a 60 jours apres le concert (jamais moins de 60
+//   jours apres l'envoi) et la recalcule si la date du concert change ;
 // - photos de newsletter (article, annonces) : apres NEWSLETTER_JOURS. Elles ne
 //   sont referencees nulle part en base (le formulaire n'est pas sauvegarde),
 //   mais les newsletters envoyees pointent vers elles : les supprimer tout de
@@ -20,7 +24,9 @@
 //   suivent son envoi ; au-dela de six mois, une image manquante dans un vieil
 //   e-mail est acceptee (decision du 23/09). Une photo est envoyee pour une
 //   edition precise : son age est, a quelques jours pres, celui de l'e-mail.
-// Ce qui n'est JAMAIS touche : les photos d'artistes. Elles aussi peuvent
+// Ce qui n'est JAMAIS touche : les logos des supports du report
+// (report-logos/, bibliotheque partagee entre tous les reports, entrees
+// {type:'support', path} sans date), et les photos d'artistes. Elles aussi peuvent
 // figurer dans des e-mails envoyes, mais l'age du fichier ne dit pas quand la
 // photo a servi pour la derniere fois : une photo de sept mois, remplacee
 // hier, etait encore dans la newsletter de la semaine derniere.
@@ -31,11 +37,11 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const BUCKET = "concert-media";
-const PREFIXES_PERMANENTS = ["artist-photos/"];
+const PREFIXES_PERMANENTS = ["artist-photos/", "report-logos/"];
 const PREFIXE_NEWSLETTER = "newsletter-photos/";
 const GRACE_HEURES = 24;
 const NEWSLETTER_JOURS = 180;
-const PROFONDEUR_MAX = 4; // idConcert/categorie/fichier : 3 niveaux attendus
+const PROFONDEUR_MAX = 4; // report/idConcert/idAction/fichier : 4 niveaux (ancien questionnaire : 3)
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
