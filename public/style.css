@@ -2245,6 +2245,17 @@ select.rp-in{padding-right:8px}
 .rp-logo{width:36px;height:36px;border-radius:50%;object-fit:cover;background:#fff}
 .rp-logo-l .btn-link{padding-left:0}
 .rp-puces{display:flex;flex-wrap:wrap;gap:6px}
+/* La campagne : un bloc par grand chiffre */
+.rp-leger{font-style:normal;font-weight:400;color:var(--text-3)}
+.rp-gc .rp-in{min-height:40px}
+.rp-gc-t{display:flex;align-items:center;gap:2px;font-size:12px;font-weight:600;color:var(--text-3)}
+.rp-gc-t span{flex:1}
+.rp-gc-t .rp-ico{width:32px;height:32px;border:none;background:none;color:var(--text-3)}
+.rp-gc-nl{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px}
+.rp-gc-calc:empty{display:none}
+.rp-gc-calc{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:12px;font-weight:400;color:var(--text-3)}
+.rp-gc-dispo{display:flex;flex-direction:column;gap:8px;margin-top:6px;font-size:12px;font-weight:400;color:var(--text-3)}
+.rp-puce:disabled{opacity:.45;cursor:default}
 .rp-puce{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-pill);background:var(--surface-2);color:var(--text-2);font:inherit;font-size:12px;cursor:pointer}
 .rp-puce img{width:22px;height:22px;margin-left:-6px;border-radius:50%;object-fit:cover;background:#fff}
 .rp-puce:hover{color:var(--text);box-shadow:var(--survol-ombre)}
@@ -2527,16 +2538,23 @@ select.rp-in{padding-right:8px}
 .rpp-couv-photo{min-height:0;padding:40px 40px 40px 0}
 .rpp-couv-photo img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;border-radius:28px;display:block}
 .rpp-couv-photo.choisie img{object-position:50% 50%}
-/* La campagne en un coup d'oeil : compteurs et frise */
-.rpp-comptes{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:16px;margin-top:24px}
-.rpp-compte{padding-top:12px;border-top:2px solid var(--rp-bleu)}
-.rpp-compte-n{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.rpp-compte b{display:block;font-family:'Anton','Oswald',Impact,sans-serif;font-size:52px;font-weight:400;line-height:1;color:var(--rp-bleu)}
-.rpp-coche{display:block;width:44px;height:49px;fill:none;stroke:var(--rp-bleu);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
-.rpp-compte i{font-size:13px;font-style:normal;letter-spacing:.06em;color:var(--rp-gris)}
-.rpp-compte span{display:block;margin-top:8px;font-size:16px;font-weight:700;color:var(--rp-bleu)}
-.rpp-compte em{display:-webkit-box;margin-top:3px;overflow:hidden;-webkit-line-clamp:3;-webkit-box-orient:vertical;font-size:14px;font-style:normal;line-height:1.35;color:var(--rp-gris)}
-.rpp-compte.vide{opacity:.4}
+/* La campagne en un coup d'oeil : les grands chiffres (4 au plus, le premier
+   plus large : c'est le plus grand tant qu'on n'a pas change l'ordre), puis
+   la frise. Nombre plus petit quand il est long (classes m, p, pp posees par
+   rpCampagne selon le nombre de caracteres : « 377 762 » tient a 76 px dans
+   la colonne la plus etroite, 277 px). */
+.rpp-gc{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:40px;margin-top:30px}
+.rpp-gc.n3{grid-template-columns:minmax(0,1.3fr) repeat(2,minmax(0,1fr))}
+.rpp-gc.n2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.rpp-gc.n1{grid-template-columns:minmax(0,1fr)}
+.rpp-gc-c{min-width:0;padding-top:14px;border-top:2px solid var(--rp-bleu)}
+.rpp-gc-c b{display:block;font-family:'Anton','Oswald',Impact,sans-serif;font-size:88px;font-weight:400;line-height:.95;color:var(--rp-bleu);white-space:nowrap}
+.rpp-gc-c b.m{font-size:76px}
+.rpp-gc-c b.p{font-size:60px}
+.rpp-gc-c b.pp{font-size:46px}
+.rpp-gc-c b.ppp{font-size:38px;white-space:normal;overflow-wrap:anywhere}
+.rpp-gc-c span{display:-webkit-box;margin-top:10px;overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:19px;font-weight:700;line-height:1.3;color:var(--rp-bleu)}
+.rpp-gc-c em{display:-webkit-box;margin-top:4px;overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:15px;font-style:normal;line-height:1.35;color:var(--rp-gris)}
 /* Frise : une ligne par famille d'actions. Colonne des noms 252 px + piste
    1 060 px = 1 312 px (largeur utile) ; rpFrise place la ligne du concert
    avec ces memes 252 px. */
