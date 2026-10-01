@@ -5584,21 +5584,21 @@ var RP_RUBRIQUES=[
 // remplis, il ne reste qu'a dire quand et a ajouter les photos. photos:1 =
 // une action qu'on attend illustree (point ambre tant qu'elle ne l'est pas).
 var RP_MODELES=[
-  {id:'flyers',rub:'diffusion',titre:'Dépôt de flyers',ico:'file',quand:'periode',chiffres:['flyers','lieux de dépôt'],teinte:'brick',photos:1},
-  {id:'sauvage',rub:'diffusion',titre:'Affichage sauvage',ico:'image',quand:'periode',chiffres:['affiches'],teinte:'brick',photos:1},
-  {id:'dooh',rub:'affichage',titre:'Affichage protégé',support:'Écrans digitaux · DOOH',ico:'monitor',quand:'periode',chiffres:['faces'],teinte:'brick',photos:1},
-  {id:'ecrans',rub:'affichage',titre:'Écrans géants',ico:'banner',quand:'periode',chiffres:['passages par jour'],teinte:'brick',photos:1},
-  {id:'presse',rub:'medias',titre:'Article de presse',ico:'newspaper',quand:'jour',chiffres:[],teinte:'blue'},
-  {id:'interview',rub:'medias',titre:'Interview · phoner',ico:'mic',quand:'jour',chiffres:[],teinte:'blue'},
-  {id:'radio',rub:'medias',titre:'Opé radio',ico:'radio',quand:'periode',chiffres:['promos antenne','speaks animateurs'],teinte:'amber'},
-  {id:'jeu',rub:'medias',titre:'Jeu concours',ico:'ticket',quand:'periode',chiffres:['places à gagner'],teinte:'amber'},
-  {id:'fbevent',rub:'rs',titre:'Événement Facebook',ico:'calendar',quand:'',chiffres:[],teinte:'blue'},
-  {id:'posts',rub:'rs',titre:'Posts & stories',support:'Facebook et Instagram',ico:'smartphone',quand:'',chiffres:[],teinte:'blue'},
+  {id:'flyers',rub:'diffusion',titre:'Dépôt de flyers',ico:'file',quand:'periode',chiffres:['flyers','lieux de dépôt'],teinte:'brick',photos:1,autre:'un autre dépôt de flyers'},
+  {id:'sauvage',rub:'diffusion',titre:'Affichage sauvage',ico:'image',quand:'periode',chiffres:['affiches'],teinte:'brick',photos:1,autre:'un autre affichage sauvage'},
+  {id:'dooh',rub:'affichage',titre:'Affichage protégé',support:'Écrans digitaux · DOOH',ico:'monitor',quand:'periode',chiffres:['faces'],teinte:'brick',photos:1,autre:'un autre affichage'},
+  {id:'ecrans',rub:'affichage',titre:'Écrans géants',ico:'banner',quand:'periode',chiffres:['passages par jour'],teinte:'brick',photos:1,autre:'d\'autres écrans'},
+  {id:'presse',rub:'medias',titre:'Article de presse',ico:'newspaper',quand:'jour',chiffres:[],teinte:'blue',autre:'un autre article'},
+  {id:'interview',rub:'medias',titre:'Interview · phoner',ico:'mic',quand:'jour',chiffres:[],teinte:'blue',autre:'une autre interview'},
+  {id:'radio',rub:'medias',titre:'Opé radio',ico:'radio',quand:'periode',chiffres:['promos antenne','speaks animateurs'],teinte:'amber',autre:'une autre opé radio'},
+  {id:'jeu',rub:'medias',titre:'Jeu concours',ico:'ticket',quand:'periode',chiffres:['places à gagner'],teinte:'amber',autre:'un autre jeu concours'},
+  {id:'fbevent',rub:'rs',titre:'Événement Facebook',ico:'calendar',quand:'',chiffres:[],teinte:'blue',autre:'un autre événement Facebook'},
+  {id:'posts',rub:'rs',titre:'Posts & stories',support:'Facebook et Instagram',ico:'smartphone',quand:'',chiffres:[],teinte:'blue',autre:'un autre post'},
   {id:'sponso',rub:'sponso',titre:'Sponsorisation',ico:'chart',quand:'',chiffres:[],teinte:'green'},
-  {id:'newsletter',rub:'newsletter',titre:'Newsletter',ico:'send',quand:'mensuel',chiffres:['contacts'],teinte:'blue'},
-  {id:'agenda',rub:'agenda',titre:'Agenda en ligne',ico:'list',quand:'',chiffres:[],teinte:'blue'},
-  {id:'site',rub:'agenda',titre:'Site web',ico:'globe',quand:'',chiffres:[],teinte:'blue'},
-  {id:'autre',rub:'medias',titre:'',ico:'more',quand:'jour',chiffres:[],teinte:'gris',libre:true}
+  {id:'newsletter',rub:'newsletter',titre:'Newsletter',ico:'send',quand:'mensuel',chiffres:['contacts'],teinte:'blue',autre:'une autre newsletter'},
+  {id:'agenda',rub:'agenda',titre:'Agenda en ligne',ico:'list',quand:'',chiffres:[],teinte:'blue',autre:'un autre agenda'},
+  {id:'site',rub:'agenda',titre:'Site web',ico:'globe',quand:'',chiffres:[],teinte:'blue',autre:'un autre site'},
+  {id:'autre',rub:'medias',titre:'',ico:'more',quand:'jour',chiffres:[],teinte:'gris',libre:true,autre:'une autre action'}
 ];
 // Etapes du process qui proposent une action une fois cochees (nom normalise :
 // l'id d'une etape change si un administrateur la recree). Le jour de la coche
@@ -5764,7 +5764,8 @@ function rpFmtQuand(q){
     return rpJJMMAAAA(a)+' → '+rpJJMMAAAA(b);
   }
   if(q.mode==='mois')return rpMoisTexte(q.mois);
-  if(q.mode==='mensuel')return 'Le '+rpJourMois(q.jour)+' de chaque mois';
+  // Newsletter mensuelle : l'etendue des envois ; leur nombre est dessous.
+  if(q.mode==='mensuel')return q.dates.length>1?rpFmtQuand({mode:'periode',du:q.dates[0],au:q.dates[q.dates.length-1]}):rpJJMMAAAA(q.dates[0]);
   return q.texte||'';
 }
 function rpJourMois(j){return j===1?'1er':String(j);}
@@ -5787,13 +5788,10 @@ function rpAvant(j){
   return Math.round(j/30.4)+' mois avant le concert';
 }
 // Sous la date : « 93 jours · jusqu'à la veille du concert », « 2 jours ·
-// 3 mois avant le concert », « 4 envois · 05/06 → 05/09/2026 ».
+// 3 mois avant le concert », « 4 envois ».
 function rpSousQuand(q,c){
   if(!q)return '';
-  if(q.mode==='mensuel'){
-    var nb=q.dates.length;
-    return evtPluriel(nb,'envoi')+' · '+(nb>1?rpFmtQuand({mode:'periode',du:q.dates[0],au:q.dates[nb-1]}):rpJJMMAAAA(q.dates[0]));
-  }
+  if(q.mode==='mensuel')return evtPluriel(q.dates.length,'envoi');
   var dc=c&&c.dc;
   if(q.mode==='jour')return dc&&q.du<dc?evtCap(rpAvant(rpJoursEntre(q.du,dc)-1)):'';
   if(q.mode!=='periode')return '';
@@ -5804,10 +5802,12 @@ function rpSousQuand(q,c){
 // Nom a afficher : le support en grand quand il est precis (« N RADIO »,
 // type « Opé radio » en etiquette), sinon le titre (« AFFICHAGE PROTÉGÉ »,
 // support « Écrans digitaux · DOOH » en etiquette).
+// Medias & ope : le nom du media toujours en grand, le type en petit (« J'AIME
+// DIJON », jeu concours ; demande du 01/10).
 function rpNoms(a){
   var m=rpModele(a.modele),titre=String(a.titre||'').trim(),sup=String(a.support||'').trim();
   var supPrecis=sup&&sup!==(m.support||'');
-  if(supPrecis&&(!titre||titre===m.titre))return {grand:sup,puce:titre,ligne:sup+(titre?' · '+titre:'')};
+  if(supPrecis&&(a.rub==='medias'||!titre||titre===m.titre))return {grand:sup,puce:titre,ligne:sup+(titre?' · '+titre:'')};
   var g=titre||sup||m.titre||'Action';
   var p=titre&&sup?sup:'';
   return {grand:g,puce:p,ligne:g+(p?' · '+p:'')};
@@ -6192,7 +6192,7 @@ function rpInfos(a,c,o){
   var taille=rpTailleTitre(n.grand,18,30);
   h+='<h2 class="rpp-titre'+taille+'">'+esc(n.grand)+'</h2>';
   if(q){
-    h+='<div class="rpp-lbl rpp-espace">'+(q.mode==='mensuel'?'Envois':'Période')+'</div><div class="rpp-quand'+(q.mode==='texte'||q.mode==='mensuel'?' texte':'')+'">'+rpDateHtml(rpFmtQuand(q))+'</div>';
+    h+='<div class="rpp-lbl rpp-espace">Période</div><div class="rpp-quand'+(q.mode==='texte'?' texte':'')+'">'+rpDateHtml(rpFmtQuand(q))+'</div>';
     var s=rpSousQuand(q,c);if(s)h+='<div class="rpp-sous">'+rpDateHtml(s)+'</div>';
   }
   if(!o.sansChiffres)h+=rpChiffresHtml(rpChiffres(a),' rpp-espace');
@@ -6222,12 +6222,16 @@ function rpCouverture(c){
 }
 // Page « La campagne en un coup d'oeil » : les rubriques (nombre d'actions,
 // les noms, la page ou elles commencent), puis la frise jusqu'au concert.
+// Agenda & digital : seuls les plus marquants figurent au report, il y en a
+// bien d'autres. Pas de nombre pour eux, ni dans le total (demande du 01/10).
+var RP_COCHE='<svg class="rpp-coche" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>';
 function rpCampagne(c,acts,num,pages){
-  var h='<div class="rpp-h"><h2 class="rpp-titre rpp-titre-page">La campagne en un coup d\'œil</h2><div class="rpp-h-note">'+esc(evtPluriel(acts.length,'action'))+'</div></div>';
+  var nb=acts.filter(function(a){return a.rub!=='agenda';}).length;
+  var h='<div class="rpp-h"><h2 class="rpp-titre rpp-titre-page">La campagne en un coup d\'œil</h2><div class="rpp-h-note">'+esc(evtPluriel(nb,'action'))+'</div></div>';
   h+='<div class="rpp-comptes">'+RP_RUBRIQUES.map(function(r){
     var l=acts.filter(function(a){return a.rub===r.id;});
     var ip=(pages||[]).findIndex(function(x){return x.rub&&x.rub.id===r.id;});
-    return '<div class="rpp-compte'+(l.length?'':' vide')+'"><div class="rpp-compte-n"><b>'+l.length+'</b>'+(ip>0?'<i>p. '+rpDeux(ip+1)+'</i>':'')+'</div><span>'+esc(r.nom)+'</span><em>'+esc(l.length?rpResumeRub(c,r,l):'')+'</em></div>';
+    return '<div class="rpp-compte'+(l.length?'':' vide')+'"><div class="rpp-compte-n"><b>'+(r.id==='agenda'&&l.length?RP_COCHE:l.length)+'</b>'+(ip>0?'<i>p. '+rpDeux(ip+1)+'</i>':'')+'</div><span>'+esc(r.nom)+'</span><em>'+esc(l.length?rpResumeRub(c,r,l):'')+'</em></div>';
   }).join('')+'</div>';
   h+=rpFrise(c,acts);
   return rpPage(c,'','La campagne',h,num);
@@ -6257,7 +6261,7 @@ function rpChiffreCle(c,a){
     return vs.length?t:'';
   }
   var q=rpQuand(a),ch=rpChiffres(a)[0];
-  return [q&&q.mode==='mensuel'?rpFmtQuand(q):'',ch?(ch.n+' '+ch.l).trim():''].filter(Boolean).join(' · ');
+  return [q&&q.mode==='mensuel'?evtPluriel(q.dates.length,'envoi'):'',ch?(ch.n+' '+ch.l).trim():''].filter(Boolean).join(' · ');
 }
 // Frise : une ligne par famille d'actions (toutes les vagues sponso, tous les
 // flyers...), sans les dates a cote du nom (elles sont sur les pages). Ni les
@@ -6390,25 +6394,26 @@ function rpTitreGroupe(p){
   var t=p.actions.map(function(a){return String(a.titre||'').trim();});
   return t[0]&&t.every(function(x){return x===t[0];})?t[0]:p.rub.nom;
 }
+function rpNoteGroupe(p){return p.rub.id==='agenda'?'':'<div class="rpp-h-note">'+esc(evtPluriel(p.actions.length,'action'))+'</div>';}
 function rpPageCartes(c,p,num,ap){
-  var nb=p.actions.length,h='<div class="rpp-h"><h2 class="rpp-titre rpp-titre-page">'+esc(rpTitreGroupe(p))+'</h2><div class="rpp-h-note">'+esc(evtPluriel(p.actions.length,'action'))+'</div></div>'
+  var nb=p.actions.length,h='<div class="rpp-h"><h2 class="rpp-titre rpp-titre-page">'+esc(rpTitreGroupe(p))+'</h2>'+rpNoteGroupe(p)+'</div>'
     +'<div class="rpp-cartes n'+nb+'">'+p.actions.map(function(a){
       var n=rpNoms(a),q=rpQuand(a),t=String(a.texte||'').trim();
       return '<div class="rpp-carte"><div class="rpp-carte-nom">'+rpMarque(a)+'<span>'+esc(n.grand)+'</span></div>'
         +(n.puce?'<span class="rpp-puce rpp-espace-p">'+esc(n.puce)+'</span>':'')
-        +(q?'<div class="rpp-lbl rpp-espace">'+(q.mode==='mensuel'?'Envois':'Période')+'</div><div class="rpp-quand-c">'+rpDateHtml(rpFmtQuand(q))+'</div>':'')
+        +(q?'<div class="rpp-lbl rpp-espace">Période</div><div class="rpp-quand-c">'+rpDateHtml(rpFmtQuand(q))+'</div>'+(q.mode==='mensuel'?'<div class="rpp-sous">'+esc(rpSousQuand(q,c))+'</div>':''):'')
         +rpChiffresHtml(rpChiffres(a),' rpp-espace petits')
         +(t?'<div class="rpp-texte petit rpp-espace">'+esc(t)+'</div>':'')+rpLienHtml(a.lien,ap)+'</div>';
     }).join('')+'</div>';
   return rpPage(c,'',rpRubTexte(p.rub),h,num);
 }
 function rpPageVignettes(c,p,num,ap){
-  var nb=p.actions.length,h='<div class="rpp-h"><h2 class="rpp-titre rpp-titre-page">'+esc(rpTitreGroupe(p))+'</h2><div class="rpp-h-note">'+esc(evtPluriel(p.actions.length,'action'))+'</div></div>'
+  var nb=p.actions.length,h='<div class="rpp-h"><h2 class="rpp-titre rpp-titre-page">'+esc(rpTitreGroupe(p))+'</h2>'+rpNoteGroupe(p)+'</div>'
     +'<div class="rpp-vignettes n'+nb+'">'+p.actions.map(function(a){
       var n=rpNoms(a),q=rpQuand(a),ph=rpPhotos(a.id)[0],ch=rpChiffres(a)[0],t=String(a.texte||'').trim();
       return '<div class="rpp-vignette">'+rpImg(ph,'')+'<div class="rpp-vignette-t">'+rpMarque(a)
         +'<div class="rpp-vignette-nom">'+esc(n.grand)+'</div>'+(n.puce?'<div class="rpp-vignette-type">'+esc(n.puce)+'</div>':'')
-        +(q?'<div class="rpp-vignette-date">'+rpDateHtml(rpFmtQuand(q))+'</div>':'')
+        +(q?'<div class="rpp-vignette-date">'+rpDateHtml(rpFmtQuand(q))+(q.mode==='mensuel'?' · '+esc(rpSousQuand(q,c)):'')+'</div>':'')
         +(ch?'<div class="rpp-vignette-type">'+esc((ch.n+' '+ch.l).trim())+'</div>':'')
         +(t?'<div class="rpp-vignette-type">'+esc(t)+'</div>':'')+rpLienHtml(a.lien,ap)+'</div></div>';
     }).join('')+'</div>';
@@ -6547,7 +6552,7 @@ function rpMajApercu(){
   rpRemplacer('rp-liste',rpHtmlListe(c));
   if(rpSel!=='ajouter'){rpRemplacer('rp-centre',rpHtmlCentre(c));rpEchelle();}
   var t=document.getElementById('rp-form-titre'),a=rpTrouve(rpSel);
-  if(t&&a)t.textContent=rpNoms(a).grand||'Nouvelle action';
+  if(t&&a)t.textContent=rpNomListe(a);
 }
 function rpPlanifierApercu(){clearTimeout(rpApercuTimer);rpApercuTimer=setTimeout(rpMajApercu,150);}
 function rpEchelle(){
@@ -6571,25 +6576,44 @@ function rpVignette(a){
   if(ph)return '<img class="rp-vign" src="'+escUrl(ph.url)+'" alt="">';
   return '<span class="rp-vign t-'+esc(m.teinte)+'">'+icon(m.ico)+'</span>';
 }
+// Nom d'une action dans l'editeur : un post par sa legende (deux « Posts &
+// stories » se ressemblaient), sinon comme sur la page.
+function rpNomListe(a){
+  if(a.modele==='posts'){var t=String(a.texte||'').trim().split('\n')[0];return t?(t.length>48?t.slice(0,46)+'…':t):'Post sans légende';}
+  return rpNoms(a).grand||'Nouvelle action';
+}
+// Liste de gauche : les slides du report, dans l'ordre. Une slide qui
+// regroupe plusieurs elements (posts, jeux concours, agendas...) s'affiche
+// une fois, ses elements dessous, avec « + Ajouter un autre ... » : on voit
+// qu'un nouveau post est un nouvel element de la meme slide (01/10).
 function rpHtmlListe(c){
-  var acts=rpActions(c),sug=rpSuggestions(c).length,couv=rpCouvUrl(c);
-  function item(id,vign,nom,fin){
-    return '<button type="button" class="rp-item'+(rpSel===id?' actif':'')+'" data-a="sel" data-id="'+esc(id)+'">'+vign+'<span class="rp-item-nom">'+esc(nom)+'</span>'+fin+'</button>';
+  var pages=rpPages(c),sug=rpSuggestions(c).length,couv=rpCouvUrl(c);
+  function item(id,vign,nom,fin,cls){
+    return '<button type="button" class="rp-item'+(cls||'')+(rpSel===id?' actif':'')+'" data-a="sel" data-id="'+esc(id)+'">'+vign+'<span class="rp-item-nom">'+esc(nom)+'</span>'+fin+'</button>';
   }
+  function itemAction(a,cls){var manque=rpManque(a);return item(a.id,rpVignette(a),rpNomListe(a),manque?'<span class="rp-point" title="'+esc(manque)+'"></span>':'',cls);}
   var h='<div class="rp-defil">';
   if(sug)h+='<button type="button" class="rp-b-sugg'+(rpSel==='ajouter'?' actif':'')+'" data-a="ajouter"><span class="rp-point corail"></span><span>'+esc(evtPluriel(sug,'suggestion'))+' de l\'appli</span><b>Voir</b></button>';
   h+='<div class="rp-groupe">Début</div>';
   h+=item('couv',couv?'<img class="rp-vign" src="'+esc(couv)+'" alt="">':'<span class="rp-vign ciel"></span>','Couverture','<span class="rp-auto">auto</span>');
   h+=item('camp','<span class="rp-vign blanc"></span>','La campagne','<span class="rp-auto">auto</span>');
-  RP_RUBRIQUES.forEach(function(r){
-    var l=acts.filter(function(a){return a.rub===r.id;});if(!l.length)return;
-    h+='<div class="rp-groupe">'+esc(r.num+' '+r.nom)+'</div>';
-    l.forEach(function(a){
-      var manque=rpManque(a);
-      h+=item(a.id,rpVignette(a),rpNoms(a).grand||'Nouvelle action',manque?'<span class="rp-point" title="'+esc(manque)+'"></span>':'');
-    });
+  var rub=null,vus={};
+  pages.forEach(function(p,i){
+    if(!p.rub||p.type==='suite'||(p.type==='posts'&&p.suite))return;
+    if(p.rub.id!==rub){rub=p.rub.id;h+='<div class="rp-groupe">'+esc(p.rub.num+' '+p.rub.nom)+'</div>';}
+    var l=p.actions.filter(function(a){return !vus[a.id];});
+    l.forEach(function(a){vus[a.id]=1;});
+    if(p.type!=='posts'&&l.length===1){h+=itemAction(l[0]);return;}
+    // Slide a plusieurs elements : « + Ajouter » propose le type le plus
+    // present (un autre post, un autre jeu concours...).
+    var compte={},dom=l[0];
+    l.forEach(function(a){compte[a.modele]=(compte[a.modele]||0)+1;if(compte[a.modele]>compte[dom.modele])dom=a;});
+    var md=rpModele(dom.modele);
+    h+='<div class="rp-slide"><button type="button" class="rp-slide-t" data-a="sel" data-id="'+esc(l[0].id)+'">'+icon('panel-top')+'<span>'+esc(rpTitreGroupe(p))+'</span><em>'+esc(evtPluriel(l.length,'élément'))+' · p. '+rpDeux(i+1)+'</em></button>'
+      +l.map(function(a){return itemAction(a,' enfant');}).join('')
+      +(md.autre?'<button type="button" class="rp-slide-plus" data-a="meme" data-id="'+esc(dom.id)+'">'+icon('plus')+'Ajouter '+esc(md.autre)+'</button>':'')+'</div>';
   });
-  if(!acts.length)h+='<p class="rp-vide-liste">Aucune action pour l\'instant. Ajoute la première avec le bouton ci-dessous.</p>';
+  if(pages.length<=2)h+='<p class="rp-vide-liste">Aucune action pour l\'instant. Ajoute la première avec le bouton ci-dessous.</p>';
   h+='</div><div class="rp-liste-pied"><button type="button" class="btn-ajout rp-b-ajout'+(rpSel==='ajouter'?' actif':'')+'" data-a="ajouter">'+icon('plus')+'Ajouter une action</button></div>';
   return h;
 }
@@ -6617,7 +6641,7 @@ function rpHtmlCentre(c){
 function rpHtmlAjout(c){
   var sugg=rpSuggestions(c),ign=rpDe(c.id,'ignore').length;
   var h='<div class="rp-ajout rp-defil"><h2 class="rp-ajout-titre">Qu\'est-ce qui a été fait ?</h2>'
-    +'<p class="rp-ajout-sous">Choisis une case : l\'action se range dans la bonne rubrique, titre déjà rempli. Il ne reste qu\'à dire quand, et à ajouter les photos.</p>';
+    +'<p class="rp-ajout-sous">Une action = une chose faite : un post, un jeu concours avec un média, une opé radio… Ajoute-en une par chose, avec ses photos. Choisis une case : l\'action se range dans la bonne rubrique, titre déjà rempli.</p>';
   if(sugg.length){
     h+='<div class="rp-ajout-h">Suggestions de l\'appli <b>'+sugg.length+'</b></div><div class="rp-suggs">'+sugg.map(function(s){
       var m=rpModele(s.modele);
@@ -6679,7 +6703,8 @@ function rpHtmlFormCouv(c){
 }
 function rpHtmlFormAction(c,a){
   var m=rpModele(a.modele),r=rpRub(a.rub);
-  var h='<div class="rp-form-tete"><div class="rp-meta">'+esc(r.num+' '+r.nom)+'</div><div class="rp-form-titre" id="rp-form-titre">'+esc(rpNoms(a).grand||'Nouvelle action')+'</div></div><div class="rp-defil rp-form-defil">';
+  var h='<div class="rp-form-tete"><div class="rp-meta">'+esc(r.num+' '+r.nom)+'</div><div class="rp-form-titre" id="rp-form-titre">'+esc(rpNomListe(a))+'</div>'
+    +(m.autre?'<button type="button" class="btn-link rp-autre" data-a="meme" data-id="'+esc(a.id)+'">'+icon('plus')+'Ajouter '+esc(m.autre)+'</button>':'')+'</div><div class="rp-defil rp-form-defil">';
   h+='<label class="rp-champ">C\'est quoi ?<input class="rp-in" type="text" data-f="titre" value="'+esc(a.titre)+'" placeholder="'+esc(m.titre||'Ex. : opé radio, collage, stand…')+'"></label>';
   var rubSel='<label class="rp-champ">Rubrique<select class="rp-in" data-f="rub">'+RP_RUBRIQUES.map(function(x){return '<option value="'+esc(x.id)+'"'+(x.id===a.rub?' selected':'')+'>'+esc(x.num+' · '+x.nom)+'</option>';}).join('')+'</select></label>';
   if(m.libre)h+=rubSel;
@@ -6826,7 +6851,10 @@ function rpHtmlPhotos(c,a){
     +'<div class="rp-depot-t">'+icon('upload')+'Dépose les photos ici</div></div>'
     +'<button type="button" class="btn rp-b-camera" data-a="ph-camera">'+icon('camera')+'Prendre une photo</button>';
   if(rpEnvoi&&rpEnvoi.aid===a.id)h+='<p class="rp-aide">Envoi… '+rpEnvoi.fait+' / '+rpEnvoi.total+'</p>';
-  h+='<p class="rp-aide">'+(ph.length?'Clique une photo pour la recadrer. ':'')+(ph.length>1?'La première est la plus grande. ':'')+(exp?'Gardées jusqu\'au '+esc(dateCourte(exp))+', 60 jours après le concert.':'')+'</p></div>';
+  var md=rpModele(a.modele);
+  var propre={posts:'sa propre légende',jeu:'son média et sa date',agenda:'son site',interview:'son média et sa date',presse:'son média et sa date',radio:'sa radio et ses dates'}[a.modele];
+  if(md.autre&&propre)h+='<p class="rp-aide">Les photos de cet élément seulement. Pour '+esc(md.autre)+', avec '+propre+' : « Ajouter '+esc(md.autre)+' », en haut.</p>';
+  h+='<p class="rp-aide">'+(ph.length?'Clique une photo pour la recadrer. ':'')+(ph.length>1&&a.modele!=='posts'?'La première est la plus grande. ':'')+(exp?'Gardées jusqu\'au '+esc(dateCourte(exp))+', 60 jours après le concert.':'')+'</p></div>';
   return h;
 }
 
@@ -6863,6 +6891,14 @@ function rpAction(nom,b){
     case 'rc-ok':rpRcValider();return;
     case 'rc-entiere':rpRcFormat('libre',true);return;
     case 'rc-format':rpRcFormat(b.getAttribute('data-v'));return;
+    case 'meme':{
+      // Un element de plus, du meme type (un autre post, un autre jeu concours...).
+      var mo=rpTrouve(b.getAttribute('data-id'));if(!mo||mo.type!=='action')return;
+      var nm=rpNouvelleAction(c,mo.modele,{rub:mo.rub});
+      rpSel=nm.id;rpTout=false;if(rpEstTel())rpTel='page';rpRendu();rpHaut();
+      rpFocus(mo.modele==='posts'?'[data-f="texte"]':'[data-f="support"]',true);
+      return;
+    }
     case 'cp-annuler':rpCopieFermer();return;
     case 'cp-ok':rpCopieValider();return;
     case 'rep-tout':rpRepTout=!rpRepTout;rpRendu();return;

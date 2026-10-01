@@ -2129,6 +2129,20 @@ button.tag.fa-lien{cursor:pointer}
 .rp-item:hover{box-shadow:var(--survol-ombre)}
 .rp-item.actif{background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent-ring);color:var(--accent);font-weight:600}
 .rp-item-nom{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Slide a plusieurs elements (posts, jeux concours, agendas) : son nom, ses
+   elements en retrait, « + Ajouter un autre ... » */
+.rp-slide{margin:2px 0 6px;padding:2px 0 4px;border-left:2px solid var(--border-light);margin-left:8px}
+.rp-slide-t{display:flex;align-items:center;gap:8px;width:100%;min-height:34px;padding:4px 8px 4px 10px;border:none;background:none;color:var(--text-2);font:inherit;font-size:12px;font-weight:600;text-align:left;cursor:pointer}
+.rp-slide-t .ico{width:14px;height:14px;flex-shrink:0;color:var(--text-3)}
+.rp-slide-t span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rp-slide-t em{flex-shrink:0;font-style:normal;font-weight:400;color:var(--text-4)}
+.rp-slide-t:hover{color:var(--text)}
+.rp-item.enfant{padding-left:12px}
+.rp-slide-plus{display:flex;align-items:center;gap:6px;min-height:32px;padding:4px 10px 4px 14px;border:none;background:none;color:var(--accent);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.rp-slide-plus .ico{width:13px;height:13px}
+.rp-slide-plus:hover{text-decoration:underline}
+.rp-autre{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding-left:0;font-size:13px}
+.rp-autre .ico{width:14px;height:14px}
 .rp-vign{width:48px;height:27px;flex-shrink:0;border-radius:4px;object-fit:cover;display:flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--text-3)}
 .rp-vign .ico{width:14px;height:14px}
 .rp-vign.ciel{background:#92d2fe}
@@ -2518,6 +2532,7 @@ select.rp-in{padding-right:8px}
 .rpp-compte{padding-top:12px;border-top:2px solid var(--rp-bleu)}
 .rpp-compte-n{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .rpp-compte b{display:block;font-family:'Anton','Oswald',Impact,sans-serif;font-size:52px;font-weight:400;line-height:1;color:var(--rp-bleu)}
+.rpp-coche{display:block;width:44px;height:49px;fill:none;stroke:var(--rp-bleu);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
 .rpp-compte i{font-size:13px;font-style:normal;letter-spacing:.06em;color:var(--rp-gris)}
 .rpp-compte span{display:block;margin-top:8px;font-size:16px;font-weight:700;color:var(--rp-bleu)}
 .rpp-compte em{display:-webkit-box;margin-top:3px;overflow:hidden;-webkit-line-clamp:3;-webkit-box-orient:vertical;font-size:14px;font-style:normal;line-height:1.35;color:var(--rp-gris)}
