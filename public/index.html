@@ -361,6 +361,7 @@
   <input type="file" id="rp-camera" accept="image/*" capture="environment" hidden>
   <input type="file" id="rp-logo" accept="image/*" hidden>
   <div class="rp-rc" id="rp-rc" hidden></div>
+  <div class="rp-rc rp-copie" id="rp-copie" hidden></div>
 </div>
 <div id="rp-print" aria-hidden="true"></div>
 <div class="tk-modal" id="tk-modal">
@@ -3570,6 +3571,7 @@ document.addEventListener('keydown',function(e){
   var sm=document.getElementById('sp-modal');if(sm&&sm.classList.contains('open')){spCloseModal();return;}
   if(document.querySelector('.tk-modal.open,.rs-modal.open'))return;
   if(rpRc){rpRcFermer();return;}
+  if(rpCopieId){rpCopieFermer();return;}
   if(rpOuvert()){if(rpTout){rpTout=false;rpRendu();}else rpFermer();return;}
   var menus=['fiche-menu','fiche-photo-menu'].map(function(id){return document.getElementById(id);});
   if(menus.some(function(m){return m&&m.style.display!=='none';})){closeFicheMenu();return;}
@@ -5545,7 +5547,10 @@ function evtAjouterColle(c){
 // sauvegardee la nuit : aucune migration), une liste d'elements identifies,
 // fusionnes par id comme le reste :
 //   action  {id,type:'action',concertId,rub,modele,titre,support,quand,chiffres,
-//            texte,lien,detail,modeDetail,vagues,source,cree}
+//            texte,lien,detail,modeDetail,vagues,source,cree,copie}
+//            copie : id commun aux copies d'une meme action dans plusieurs
+//            reports (« Ajouter a d'autres dates », 01/10) ; leurs photos
+//            pointent vers les memes fichiers
 //   photo   {id,type:'photo',concertId,actionId,path,url,w,h,ordre,cree,expiresAt,
 //            orig,cadre,srcArtiste}  actionId 'couv' : photo de couverture ;
 //            orig {path,url,w,h} : l'originale d'une photo recadree ; cadre
@@ -5650,6 +5655,17 @@ function rpCouvUrl(c){
 // Fichiers d'une photo du report : la version affichee et, apres un
 // recadrage, l'originale. Jamais un fichier hors de report/ (photo d'artiste).
 function rpFichiers(m){return [m&&m.path,m&&m.orig&&m.orig.path].filter(function(x){return typeof x==='string'&&x.indexOf('report/')===0;});}
+// Une photo peut servir a plusieurs reports (action copiee vers d'autres
+// dates) : un fichier n'est supprime que lorsque plus aucun element de
+// concert_media ne le reference. retires : elements deja sortis de la liste.
+function rpFichiersLibres(retires){
+  var gardes={},out=[];
+  concertMedia.forEach(function(m){if(m&&retires.indexOf(m)<0)rpFichiers(m).forEach(function(x){gardes[x]=1;});});
+  retires.forEach(function(m){rpFichiers(m).forEach(function(x){if(!gardes[x]&&out.indexOf(x)<0)out.push(x);});});
+  return out;
+}
+function rpSupprimerFichiers(retires){rpFichiersLibres(retires).forEach(function(x){storageDelete(x);});}
+function rpSupprimerSiLibre(path){if(path)rpSupprimerFichiers([{path:path}]);}
 function rpSupports(){return rpTous('support').sort(function(a,b){return String(a.nom).localeCompare(String(b.nom),'fr');});}
 function rpSupportDe(nom){var n=rpNorm(nom);if(!n)return null;return rpTous('support').find(function(s){return rpNorm(s.nom)===n;})||null;}
 function rpSauver(){scheduleSave('concert_media');rpMajEnregistre();}
@@ -5903,6 +5919,105 @@ function rpIgnorer(c,source){
   concertMedia.push({id:uid('ri'),type:'ignore',concertId:c.id,source:source,cree:rpAuj()});
   rpSauver();
 }
+// ── Une action dans plusieurs reports (01/10) ──
+// Flyer ou bache multi-artistes, ecrans d'un festival... : la meme action vaut
+// pour plusieurs dates. On la copie dans leurs reports : textes, chiffres et
+// dates repris (chaque copie se modifie ensuite a part), photos partagees
+// (memes fichiers, aucun nouvel envoi ; voir rpFichiersLibres).
+function rpGroupe(a){return a.copie||a.id;}
+function rpCopies(a){var g=rpGroupe(a);return rpTous('action').filter(function(x){return x!==a&&rpGroupe(x)===g;});}
+function rpAGroupe(cid,g){return rpDe(cid,'action').some(function(x){return rpGroupe(x)===g;});}
+function rpCopierAction(a,cible){
+  var auj=rpAuj(),g=rpGroupe(a),n=syncClone(a);
+  a.copie=g;
+  n.id=uid('ra');n.concertId=cible.id;n.cree=auj;n.copie=g;
+  (n.chiffres||[]).forEach(function(x){x.id=uid('rc');});
+  (n.detail||[]).forEach(function(x){x.id=uid('rl');});
+  delete n.vagues;
+  concertMedia.push(n);
+  var exp=rpExpire(cible,auj);
+  rpPhotos(a.id).forEach(function(p){
+    var q=syncClone(p);
+    q.id=uid('rf');q.concertId=cible.id;q.actionId=n.id;q.cree=auj;
+    if(exp)q.expiresAt=exp;else delete q.expiresAt;
+    concertMedia.push(q);
+  });
+  return n;
+}
+// « Aussi dans 3 autres reports : Benjamin Biolay (30/10), Camille (19/11)… »
+function rpAutresReports(a){
+  var l=rpCopies(a).map(function(x){return concerts.find(function(c){return c.id===x.concertId;});}).filter(Boolean);
+  l.sort(function(x,y){return String(x.dc||'').localeCompare(String(y.dc||''));});
+  return l;
+}
+function rpNomDate(c){return String(c.art||'').trim()+(c.dc?' ('+rpJJMM(c.dc)+')':'');}
+// Dates proposees : a venir, puis passees depuis moins de 60 jours (au-dela,
+// leur report est deja purge).
+function rpDatesCopie(c){
+  var auj=rpAuj(),lim=rpPlusJours(auj,-RP_JOURS);
+  var l=concerts.filter(function(x){return x.id!==c.id&&!x.supprime&&!x.annule&&(!x.dc||x.dc>=lim);});
+  var avenir=l.filter(function(x){return !x.dc||x.dc>=auj;}).sort(function(x,y){return String(x.dc||'9999').localeCompare(String(y.dc||'9999'));});
+  var passes=l.filter(function(x){return x.dc&&x.dc<auj;}).sort(function(x,y){return y.dc.localeCompare(x.dc);});
+  return {avenir:avenir,passes:passes};
+}
+var rpCopieId=null;
+function rpCopieOuvrir(a){
+  var c=rpConcert();if(!c||!a)return;
+  rpCopieId=a.id;
+  var g=rpGroupe(a),d=rpDatesCopie(c),nph=rpPhotos(a.id).length;
+  function ligne(x){
+    var deja=rpAGroupe(x.id,g),info=[lieuTexte(x),x.dc?dateCourte(x.dc,true):'sans date'].filter(Boolean).join(' · ');
+    var cherche=rpNorm([x.art,x.ville,x.salle].join(' '));
+    return '<label class="rp-copie-l'+(deja?' deja':'')+'" data-cherche="'+esc(cherche)+'"><input type="checkbox" data-cp="'+esc(x.id)+'"'+(deja?' checked disabled':'')+'>'
+      +'<span class="rp-copie-art">'+esc(x.art||'Sans nom')+'</span><span class="rp-copie-info">'+esc(info)+(deja?' · <em>déjà dans son report</em>':'')+'</span></label>';
+  }
+  var liste=(d.avenir.length?'<div class="rp-copie-g">À venir</div>'+d.avenir.map(ligne).join(''):'')
+    +(d.passes.length?'<div class="rp-copie-g">Passées (moins de 60 jours)</div>'+d.passes.map(ligne).join(''):'');
+  var el=document.getElementById('rp-copie');
+  el.innerHTML='<div class="rp-rc-boite rp-copie-boite" role="dialog" aria-modal="true" aria-label="Ajouter à d\'autres dates">'
+    +'<div class="rp-rc-tete"><b>Ajouter « '+esc(rpNoms(a).grand||'cette action')+' » à d\'autres dates</b></div>'
+    +'<p class="rp-aide grand">L\'action est copiée dans le report de chaque date cochée'+(nph?', avec '+esc(evtPluriel(nph,'photo'))+' (sans les renvoyer)':'')+', ses dates, ses chiffres et son texte. Chaque copie se modifie ensuite à part.</p>'
+    +'<input class="rp-in" type="search" id="rp-copie-q" placeholder="Rechercher un artiste, une ville…" autocomplete="off" aria-label="Rechercher une date">'
+    +'<div class="rp-copie-liste" id="rp-copie-liste">'+(liste||'<p class="rp-aide">Aucune autre date.</p>')+'</div>'
+    +'<div class="rp-rc-pied"><span class="rp-aide" id="rp-copie-n">Coche les dates concernées.</span><span class="rp-rc-vide"></span>'
+    +'<button type="button" class="btn" data-a="cp-annuler">Annuler</button><button type="button" class="btn btn-primary" data-a="cp-ok" id="rp-copie-ok" disabled>Ajouter</button></div></div>';
+  el.hidden=false;
+  if(!rpEstTel()){var q=document.getElementById('rp-copie-q');if(q)q.focus();}
+}
+function rpCopieFermer(){rpCopieId=null;var el=document.getElementById('rp-copie');el.hidden=true;el.innerHTML='';}
+function rpCopieCoches(){return Array.prototype.slice.call(document.querySelectorAll('#rp-copie input[data-cp]:checked:not(:disabled)')).map(function(x){return x.getAttribute('data-cp');});}
+function rpCopieMaj(){
+  var n=rpCopieCoches().length,b=document.getElementById('rp-copie-ok'),t=document.getElementById('rp-copie-n');
+  if(b){b.disabled=!n;b.textContent=n?'Ajouter à '+evtPluriel(n,'date'):'Ajouter';}
+  if(t)t.textContent=n?evtPluriel(n,'date cochée','dates cochées'):'Coche les dates concernées.';
+}
+function rpCopieFiltre(v){
+  var q=rpNorm(v);
+  document.querySelectorAll('#rp-copie .rp-copie-l').forEach(function(l){l.hidden=!!q&&String(l.getAttribute('data-cherche')).indexOf(q)<0;});
+}
+function rpCopieValider(){
+  var a=rpTrouve(rpCopieId),ids=rpCopieCoches();if(!a||!ids.length){rpCopieFermer();return;}
+  var g=rpGroupe(a),n=0;
+  ids.forEach(function(id){var cb=concerts.find(function(x){return x.id===id;});if(cb&&!rpAGroupe(cb.id,g)){rpCopierAction(a,cb);n++;}});
+  rpSauver();rpCopieFermer();rpRendu();
+  showToast('Ajoutée '+(n>1?'aux reports de '+n+' dates':'au report d\'une autre date')+'.');
+}
+// « Reprendre d'un autre report » : une action par groupe de copies, absente
+// de ce report (jamais la sponso, propre a chaque date). D'abord celles deja
+// partagees entre plusieurs reports, puis les familles qui servent souvent a
+// plusieurs dates (flyers, affichage, ecrans, newsletter...), puis le reste ;
+// la plus recente d'abord.
+var RP_PARTAGEABLES={flyers:1,sauvage:1,dooh:1,ecrans:1,newsletter:1,radio:1,autre:1};
+function rpAReprendre(c){
+  var parId={},vus={},out=[];
+  concerts.forEach(function(x){parId[x.id]=x;});
+  function dc(a){return String(parId[a.concertId].dc||'');}
+  rpTous('action').filter(function(a){return a.concertId!==c.id&&a.modele!=='sponso'&&parId[a.concertId]&&!parId[a.concertId].supprime;})
+    .sort(function(x,y){return dc(y).localeCompare(dc(x))||String(y.cree||'').localeCompare(String(x.cree||''));})
+    .forEach(function(a){var g=rpGroupe(a);if(vus[g])return;vus[g]=1;if(!rpAGroupe(c.id,g))out.push(a);});
+  function score(a){return (rpCopies(a).length?2:0)+(RP_PARTAGEABLES[a.modele]?1:0);}
+  return out.map(function(a,i){return {a:a,i:i,s:score(a)};}).sort(function(x,y){return y.s-x.s||x.i-y.i;}).map(function(x){return x.a;});
+}
 // Jour de la coche, pour les seules etapes qui alimentent le report.
 function rpNoterCoche(k,t,fait){
   if(!rpEtape(t))return;
@@ -5918,7 +6033,7 @@ function rpNoterCoche(k,t,fait){
 // serveur) rattrape l'oubli.
 function rpPurger(){
   if(!concerts.length)return;
-  var auj=rpAuj(),parId={},fichiers=[],change=false;
+  var auj=rpAuj(),parId={},fichiers=[],retires=[],change=false;
   concerts.forEach(function(c){parId[c.id]=c;});
   concertMedia=concertMedia.filter(function(m){
     if(!m||typeof m!=='object')return false;
@@ -5926,12 +6041,13 @@ function rpPurger(){
     if(m.type==='image'||m.type==='link'){if(m.path)fichiers.push(m.path);change=true;return false;}
     var c=parId[m.concertId];
     var lim=c?rpLimite(c,m.cree):null;
-    if(!c||(lim&&lim<auj)){if(m.type==='photo')fichiers.push.apply(fichiers,rpFichiers(m));change=true;return false;}
+    if(!c||(lim&&lim<auj)){if(m.type==='photo')retires.push(m);change=true;return false;}
     if(m.type==='photo'){var exp=rpExpire(c,m.cree);if(m.expiresAt!==exp){if(exp)m.expiresAt=exp;else delete m.expiresAt;change=true;}}
     return true;
   });
   if(change)scheduleSave('concert_media');
-  fichiers.forEach(function(p){storageDelete(p);});
+  // Photo partagee avec le report d'une date plus lointaine : gardee.
+  fichiers.concat(rpFichiersLibres(retires)).forEach(function(p){storageDelete(p);});
 }
 
 // ── Les pages du report ──
@@ -6363,13 +6479,13 @@ function rpPageHtml(c,pages,i,ap){
 }
 
 // ── L'editeur, en pleine page ──
-var rpCid=null,rpSel='couv',rpTout=false,rpTel='liste',rpRenduAttente=false,rpEnvoi=null,rpOptions=false,rpApercuTimer=null;
+var rpCid=null,rpSel='couv',rpTout=false,rpTel='liste',rpRenduAttente=false,rpEnvoi=null,rpOptions=false,rpApercuTimer=null,rpRepTout=false;
 function rpOuvert(){var el=document.getElementById('rp');return !!(el&&el.classList.contains('open'));}
 function rpConcert(){return rpCid?concerts.find(function(x){return x.id===rpCid;})||null:null;}
 function rpEstTel(){return !!(window.matchMedia&&matchMedia('(max-width: 768px)').matches);}
 function rpOuvrir(cid,depuisRoute){
   var c=concerts.find(function(x){return x.id===cid;});if(!c)return;
-  rpCid=cid;rpSel='couv';rpTout=false;rpTel='liste';rpOptions=false;
+  rpCid=cid;rpSel='couv';rpTout=false;rpTel='liste';rpOptions=false;rpRepTout=false;
   var el=document.getElementById('rp');
   el.classList.add('open');el.setAttribute('aria-hidden','false');
   document.body.style.overflow='hidden';
@@ -6378,6 +6494,7 @@ function rpOuvrir(cid,depuisRoute){
 }
 function rpFermer(depuisRoute){
   if(!rpOuvert())return;
+  rpRcFermer();rpCopieFermer();
   var el=document.getElementById('rp');
   el.classList.remove('open','tout','tel-page','mode-ajout');el.setAttribute('aria-hidden','true');
   rpCid=null;rpRenduAttente=false;
@@ -6510,6 +6627,20 @@ function rpHtmlAjout(c){
         +'<button type="button" class="btn" data-a="sugg-non" data-s="'+esc(s.source)+'">Ignorer</button></div></div>';
     }).join('')+'</div>';
   }
+  var rep=rpAReprendre(c);
+  if(rep.length){
+    var montre=rpRepTout?rep:rep.slice(0,6),parId={};
+    concerts.forEach(function(x){parId[x.id]=x;});
+    h+='<div class="rp-ajout-h">Reprendre d\'un autre report <b>'+rep.length+'</b></div>'
+      +'<p class="rp-ajout-sous">Une action déjà faite pour une autre date : elle est copiée ici avec ses photos, sans les renvoyer.</p>'
+      +'<div class="rp-reps">'+montre.map(function(a){
+        var src=parId[a.concertId],nph=rpPhotos(a.id).length,nb=rpCopies(a).length+1;
+        var meta=[rpNomDate(src),nph?evtPluriel(nph,'photo'):'',nb>1?'dans '+nb+' reports':''].filter(Boolean).join(' · ');
+        return '<div class="rp-rep">'+rpVignette(a)+'<div class="rp-rep-t"><b>'+esc(rpNoms(a).grand||'Action')+'</b><span>'+esc(meta)+'</span></div>'
+          +'<button type="button" class="btn" data-a="reprendre" data-id="'+esc(a.id)+'">Reprendre</button></div>';
+      }).join('')+'</div>'
+      +(rep.length>6?'<button type="button" class="btn-link discret rp-revoir" data-a="rep-tout">'+(rpRepTout?'Afficher moins':'Afficher les '+rep.length)+'</button>':'');
+  }
   if(ign)h+='<button type="button" class="btn-link discret rp-revoir" data-a="revoir">'+esc(evtPluriel(ign,'suggestion ignorée','suggestions ignorées'))+' · Les revoir</button>';
   h+='<div class="rp-ajout-h">'+(sugg.length?'Ou choisis dans la liste':'Choisis dans la liste')+'</div><div class="rp-tuiles">'+RP_MODELES.map(function(m){
     return '<button type="button" class="rp-tuile" data-a="modele" data-m="'+esc(m.id)+'">'+icon(m.ico,'t-'+m.teinte)
@@ -6568,6 +6699,14 @@ function rpHtmlFormAction(c,a){
   var posts=a.modele==='posts';
   h+='<label class="rp-champ">'+(posts?'Légende, sous le visuel':'En quelques mots')+'<textarea class="rp-in" data-f="texte" rows="3" placeholder="'+(posts?'Ex. : post d\'annonce du concert.':'Ex. : zone Cormontreuil et Reims.')+'">'+esc(a.texte)+'</textarea></label>';
   h+=rpHtmlPhotos(c,a);
+  if(a.modele!=='sponso'){
+    // La meme action pour plusieurs dates (flyer multi-artistes...).
+    var autres=rpAutresReports(a);
+    h+='<div class="rp-champ"><span>Autres dates</span>'
+      +(autres.length?'<p class="rp-aide">Aussi dans '+esc(evtPluriel(autres.length,'autre report','autres reports'))+' : '+esc(autres.slice(0,3).map(rpNomDate).join(', ')+(autres.length>3?'…':''))+'. La modifier ici ne change que ce report.</p>'
+        :'<p class="rp-aide">Elle vaut aussi pour d\'autres concerts (flyer ou bâche multi-artistes…) ? Copie-la dans leurs reports, photos comprises.</p>')
+      +'<button type="button" class="btn rp-b-copier" data-a="copier">'+icon('copy')+'Ajouter à d\'autres dates…</button></div>';
+  }
   h+='<details class="rp-options"'+(rpOptions||a.lien?' open':'')+'><summary>Plus d\'options</summary><div class="rp-options-c">'
     +'<label class="rp-champ">Lien, cliquable dans le PDF<input class="rp-in" type="url" data-f="lien" value="'+esc(a.lien)+'" placeholder="https://…"></label>'
     +(m.libre?'':rubSel)
@@ -6724,11 +6863,21 @@ function rpAction(nom,b){
     case 'rc-ok':rpRcValider();return;
     case 'rc-entiere':rpRcFormat('libre',true);return;
     case 'rc-format':rpRcFormat(b.getAttribute('data-v'));return;
+    case 'cp-annuler':rpCopieFermer();return;
+    case 'cp-ok':rpCopieValider();return;
+    case 'rep-tout':rpRepTout=!rpRepTout;rpRendu();return;
+    case 'reprendre':{
+      var src=rpTrouve(b.getAttribute('data-id'));if(!src)return;
+      var na2=rpCopierAction(src,c);rpSauver();
+      rpSel=na2.id;if(rpEstTel())rpTel='page';rpRendu();rpHaut();
+      return;
+    }
     case 'ph-camera':document.getElementById('rp-camera').click();return;
   }
   if(!a||a.type!=='action')return;
   switch(nom){
     case 'ph-rc':rpRecadrer(b.getAttribute('data-id'));return;
+    case 'copier':rpCopieOuvrir(a);return;
     case 'support':a.support=b.getAttribute('data-nom')||'';break;
     case 'quand':{
       var q=a.quand||(a.quand={}),v=b.getAttribute('data-v');
@@ -6760,7 +6909,7 @@ function rpAction(nom,b){
         if(!ok)return;
         var p=rpTrouve(pid);if(!p)return;
         concertMedia=concertMedia.filter(function(m){return m!==p;});
-        rpSauver();rpFichiers(p).forEach(function(x){storageDelete(x);});rpDemandeRendu();
+        rpSauver();rpSupprimerFichiers([p]);rpDemandeRendu();
       });
       return;
     }
@@ -6814,7 +6963,7 @@ async function rpSupprimerAction(c,a){
   // Une suggestion acceptee puis retiree ne revient pas d'elle-meme.
   if(a.source&&!rpDe(c.id,'ignore').some(function(x){return x.source===a.source;}))concertMedia.push({id:uid('ri'),type:'ignore',concertId:c.id,source:a.source,cree:rpAuj()});
   rpSauver();
-  ph.forEach(function(p){rpFichiers(p).forEach(function(x){storageDelete(x);});});
+  rpSupprimerFichiers(ph);
   rpSel='couv';rpRendu();
 }
 function rpDimensions(blob){
@@ -6876,7 +7025,7 @@ function rpRetirerCouv(cid){
   var old=concertMedia.filter(function(m){return m&&m.type==='photo'&&m.actionId==='couv'&&m.concertId===cid;});
   if(!old.length)return;
   concertMedia=concertMedia.filter(function(m){return old.indexOf(m)<0;});
-  old.forEach(function(p){rpFichiers(p).forEach(function(x){storageDelete(x);});});
+  rpSupprimerFichiers(old);
 }
 
 // ── Recadrage d'une photo du report ──
@@ -6999,7 +7148,7 @@ async function rpRcValider(){
     else if(p&&p.orig){
       var decoupe=p.path;
       p.path=p.orig.path;p.url=p.orig.url;p.w=p.orig.w;p.h=p.orig.h;delete p.orig;delete p.cadre;
-      rpSauver();if(decoupe&&decoupe.indexOf('report/')===0)storageDelete(decoupe);
+      rpSauver();rpSupprimerSiLibre(decoupe);
     }
     rpRcFermer();rpRendu();return;
   }
@@ -7024,7 +7173,7 @@ async function rpRcValider(){
     p.path=path;p.url=url;p.w=ow;p.h=oh;p.cadre=cadre;
   }
   rpSauver();
-  if(vieux&&vieux.indexOf('report/')===0)storageDelete(vieux);
+  rpSupprimerSiLibre(vieux);
   rpRcFermer();rpRendu();
 }
 
@@ -7088,8 +7237,8 @@ async function rpPdf(){
     if(!b||!rp.contains(b)||b.disabled)return;
     rpAction(b.getAttribute('data-a'),b);
   });
-  rp.addEventListener('input',function(e){var t=e.target;if(t.getAttribute&&t.getAttribute('data-f'))rpChamp(t,false);});
-  rp.addEventListener('change',function(e){var t=e.target;if(t.getAttribute&&t.getAttribute('data-f'))rpChamp(t,true);});
+  rp.addEventListener('input',function(e){var t=e.target;if(t.id==='rp-copie-q'){rpCopieFiltre(t.value);return;}if(t.getAttribute&&t.getAttribute('data-f'))rpChamp(t,false);});
+  rp.addEventListener('change',function(e){var t=e.target;if(t.getAttribute&&t.getAttribute('data-cp')){rpCopieMaj();return;}if(t.getAttribute&&t.getAttribute('data-f'))rpChamp(t,true);});
   document.getElementById('rp-fichiers').addEventListener('change',function(){rpEnvoyerPhotos(this);});
   document.getElementById('rp-camera').addEventListener('change',function(){rpEnvoyerPhotos(this);});
   document.getElementById('rp-logo').addEventListener('change',function(){rpEnvoyerLogo(this);});
@@ -7363,7 +7512,9 @@ async function permanentlyDeleteConcert(id){
   // posts des concerts recents introuvables, qui peuvent etre en transit).
   rsPosts=rsPosts.filter(function(p){return !(p.autoRef===id&&p.proj==='pp');});
   scheduleSave('concerts','concert_media','concert_tasks','taskstates','rsposts');
-  orphanMedia.forEach(function(m){if((m.type==='photo'||m.type==='image')&&m.path)storageDelete(m.path);if(m.orig&&m.orig.path)storageDelete(m.orig.path);});
+  // Photos du report : sauf celles qu'un autre report utilise encore.
+  orphanMedia.forEach(function(m){if(m.type==='image'&&m.path)storageDelete(m.path);});
+  rpSupprimerFichiers(orphanMedia.filter(function(m){return m.type==='photo';}));
   if(currentFicheId===id)closeFicheBtn();else render();
 }
 function annonceDone(cid){annonceMarquer(cid,true);}
