@@ -6289,53 +6289,152 @@ function rpCouverture(c){
     +(url?'<div class="rpp-couv-photo'+(pc?' choisie':'')+'"><img src="'+esc(url)+'" alt=""></div>':'')
     +'</div>';
 }
-// Page « La campagne en un coup d'oeil » : les rubriques (nombre d'actions,
-// les noms, la page ou elles commencent), puis la frise jusqu'au concert.
-// Agenda & digital : seuls les plus marquants figurent au report, il y en a
-// bien d'autres. Pas de nombre pour eux, ni dans le total (demande du 01/10).
-var RP_COCHE='<svg class="rpp-coche" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5"/></svg>';
-function rpCampagne(c,acts,num,pages){
-  var nb=acts.filter(function(a){return a.rub!=='agenda';}).length;
-  var h='<div class="rpp-h"><h2 class="rpp-titre rpp-titre-page">La campagne en un coup d\'œil</h2><div class="rpp-h-note">'+esc(evtPluriel(nb,'action'))+'</div></div>';
-  h+='<div class="rpp-comptes">'+RP_RUBRIQUES.map(function(r){
-    var l=acts.filter(function(a){return a.rub===r.id;});
-    var ip=(pages||[]).findIndex(function(x){return x.rub&&x.rub.id===r.id;});
-    return '<div class="rpp-compte'+(l.length?'':' vide')+'"><div class="rpp-compte-n"><b>'+(r.id==='agenda'&&l.length?RP_COCHE:l.length)+'</b>'+(ip>0?'<i>p. '+rpDeux(ip+1)+'</i>':'')+'</div><span>'+esc(r.nom)+'</span><em>'+esc(l.length?rpResumeRub(c,r,l):'')+'</em></div>';
+// Page « La campagne en un coup d'oeil » : les grands chiffres de la campagne
+// (flyers, affiches, impressions, e-mails...), puis la frise jusqu'au
+// concert. Elle comptait avant les actions par rubrique, ce qui ne disait
+// rien du travail fait : « 1 » pour une sponso a 377 762 impressions
+// (Mathieu, 01/10, maquette A du canevas « Report comm — page La campagne »).
+// Les chiffres sont calcules a partir des actions et modifiables dans
+// l'editeur : element 'campagne' de concert_media, un par report, cree a la
+// premiere modification (rpCampCreer).
+var RP_GC_MAX=4;
+// Le chiffre « volume » de chaque famille : les chiffres dont le libelle
+// commence par ce mot s'additionnent (« affiches 80x120 » + « affiches
+// 40x60 »), les autres servent de precision (« +50 lieux de depot »).
+var RP_VOLUMES={
+  flyers:{mot:'flyer',l:'flyers distribués'},
+  sauvage:{mot:'affiche',l:'affiches collées'},
+  dooh:{mot:'face',l:'faces d\'affichage'},
+  radio:{mot:'promo',l:'promos à l\'antenne'},
+  jeu:{mot:'place',l:'places à gagner'}
+};
+var RP_GC_SPONSO={impressions:'impressions sponsorisées',vues:'vues de vidéo',couverture:'personnes touchées',clics:'clics'};
+function rpCampagne(c,acts,num){
+  var duree=rpDuree(c,acts),gc=rpGrandsChiffres(c,acts).filter(function(x){return String(x.n||'').trim();});
+  var h='<div class="rpp-h"><h2 class="rpp-titre rpp-titre-page">La campagne en un coup d\'œil</h2>'+(duree?'<div class="rpp-h-note">'+esc(duree)+'</div>':'')+'</div>';
+  if(gc.length)h+='<div class="rpp-gc n'+esc(gc.length)+'">'+gc.map(function(x){
+    var n=rpFmtSaisie(x.n),lg=n.length;
+    return '<div class="rpp-gc-c"><b'+(lg>14?' class="ppp"':lg>10?' class="pp"':lg>7?' class="p"':lg>6?' class="m"':'')+'>'+esc(n)+'</b>'
+      +(String(x.l||'').trim()?'<span>'+esc(x.l)+'</span>':'')+(String(x.s||'').trim()?'<em>'+esc(x.s)+'</em>':'')+'</div>';
   }).join('')+'</div>';
-  h+=rpFrise(c,acts);
+  h+=rpFrise(c,acts,gc.length?270:390);
   return rpPage(c,'','La campagne',h,num);
 }
-// Sous le nom d'une rubrique : les noms les plus precis (le partenaire quand
-// il est donne : « J'aime Dijon, Bien Public »), sans doublon. Une rubrique
-// qui n'a qu'une action du meme nom (« Sponsorisation ») donne plutot son
-// chiffre cle.
-function rpResumeRub(c,r,l){
-  var noms=[];
-  l.forEach(function(a){
-    var m=rpModele(a.modele),sup=String(a.support||'').trim(),n=sup&&sup!==(m.support||'')?sup:rpNoms(a).grand;
-    if(n&&noms.every(function(x){return rpNorm(x)!==rpNorm(n);}))noms.push(n);
+// « 14 semaines · du 24 juin au 1er octobre » : de la premiere action datee
+// au concert.
+function rpDuree(c,acts){
+  var fin=c.dc,debut=null;if(!fin)return '';
+  function vu(d){if(d&&d<fin&&(!debut||d<debut))debut=d;}
+  acts.forEach(function(a){
+    if(a.modele==='sponso'){spVaguesTriees(c).forEach(function(v){vu(v.debut);});return;}
+    if(a.modele==='posts'){rpPostsPublies(c).forEach(function(p){vu(p.date);});return;}
+    vu(rpDebut(rpQuand(a)));
   });
-  function sing(x){return rpNorm(x).replace(/s\b/g,'');}
-  if(noms.length<=1&&(!noms.length||sing(noms[0])===sing(r.nom))){var k=rpChiffreCle(c,l[0]);if(k)return k;}
-  return noms.slice(0,3).join(', ')+(noms.length>3?'…':'');
+  if(!debut)return '';
+  var j=rpJoursEntre(debut,fin)-1;
+  return (j<14?evtPluriel(j,'jour'):Math.round(j/7)+' semaines')+' · '+rpPeriodeTexte(debut,fin);
 }
-function rpChiffreCle(c,a){
-  if(a.modele==='sponso'){
-    var vs=spVaguesTriees(c),mes=a.vagues||{},t=evtPluriel(vs.length,'vague');
-    var k=['impressions','couverture','vues','clics'].find(function(x){return vs.some(function(v){return rpNombre((mes[v.id]||{})[x])!==null;});});
-    if(k){
-      var tot=vs.reduce(function(s,v){var n=rpNombre((mes[v.id]||{})[k]);return n===null?s:s+n;},0);
-      t+=' · '+rpFmtNombre(tot)+' '+RP_MESURES.find(function(m){return m[0]===k;})[1].toLowerCase();
-    }
-    return vs.length?t:'';
+function rpJourMois(iso){var j=+iso.slice(8,10);return (j===1?'1er':j)+' '+RP_MOIS[+iso.slice(5,7)-1];}
+function rpPeriodeTexte(du,au){
+  if(du===au)return 'le '+rpJourMois(du);
+  var an=du.slice(0,4)===au.slice(0,4),j=+du.slice(8,10);
+  if(du.slice(0,7)===au.slice(0,7)){
+    // Un mois entier (action datee « Avril 2026 ») : « en avril ».
+    if(j===1&&au===rpFinQ({mois:au.slice(0,7)}))return 'en '+RP_MOIS[+au.slice(5,7)-1];
+    return 'du '+(j===1?'1er':j)+' au '+rpJourMois(au);
   }
-  var q=rpQuand(a),ch=rpChiffres(a)[0];
-  return [q&&q.mode==='mensuel'?evtPluriel(q.dates.length,'envoi'):'',ch?(ch.n+' '+ch.l).trim():''].filter(Boolean).join(' · ');
+  return 'du '+rpJourMois(du)+(an?'':' '+du.slice(0,4))+' au '+rpJourMois(au)+(an?'':' '+au.slice(0,4));
+}
+// Somme de chiffres saisis : « 80+ » ou « environ 40 » tels quels s'ils sont
+// seuls, « 280+ » quand l'un des chiffres additionnes n'etait qu'un ordre de
+// grandeur.
+function rpSomme(){return {v:0,nb:0,seul:'',approx:false};}
+function rpAjouteSomme(s,n){
+  var v=rpNombre(n),m=String(n||'').match(/\d[\d\s]*/);
+  if(v===null&&m)v=rpNombre(m[0]);
+  if(v===null)return;
+  s.v+=v;s.nb++;s.seul=n;if(!/^[\d\s]+$/.test(n))s.approx=true;
+}
+function rpTexteSomme(s){return s.nb===1?s.seul:rpFmtNombre(s.v)+(s.approx?'+':'');}
+// Les chiffres calcules, du plus grand au plus petit : {cle, v, n, l, s}.
+function rpGcAuto(c,acts){
+  var out=[];
+  var sp=acts.find(function(a){return a.modele==='sponso';});
+  if(sp){
+    var vs=spVaguesTriees(c),mes=sp.vagues||{};
+    var k=['impressions','vues','couverture','clics'].find(function(x){return vs.some(function(v){return rpNombre((mes[v.id]||{})[x])!==null;});});
+    if(k){
+      var ts=rpSomme();vs.forEach(function(v){rpAjouteSomme(ts,String((mes[v.id]||{})[k]||''));});
+      out.push({cle:'sponso',v:ts.v,n:rpFmtNombre(ts.v),l:RP_GC_SPONSO[k],s:'Facebook et Instagram'+(ts.nb>1?', en '+ts.nb+' vagues':'')});
+    }
+  }
+  // Newsletters : envois x contacts.
+  var envois=0,mails=0,contacts=[];
+  acts.forEach(function(a){
+    if(a.modele!=='newsletter')return;
+    var ct=rpChiffres(a).find(function(x){return rpNorm(x.l).indexOf('contact')===0&&rpNombre(x.n)!==null;});
+    if(!ct)return;
+    var q=rpQuand(a),e=q&&q.mode==='mensuel'?q.dates.length:1;
+    envois+=e;mails+=e*rpNombre(ct.n);
+    if(contacts.indexOf(ct.n)<0)contacts.push(ct.n);
+  });
+  if(mails)out.push({cle:'newsletter',v:mails,n:rpFmtNombre(mails),l:'e-mails envoyés',s:evtPluriel(envois,'newsletter')+(contacts.length===1?' à '+contacts[0]+' contacts':'')});
+  Object.keys(RP_VOLUMES).forEach(function(mod){
+    var vol=RP_VOLUMES[mod],l=acts.filter(function(a){return a.modele===mod;});
+    var tot=rpSomme(),autres={},ordre=[],sups=[],du=null,au=null;
+    l.forEach(function(a){
+      rpChiffres(a).forEach(function(x){
+        var k=rpNorm(x.l);
+        if(k.indexOf(vol.mot)===0){rpAjouteSomme(tot,x.n);return;}
+        if(!k)return;
+        if(!autres[k]){autres[k]=rpSomme();autres[k].l=x.l;ordre.push(k);}
+        rpAjouteSomme(autres[k],x.n);
+      });
+      var m=rpModele(a.modele),sup=String(a.support||'').trim();
+      if(sup&&sup!==(m.support||'')&&sups.every(function(x){return rpNorm(x)!==rpNorm(sup);}))sups.push(sup);
+      var q=rpQuand(a),d=rpDebut(q),f=rpFinQ(q);
+      if(d&&(!du||d<du))du=d;
+      if(f&&(!au||f>au))au=f;
+    });
+    if(!tot.nb)return;
+    // Precision : les partenaires et l'autre chiffre de la famille, sinon
+    // la periode.
+    var p=sups.length?[sups.slice(0,2).join(', ')+(sups.length>2?'…':'')]:[];
+    ordre.forEach(function(k){if(autres[k].nb)p.push(rpTexteSomme(autres[k])+' '+autres[k].l);});
+    if(!p.length&&du)p=[rpPeriodeTexte(du,au||du)];
+    out.push({cle:mod,v:tot.v,n:rpTexteSomme(tot),l:vol.l,s:p.slice(0,2).join(' · ')});
+  });
+  return out.sort(function(a,b){return b.v-a.v;});
+}
+function rpCampEl(c){return concertMedia.find(function(m){return m&&m.type==='campagne'&&m.concertId===c.id;})||null;}
+// Les chiffres du report : les quatre plus grands tant que personne n'y a
+// touche ; ensuite ceux qu'on a gardes, dans l'ordre choisi. Un champ jamais
+// modifie suit le calcul (une action ajoutee plus tard y compte encore).
+function rpGrandsChiffres(c,acts){
+  var auto=rpGcAuto(c,acts||rpActions(c)),el=rpCampEl(c);
+  if(!el||!Array.isArray(el.tuiles))return auto.slice(0,RP_GC_MAX).map(function(x){return {cle:x.cle,n:x.n,l:x.l,s:x.s,auto:x};});
+  return el.tuiles.map(function(t){
+    var a=auto.find(function(x){return x.cle===t.cle;})||null;
+    // Famille disparue (ses actions retirees) et nombre jamais saisi : rien.
+    if(!a&&typeof t.n!=='string')return null;
+    function v(k){return typeof t[k]==='string'?t[k]:a?a[k]:'';}
+    return {cle:t.cle,n:v('n'),l:v('l'),s:v('s'),auto:a};
+  }).filter(Boolean);
+}
+function rpCampCreer(c){
+  // Les chiffres montres a l'ecran, ni plus ni moins (calcules avant que
+  // l'element existe) : une famille disparue sort de la liste.
+  var vus=rpGrandsChiffres(c).map(function(x){return x.cle;}),el=rpCampEl(c);
+  if(!el){el={id:uid('rk'),type:'campagne',concertId:c.id,cree:rpAuj(),tuiles:[]};concertMedia.push(el);}
+  var avant=Array.isArray(el.tuiles)?el.tuiles:[];
+  el.tuiles=vus.map(function(k){return avant.find(function(t){return t.cle===k;})||{cle:k};});
+  return el;
 }
 // Frise : une ligne par famille d'actions (toutes les vagues sponso, tous les
 // flyers...), sans les dates a cote du nom (elles sont sur les pages). Ni les
 // evenements Facebook ni les agendas : seul compte qu'ils soient faits.
-function rpFrise(c,acts){
+// place : hauteur des lignes, tout compris (moins sous les grands chiffres).
+function rpFrise(c,acts,place){
   var groupes=[],parCle={};
   function groupe(cle,nom){if(!parCle[cle]){parCle[cle]={nom:nom,seg:[],titres:[]};groupes.push(parCle[cle]);}return parCle[cle];}
   acts.forEach(function(a){
@@ -6389,7 +6488,7 @@ function rpFrise(c,acts){
   var approx=groupes.some(function(g){return g.seg.some(function(x){return !x.exact&&x.du!==x.au;});});
   // Lignes plus hautes quand elles sont peu nombreuses : la frise occupe la
   // page sans deborder sur le pied (legende en plus, un peu moins de place).
-  var rh=Math.max(30,Math.min(42,Math.floor((approx||trop?250:300)/groupes.length)));
+  var rh=Math.max(26,Math.min(42,Math.floor(((place||300)-(approx||trop?50:0))/groupes.length)));
   var h='<div class="rpp-frise" style="--rh:'+rh+'px"><div class="rpp-frise-l rpp-frise-axe"><span class="rpp-frise-nom">Actions datées</span><div class="rpp-frise-piste">'+axe+'</div></div>';
   h+='<div class="rpp-frise-corps"><div class="rpp-frise-grille">'+grille+'</div>';
   groupes.forEach(function(g){
@@ -6547,7 +6646,7 @@ function rpPagePosts(c,p,num,ap){
 function rpPageHtml(c,pages,i,ap){
   var p=pages[i],num=i+1;
   if(p.type==='couv')return rpCouverture(c);
-  if(p.type==='camp')return rpCampagne(c,p.actions,num,pages);
+  if(p.type==='camp')return rpCampagne(c,p.actions,num);
   var f={photo:rpPagePhoto,galerie:rpPageGalerie,suite:rpPageSuite,texte:rpPageTexte,detail:rpPageDetail,cartes:rpPageCartes,vignettes:rpPageVignettes,sponso:rpPageSponso,posts:rpPagePosts}[p.type];
   return f?f(c,p,num,ap):'';
 }
@@ -6665,7 +6764,7 @@ function rpHtmlListe(c){
   if(sug)h+='<button type="button" class="rp-b-sugg'+(rpSel==='ajouter'?' actif':'')+'" data-a="ajouter"><span class="rp-point corail"></span><span>'+esc(evtPluriel(sug,'suggestion'))+' de l\'appli</span><b>Voir</b></button>';
   h+='<div class="rp-groupe">Début</div>';
   h+=item('couv',couv?'<img class="rp-vign" src="'+esc(couv)+'" alt="">':'<span class="rp-vign ciel"></span>','Couverture','<span class="rp-auto">auto</span>');
-  h+=item('camp','<span class="rp-vign blanc"></span>','La campagne','<span class="rp-auto">auto</span>');
+  h+=item('camp','<span class="rp-vign blanc"></span>','La campagne',rpCampEl(c)?'':'<span class="rp-auto">auto</span>');
   var rub=null,vus={};
   pages.forEach(function(p,i){
     if(!p.rub||p.type==='suite'||(p.type==='posts'&&p.suite))return;
@@ -6747,9 +6846,81 @@ function rpInfoForm(sur,titre,texte,alerte){
 }
 function rpHtmlForm(c){
   if(rpSel==='couv')return rpHtmlFormCouv(c);
-  if(rpSel==='camp')return rpInfoForm('Début','La campagne','Page créée toute seule : chaque rubrique avec son nombre d\'actions et sa page, puis une frise jusqu\'au concert, une ligne par famille d\'actions (sponso, flyers, affichage…). Les événements Facebook, agendas et sites n\'y figurent pas.');
+  if(rpSel==='camp')return rpHtmlFormCamp(c);
   var a=rpTrouve(rpSel);if(!a)return '';
   return rpHtmlFormAction(c,a);
+}
+// La campagne : les grands chiffres, calcules, et tout ce qu'on y change.
+// Un champ remis a la valeur calculee suit de nouveau le calcul.
+function rpHtmlFormCamp(c){
+  var acts=rpActions(c),auto=rpGcAuto(c,acts),gc=rpGrandsChiffres(c,acts),el=rpCampEl(c),plein=gc.length>=RP_GC_MAX;
+  var h='<div class="rp-form-tete"><div class="rp-meta">Début</div><div class="rp-form-titre">La campagne</div></div><div class="rp-defil rp-form-defil">'
+    +'<p class="rp-aide grand">En haut de la page, les grands chiffres de la campagne, calculés d\'après les actions. Tu peux tout modifier : le chiffre, ce qu\'il compte, la précision dessous.</p>'
+    +'<div class="rp-champ"><span>Les grands chiffres <em class="rp-leger">· '+RP_GC_MAX+' au plus</em></span>';
+  gc.forEach(function(x,i){
+    var cle=esc(x.cle);
+    h+='<div class="rp-ligne rp-gc" data-cle="'+cle+'"><div class="rp-gc-t"><span>Chiffre '+(i+1)+'</span>'
+      +'<button type="button" class="rp-ico" data-a="g-haut" data-cle="'+cle+'" aria-label="Monter"'+(i?'':' disabled')+'>'+icon('arrow-up')+'</button>'
+      +'<button type="button" class="rp-ico" data-a="g-bas" data-cle="'+cle+'" aria-label="Descendre"'+(i<gc.length-1?'':' disabled')+'>'+icon('arrow-down')+'</button>'
+      +'<button type="button" class="rp-ico" data-a="g-moins" data-cle="'+cle+'" aria-label="Retirer ce chiffre">'+icon('x')+'</button></div>'
+      +'<div class="rp-gc-nl"><input class="rp-in" type="text" data-f="g-n" data-cle="'+cle+'" value="'+esc(x.n)+'" placeholder="35 000" aria-label="Chiffre">'
+      +'<input class="rp-in" type="text" data-f="g-l" data-cle="'+cle+'" value="'+esc(x.l)+'" placeholder="flyers distribués" aria-label="Ce qui est compté"></div>'
+      +'<input class="rp-in" type="text" data-f="g-s" data-cle="'+cle+'" value="'+esc(x.s)+'" placeholder="Précision : où, avec qui, combien de fois…" aria-label="Précision">'
+      +'<div class="rp-gc-calc" data-calc="'+cle+'">'+rpHtmlGcCalc(x)+'</div>'
+      +'</div>';
+  });
+  if(!plein)h+='<button type="button" class="btn-link rp-gauche" data-a="g-plus">+ Ajouter un chiffre</button>';
+  var dispo=auto.filter(function(x){return !gc.some(function(t){return t.cle===x.cle;});});
+  if(dispo.length)h+='<div class="rp-gc-dispo"><span>Autres chiffres calculés'+(plein?' (retire un chiffre pour en mettre un autre)':'')+'</span><div class="rp-puces">'+dispo.map(function(x){
+    return '<button type="button" class="rp-puce" data-a="g-ajout" data-cle="'+esc(x.cle)+'"'+(plein?' disabled':'')+'>+ '+esc(x.n+' '+x.l)+'</button>';
+  }).join('')+'</div></div>';
+  if(!gc.length&&!dispo.length)h+='<p class="rp-aide">Rien à calculer pour l\'instant : les chiffres viennent des actions (flyers, affiches, sponso, newsletters…). Tu peux aussi en ajouter un ici.</p>';
+  h+='<p class="rp-aide">Un chiffre sans nombre n\'est pas imprimé.'+(el?'':' Tant que tu n\'y touches pas, ce sont les '+RP_GC_MAX+' plus grands.')+'</p>'
+    +(el?'<button type="button" class="btn-link discret rp-gauche" data-a="g-tout">Revenir aux chiffres calculés</button>':'')
+    +'</div>'
+    +'<p class="rp-aide">Dessous, la frise jusqu\'au concert, faite toute seule : une ligne par famille d\'actions (sponso, flyers, affichage…). Les événements Facebook, agendas et sites n\'y figurent pas.</p>'
+    +'</div>';
+  return h;
+}
+// Chiffre calcule change a la main : le calcul reste visible, et on peut le
+// reprendre.
+function rpHtmlGcCalc(x){
+  var a=x.auto;if(!a||(x.n===a.n&&x.l===a.l&&x.s===a.s))return '';
+  return '<span>Calcul : '+esc(a.n+' '+a.l)+'</span><button type="button" class="btn-link discret" data-a="g-calcul" data-cle="'+esc(x.cle)+'">Reprendre le calcul</button>';
+}
+function rpChampCamp(t){
+  var c=rpConcert();if(!c)return;
+  var nouveau=!rpCampEl(c),cle=t.getAttribute('data-cle'),k=t.getAttribute('data-f').slice(2),el=rpCampCreer(c);
+  var tu=el.tuiles.find(function(x){return x.cle===cle;});if(!tu)return;
+  var a=rpGcAuto(c,rpActions(c)).find(function(x){return x.cle===cle;});
+  if(a&&t.value===a[k])delete tu[k];else tu[k]=t.value;
+  rpSauver();rpPlanifierApercu();
+  // Sans redessiner le formulaire (le champ garde le curseur) : la ligne
+  // « Calcul » de ce chiffre et, la premiere fois, la liste (plus « auto »).
+  var x=rpGrandsChiffres(c).find(function(y){return y.cle===cle;});
+  document.querySelectorAll('#rp [data-calc]').forEach(function(z){if(x&&z.getAttribute('data-calc')===cle)z.innerHTML=rpHtmlGcCalc(x);});
+  if(nouveau)rpRemplacer('rp-liste',rpHtmlListe(c));
+}
+function rpActionCamp(nom,b,c){
+  if(nom==='g-tout'){
+    customConfirm('Revenir aux chiffres calculés ? Ce que tu as changé ou ajouté sera perdu.','Revenir').then(function(ok){
+      if(!ok)return;
+      concertMedia=concertMedia.filter(function(m){return !(m&&m.type==='campagne'&&m.concertId===c.id);});
+      rpSauver();rpRendu();
+    });
+    return;
+  }
+  var el=rpCampCreer(c),l=el.tuiles,cle=b.getAttribute('data-cle'),i=l.findIndex(function(x){return x.cle===cle;});
+  if(nom==='g-plus'&&l.length<RP_GC_MAX)l.push({cle:uid('p-'),n:'',l:'',s:''});
+  else if(nom==='g-ajout'&&l.length<RP_GC_MAX&&i<0)l.push({cle:cle});
+  else if(nom==='g-moins'&&i>=0)l.splice(i,1);
+  else if(nom==='g-calcul'&&i>=0)l[i]={cle:cle};
+  else if((nom==='g-haut'||nom==='g-bas')&&i>=0){
+    var j=nom==='g-haut'?i-1:i+1;
+    if(j>=0&&j<l.length){var x=l[i];l[i]=l[j];l[j]=x;}
+  }
+  rpSauver();rpRendu();
+  if(nom==='g-plus'&&!rpEstTel()){var ns=document.querySelectorAll('#rp .rp-gc [data-f="g-n"]');if(ns.length)ns[ns.length-1].focus();}
 }
 // Couverture : nom, salle et date viennent de la fiche ; la photo est celle
 // de l'artiste, sauf si on en choisit une autre pour ce report (glisser-
@@ -6978,6 +7149,7 @@ function rpAction(nom,b){
       return;
     }
     case 'ph-camera':document.getElementById('rp-camera').click();return;
+    case 'g-plus':case 'g-ajout':case 'g-moins':case 'g-calcul':case 'g-haut':case 'g-bas':case 'g-tout':rpActionCamp(nom,b,c);return;
   }
   if(!a||a.type!=='action')return;
   switch(nom){
@@ -7024,6 +7196,7 @@ function rpAction(nom,b){
   rpSauver();rpRendu();
 }
 function rpChamp(t,change){
+  if(rpSel==='camp'){rpChampCamp(t);return;}
   var a=rpTrouve(rpSel);if(!a||a.type!=='action')return;
   var f=t.getAttribute('data-f'),i=+t.getAttribute('data-i'),v=t.value;
   function q(){return a.quand||(a.quand={mode:rpModele(a.modele).quand||'jour'});}
