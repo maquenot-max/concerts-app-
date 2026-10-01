@@ -3397,6 +3397,74 @@ function purgeOrphanTaskStates(){
   if(n)scheduleSave('taskstates');
   return n;
 }
+// ── MENAGE AUTOMATIQUE, a l'ouverture de l'appli (demande du 01/10) ──
+// Pour que les listes ne grossissent pas d'annee en annee (chacune est
+// renvoyee entiere a chaque modification) :
+// - taches par projet faites : 30 jours apres avoir ete cochees ;
+// - posts du planning RS : 6 mois apres leur date, sauf ceux d'un concert
+//   dont le report est encore conserve (il compte ses posts publies) ;
+// - photos d'artistes (fiche et fichiers) : 6 mois apres le dernier concert
+//   de l'artiste, s'il n'en a plus aucun a venir (festivals compris). Six mois
+//   comme les photos de newsletter : les e-mails deja envoyes les affichent.
+var MENAGE_TACHES_JOURS=30,MENAGE_MOIS_JOURS=183,MENAGE_PHOTOS_MAX=10;
+function menageAuto(){
+  if(!appDataLoaded||!concerts.length)return; // donnees absentes : on ne touche a rien
+  menageTaches();menagePostsRS();menagePhotosArtistes();
+}
+// Jour ou la tache a ete cochee : note depuis le 01/10 (faitLe) ; pour une
+// tache cochee avant, le compte demarre au premier passage.
+function menageTaches(){
+  var auj=rpAuj(),lim=rpPlusJours(auj,-MENAGE_TACHES_JOURS),avant=tkTasks.length,change=false;
+  tkTasks=tkTasks.filter(function(t){
+    if(!t||!t.done)return true;
+    if(!t.faitLe){t.faitLe=auj;change=true;return true;}
+    return t.faitLe>=lim;
+  });
+  if(change||tkTasks.length!==avant)scheduleSave('tktasks');
+}
+function menagePostsRS(){
+  var lim=rpPlusJours(rpAuj(),-MENAGE_MOIS_JOURS),lim60=rpPlusJours(rpAuj(),-RP_JOURS),parId={},avant=rsPosts.length;
+  concerts.forEach(function(c){parId[c.id]=c;});
+  rsPosts=rsPosts.filter(function(p){
+    if(!p||!p.date||p.date>=lim)return true;
+    var c=parId[p.autoRef||p.concertId];if(!c)return false;
+    var f=rpFin(c)||c.dc;
+    return !f||f>=lim60;
+  });
+  if(rsPosts.length!==avant)scheduleSave('rsposts');
+}
+// Dernier jour de concert de chaque artiste : ses concerts (archives compris)
+// et les programmes d'evenements. Un concert sans date compte comme a venir.
+function menageDerniersConcerts(){
+  var der={};
+  function note(art,d){var k=artKey(art);if(!k)return;d=d||'9999-12-31';if(!der[k]||d>der[k])der[k]=d;}
+  concerts.forEach(function(c){
+    note(c.art,rpFin(c)||c.dc);
+    if(estEvt(c))evtProg(c).forEach(function(p){note(p.art,p.dc||rpFin(c)||c.dc);});
+  });
+  return der;
+}
+function menagePhotosArtistes(){
+  var lim=rpPlusJours(rpAuj(),-MENAGE_MOIS_JOURS),der=menageDerniersConcerts(),fichiers=[],n=0;
+  Object.keys(artistPhotos).forEach(function(k){
+    var e=artistPhotos[k];if(!e||n>=MENAGE_PHOTOS_MAX)return;
+    if(der[k]){if(der[k]>=lim)return;}
+    else{
+      // Aucun concert ne la cite plus : l'age du fichier (son nom finit par
+      // l'heure de l'envoi) remplace la date du dernier concert.
+      var m=/-(\d{13})\.jpg$/.exec(String(e.path||''));
+      if(!m||+m[1]>Date.now()-MENAGE_MOIS_JOURS*86400000)return;
+    }
+    fichiers.push(e.path,e.orig&&e.orig.path);
+    delete artistPhotos[k];n++;
+  });
+  if(!n)return;
+  scheduleSave('artist_photos');
+  // Un meme fichier peut servir a deux noms (artiste renomme) : garde.
+  var gardes={};
+  Object.keys(artistPhotos).forEach(function(k){var e=artistPhotos[k];if(e){gardes[e.path]=1;if(e.orig)gardes[e.orig.path]=1;}});
+  fichiers.forEach(function(x){if(typeof x==='string'&&x.indexOf('artist-photos/')===0&&!gardes[x])storageDelete(x);});
+}
 async function init(){
   document.getElementById('load-error-overlay').style.display='none';
   document.getElementById('app').style.display='';
@@ -3440,6 +3508,7 @@ async function init(){
     initRealtime();
     checkArchiveSuggestion();
     rpPurger();
+    menageAuto();
   }catch(e){
     console.error('Echec du chargement initial',e);
     appDataLoaded=false;
@@ -8495,7 +8564,7 @@ function tkAdvanceRecurringTasks(){
 function tkToggleDone(id){
   var t=tkTasks.find(function(x){return x.id===id;});
   if(!t)return;
-  var avant={done:t.done,date:t.date},titre,detail=t.nom;
+  var avant={done:t.done,date:t.date,faitLe:t.faitLe},titre,detail=t.nom;
   if(t.recur&&!t.done){
     // Tache recurrente validee : on programme directement la prochaine
     // occurrence au lieu de la marquer simplement terminee (elle ne doit
@@ -8504,12 +8573,15 @@ function tkToggleDone(id){
     titre='Tâche faite';detail=t.nom+' · prochaine le '+ficheCourt(t.date);
   } else {
     t.done=!t.done;
+    // Jour de la coche : la tache faite disparait 30 jours apres (menageTaches).
+    if(t.done)t.faitLe=rpAuj();else delete t.faitLe;
     titre='Tâche '+(t.done?'faite':'remise à faire');
   }
   scheduleSave('tktasks');renderTaches();renderTkWidget();
   proposerAnnulation(titre,detail,function(){
     var x=tkTasks.find(function(y){return y.id===id;});if(!x)return;
     x.done=avant.done;x.date=avant.date;
+    if(avant.faitLe)x.faitLe=avant.faitLe;else delete x.faitLe;
     scheduleSave('tktasks');renderTaches();renderTkWidget();
   });
 }
@@ -8639,6 +8711,10 @@ function majPostsAuto(){
     if(c.supprime||c.annule)return; // concert archive ou annule : on arrete de le synchroniser (sans toucher au post deja existant)
     var ds=c.da.substring(0,10);
     var existing=rsPosts.find(function(p){return p.autoRef===c.id&&p.proj==='pp';});
+    // Concert passe depuis plus de 60 jours : son post d'annonce, retire par
+    // le menage (menagePostsRS), n'est pas recree.
+    var fin=rpFin(c)||c.dc;
+    if(!existing&&fin&&fin<rpPlusJours(rpAuj(),-RP_JOURS))return;
     if(!existing){
       rsPosts.push({id:rsNewId(),proj:'pp',date:ds,type:'annonce',format:'post',
         concert:c.art,concertId:c.id,note:'',legend:'',link:'',fb:false,insta:false,tiktok:false,
