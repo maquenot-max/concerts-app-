@@ -59,6 +59,11 @@ version-la, pas une copie anterieure (qui supprimerait les originales au bout
 de 24 h ; les photos recadrees resteraient, seul « Photo entiere » ne
 marcherait plus).
 
+**Photos partagees entre plusieurs reports (01/10)** : une action copiee
+vers d'autres dates garde les memes fichiers photo. `purge-media` n'a rien a
+changer : un fichier reste tant qu'une entree non expiree le reference, donc
+jusqu'a 60 jours apres le dernier concert qui l'utilise.
+
 **Photos de newsletter, 6 mois (23/09)** : elles ne sont référencées nulle
 part en base, mais les e-mails envoyés pointent vers elles ; on les garde le
 temps qu'une newsletter soit lue, puis `purge-media` les supprime. Les photos
