@@ -13,11 +13,18 @@ rien ne synchronise les deux automatiquement.
 |---|---|---|
 | `backup-daily` | Sauvegarde quotidienne de `app_data` dans le bucket privé `backups`, rétention 30 jours | la tâche `pg_cron` `sauvegarde-app`, chaque nuit à 03h15 UTC |
 | `team-admin` | Gestion de l'équipe (ajout, mot de passe, rôle, 2FA) | la page *Équipe* de l'application |
-| `purge-media` | Supprime du bucket public `concert-media` les photos du report de communication expirées (60 jours après le concert) ou plus référencées, et les photos de newsletter de plus de 6 mois (jamais `artist-photos/` ni `report-logos/`) | **pas encore déployée** — voir ci-dessous |
+| `purge-media` | Supprime du bucket public `concert-media` les photos du report de communication expirées (60 jours après le concert) ou plus référencées, et les photos de newsletter de plus de 6 mois (jamais `artist-photos/` ni `report-logos/`) | la tâche `pg_cron` `purge-medias`, chaque nuit à 03h30 UTC (après la sauvegarde) |
 
-**`purge-media` n'est pas déployée.** Le code est prêt (23/09) ; l'IA n'a pas
-le droit de déployer une fonction qui supprime des fichiers en masse, même
-avec l'accord de Mathieu. Marche à suivre, à faire soi-même :
+**`purge-media` est en service depuis le 01/10/2026.** Déployée à la main par
+Mathieu (éditeur du tableau de bord, version 1, *Verify JWT* activé), puis
+simulée : 31 fichiers examinés, 25 photos de report référencées, un seul
+fichier à supprimer (la photo orpheline du 13/09), aucune photo de
+newsletter. Tâche `purge-medias` (jobid 3) planifiée le même jour par la
+commande de l'étape 3 ci-dessous.
+
+L'IA n'a pas le droit de déployer ou de planifier une fonction qui supprime
+des fichiers en masse, même avec l'accord de Mathieu. Pour une nouvelle
+version, refaire soi-même :
 
 1. Déployer, depuis la racine du dépôt (une connexion `npx supabase login` est
    demandée la première fois) :
