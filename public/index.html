@@ -313,6 +313,7 @@
       <p class="fiche-plan-evt" id="fiche-plan-evt" hidden></p>
     </div>
     <div class="fiche-panneau" id="fp-sponso" role="tabpanel" aria-labelledby="fo-sponso" hidden>
+      <h3 class="fiche-plan-h fsp-titre fsp-sponso-h">Sponso</h3>
       <div class="fiche-sp-tete">
         <span class="fiche-sp-total" id="fiche-sponso-sum"></span>
         <button type="button" class="fiche-switch" role="switch" id="skip-sp-btn" aria-checked="false" onclick="toggleSkip('sp')"><span class="fiche-switch-piste" aria-hidden="true"></span><span>Gérée par la prod</span></button>
@@ -3874,7 +3875,8 @@ function sansEtapesSautees(c,l){
 // numerotees par date comme partout (spVaguesTriees). Depuis le 26/09 :
 // - vague N datee : l'etape tombe le jour ou la vague demarre (un « Decaler »
 //   de la fiche reste prioritaire) ;
-// - aucune vague programmee : la date du process, comme avant ;
+// - aucune vague programmee : la date du process, comme avant (un spectacle
+//   d'evenement sans vague : sans objet, voir vagueDeLEtape) ;
 // - des vagues, mais pas de vague N : l'etape est sans objet, comme une etape
 //   sautee (retiree du plan et du tableau de bord).
 // Rien n'est jamais coche tout seul.
@@ -3885,10 +3887,13 @@ function etapeNumVague(t){
 }
 // La vague N de l'etape, null si l'etape n'est pas liee ou si aucune vague
 // n'est programmee, false s'il y a des vagues mais pas de vague N.
+// Un spectacle d'evenement (09/10) a sa propre sponso : sans aucune vague, il
+// n'est pas sponsorise et ces etapes ne le concernent pas (a la difference d'un
+// concert, ou le process garde sa date tant qu'aucune vague n'est programmee).
 function vagueDeLEtape(c,t){
   var n=etapeNumVague(t);if(!n)return null;
   var vs=spVaguesTriees(c);
-  if(!vs.length)return null;
+  if(!vs.length)return c.spectacle?false:null;
   return vs[n-1]||false;
 }
 function fillFilterSelect(el,opts,emptyLabel){
@@ -4023,7 +4028,7 @@ function ficheJours(c){
 function openFiche(id,sec,voisin,sp){
   var c=concerts.find(function(x){return x.id===id;});if(!c)return;
   var autre=currentFicheId!==id;
-  if(autre){ficheGroupsOpen={avenir:true,done:false,na:false};spFicheOuverte=null;evtEtapeOuverte=null;}
+  if(autre){ficheGroupsOpen={avenir:true,done:false,na:false};spFicheOuverte=null;evtEtapeOuverte=null;evtArtistesOuverts={};evtArtistesOrdre=null;}
   if(autre||sp!==undefined){var p=sp&&estEvt(c)?evtSpectacle(c,sp):null;ficheSpId=p&&!evtApart(p)?p.id:null;}
   if(sec&&FICHE_ONGLETS[sec])ficheTab=FICHE_ONGLETS[sec];
   else if(autre&&!voisin)ficheTab='apercu';
@@ -4245,7 +4250,7 @@ function ficheOnglet(nom){
   var k=FICHE_ONGLETS[nom];if(!k)return;
   var s=ficheSujet();
   // Spectacle : une seule page, on descend jusqu'a ses infos (ou remonte).
-  if(s&&s.spectacle){ficheDefilerVers(k==='infos'?'fp-infos':null);return;}
+  if(s&&s.spectacle){ficheDefilerVers(k==='infos'?'fp-infos':k==='sponso'?'fp-sponso':null);return;}
   if(ficheOrdreOnglets(s).indexOf(k)<0)return;
   ficheTab=k;
   ficheAfficherOnglet();
@@ -4262,8 +4267,8 @@ function ficheAfficherOnglet(){
     b.classList.toggle('active',on);
     b.setAttribute('aria-selected',on?'true':'false');
     b.tabIndex=on?0:-1;
-    // Spectacle : son plan, puis ses infos en dessous.
-    document.getElementById('fp-'+k).hidden=sp?k!=='plan'&&k!=='infos':!on;
+    // Spectacle : son plan, sa sponso, puis ses infos en dessous.
+    document.getElementById('fp-'+k).hidden=sp?k==='apercu':!on;
   });
   // Plan de l'evenement : le reglage de la repartition, a droite des onglets.
   var c=ficheConcert();
@@ -4747,6 +4752,12 @@ async function evtConcertAPart(c,p){
   if(!await customConfirm('Créer une fiche concert pour '+p.art+' ('+quand+') ? Elle aura son propre plan, sa sponso et son budget ; le spectacle reste dans le programme de '+c.art+'.','Créer la fiche'))return;
   var nc={id:Date.now().toString(),art:p.art,ville:evtLieu(p),dc:p.dc,da:p.da||c.da||'',medias:p.medias||'',jeux:p.jeux||'',budget:'',notes:[p.notes,'Spectacle de '+c.art].filter(Boolean).join(' · '),ventes:evtVentes(p)};
   if(p.billet)spWrite(nc).billet=p.billet;
+  // Ses vagues de sponso passent sur sa fiche concert (elles quittent le spectacle).
+  if(p.sponso&&p.sponso.vagues&&p.sponso.vagues.length){
+    nc.sponso=JSON.parse(JSON.stringify(p.sponso));
+    if(p.billet)nc.sponso.billet=p.billet;
+    delete p.sponso;
+  }
   // Ce qui etait fait pour ce spectacle le reste sur sa fiche concert ; ses
   // taches ajoutees a la main l'y suivent.
   var siennes=customTasks.filter(function(t){return t.concertId===p.id;}),copies=0;
@@ -4975,7 +4986,7 @@ function ficheChoisirSpectacle(pid,onglet){
   renderFiche(c);
   ficheAfficherOnglet();
   document.getElementById('fiche').scrollTop=0;
-  if(ficheSpId&&onglet==='infos')ficheDefilerVers('fp-infos');
+  if(ficheSpId&&(onglet==='infos'||onglet==='sponso'))ficheDefilerVers(onglet==='infos'?'fp-infos':'fp-sponso');
   ficheCompacte();
   pushRoute(currentTab,c.id,true,ficheSpId);
 }
@@ -5047,6 +5058,12 @@ function renderFichePlanSp(c){
   box.innerHTML=evtPlanSpHtml(c,etapes,sps);
   return retard;
 }
+// Vue du plan des spectacles (09/10) : par tache (« Demander kit promo · 18
+// spectacles ») ou par artiste (ses retards, ses taches a faire). Un choix par
+// navigateur ; par artiste au premier lancement, puisque c'est ce qu'on cherche
+// d'abord : qui est en retard.
+var evtPlanVue=(function(){try{return localStorage.getItem('pp_evt_plan_par')==='etape'?'etape':'artiste';}catch(e){return 'artiste';}})();
+var evtArtistesOuverts={};
 function evtPlanSpHtml(e,etapes,sps){
   var h='<div class="evp-sec-tete"><h3>Pour chaque spectacle</h3>';
   if(!sps.length)return h+'</div><p class="evp-sec-aide">Les tâches de chaque spectacle apparaîtront ici avec les spectacles du programme.</p>';
@@ -5054,12 +5071,80 @@ function evtPlanSpHtml(e,etapes,sps){
     +'<p class="evt-vide-aide">Choisis les tâches à faire pour chaque spectacle (photographes, report comm…) : elles apparaîtront dans sa fiche, datées d\'après son jour.</p>'
     +'<div class="evt-vide-actions"><button type="button" class="btn btn-sm btn-primary" data-pl="repartir">'+icon('settings')+'Choisir les tâches de chaque spectacle</button></div></div>';
   var tot=0,faits=0;etapes.forEach(function(r){tot+=r.n-r.na;faits+=r.faits;});
-  // Une seule vue, par tache (26/09 : le tableau spectacles × taches est retire).
-  var pct=tot?Math.round(faits/tot*100):0;
+  var pct=tot?Math.round(faits/tot*100):0,art=evtPlanVue==='artiste';
+  function bouton(v,l){return '<button type="button" class="view-toggle-btn'+(evtPlanVue===v?' active':'')+'" data-pl="vue" data-v="'+v+'" aria-pressed="'+(evtPlanVue===v?'true':'false')+'">'+l+'</button>';}
   h+='<span class="fiche-avancement">'+faits+' / '+tot+' faites</span><span class="fiche-jauge" aria-hidden="true"><i style="width:'+pct+'%"></i></span><span class="grow"></span>'
+    +'<div class="view-toggle compact evp-vue" role="group" aria-label="Regrouper les tâches">'+bouton('etape','Par tâche')+bouton('artiste','Par artiste')+'</div>'
     +'<button type="button" class="btn-link evp-repartir-tel" data-pl="repartir">Répartir</button></div>'
-    +'<p class="evp-sec-aide">'+esc(evtPluriel(etapes.length,'tâche')+(etapes.length>1?', datées':', datée')+' d\'après le jour de chaque spectacle. Chacune est aussi dans la fiche du spectacle.')+'</p>';
-  return h+evtEtapesHtml(e,etapes,sps);
+    +'<p class="evp-sec-aide">'+esc(art?'Les tâches de chaque artiste, datées d\'après son jour : les plus en retard d\'abord. Une case coche la tâche dans sa fiche.'
+      :evtPluriel(etapes.length,'tâche')+(etapes.length>1?', datées':', datée')+' d\'après le jour de chaque spectacle. Chacune est aussi dans la fiche du spectacle.')+'</p>';
+  return h+(art?evtArtistesHtml(e,sps):evtEtapesHtml(e,etapes,sps));
+}
+// Un artiste et ses taches : ce qu'il faut pour trier et pour afficher.
+// Les plus en retard d'abord. Tant qu'un artiste est deplie (figer), l'ordre ne
+// bouge plus : sinon sa ligne partirait en bas de la liste a chaque tache
+// cochee, sous le curseur.
+var evtArtistesOrdre=null;
+function evtParArtiste(e,sps,figer){
+  var l=sps.map(function(p,i){
+    var s=spSujet(e,p),g=ficheGroupes(s),d=null;
+    [g.late,g.soon,g.future].forEach(function(t){if(!d&&t.length)d=calcDate(s,t[0]);});
+    return {p:p,s:s,g:g,i:i,prochaine:d};
+  }).sort(function(a,b){
+    return (b.g.late.length-a.g.late.length)||(b.g.soon.length-a.g.soon.length)||(a.i-b.i);
+  });
+  if(!figer)return l;
+  var ouvert=Object.keys(evtArtistesOuverts).some(function(k){return evtArtistesOuverts[k];});
+  var rang={};
+  if(ouvert&&evtArtistesOrdre)evtArtistesOrdre.forEach(function(id,i){rang[id]=i;});
+  if(ouvert&&l.length&&l.every(function(x){return rang[x.p.id]!==undefined;}))
+    l.sort(function(a,b){return rang[a.p.id]-rang[b.p.id];});
+  else evtArtistesOrdre=l.map(function(x){return x.p.id;});
+  return l;
+}
+function evtArtisteResume(x){
+  var g=x.g,nom=function(t){return t.nom;};
+  if(!g.total)return {tags:'<span class="tag">Aucune tâche</span>',aide:''};
+  var tags='',aide='';
+  if(g.late.length){tags+='<span class="evp-tag late">'+g.late.length+' en retard</span>';aide=g.late.map(nom).slice(0,2).join(', ')+(g.late.length>2?' …':'');}
+  if(g.soon.length){tags+='<span class="evp-tag soon">'+g.soon.length+' cette semaine</span>';if(!aide)aide=g.soon.map(nom).slice(0,2).join(', ')+(g.soon.length>2?' …':'');}
+  if(!tags){
+    tags='<span class="evp-tag ok">À jour</span>';
+    aide=x.prochaine?'Prochaine : '+dateCourte(x.prochaine,true):g.done.length===g.total?'Tout est fait':'';
+  }
+  return {tags:tags,aide:aide};
+}
+function evtArtistesHtml(e,sps){
+  var l=evtParArtiste(e,sps,true);
+  return '<div class="evp-artistes">'+l.map(function(x){
+    var p=x.p,g=x.g,ouv=!!evtArtistesOuverts[p.id],ph=evtPhotoUrl(p),r=evtArtisteResume(x);
+    var pct=g.total?Math.round(g.done.length/g.total*100):0;
+    var sous=[evtJourCourt(p.dc),lieuTexte(p)].filter(function(v){return v&&v!=='Sans date';}).join(' · ');
+    return '<div class="evp-art'+(ouv?' ouverte':'')+'">'
+      +'<button type="button" class="evp-art-l" data-pl="artiste" data-p="'+esc(p.id)+'" aria-expanded="'+(ouv?'true':'false')+'">'
+        +(ph?'<img class="fm-vis" src="'+esc(ph)+'" alt="" loading="lazy">':'<span class="fm-vis vide evp-art-init" aria-hidden="true">'+esc((p.art||'?').trim().charAt(0).toUpperCase())+'</span>')
+        +'<span class="evp-etape-nom"><span class="evt-art">'+esc(p.art||'Sans nom')+'</span><span class="evp-etape-meta"><span>'+esc(sous||'Date à fixer')+'</span></span></span>'
+        +'<span class="evp-art-etat">'+r.tags+(r.aide?'<span class="evp-art-aide" title="'+esc(r.aide)+'">'+esc(r.aide)+'</span>':'')+'</span>'
+        +'<span class="evp-etape-prog"><span class="fiche-jauge" aria-hidden="true"><i style="width:'+pct+'%"></i></span>'+g.done.length+' / '+g.total+'</span>'
+        +'<span class="evp-etape-chev" aria-hidden="true">'+icon('chevron-right')+'</span></button>'
+      +(ouv?evtArtisteDetailHtml(x):'')+'</div>';
+  }).join('')+'</div>';
+}
+// Les taches de l'artiste, cochables sur place (la meme ligne que sa fiche).
+function evtArtisteDetailHtml(x){
+  var g=x.g,s=x.s,h='';
+  function liste(a,kind){return a.map(function(t){return ficheTacheHtml(s,t,kind,true);}).join('');}
+  if(g.late.length)h+=ficheGroupeTitre('En retard',g.late.length,'late')+liste(g.late,'late');
+  if(g.soon.length)h+=ficheGroupeTitre('Cette semaine',g.soon.length,'soon')+liste(g.soon,'soon');
+  if(g.future.length)h+=ficheGroupeTitre('À venir',g.future.length,'')+liste(g.future,'future');
+  if(g.nocalc.length)h+=ficheGroupeTitre('Sans date calculée',g.nocalc.length,'muted')+liste(g.nocalc,'nocalc');
+  var reste=[];
+  if(g.blocked.length)reste.push(g.blocked.length+' en attente de prérequis');
+  if(g.done.length)reste.push(g.done.length+(g.done.length>1?' faites':' faite'));
+  if(!h)h='<div class="fa-vide">'+icon('circle-check')+(g.total?'Tout est fait.':'Aucune tâche pour ce spectacle.')+'</div>';
+  return '<div class="evp-art-detail">'+h
+    +'<div class="evp-detail-actions">'+(reste.length?'<span class="evp-aide">'+esc(reste.join(' · '))+'</span>':'')
+    +'<span class="grow"></span><button type="button" class="btn-link" data-pl="sp" data-p="'+esc(x.p.id)+'">Sa page'+icon('arrow-right')+'</button></div></div>';
 }
 function evtEtapesHtml(e,etapes,sps){
   return '<div class="evp-etapes">'+etapes.map(function(r){
@@ -5118,6 +5203,21 @@ function evtCocheHtml(s,t,dRef){
     var e=ficheConcert();if(!estEvt(e))return;
     var a=b.dataset.pl,t=b.dataset.t!=null?process.find(function(x){return String(x.id)===b.dataset.t;}):null;
     if(a==='repartir'){evtOuvrirRepartir();return;}
+    if(a==='vue'){
+      evtPlanVue=b.dataset.v==='etape'?'etape':'artiste';
+      try{localStorage.setItem('pp_evt_plan_par',evtPlanVue);}catch(err){}
+      renderFichePlanSp(e);
+      var nb=el.querySelector('.evp-vue [data-v="'+evtPlanVue+'"]');if(nb)nb.focus();
+      return;
+    }
+    if(a==='artiste'){
+      var pid0=b.dataset.p;
+      if(evtArtistesOuverts[pid0])delete evtArtistesOuverts[pid0];else evtArtistesOuverts[pid0]=true;
+      renderFichePlanSp(e);
+      var qp0=CSS.escape(pid0),ra=el.querySelector('.evp-art-l[data-p="'+qp0+'"]');if(ra)ra.focus();
+      return;
+    }
+    if(a==='sp'){ficheChoisirSpectacle(b.dataset.p);return;}
     if(!t)return;
     var qt=CSS.escape(String(t.id)),q='[data-t="'+qt+'"]';
     if(a==='etape'){
@@ -5152,30 +5252,46 @@ function evtToutCocher(e,t){
 function evtMontrerEtape(tid){
   var t=process.find(function(x){return String(x.id)===String(tid);});if(!t)return;
   evtEtapeOuverte=t.id;
+  evtPlanVue='etape';
   ficheOnglet('plan');
   renderFichePlanSp(ficheConcert());
   var qt=CSS.escape(String(t.id)),r=document.querySelector('#fiche-plan-sp .evp-etape[data-t="'+qt+'"]');
   if(r)r.scrollIntoView({block:'center'});
 }
+// Depuis l'apercu : le plan par artiste, cet artiste deplie.
+function evtMontrerArtiste(pid){
+  if(pid){evtArtistesOuverts[pid]=true;}
+  evtPlanVue='artiste';
+  ficheOnglet('plan');
+  renderFichePlanSp(ficheConcert());
+  var qp=pid?CSS.escape(pid):'',r=pid?document.querySelector('#fiche-plan-sp .evp-art-l[data-p="'+qp+'"]'):null;
+  if(r)r.scrollIntoView({block:'center'});
+}
 
-// ── Apercu de l'evenement : ce qui presse du cote des spectacles ──
+// ── Apercu de l'evenement : ce qui presse du cote des artistes ──
+// Un artiste par ligne (09/10, avant : une tache par ligne, avec les noms des
+// spectacles), les plus en retard d'abord.
 function evtApercuSpHtml(e){
-  if(!evtSuivis(e).length)return '';
-  var etapes=evtEtatEtapes(e);
-  if(!etapes.length)return '<div class="fa-vide fa-note">'+icon('list')+'<span>Les tâches de chaque spectacle ne sont pas encore choisies.</span><button type="button" class="btn-link" data-ap="repartir">Choisir</button></div>';
-  var urg=etapes.filter(function(r){return r.urgents.length;});
+  var sps=evtSuivis(e);
+  if(!sps.length)return '';
+  if(!evtEtatEtapes(e).length)return '<div class="fa-vide fa-note">'+icon('list')+'<span>Les tâches de chaque spectacle ne sont pas encore choisies.</span><button type="button" class="btn-link" data-ap="repartir">Choisir</button></div>';
+  var l=evtParArtiste(e,sps),urg=l.filter(function(x){return x.g.late.length||x.g.soon.length;}),calmes=l.filter(function(x){return !(x.g.late.length||x.g.soon.length);});
   if(!urg.length){
     var proch=null;
-    etapes.forEach(function(r){r.dates.forEach(function(d){if(!proch||d<proch.d)proch={d:d,t:r.t};});});
-    return '<div class="fa-vide fa-note">'+icon('circle-check')+'<span>'+esc('Rien d\'urgent du côté des spectacles.'+(proch?' Prochaine tâche : '+proch.t.nom+', à partir du '+dateCourte(proch.d,true)+'.':''))+'</span></div>';
+    l.forEach(function(x){if(x.prochaine&&(!proch||x.prochaine<proch.d))proch={d:x.prochaine,n:x.p.art};});
+    return '<div class="fa-vide fa-note">'+icon('circle-check')+'<span>'+esc('Rien d\'urgent du côté des artistes.'+(proch?' Prochaine tâche : '+proch.n+', à partir du '+dateCourte(proch.d,true)+'.':''))+'</span></div>';
   }
-  return urg.map(function(r){
-    var late=r.retard>0,cat=CATS[r.t.cat]||CATS.gen;
-    return '<button type="button" class="ftask ftask-'+(late?'late':'soon')+' fa-groupe" data-ap="etape" data-t="'+esc(r.t.id)+'" title="Voir cette tâche pour chaque spectacle">'
-      +'<span class="kb-groupe-ico" aria-hidden="true">'+icon('list')+'</span>'
-      +'<span class="ftask-body"><span class="ftask-name">'+esc(r.t.nom)+'</span><span class="ftask-meta"><span class="pill '+cat.cls+'">'+esc(cat.label)+'</span><span class="ftask-note">'+esc(evtNomsCourts(r.urgents))+'</span></span></span>'
-      +'<span class="ftask-date">'+esc(evtPluriel(r.urgents.length,'spectacle'))+'</span></button>';
+  var h='<div class="fa-tete fa-sous-tete"><h3>Du côté des artistes</h3><button type="button" class="btn-link" data-ap="artiste" data-p="">Voir par artiste'+icon('arrow-right')+'</button></div>'
+    +urg.map(function(x){
+    var p=x.p,g=x.g,late=g.late.length>0,ph=evtPhotoUrl(p),noms=g.late.concat(g.soon).map(function(t){return t.nom;});
+    var liste=noms.slice(0,3).join(' · ')+(noms.length>3?' · + '+evtPluriel(noms.length-3,'autre'):'');
+    return '<button type="button" class="ftask ftask-'+(late?'late':'soon')+' fa-groupe fa-artiste" data-ap="artiste" data-p="'+esc(p.id)+'" title="Voir les tâches de cet artiste">'
+      +(ph?'<img class="fm-vis" src="'+esc(ph)+'" alt="" loading="lazy">':'<span class="fm-vis vide fa-art-init" aria-hidden="true">'+esc((p.art||'?').trim().charAt(0).toUpperCase())+'</span>')
+      +'<span class="ftask-body"><span class="ftask-name evt-art">'+esc(p.art||'Sans nom')+'</span><span class="ftask-meta"><span class="ftask-note">'+esc(liste)+'</span></span></span>'
+      +'<span class="ftask-date">'+esc(g.late.length?g.late.length+' en retard':g.soon.length+' cette semaine')+'</span></button>';
   }).join('');
+  if(calmes.length)h+='<div class="fa-vide fa-note">'+icon('circle-check')+'<span>'+esc(calmes.length===1?(calmes[0].p.art||'Un artiste')+' est à jour.':evtPluriel(calmes.length,'artiste')+' à jour.')+'</span></div>';
+  return h;
 }
 // Tuile Avancement : les taches faites une fois pour l'evenement, puis
 // celles de chaque spectacle (avant le 26/09 : deux tuiles).
@@ -5202,6 +5318,7 @@ function evtTuileAvancementHtml(e,g){
     var a=b.dataset.ap,c=ficheConcert();
     if(a==='repartir')evtOuvrirRepartir();
     else if(a==='etape')evtMontrerEtape(b.dataset.t);
+    else if(a==='artiste')evtMontrerArtiste(b.dataset.p);
     else if(!estEvt(c))return;
     else if(a==='ajouter')evtOuvrirAjout(c,'un','');
     else if(a==='coller')evtOuvrirAjout(c,'coller','');
@@ -5267,6 +5384,9 @@ function evtEtapesProposees(sauf){
   var m={};
   if(dernier){var d=evtEtapesSp(dernier);process.forEach(function(t){if(d[t.id])m[t.id]=true;});return m;}
   EVT_ETAPES_SP_DEFAUT.forEach(function(id){if(process.some(function(t){return t.id===id;}))m[id]=true;});
+  // La sponso se saisit par artiste (09/10) : ses etapes « … Vague N » suivent
+  // les vagues de chaque spectacle.
+  process.forEach(function(t){if(etapeNumVague(t))m[t.id]=true;});
   return m;
 }
 function evtOuvrirRepartir(){
@@ -5298,6 +5418,7 @@ function renderEvtRep(){
         if(taskStates[tk(e.id,t.id)])note='Déjà faite pour l\'événement : elle sera cochée pour les '+evtPluriel(cibles,'spectacle');
         else if(taskStates['na-'+e.id+'-'+t.id])note='Inutile pour l\'événement : elle le sera pour les '+evtPluriel(cibles,'spectacle');
       }
+      if(sp&&!note&&etapeNumVague(t))note='Suit les vagues de sponso de chaque artiste ; sans vague, elle ne le concerne pas';
       return '<div class="evp-rep-l'+(sp?' spect':'')+'"><div class="evp-rep-nom"><span class="evp-rep-titre">'+esc(t.nom)+'</span>'
           +'<span class="evp-rep-meta"><span class="pill '+cat.cls+'">'+esc(cat.label)+'</span><span>'+esc(evtQuand(t))+'</span></span>'
           +(note?'<span class="evp-rep-note">'+esc(note)+'</span>':'')+'</div>'
@@ -9434,13 +9555,21 @@ var SP_STATUTS={
 };
 
 function spNewId(){return uid('sp');}
-function spRead(c){return c&&c.sponso?c.sponso:SP_VIDE;}
+// Un spectacle d'evenement (spSujet) garde sa sponso dans son entree du
+// programme (p.sponso, 09/10) : on lit et on ecrit toujours sur l'objet reel,
+// jamais sur la copie que le sujet represente.
+function spPorteur(c){return c&&c.spectacle?c.spectacle:c;}
+function spRead(c){var o=spPorteur(c);return o&&o.sponso?o.sponso:SP_VIDE;}
 function spWrite(c){
-  if(!c.sponso)c.sponso={billet:'',legende:'',crea:'',ville:'',rayon:'',vagues:[]};
-  if(!c.sponso.vagues)c.sponso.vagues=[];
-  return c.sponso;
+  var o=spPorteur(c);
+  if(!o.sponso)o.sponso={billet:'',legende:'',crea:'',ville:'',rayon:'',vagues:[]};
+  if(!o.sponso.vagues)o.sponso.vagues=[];
+  return o.sponso;
 }
-function spConcert(cid){return concerts.find(function(x){return x.id===cid;});}
+// Un concert, un evenement ou l'un de ses spectacles (id de vague, de coche).
+function spConcert(cid){return concerts.find(function(x){return x.id===cid;})||sujetParId(cid);}
+// La fiche ouverte qui montre ce sujet : lui-meme, ou son evenement.
+function spFicheDe(cid){var c=spConcert(cid);return c?(c.spectacle?c.evenement.id:c.id):null;}
 // Seules les vagues font entrer un concert dans l'onglet Sponso, quel que soit
 // leur statut (terminee, en cours, programmee, ou "a programmer" faute de
 // dates). Le lien billetterie ne compte pas : il est saisi sur TOUTES les
@@ -9549,7 +9678,7 @@ function spSetField(cid,field,val){
   spWrite(c)[field]=val.trim();
   scheduleSave('concerts');
   spRenderVues();
-  if(currentFicheId===cid)renderFicheApercu(c);
+  if(currentFicheId===spFicheDe(cid))renderFicheApercu(c);
 }
 function spSetVague(cid,vid,field,val){
   var c=spConcert(cid);if(!c)return;
@@ -9591,7 +9720,7 @@ function spCopyLegende(cid){
   try{navigator.clipboard.writeText(t).then(function(){showToast('Légende copiée.');},function(){showToast('Sélectionne et copie la légende.');});}catch(e){showToast('Sélectionne et copie la légende.');}
 }
 function spRefresh(cid){
-  if(currentFicheId===cid)spRenderFiche(cid);
+  if(currentFicheId===spFicheDe(cid))spRenderFiche(cid);
   spRenderVues();
 }
 // Les deux vues qui affichent un recap sponso en dehors du bloc de saisie.
@@ -9609,19 +9738,26 @@ function spRenderVues(){
 var spFicheOuverte=null; // id de la vague depliee dans la fiche
 function spRenderFiche(cid){
   var c=spConcert(cid),el=document.getElementById('fiche-sponso');
-  if(!c||!el)return;
-  el.innerHTML=spFicheHtml(c);
+  if(!c||!el||spFicheDe(cid)!==currentFicheId)return;
+  // Ce que la page montre : l'evenement, ou le spectacle choisi dans son menu.
+  c=ficheCible(c);
+  el.innerHTML=(speAffiche(c)?'<div class="spe" id="spe">'+speInterieurHtml(c)+'</div><h3 class="fiche-plan-h spe-titre" id="spe-evt">Sponso de l\'événement</h3>':'')+spFicheHtml(c);
   spUpdateFicheSum(cid);
 }
 // Total, frise et Apercu : ce qui change quand une vague change, sans
-// reconstruire les champs (celui qui a le focus le perdrait).
+// reconstruire les champs (celui qui a le focus le perdrait). Sur la page d'un
+// evenement, le total et la frise reprennent aussi la sponso de ses artistes.
 function spUpdateFicheSum(cid){
   var c=spConcert(cid),el=document.getElementById('fiche-sponso-sum');
-  if(!c||!el||currentFicheId!==cid)return;
-  var n=spRead(c).vagues.length;
-  el.innerHTML=n?'<b>'+esc(spEuro(spTotal(c)))+'</b> · '+n+' vague'+(n>1?'s':''):'Aucune vague';
+  if(!c||!el||currentFicheId!==spFicheDe(cid))return;
+  c=ficheCible(c);
+  var n=spRead(c).vagues.length,tot=spTotal(c);
+  if(speAffiche(c)){var a=speTotaux(c);n+=a.vagues;tot+=a.budget;}
+  el.innerHTML=n?'<b>'+esc(spEuro(tot))+'</b> · '+n+' vague'+(n>1?'s':''):'Aucune vague';
   var fr=document.getElementById('spf-frise');
   if(fr)fr.innerHTML=spFicheFriseHtml(c);
+  var spe=document.getElementById('spe');
+  if(spe)spe.innerHTML=speInterieurHtml(c);
   renderFicheApercu(c);
 }
 function spPlage(v){
@@ -9643,7 +9779,7 @@ function spFicheAjouter(cid){
 function spFicheHtml(c){
   var s=spRead(c),h='';
   if(spSkipProd(c.id))h+='<div class="sp-warn">'+icon('alert')+' <span>Sponso gérée par la prod : ses tâches sont retirées du plan. Tu peux quand même programmer des vagues ici.</span></div>';
-  h+='<div class="spf-frise" id="spf-frise">'+spFicheFriseHtml(c)+'</div>';
+  if(!speAffiche(c))h+='<div class="spf-frise" id="spf-frise">'+spFicheFriseHtml(c)+'</div>';
   if(s.vagues.length){
     h+='<div class="spf-vagues">';
     spVaguesTriees(c).forEach(function(v,i){
@@ -9725,6 +9861,164 @@ function spFicheFriseHtml(c){
   });
   if(dcd){var dm=dcd.getTime();if(dm>=a0&&dm<=a1)barres+='<div class="sp-dc" style="left:'+pc(dm)+'%" title="'+esc('Concert · '+spFmtDate(c.dc))+'"></div>';}
   return '<div class="spf-mois">'+mois+'</div><div class="spf-piste">'+deco+barres+'</div>';
+}
+
+// ── Sponso d'un evenement, compilee par artiste (09/10) ──
+// Chaque spectacle a sa propre sponso (p.sponso, saisie dans sa page) ; l'onglet
+// Sponso de l'evenement les reunit : totaux, une frise avec une ligne pour
+// l'evenement et une par artiste, puis les vagues de chacun. La sponso propre a
+// l'evenement reste dessous. Maquette validee le 09/10 (canevas « Evenement :
+// taches et sponso par artiste »).
+function speAffiche(c){return !!c&&estEvt(c)&&!c.spectacle&&evtSuivis(c).length>0;}
+function speSujets(e){return evtSuivis(e).map(function(p){return spSujet(e,p);});}
+function speTotaux(e){
+  var r={budget:0,vagues:0,artistes:0,total:0};
+  speSujets(e).forEach(function(s){
+    r.total++;
+    var n=spRead(s).vagues.length;
+    if(n){r.artistes++;r.vagues+=n;r.budget+=spTotal(s);}
+  });
+  return r;
+}
+function speJour(iso){var d=new Date((iso||'')+'T00:00:00');return isNaN(d.getTime())?null:d;}
+// Les vagues de l'evenement et des artistes, avec ce qu'il faut pour les
+// nommer : { c: sujet, vagues: triees, evt: bool }.
+function speLignes(e){
+  var l=[{c:e,evt:true,vagues:spVaguesTriees(e)}];
+  speSujets(e).forEach(function(s){l.push({c:s,evt:false,vagues:spVaguesTriees(s)});});
+  return l;
+}
+// Du mois en cours (ou d'une vague deja lancee) jusqu'au mois du dernier
+// spectacle ou de la derniere vague : entre 3 et 9 mois.
+function speFenetre(e,lignes){
+  var t=new Date();t.setHours(0,0,0,0);
+  var debut=new Date(t.getFullYear(),t.getMonth(),1),derniere=t;
+  var fin0=speJour(evtFin(e));
+  if(fin0&&fin0>derniere)derniere=fin0;
+  lignes.forEach(function(l){
+    var dc=speJour(l.c.dc);if(dc&&dc>derniere)derniere=dc;
+    l.vagues.forEach(function(v){
+      var a=speJour(v.debut),b=speJour(v.fin);
+      if(a&&spStatut(v)!=='programmee'){var m0=new Date(a.getFullYear(),a.getMonth(),1);if(m0<debut)debut=m0;}
+      if(b&&b>derniere)derniere=b;
+    });
+  });
+  var fin=new Date(derniere.getFullYear(),derniere.getMonth()+1,1);
+  var min=new Date(debut.getFullYear(),debut.getMonth()+3,1),max=new Date(debut.getFullYear(),debut.getMonth()+9,1);
+  if(fin<min)fin=min;
+  if(fin>max)fin=max;
+  return {debut:debut,fin:fin};
+}
+function speFriseHtml(e,lignes){
+  var w=speFenetre(e,lignes),a0=w.debut.getTime(),a1=w.fin.getTime(),span=a1-a0;
+  function pc(ms){return (ms-a0)/span*100;}
+  var mois='',deco='',tm=new Date().setHours(0,0,0,0);
+  for(var m=new Date(w.debut);m<w.fin;m=new Date(m.getFullYear(),m.getMonth()+1,1)){
+    var l=pc(m.getTime()),r=pc(new Date(m.getFullYear(),m.getMonth()+1,1).getTime());
+    mois+='<div class="sp-head-m" style="left:'+l+'%;width:'+(r-l)+'%">'+esc(m.toLocaleDateString('fr-FR',{month:'short'}))+'</div>';
+    if(m.getTime()>a0)deco+='<div class="sp-sep" style="left:'+l+'%"></div>';
+  }
+  if(tm>=a0&&tm<=a1)deco+='<div class="sp-today" style="left:'+pc(tm)+'%" title="Aujourd\'hui"></div>';
+  var jours=evtJours(e).filter(Boolean);
+  var h='<div class="spe-ligne spe-tete"><div class="spe-info"></div><div class="spe-piste">'+mois+'</div></div>';
+  lignes.forEach(function(l){
+    var c=l.c,n=l.vagues.length,tot=spTotal(c),barres='';
+    l.vagues.forEach(function(v,i){
+      var a=speJour(v.debut),b=speJour(v.fin);
+      if(!a||!b||b.getTime()<a0||a.getTime()>a1)return;
+      var g=Math.max(0,pc(a.getTime())),d=Math.min(100,pc(b.getTime()));
+      var st=spStatut(v),nt=spNonTransmise(v);
+      var tip='V'+(i+1)+' · '+spFmtDate(v.debut)+' → '+spFmtDate(v.fin)+(v.budget?' · '+spEuro(v.budget):'')+(nt?' · prestataire pas encore informé':'');
+      barres+='<div class="sp-bar '+SP_STATUTS[st].cls+(nt?' sp-nontransmise':'')+'" style="left:'+g+'%;width:'+Math.max(d-g,0)+'%" title="'+esc(tip)+'" '
+        +'onclick="'+(l.evt?'speOuvrirEvt(':'speOuvrir(\''+escJs(c.id)+'\',')+'\''+escJs(v.id)+'\')">'
+        +'<span>'+esc(v.budget?spEuroCourt(v.budget):'V'+(i+1))+'</span></div>';
+    });
+    // Le jour du spectacle en losange ; pour l'evenement, ses jours en bande.
+    if(l.evt){
+      var j0=speJour(c.dc),j1=speJour(evtFin(c));
+      if(j0&&j1&&j1.getTime()>=a0&&j0.getTime()<=a1){
+        var g0=Math.max(0,pc(j0.getTime())),g1=Math.min(100,pc(j1.getTime()+864e5));
+        barres+='<div class="spe-jours" style="left:'+g0+'%;width:'+Math.max(g1-g0,0)+'%" title="'+esc('Événement · '+spFmtDate(c.dc)+' → '+spFmtDate(evtFin(c)))+'"></div>';
+      }
+    }else{
+      var d=speJour(c.dc),xd=d?pc(d.getTime()):0;
+      if(d&&d.getTime()>=a0&&d.getTime()<=a1)barres+='<div class="sp-dc" style="left:'+xd+'%" title="'+esc('Spectacle · '+spFmtDate(c.dc))+'"></div>';
+    }
+    var sous=l.evt?(n?evtPluriel(n,'vague'):'Pour tout l\'événement')
+      :[c.dc?evtJourCourt(c.dc):'',n?evtPluriel(n,'vague'):''].filter(Boolean).join(' · ');
+    if(!n)barres+='<button type="button" class="btn-link spe-ajout" onclick="'+(l.evt?'speAjouterEvt()':'speAjouter(\''+escJs(c.id)+'\')')+'">'+icon('plus')+'Ajouter une vague</button>';
+    h+='<div class="spe-ligne'+(l.evt?' spe-evt':'')+'"><div class="spe-info"><span class="spe-nom">'+esc(l.evt?'Événement':c.art||'Sans nom')+'</span>'
+      +'<span class="spe-sous">'+(tot?'<b>'+esc(spEuro(tot))+'</b> · ':'')+esc(sous)+'</span></div>'
+      +'<div class="spe-piste">'+deco+barres+'</div></div>';
+  });
+  return '<div class="spe-frise">'+h+'</div>'
+    +'<div class="spe-legende"><span><i class="k p"></i>Programmée</span><span><i class="k"></i>Lancée</span><span><i class="k d"></i>Jour du spectacle</span>'
+    +'<span class="spe-aide">Un clic sur une vague l\'ouvre.</span></div>';
+}
+function speInterieurHtml(e){
+  var lignes=speLignes(e),t=speTotaux(e),propre=spRead(e).vagues.length,propreTot=spTotal(e);
+  var total=t.budget+propreTot,nb=t.vagues+propre;
+  // La vague la plus proche : en cours, sinon la prochaine a demarrer.
+  var cours=null,suiv=null;
+  lignes.forEach(function(l){
+    l.vagues.forEach(function(v,i){
+      var st=spStatut(v);
+      if(st==='encours'&&(!cours||v.fin<cours.v.fin))cours={l:l,v:v};
+      if(st==='programmee'&&(!suiv||v.debut<suiv.v.debut))suiv={l:l,v:v};
+    });
+  });
+  var qui=function(x){return x.l.evt?'l\'événement':x.l.c.art;};
+  var prochaine=cours?'En cours : '+qui(cours)+', jusqu\'au '+ficheCourt(cours.v.fin)
+    :suiv?'Prochaine : '+qui(suiv)+', dès le '+ficheCourt(suiv.v.debut):nb?'Aucune vague à venir':'Aucune vague';
+  var tuiles='<div class="fa-tuiles spe-tuiles">'
+    +'<div class="fa-tuile statique"><span class="fa-l">Budget total</span><span class="fa-v">'+ficheMontantHtml(nb?spEuro(total):'—')+'</span>'
+      +'<span class="fa-s">'+esc(nb?'Événement '+spEuro(propreTot||0)+' · artistes '+spEuro(t.budget||0):'Rien de programmé')+'</span></div>'
+    +'<div class="fa-tuile statique"><span class="fa-l">Vagues</span><span class="fa-v"><span data-n="'+esc(String(nb))+'">'+nb+'</span></span><span class="fa-s'+(cours||suiv?' accent':'')+'">'+esc(prochaine)+'</span></div>'
+    +'<div class="fa-tuile statique"><span class="fa-l">Artistes sponsorisés</span><span class="fa-v"><span data-n="'+esc(String(t.artistes))+'">'+t.artistes+'</span><small> / '+t.total+'</small></span>'
+      +'<span class="fa-s">'+esc(t.artistes===t.total?'Tous ont une sponso':t.total-t.artistes+' sans sponso')+'</span></div>'
+    +'</div>';
+  // Les vagues de chaque artiste, une ligne par artiste.
+  var liste='';
+  lignes.forEach(function(l){
+    if(l.evt||!l.vagues.length)return;
+    var c=l.c;
+    liste+='<div class="spe-art"><div class="spe-art-nom">'+esc(c.art||'Sans nom')+'<span>'+esc(spEuro(spTotal(c)))+'</span></div><div class="spe-vagues">'
+      +l.vagues.map(function(v,i){
+        var st=spStatut(v);
+        return '<button type="button" class="spe-vague '+SP_STATUTS[st].cls+'" onclick="speOuvrir(\''+escJs(c.id)+'\',\''+escJs(v.id)+'\')" title="Ouvrir cette vague dans la page de l\'artiste">'
+          +'<b>V'+(i+1)+'</b>'+esc(spPlage(v))+(v.budget?' · '+esc(spEuro(v.budget)):'')+'</button>';
+      }).join('')
+      +'</div><button type="button" class="btn-link spe-art-lien" onclick="speOuvrir(\''+escJs(c.id)+'\')">Sa sponso'+icon('arrow-right')+'</button></div>';
+  });
+  return tuiles+speFriseHtml(e,lignes)
+    +(liste?'<section class="fa-bloc spe-liste"><h3>Vague par vague</h3>'+liste+'</section>':'');
+}
+// Page d'un artiste, sur sa sponso (vid : la vague depliee).
+function speOuvrir(pid,vid){
+  var e=ficheConcert();if(!estEvt(e)||!evtSpectacle(e,pid))return;
+  spFicheOuverte=vid||null;
+  ficheChoisirSpectacle(pid,'sponso');
+}
+// Vague de l'evenement : depliee dans sa liste, sous la frise.
+function speOuvrirEvt(vid){
+  spFicheOuverte=vid;
+  spRenderFiche(currentFicheId);
+  ficheDefilerVers('spe-evt');
+}
+function speAjouterEvt(){
+  var e=ficheConcert();if(!estEvt(e))return;
+  spFicheAjouter(e.id);
+  ficheDefilerVers('spe-evt');
+}
+// Pas encore de vague : on en ajoute une et on ouvre la page de l'artiste pour
+// la renseigner.
+function speAjouter(pid){
+  var c=spConcert(pid);if(!c||!c.spectacle)return;
+  var v={id:spNewId(),budget:'',debut:'',fin:''};
+  spWrite(c).vagues.push(v);
+  scheduleSave('concerts');
+  speOuvrir(pid,v.id);
+  spRenderVues();
 }
 
 // ── Depuis la frise ou la liste : la fiche, sur son onglet Sponso ──
