@@ -34,4 +34,4 @@ Le document de référence est `passation.md`, **dans le dossier principal** `/U
 
 ## Fin de session
 
-Tout ce que la session a créé et qui ne sert plus va à la corbeille, jamais `rm` (un hook le bloque) : captures de `outils/banc/captures/`, profils Chrome du `$TMPDIR`, scratchpad, worktree fusionné, serveurs restés ouverts. Ne jamais toucher aux fichiers de Mathieu. Détail : §6, point 11.
+Tout ce que la session a créé et qui ne sert plus va à la corbeille, jamais `rm` (un hook le bloque) : captures de `outils/banc/captures/`, profils Chrome du `$TMPDIR`, scratchpad, worktree fusionné, serveurs restés ouverts. Ne jamais toucher aux fichiers de Mathieu. Écrire les captures directement dans le scratchpad de la session, pour en laisser moins derrière soi. Si le mode auto refuse une série de mises à la corbeille, donner la liste et la commande à Mathieu, sans chercher à contourner. Détail : §6, point 11.
