@@ -6419,15 +6419,21 @@ function rpGrandsChiffres(c,acts){
     if(!a&&typeof t.n!=='string')return null;
     function v(k){return typeof t[k]==='string'?t[k]:a?a[k]:'';}
     return {cle:t.cle,n:v('n'),l:v('l'),s:v('s'),auto:a};
-  }).filter(Boolean);
+  }).filter(Boolean).slice(0,RP_GC_MAX); // une fusion peut en reunir plus
 }
+// Un chiffre stocke porte un id egal a sa cle : la fusion a trois voies
+// traite alors les chiffres un par un (sans id, le tableau etait remplace en
+// bloc et la retouche d'un collegue faite dans les memes secondes perdue).
+function rpTuile(k){return {id:k,cle:k};}
 function rpCampCreer(c){
   // Les chiffres montres a l'ecran, ni plus ni moins (calcules avant que
   // l'element existe) : une famille disparue sort de la liste.
   var vus=rpGrandsChiffres(c).map(function(x){return x.cle;}),el=rpCampEl(c);
-  if(!el){el={id:uid('rk'),type:'campagne',concertId:c.id,cree:rpAuj(),tuiles:[]};concertMedia.push(el);}
+  // Id fixe par report (avant le 09/10 : uid('rk'), et deux premieres
+  // retouches simultanees creaient deux elements, dont un ignore).
+  if(!el){el={id:'rk-camp-'+c.id,type:'campagne',concertId:c.id,cree:rpAuj(),tuiles:[]};concertMedia.push(el);}
   var avant=Array.isArray(el.tuiles)?el.tuiles:[];
-  el.tuiles=vus.map(function(k){return avant.find(function(t){return t.cle===k;})||{cle:k};});
+  el.tuiles=vus.map(function(k){var t=avant.find(function(x){return x.cle===k;});if(t)t.id=k;return t||rpTuile(k);});
   return el;
 }
 // Frise : une ligne par famille d'actions (toutes les vagues sponso, tous les
@@ -6911,10 +6917,10 @@ function rpActionCamp(nom,b,c){
     return;
   }
   var el=rpCampCreer(c),l=el.tuiles,cle=b.getAttribute('data-cle'),i=l.findIndex(function(x){return x.cle===cle;});
-  if(nom==='g-plus'&&l.length<RP_GC_MAX)l.push({cle:uid('p-'),n:'',l:'',s:''});
-  else if(nom==='g-ajout'&&l.length<RP_GC_MAX&&i<0)l.push({cle:cle});
+  if(nom==='g-plus'&&l.length<RP_GC_MAX){var p=rpTuile(uid('p-'));p.n=p.l=p.s='';l.push(p);}
+  else if(nom==='g-ajout'&&l.length<RP_GC_MAX&&i<0)l.push(rpTuile(cle));
   else if(nom==='g-moins'&&i>=0)l.splice(i,1);
-  else if(nom==='g-calcul'&&i>=0)l[i]={cle:cle};
+  else if(nom==='g-calcul'&&i>=0)l[i]=rpTuile(cle);
   else if((nom==='g-haut'||nom==='g-bas')&&i>=0){
     var j=nom==='g-haut'?i-1:i+1;
     if(j>=0&&j<l.length){var x=l[i];l[i]=l[j];l[j]=x;}
