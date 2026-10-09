@@ -12,7 +12,7 @@
  * l'automatisation a distance » cochee dans son menu Developpement.
  *
  * Usage : node outils/banc/tour.mjs [--url http://localhost:8766/]
- *           [--largeurs 1440,1024,390] [--navigateurs safari,chrome] [--ecrans fiche]
+ *           [--largeurs 1440,1024,390] [--navigateurs safari,chrome] [--ecrans fiche] [--sortie dossier]
  * Sortie : outils/banc/captures/<date>/index.html (hors du depot : les captures
  * montrent des donnees reelles).
  */
@@ -30,13 +30,24 @@ const HAUTEUR = 900;
 const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const d = new Date(), deux = (x) => String(x).padStart(2, '0');
 const horodatage = d.getFullYear() + deux(d.getMonth() + 1) + deux(d.getDate()) + '-' + deux(d.getHours()) + deux(d.getMinutes()) + deux(d.getSeconds());
-const SORTIE = path.join(path.dirname(new URL(import.meta.url).pathname), 'captures', horodatage);
+const SORTIE = path.join(args.sortie ? path.resolve(args.sortie) : path.join(path.dirname(new URL(import.meta.url).pathname), 'captures'), horodatage);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // Chaque ecran part d'un chargement neuf de l'appli (la fausse base revient a
 // son etat initial), puis ce code est joue dans la page.
+// La sauvegarde du banc n'a pas d'evenement : E() en cree un (cinq spectacles,
+// tâches réparties, sponso de trois d'entre eux et de l'événement), en mémoire
+// seulement, pour les écrans d'événement et de spectacle.
+const EVT_DEMO = "{id:'evt-demo',evt:true,art:'Les Incontournables 2027',ville:'Dijon',dc:'2027-01-21',dcFin:'2027-01-24',da:'2026-10-02',salle:'',medias:'',jeux:'',budget:'',notes:'',ventes:0,"
+  + "parSpectacle:{4:true,5:true,12:true,18:true,9:true,19:true,21:true,23:true,24:true},"
+  + "sponso:{billet:'',legende:'',crea:'',ville:'',rayon:'',vagues:[{id:'spE1',budget:'600',debut:'2026-12-01',fin:'2026-12-15'},{id:'spE2',budget:'800',debut:'2027-01-04',fin:'2027-01-20'}]},"
+  + "prog:[{id:'pg1',dc:'2027-01-21',h:'20:30',art:'Charlie Haid',salle:'La Vapeur',ville:'Dijon',billet:'',ventes:2,sponso:{billet:'',legende:'',crea:'',ville:'',rayon:'',vagues:[{id:'spC1',budget:'400',debut:'2026-11-12',fin:'2026-12-02'},{id:'spC2',budget:'300',debut:'2027-01-05',fin:'2027-01-20'}]}},"
+  + "{id:'pg2',dc:'2027-01-22',h:'20:30',art:'Greg Duth',salle:'Atheneum',ville:'Dijon',billet:'',ventes:1,sponso:{billet:'',legende:'',crea:'',ville:'Dijon',rayon:'30',vagues:[{id:'spA1',budget:'500',debut:'2026-11-20',fin:'2026-12-10'},{id:'spA2',budget:'300',debut:'2027-01-08',fin:'2027-01-20'}]}},"
+  + "{id:'pg3',dc:'2027-01-23',h:'20:00',art:'Matthieu Nina',salle:'La Vapeur',ville:'Dijon',billet:'',ventes:0},"
+  + "{id:'pg4',dc:'2027-01-23',h:'21:00',art:'Camille',salle:'Atheneum',ville:'Dijon',billet:'',ventes:0},"
+  + "{id:'pg5',dc:'2027-01-24',h:'18:00',art:'Djadja & Dinaz',salle:'Zenith',ville:'Dijon',billet:'',ventes:4,sponso:{billet:'',legende:'',crea:'',ville:'',rayon:'',vagues:[{id:'spB1',budget:'250',debut:'2027-01-11',fin:'2027-01-22'}]}}]}";
 const AIDES = "var C=function(n){return concerts.find(function(x){return x.art===n;});};"
-  + "var E=function(){return concerts.find(estEvt);};";
+  + "var E=function(){var e=concerts.find(estEvt);if(!e){e=" + EVT_DEMO + ";concerts.push(e);}return e;};";
 const RP_DEMO = "var a=rpNouvelleAction(c,'dooh',{quand:{mode:'periode',du:'2026-08-14',au:'2026-09-10'},texte:'Zone Cormontreuil et Reims.'});a.chiffres[0].n='8';"
   + "var b=rpNouvelleAction(c,'radio',{support:'N Radio',quand:{mode:'mois',mois:'2026-09'}});b.chiffres[0].n='80+';b.chiffres[1].n='10+';";
 const ECRANS = [
@@ -57,7 +68,11 @@ const ECRANS = [
   ['14-fiche-infos', "showTab('concerts');openFiche(C('EIFFEL').id,'infos')"],
   ['15-evenement-apercu', "showTab('concerts');openFiche(E().id,'apercu')"],
   ['16-evenement-plan', "showTab('concerts');openFiche(E().id,'plan')"],
+  ['16b-evenement-plan-artiste', "showTab('concerts');openFiche(E().id,'plan');evtPlanVue='artiste';evtArtistesOuverts[E().prog[0].id]=true;renderFichePlanSp(E());"
+    + "document.getElementById('fiche-plan-sp').scrollIntoView({block:'start'})"],
+  ['16c-evenement-sponso', "showTab('concerts');openFiche(E().id,'sponso')"],
   ['17-spectacle', "showTab('concerts');openFiche(E().id);ficheChoisirSpectacle(E().prog[0].id)"],
+  ['17b-spectacle-sponso', "showTab('concerts');openFiche(E().id);spFicheOuverte=E().prog[1].sponso.vagues[1].id;ficheChoisirSpectacle(E().prog[1].id,'sponso')"],
   ['18-newsletter', "showTab('kanban');openNewsletterModal()"],
   ['19-aide', "showTab('kanban');openHelp()"],
   // Report de communication (30/09) : editeur pleine page, avec deux actions
