@@ -2643,6 +2643,7 @@ select.rp-in{padding-right:8px}
 .spe-legende .k.p{background:var(--accent-soft);border:1px dashed rgba(255,138,100,.5)}
 .spe-legende .k.d{width:9px;height:9px;background:var(--text);transform:rotate(45deg);border-radius:1px}
 .spe-aide{margin-left:auto}
+.spe-ajout-art{padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:inherit;color:var(--text-2);background:var(--surface);outline:none;max-width:100%}
 .spe-liste{margin-top:18px}
 .spe-art{display:grid;grid-template-columns:176px minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border-light)}
 .spe-art-nom{display:flex;flex-direction:column;font-family:'Anton','Oswald',Impact,sans-serif;font-size:15px;letter-spacing:.012em;text-transform:uppercase}
