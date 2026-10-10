@@ -9882,11 +9882,18 @@ function speTotaux(e){
 }
 function speJour(iso){var d=new Date((iso||'')+'T00:00:00');return isNaN(d.getTime())?null:d;}
 // Les vagues de l'evenement et des artistes, avec ce qu'il faut pour les
-// nommer : { c: sujet, vagues: triees, evt: bool }.
+// nommer : { c: sujet, vagues: triees, evt: bool }. Un artiste sans aucune
+// vague n'a pas de ligne (10/10) : il s'ajoute par speArtistesSansVague.
 function speLignes(e){
   var l=[{c:e,evt:true,vagues:spVaguesTriees(e)}];
-  speSujets(e).forEach(function(s){l.push({c:s,evt:false,vagues:spVaguesTriees(s)});});
+  speSujets(e).forEach(function(s){
+    var v=spVaguesTriees(s);
+    if(v.length)l.push({c:s,evt:false,vagues:v});
+  });
   return l;
+}
+function speArtistesSansVague(e){
+  return speSujets(e).filter(function(s){return !spRead(s).vagues.length;});
 }
 // Du mois en cours (ou d'une vague deja lancee) jusqu'au mois du dernier
 // spectacle ou de la derniere vague : entre 3 et 9 mois.
@@ -9946,14 +9953,19 @@ function speFriseHtml(e,lignes){
     }
     var sous=l.evt?(n?evtPluriel(n,'vague'):'Pour tout l\'événement')
       :[c.dc?evtJourCourt(c.dc):'',n?evtPluriel(n,'vague'):''].filter(Boolean).join(' · ');
-    if(!n)barres+='<button type="button" class="btn-link spe-ajout" onclick="'+(l.evt?'speAjouterEvt()':'speAjouter(\''+escJs(c.id)+'\')')+'">'+icon('plus')+'Ajouter une vague</button>';
+    if(!n)barres+='<button type="button" class="btn-link spe-ajout" onclick="speAjouterEvt()">'+icon('plus')+'Ajouter une vague</button>';
     h+='<div class="spe-ligne'+(l.evt?' spe-evt':'')+'"><div class="spe-info"><span class="spe-nom">'+esc(l.evt?'Événement':c.art||'Sans nom')+'</span>'
       +'<span class="spe-sous">'+(tot?'<b>'+esc(spEuro(tot))+'</b> · ':'')+esc(sous)+'</span></div>'
       +'<div class="spe-piste">'+deco+barres+'</div></div>';
   });
+  // Les artistes sans vague n'ont pas de ligne : un menu pour en ajouter une.
+  var sans=speArtistesSansVague(e),ajout='';
+  if(sans.length)ajout='<select class="spe-ajout-art" aria-label="Ajouter une vague pour un artiste" onchange="if(this.value)speAjouter(this.value)">'
+    +'<option value="">Ajouter une vague pour…</option>'
+    +sans.map(function(s){return '<option value="'+esc(s.id)+'">'+esc(s.art||'Sans nom')+'</option>';}).join('')+'</select>';
   return '<div class="spe-frise">'+h+'</div>'
     +'<div class="spe-legende"><span><i class="k p"></i>Programmée</span><span><i class="k"></i>Lancée</span><span><i class="k d"></i>Jour du spectacle</span>'
-    +'<span class="spe-aide">Un clic sur une vague l\'ouvre.</span></div>';
+    +ajout+'<span class="spe-aide">Un clic sur une vague l\'ouvre.</span></div>';
 }
 function speInterieurHtml(e){
   var lignes=speLignes(e),t=speTotaux(e),propre=spRead(e).vagues.length,propreTot=spTotal(e);
