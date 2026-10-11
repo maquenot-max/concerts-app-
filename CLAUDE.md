@@ -30,6 +30,7 @@ Le document de référence est `passation.md`, **dans le dossier principal** `/U
 - Messages de commit détaillés, qui expliquent le pourquoi.
 - Chaque déploiement de production coûte 15 crédits Netlify sur 300 par mois, et le site est suspendu à zéro. Regrouper les commits, pousser une seule fois, et seulement après le « go » de Mathieu. Un push qui ne touche ni `public/`, ni `check.js`, ni `netlify.toml` ne déclenche rien.
 - Après la mise en ligne : vérifier que les fichiers servis correspondent au commit, puis mettre à jour la passation (en-tête et section dédiée).
+- `public/style.css` modifié : recopier soi-même `project/components/bundle.css` du Design System « Braise » (§22 et §33 de la passation), sans le laisser à Mathieu.
 - Une nouvelle règle valable pour toutes les sessions (après un incident, une demande de Mathieu) : la détailler dans la passation **et** l'ajouter ici en une ligne.
 
 ## Fin de session
