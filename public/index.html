@@ -10327,17 +10327,61 @@ function renderSponso(){
 
   // La legende avant la frise : en dessous, elle tombait hors de l'ecran des
   // qu'une quinzaine de concerts avaient une sponso.
+  // Legende et mois restent colles sous la barre d'outils quand on descend
+  // dans la frise (12/10). Ils ne peuvent pas vivre dans .sp-scroll : son
+  // defilement horizontal en fait le conteneur de reference du collage, qui
+  // ne se produisait donc jamais. Ils ont leur propre bande, decalee a la main
+  // pour suivre le defilement horizontal (spSuivreDefil). .sp-frise borne le
+  // collage : la tete s'en va avec la derniere ligne, avant les terminees.
   wrap.innerHTML=toolbar
     +'<div class="sp-card">'
+    +'<div class="sp-frise">'
+    +'<div class="sp-fige">'
     +legend
-    +'<div class="sp-scroll">'
+    +'<div class="sp-head-scroll" id="sp-head-scroll" onwheel="spRoueTete(event)">'
     +'<div class="sp-inner" style="min-width:'+largeurInner+'px">'
     +'<div class="sp-head"><div class="sp-head-info">Concert</div><div class="sp-head-track">'+headM+'</div></div>'
+    +'</div></div></div>'
+    +'<div class="sp-scroll" id="sp-scroll" onscroll="spSuivreDefil()">'
+    +'<div class="sp-inner" style="min-width:'+largeurInner+'px">'
     +body
-    +'</div></div>'
+    +'</div></div></div>'
     +'<div class="sp-tel">'+tel+'</div>'
     +finisHtml
     +'</div>';
+  spCalerFige(wrap);
+}
+// La tete collee se place juste sous la barre d'outils, elle-meme collee sous
+// l'en-tete : sa hauteur se mesure, parce qu'elle passe sur deux lignes sur un
+// ecran etroit. L'observateur suit aussi le premier affichage de l'onglet (la
+// barre mesure 0 tant que la vue est masquee).
+var spFigeObs=null;
+function spCalerFige(wrap){
+  var barre=wrap.querySelector('.filters');
+  if(!barre)return;
+  function caler(){
+    if(!barre.offsetHeight)return;
+    wrap.style.setProperty('--sp-fige-top',((parseFloat(getComputedStyle(barre).top)||0)+barre.offsetHeight)+'px');
+  }
+  if(spFigeObs)spFigeObs.disconnect();
+  if(window.ResizeObserver){spFigeObs=new ResizeObserver(caler);spFigeObs.observe(barre);}
+  caler();
+}
+// Dans un seul sens, de la frise vers la tete : synchroniser aussi l'inverse
+// ferait se battre les deux pendant l'inertie du trackpad.
+function spSuivreDefil(){
+  var f=document.getElementById('sp-scroll'),t=document.getElementById('sp-head-scroll');
+  if(f&&t)t.scrollLeft=f.scrollLeft;
+}
+// La tete ne defile pas d'elle-meme (overflow:hidden) : un glissement
+// horizontal sur les mois est renvoye a la frise, sinon il ne ferait rien, ou
+// declencherait le retour a la page precedente du navigateur.
+function spRoueTete(e){
+  if(Math.abs(e.deltaX)<=Math.abs(e.deltaY))return;
+  var f=document.getElementById('sp-scroll');
+  if(!f)return;
+  f.scrollLeft+=e.deltaX;
+  e.preventDefault();
 }
 function spSetFiltre(f){spFiltre=f;renderSponso();}
 function spSetVue(v){spVue=v;renderSponso();}
