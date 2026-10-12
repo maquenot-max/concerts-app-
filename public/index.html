@@ -5738,6 +5738,8 @@ function evtAjouterColle(c){
 // fusionnes par id comme le reste :
 //   action  {id,type:'action',concertId,rub,modele,titre,support,quand,chiffres,
 //            texte,lien,detail,modeDetail,vagues,source,cree,copie}
+//            vagues : {idVague:{nom,depense,impressions,couverture,clics,vues,
+//            debut,fin,cible,propre,retire}} (sponso, voir rpVagues)
 //            copie : id commun aux copies d'une meme action dans plusieurs
 //            reports (« Ajouter a d'autres dates », 01/10) ; leurs photos
 //            pointent vers les memes fichiers
@@ -6002,13 +6004,46 @@ function rpNoms(a){
   var p=titre&&sup?sup:'';
   return {grand:g,puce:p,ligne:g+(p?' · '+p:'')};
 }
+// Vagues sponso du report (12/10, demande de Mathieu : les modifier et en
+// ajouter sans passer par le suivi sponso). Celles de l'onglet Sponso de la
+// fiche arrivent d'elles-memes ; leurs dates et leur ciblage se changent pour
+// le report seul (debut, fin, cible dans a.vagues), l'onglet ne bouge pas.
+// Une vague ajoutee ici (propre) n'existe que dans le report. Une vague de
+// l'onglet retiree du report (retire) garde ses chiffres, pour revenir telle
+// quelle. Numerotation chronologique, comme spVaguesTriees.
+function rpCibleDefaut(c){return spCible(spRead(c))||String(c.ville||'').trim();}
+function rpVagues(c,a){
+  var mes=(a&&a.vagues)||{},defaut=rpCibleDefaut(c),out=[],vus={};
+  function prend(id,d,base){
+    out.push({id:id,lie:!!base,d:d,
+      debut:typeof d.debut==='string'?d.debut:(base&&base.debut)||'',
+      fin:typeof d.fin==='string'?d.fin:(base&&base.fin)||'',
+      cible:String(d.cible||'').trim()||defaut});
+  }
+  spRead(c).vagues.forEach(function(v){vus[v.id]=1;var d=mes[v.id]||{};if(!d.retire)prend(v.id,d,v);});
+  Object.keys(mes).forEach(function(k){if(!vus[k]&&mes[k]&&mes[k].propre)prend(k,mes[k],null);});
+  return out.sort(function(x,y){
+    if(!x.debut&&!y.debut)return 0;
+    if(!x.debut)return 1;
+    if(!y.debut)return -1;
+    return x.debut<y.debut?-1:x.debut>y.debut?1:0;
+  });
+}
+// Une seule date saisie : la vague vaut pour ce jour-la.
+function rpQuandVague(v){
+  var du=v.debut||v.fin,au=v.fin||v.debut;
+  if(!du)return null;
+  if(au<du){var t=du;du=au;au=t;}
+  return du===au?{mode:'jour',du:du,au:du}:{mode:'periode',du:du,au:au};
+}
+function rpFmtVague(v,long){var q=rpQuandVague(v);return q?(long?rpFmtQuand(q):rpFmtQuandCourt(q)):(long?'À programmer':'à programmer');}
 // Ce qui manque encore (point ambre). Le PDF peut partir quand meme : une
 // information absente n'y est simplement pas imprimee.
 function rpManque(a){
   if(a.modele==='posts')return '';
   if(a.modele==='sponso'){
     var v=a.vagues||{};
-    var rempli=Object.keys(v).some(function(k){return RP_MESURES.some(function(m){return m[0]!=='depense'&&String(v[k][m[0]]||'').trim();});});
+    var rempli=Object.keys(v).some(function(k){return !v[k].retire&&RP_MESURES.some(function(m){return m[0]!=='depense'&&String(v[k][m[0]]||'').trim();});});
     return rempli?'':'Chiffres à saisir';
   }
   if(!rpSansDate(a)&&!rpQuand(a))return 'Période à préciser';
@@ -6447,7 +6482,7 @@ function rpDuree(c,acts){
   var fin=c.dc,debut=null;if(!fin)return '';
   function vu(d){if(d&&d<fin&&(!debut||d<debut))debut=d;}
   acts.forEach(function(a){
-    if(a.modele==='sponso'){spVaguesTriees(c).forEach(function(v){vu(v.debut);});return;}
+    if(a.modele==='sponso'){rpVagues(c,a).forEach(function(v){vu(v.debut);});return;}
     if(a.modele==='posts'){rpPostsPublies(c).forEach(function(p){vu(p.date);});return;}
     vu(rpDebut(rpQuand(a)));
   });
@@ -6482,10 +6517,10 @@ function rpGcAuto(c,acts){
   var out=[];
   var sp=acts.find(function(a){return a.modele==='sponso';});
   if(sp){
-    var vs=spVaguesTriees(c),mes=sp.vagues||{};
-    var k=['impressions','vues','couverture','clics'].find(function(x){return vs.some(function(v){return rpNombre((mes[v.id]||{})[x])!==null;});});
+    var vs=rpVagues(c,sp);
+    var k=['impressions','vues','couverture','clics'].find(function(x){return vs.some(function(v){return rpNombre(v.d[x])!==null;});});
     if(k){
-      var ts=rpSomme();vs.forEach(function(v){rpAjouteSomme(ts,String((mes[v.id]||{})[k]||''));});
+      var ts=rpSomme();vs.forEach(function(v){rpAjouteSomme(ts,String(v.d[k]||''));});
       out.push({cle:'sponso',v:ts.v,n:rpFmtNombre(ts.v),l:RP_GC_SPONSO[k],s:'Facebook et Instagram'+(ts.nb>1?', en '+ts.nb+' vagues':'')});
     }
   }
@@ -6567,7 +6602,7 @@ function rpFrise(c,acts,place){
   acts.forEach(function(a){
     if(a.modele==='sponso'){
       var gs=groupe('sponso','Sponsorisation');
-      spVaguesTriees(c).forEach(function(v){if(v.debut&&v.fin)gs.seg.push({du:v.debut,au:v.fin,exact:true});});
+      rpVagues(c,a).forEach(function(v){var q=rpQuandVague(v);if(q)gs.seg.push({du:q.du,au:q.au,exact:true});});
       return;
     }
     if(a.modele==='posts'){
@@ -6715,22 +6750,21 @@ function rpPageVignettes(c,p,num,ap){
   return rpPage(c,'',rpRubTexte(p.rub),h,num);
 }
 function rpPageSponso(c,p,num){
-  var a=p.actions[0],vs=spVaguesTriees(c),mes=a.vagues||{},s=spRead(c);
-  var cible=spCible(s)||String(c.ville||'').trim();
-  var cols=RP_MESURES.filter(function(m){return vs.some(function(v){return rpNombre((mes[v.id]||{})[m[0]])!==null;});});
+  var a=p.actions[0],vs=rpVagues(c,a);
+  var cols=RP_MESURES.filter(function(m){return vs.some(function(v){return rpNombre(v.d[m[0]])!==null;});});
   function val(k,n){return n===null?'':rpFmtNombre(n)+(k==='depense'?' €':'');}
-  var tot={};cols.forEach(function(m){tot[m[0]]=vs.reduce(function(t,v){var n=rpNombre((mes[v.id]||{})[m[0]]);return n===null?t:t+n;},0);});
-  var h='<div class="rpp-h"><h2 class="rpp-titre rpp-titre-page">'+esc(rpNoms(a).grand)+'</h2><div class="rpp-h-note">'+esc(evtPluriel(vs.length,'vague'))+(cols.length?' · résultats cumulés':'')+'</div></div>';
+  var tot={};cols.forEach(function(m){tot[m[0]]=vs.reduce(function(t,v){var n=rpNombre(v.d[m[0]]);return n===null?t:t+n;},0);});
+  var h='<div class="rpp-h"><h2 class="rpp-titre rpp-titre-page">'+esc(rpNoms(a).grand)+'</h2><div class="rpp-h-note">'+esc(vs.length?evtPluriel(vs.length,'vague')+(cols.length?' · résultats cumulés':''):'')+'</div></div>';
   var ncols=cols.length;
   if(ncols)h+='<div class="rpp-kpis n'+ncols+'">'+cols.map(function(m){
     return '<div class="rpp-kpi"><span>'+esc(m[0]==='couverture'&&vs.length>1?'Couverture cumulée':m[1])+'</span><b>'+esc(val(m[0],tot[m[0]]))+'</b></div>';
   }).join('')+'</div>';
   var rows=vs.map(function(v,i){
-    var d=mes[v.id]||{},nom=String(d.nom||'').trim();
-    return '<tr><td><b>Vague '+(i+1)+'</b>'+(nom?'<span>'+esc(nom)+'</span>':'')+'</td><td>'+rpDateHtml(v.debut&&v.fin?rpFmtQuand({mode:'periode',du:v.debut,au:v.fin}):'À programmer')+'</td><td>'+esc(cible)+'</td>'
+    var d=v.d,nom=String(d.nom||'').trim();
+    return '<tr><td><b>Vague '+(i+1)+'</b>'+(nom?'<span>'+esc(nom)+'</span>':'')+'</td><td>'+rpDateHtml(rpFmtVague(v,true))+'</td><td>'+esc(v.cible)+'</td>'
       +cols.map(function(m){return '<td class="n">'+esc(val(m[0],rpNombre(d[m[0]])))+'</td>';}).join('')+'</tr>';
   }).join('');
-  h+='<div class="rpp-table"><table><thead><tr><th>Vague</th><th>Période</th><th>Ciblage</th>'+cols.map(function(m){return '<th class="n">'+esc(m[1])+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody>'
+  if(vs.length)h+='<div class="rpp-table"><table><thead><tr><th>Vague</th><th>Période</th><th>Ciblage</th>'+cols.map(function(m){return '<th class="n">'+esc(m[1])+'</th>';}).join('')+'</tr></thead><tbody>'+rows+'</tbody>'
     +(cols.length&&vs.length>1?'<tfoot><tr><td>Total</td><td></td><td></td>'+cols.map(function(m){return '<td class="n">'+esc(val(m[0],tot[m[0]]))+'</td>';}).join('')+'</tr></tfoot>':'')+'</table></div>';
   var notes=[];
   if(String(a.texte||'').trim())notes.push(String(a.texte).trim());
@@ -6881,13 +6915,24 @@ function rpNomListe(a){
 // regroupe plusieurs elements (posts, jeux concours, agendas...) s'affiche
 // une fois, ses elements dessous, avec « + Ajouter un autre ... » : on voit
 // qu'un nouveau post est un nouvel element de la meme slide (01/10).
+// Reperes en tete de la liste (12/10, demande de Mathieu) : la date
+// d'annonce aide a remplir plusieurs actions (evenement Facebook, mise en
+// vente, posts d'annonce), et le budget promo s'ouvre dans un autre onglet,
+// comme depuis la fiche (seuls les liens http(s), voir openBudgetModal).
+function rpHtmlReperes(c){
+  function ligne(nom,d){return '<div class="rp-repere"><span>'+esc(nom)+'</span>'+(d?'<b>'+esc(dateCourte(d,true))+'</b>':'<b class="vide">Non renseignée</b>')+'</div>';}
+  var bud=safeUrl(c.budget);
+  return '<div class="rp-reperes">'+ligne('Annonce',c.da)+ligne(estEvt(c)?'Événement':'Concert',c.dc)
+    +(bud?'<a class="btn rp-b-budget" href="'+escUrl(c.budget)+'" target="_blank" rel="noopener">'+icon('sheet')+'<span>Budget promo</span>'+icon('arrow-up-right','ico-muted')+'</a>'
+      :'<p class="rp-repere-aide">Pas de lien vers le budget promo dans la fiche.</p>')+'</div>';
+}
 function rpHtmlListe(c){
   var pages=rpPages(c),sug=rpSuggestions(c).length,couv=rpCouvUrl(c);
   function item(id,vign,nom,fin,cls){
     return '<button type="button" class="rp-item'+(cls||'')+(rpSel===id?' actif':'')+'" data-a="sel" data-id="'+esc(id)+'">'+vign+'<span class="rp-item-nom">'+esc(nom)+'</span>'+fin+'</button>';
   }
   function itemAction(a,cls){var manque=rpManque(a);return item(a.id,rpVignette(a),rpNomListe(a),manque?'<span class="rp-point" title="'+esc(manque)+'"></span>':'',cls);}
-  var h='<div class="rp-defil">';
+  var h='<div class="rp-defil">'+rpHtmlReperes(c);
   if(sug)h+='<button type="button" class="rp-b-sugg'+(rpSel==='ajouter'?' actif':'')+'" data-a="ajouter"><span class="rp-point corail"></span><span>'+esc(evtPluriel(sug,'suggestion'))+' de l\'appli</span><b>Voir</b></button>';
   h+='<div class="rp-groupe">Début</div>';
   h+=item('couv',couv?'<img class="rp-vign" src="'+esc(couv)+'" alt="">':'<span class="rp-vign ciel"></span>','Couverture','<span class="rp-auto">auto</span>');
@@ -7183,18 +7228,31 @@ function rpHtmlDetail(a){
     +'<button type="button" class="btn-link rp-gauche" data-a="l-plus">+ Ajouter une ligne</button><div id="rp-calcul">'+rpHtmlCalcul(a)+'</div></div>';
   return h;
 }
+// Les vagues du report (rpVagues) : dates, ciblage, objectif et chiffres se
+// saisissent ici, sans toucher a l'onglet Sponso de la fiche.
 function rpHtmlSponso(c,a){
-  var vs=spVaguesTriees(c),mes=a.vagues||{};
-  if(!vs.length)return '<p class="rp-alerte">Aucune vague dans l\'onglet Sponso de la fiche : ajoute-les là-bas, elles apparaîtront ici.</p>';
-  return '<div class="rp-champ"><span>Résultats par vague</span>'+vs.map(function(v,i){
-    var d=mes[v.id]||{},vid=v.id;
-    return '<div class="rp-vague"><div class="rp-vague-t">Vague '+(i+1)+' <span>'+esc(v.debut&&v.fin?rpFmtQuandCourt({mode:'periode',du:v.debut,au:v.fin}):'à programmer')+'</span></div>'
-      +'<input class="rp-in" type="text" data-f="v-nom" data-v="'+esc(vid)+'" value="'+esc(d.nom||'')+'" placeholder="Objectif, facultatif : vente de billets…" aria-label="Objectif de la vague">'
+  var vs=rpVagues(c,a),tab=spRead(c).vagues,mes=a.vagues||{},defaut=rpCibleDefaut(c);
+  var ret=tab.filter(function(v){return mes[v.id]&&mes[v.id].retire;}).length;
+  return '<div class="rp-champ"><span>Vagues et résultats</span>'+vs.map(function(v,i){
+    var d=v.d,vid=esc(v.id),n=i+1,base=v.lie&&tab.find(function(x){return x.id===v.id;});
+    var change=base&&((typeof d.debut==='string'&&d.debut!==(base.debut||''))||(typeof d.fin==='string'&&d.fin!==(base.fin||'')));
+    return '<div class="rp-vague"><div class="rp-vague-t">Vague '+n+' <span>'+(v.lie?'de l\'onglet Sponso':'ajoutée au report')+'</span>'
+      +'<button type="button" class="rp-ico" data-a="v-moins" data-v="'+vid+'" aria-label="Retirer la vague '+n+' du report" title="Retirer du report">'+icon('x')+'</button></div>'
+      +'<div class="rp-dates"><input class="rp-in" type="date" data-f="v-debut" data-v="'+vid+'" value="'+esc(v.debut)+'" aria-label="Début de la vague '+n+'"><span aria-hidden="true">→</span>'
+      +'<input class="rp-in" type="date" data-f="v-fin" data-v="'+vid+'" value="'+esc(v.fin)+'" aria-label="Fin de la vague '+n+'"></div>'
+      +(change?'<p class="rp-aide">Dates changées pour le report. <button type="button" class="btn-link" data-a="v-reprendre" data-v="'+vid+'">Reprendre celles de l\'onglet Sponso</button></p>':'')
+      +'<input class="rp-in" type="text" data-f="v-cible" data-v="'+vid+'" value="'+esc(d.cible||'')+'" placeholder="'+esc(defaut?'Ciblage : '+defaut:'Ciblage : ville, rayon…')+'" aria-label="Ciblage de la vague '+n+'">'
+      +'<input class="rp-in" type="text" data-f="v-nom" data-v="'+vid+'" value="'+esc(d.nom||'')+'" placeholder="Objectif, facultatif : vente de billets…" aria-label="Objectif de la vague '+n+'">'
       +'<div class="rp-mesures">'+RP_MESURES.map(function(mm){
         var k=mm[0];
-        return '<label class="rp-mesure">'+esc(mm[1])+(k==='depense'?' (€)':'')+'<input class="rp-in" type="text" inputmode="decimal" data-f="v-'+k+'" data-v="'+esc(vid)+'" value="'+esc(d[k]||'')+'"></label>';
+        return '<label class="rp-mesure">'+esc(mm[1])+(k==='depense'?' (€)':'')+'<input class="rp-in" type="text" inputmode="decimal" data-f="v-'+k+'" data-v="'+vid+'" value="'+esc(d[k]||'')+'"></label>';
       }).join('')+'</div></div>';
-  }).join('')+'<p class="rp-aide">Dates et ciblage viennent de l\'onglet Sponso. Les chiffres : ceux du gestionnaire de publicités.</p></div>';
+  }).join('')
+    +'<button type="button" class="btn-link rp-gauche" data-a="v-plus">+ Ajouter une vague</button>'
+    +(ret?'<p class="rp-aide">'+esc(evtPluriel(ret,'vague de l\'onglet Sponso retirée','vagues de l\'onglet Sponso retirées'))+' du report. <button type="button" class="btn-link" data-a="v-revoir">'+(ret>1?'Les remettre':'La remettre')+'</button></p>':'')
+    +'<p class="rp-aide">'+(tab.length?'Les vagues de l\'onglet Sponso arrivent d\'elles-mêmes. Ce que tu changes ou ajoutes ici reste dans le report : l\'onglet Sponso ne bouge pas.'
+      :'Aucune vague dans l\'onglet Sponso de la fiche : ajoute ici celles du report, le suivi sponso ne bouge pas.')
+    +' Les chiffres : ceux du gestionnaire de publicités.</p></div>';
 }
 function rpHtmlPosts(c){
   var ps=rpPostsPublies(c);
@@ -7300,6 +7358,26 @@ function rpAction(nom,b){
     case 'detail-off':a.modeDetail=false;break;
     case 'l-plus':{var dl=a.detail||(a.detail=[]),der=dl[dl.length-1]||{};dl.push({id:uid('rl'),du:der.au||der.du||'',au:der.au||der.du||'',n:'',quoi:der.quoi||'',total:!!der.total});break;}
     case 'l-moins':if(a.detail)a.detail.splice(i,1);break;
+    // Vagues sponso du report (rpVagues).
+    case 'v-plus':{
+      var nv=uid('rv');(a.vagues||(a.vagues={}))[nv]={propre:true};
+      rpSauver();rpRendu();
+      var ch=document.querySelector('#rp [data-f="v-debut"][data-v="'+nv+'"]');if(ch&&!rpEstTel())ch.focus();
+      return;
+    }
+    case 'v-moins':{
+      var mv=b.getAttribute('data-v'),vv=a.vagues||(a.vagues={}),dv=vv[mv];
+      // Vague de l'onglet : seulement masquee, chiffres gardes (« La remettre »).
+      if(!dv||!dv.propre){(vv[mv]=dv||{}).retire=true;break;}
+      var plein=RP_MESURES.some(function(m){return String(dv[m[0]]||'').trim();})||String(dv.nom||'').trim();
+      (plein?customConfirm('Supprimer cette vague et ses chiffres du report ?','Supprimer'):Promise.resolve(true)).then(function(ok){
+        if(!ok||!a.vagues)return;
+        delete a.vagues[mv];rpSauver();rpDemandeRendu();
+      });
+      return;
+    }
+    case 'v-revoir':Object.keys(a.vagues||{}).forEach(function(k){delete a.vagues[k].retire;});break;
+    case 'v-reprendre':{var dr=(a.vagues||{})[b.getAttribute('data-v')];if(dr){delete dr.debut;delete dr.fin;}break;}
     case 'ph-g':case 'ph-d':{
       var ph=rpPhotos(a.id),k=ph.findIndex(function(p){return p.id===b.getAttribute('data-id');}),o=k+(nom==='ph-g'?-1:1);
       if(k<0||!ph[o])return;
@@ -7358,6 +7436,9 @@ function rpChamp(t,change){
   // le reste du formulaire garde le champ en cours de saisie.
   if(f.indexOf('l-')===0&&rpDetailActif(a)!==!!document.getElementById('rp-quand-calc')){var qb=document.getElementById('rp-quand-bloc');if(qb)qb.innerHTML=rpHtmlQuand(rpConcert(),a);}
   rpPlanifierApercu();
+  // Date d'une vague : numerotation et « Dates changees » a revoir, une fois
+  // sorti des champs (rpDemandeRendu attend la fin de la saisie).
+  if(change&&(f==='v-debut'||f==='v-fin'))rpDemandeRendu();
 }
 function rpHaut(){var d=document.querySelector('#rp-form .rp-defil');if(d)d.scrollTop=0;if(rpEstTel()){var cp=document.querySelector('#rp .rp-corps');if(cp)cp.scrollTop=0;}}
 function rpFocus(sel,vide){if(!vide||rpEstTel())return;var el=document.querySelector('#rp '+sel);if(el)el.focus();}
