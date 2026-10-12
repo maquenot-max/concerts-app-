@@ -2124,6 +2124,14 @@ button.tag.fa-lien{cursor:pointer}
 .rp-b-sugg span:nth-child(2){flex:1}
 .rp-b-sugg b{color:var(--accent);font-weight:600}
 .rp-b-sugg:hover,.rp-b-sugg.actif{box-shadow:var(--corail-lueur)}
+.rp-reperes{display:flex;flex-direction:column;gap:6px;margin:0 0 10px;padding:12px 14px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--surface-2)}
+.rp-repere{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:13px}
+.rp-repere span{font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+.rp-repere b{font-weight:600;color:var(--text);white-space:nowrap}
+.rp-repere b.vide{font-weight:400;color:var(--text-4)}
+.rp-b-budget{display:flex;align-items:center;justify-content:center;gap:8px;min-height:36px;margin-top:6px;padding:6px 12px;text-decoration:none}
+.rp-b-budget .ico{width:16px;height:16px}
+.rp-repere-aide{margin-top:4px;font-size:12px;line-height:1.4;color:var(--text-4)}
 .rp-groupe{padding:12px 8px 6px;font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
 .rp-item{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:6px 8px;border:none;border-radius:var(--radius-sm);background:none;color:var(--text);font:inherit;font-size:13px;text-align:left;cursor:pointer;transition:box-shadow .3s var(--sortie)}
 .rp-item:hover{box-shadow:var(--survol-ombre)}
@@ -2261,8 +2269,10 @@ select.rp-in{padding-right:8px}
 .rp-puce:hover{color:var(--text);box-shadow:var(--survol-ombre)}
 .rp-vague{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--border-light);border-radius:12px;background:var(--surface-2)}
 .rp-vague .rp-in{background:var(--surface)}
-.rp-vague-t{font-size:13px;font-weight:600;color:var(--text)}
-.rp-vague-t span{font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:400;color:var(--text-3)}
+.rp-vague-t{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text)}
+.rp-vague-t span{font-size:12px;font-weight:400;color:var(--text-3)}
+.rp-vague-t .rp-ico{margin-left:auto}
+.rp-aide .btn-link{padding:2px 4px}
 .rp-mesures{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .rp-mesure{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-3)}
 .rp-posts{display:flex;flex-direction:column;gap:4px;padding-left:0;list-style:none;font-size:13px;font-weight:400;color:var(--text-2)}
