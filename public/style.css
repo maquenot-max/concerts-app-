@@ -1670,7 +1670,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
   .rs-chips:empty{display:none}
   .rs-add-day-btn{margin-left:auto}
   /* Periode sponso sur sa propre ligne, libelle flexible. */
-  .sp-period,.sp-scroll,.sp-card .sp-legend{display:none}
+  .sp-period,.sp-frise{display:none}
   .sp-card .sp-tel{display:block}
   .sp-period .month-nav-label{flex:1;min-width:0;font-size:13px}
   .process-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -1679,7 +1679,14 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 
 
 /* Suivi sponso */
-.sp-card{background:var(--verre);border:1px solid transparent;border-radius:var(--radius);overflow:hidden}
+/* overflow:clip et non hidden : hidden ferait de la carte le conteneur de
+   reference de .sp-fige, qui ne se collerait plus en haut de l'ecran. hidden
+   reste en repli pour les navigateurs d'avant clip (tete simplement non collee). */
+.sp-card{background:var(--verre);border:1px solid transparent;border-radius:var(--radius);overflow:hidden;overflow:clip}
+/* Legende et mois colles sous la barre d'outils (12/10). --sp-fige-top est
+   mesure par spCalerFige() ; 122px = en-tete 68 + barre d'outils sur une ligne. */
+.sp-fige{position:sticky;top:var(--sp-fige-top,122px);z-index:5;background:var(--verre-haut);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.sp-head-scroll{overflow:hidden}
 .sp-scroll{overflow-x:auto}
 .sp-inner{min-width:680px}
 .sp-scroll{scrollbar-width:thin}
