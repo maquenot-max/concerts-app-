@@ -80,6 +80,8 @@ const ECRANS = [
   ['20-report-editeur', "showTab('concerts');var c=C('EIFFEL');" + RP_DEMO + "openFiche(c.id);rpOuvrir(c.id);rpSel=a.id;rpRendu()"],
   ['21-report-ajouter', "showTab('concerts');var c=C('EIFFEL');openFiche(c.id);rpOuvrir(c.id);rpSel='ajouter';rpRendu()"],
   ['22-report-pages', "showTab('concerts');var c=C('EIFFEL');" + RP_DEMO + "openFiche(c.id);rpOuvrir(c.id);rpTout=true;rpRendu()"],
+  // Journal d'activite (14/10) : une semaine de gestes de demonstration.
+  ['23-activite', "if(!__banc.activite.length)__banc.activiteDemo();showTab('activite')"],
 ].filter(([n]) => n.includes(FILTRE));
 
 // Transitions et animations coupees : une fenetre Safari cachee derriere
