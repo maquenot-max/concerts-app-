@@ -86,6 +86,7 @@
         <div class="menu-head" id="user-menu-head"></div>
         <button class="menu-item" onclick="closeUserMenu();openNewsletterModal()">Newsletter</button>
         <button class="menu-item" id="user-menu-team" onclick="closeUserMenu();showTab('team')" style="display:none">Équipe</button>
+        <button class="menu-item" id="user-menu-activite" onclick="closeUserMenu();showTab('activite')" style="display:none">Activité</button>
         <button class="menu-item" id="user-menu-process" onclick="closeUserMenu();showTab('process')" style="display:none">Process</button>
         <button class="menu-item" id="user-menu-budget" onclick="closeUserMenu();showTab('budgetconfig')" style="display:none">Budget</button>
         <button class="menu-item" onclick="closeUserMenu();openBackupModal()">Sauvegarde</button>
@@ -232,6 +233,16 @@
           <button class="btn btn-primary" onclick="openTeamAddModal()">+ Ajouter un membre</button>
         </div>
         <div id="team-list"></div>
+      </div>
+    </div>
+    <div id="tab-activite" class="panel">
+      <div class="card card-narrow">
+        <div class="card-head">
+          <div><h2>Activité</h2><div class="card-desc">Ce que chacun a modifié dans l'outil. L'historique remonte à deux mois ; au-delà, il s'efface tout seul.</div></div>
+        </div>
+        <div class="act-equipe" id="act-equipe"></div>
+        <label class="act-recherche"><svg class="ico" aria-hidden="true"><use href="#i-search"></use></svg><input type="search" id="act-q" placeholder="Un concert, une tâche, un post…" aria-label="Chercher dans l'activité" oninput="actChercher(this.value)"></label>
+        <div id="act-fil"></div>
       </div>
     </div>
   </main>
@@ -818,7 +829,7 @@ function renderUserMenu(){
     btn.classList.toggle('a-initiale',!!ini);
   }
   var admin=isAdmin();
-  ['user-menu-team','user-menu-process','user-menu-budget'].forEach(function(id){
+  ['user-menu-team','user-menu-activite','user-menu-process','user-menu-budget'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.style.display=admin?'':'none';
   });
 }
@@ -2707,6 +2718,476 @@ async function storageDelete(path){
   await fetch(SUPABASE_URL+'/storage/v1/object/concert-media/'+path,{method:'DELETE',headers:await authHeaders()});
 }
 
+// ── ACTIVITE (administrateurs, 14/10) : qui a modifie quoi, sur deux mois ──
+// Demande de Mathieu du 14/10, maquette A (le fil) avec le resume par
+// personne de B : https://claude.ai/artifact/TJaRUbo7UTQma8VhKwyYrq
+// Le journal est tenu par la base, pas par l'appli : le trigger
+// app_data_log_activity compare chaque ecriture d'app_data a la precedente
+// (element par element, par id, pour une liste ; cle par cle pour un objet ;
+// d'un element modifie, seuls les champs qui changent) et note qui l'a faite,
+// de la meme source infalsifiable que updated_by. Les ecritures d'une meme
+// personne sur un meme element a moins de 15 min font une seule ligne, et un
+// aller-retour (cocher puis decocher) n'en laisse aucune. Lecture reservee aux
+// admins (RLS) ; les lignes de plus de deux mois sont effacees chaque nuit
+// (pg_cron). Detail : §36 de la passation.
+// Ici : lecture par tranches de 7 jours, traduction en phrases, gestes en
+// serie regroupes (trois coches sur un meme concert), filtre par personne.
+var ACT_JOURS=7,ACT_MOIS=2,ACT_SERIE_MIN=45;
+var actRows=[],actDepuis=null,actPlus=true,actCharge=false,actEnCours=null,actErreur='',actQui='',actQ='';
+async function actCharger(plus){
+  var fin=plus&&actDepuis?actDepuis:null;
+  var debut=new Date(fin?fin.getTime():Date.now());debut.setDate(debut.getDate()-ACT_JOURS);
+  var limite=new Date();limite.setMonth(limite.getMonth()-ACT_MOIS);
+  if(debut<limite)debut=limite;
+  var f=fin?'and=(at.gte.'+debut.toISOString()+',at.lt.'+fin.toISOString()+')':'at=gte.'+debut.toISOString();
+  var r=await fetch(SUPABASE_URL+'/rest/v1/activity_log?select=id,first_at,at,email,key,item,op,old_value,new_value,writes&'+f+'&order=at.desc&limit=5000',{headers:await authHeaders()});
+  if(!r.ok){var e=new Error('HTTP '+r.status);e.status=r.status;throw e;}
+  var rows=await r.json();
+  actRows=fin?actRows.concat(rows):rows;
+  actDepuis=debut;actPlus=debut>limite;
+}
+// force : a l'ouverture de la page, on relit ; un simple redessin (synchro,
+// fiche refermee) garde ce qui est deja charge.
+async function renderActivite(force){
+  var el=document.getElementById('act-fil');if(!el)return;
+  if(!isAdmin()){el.innerHTML='<div class="empty-state">Réservé aux administrateurs.</div>';document.getElementById('act-equipe').innerHTML='';return;}
+  if(force)actCharge=false;
+  if(!actCharge){
+    if(!actEnCours){
+      el.innerHTML='<div class="empty-state">Chargement…</div>';
+      actEnCours=actCharger(false).then(function(){actErreur='';},function(e){
+        actRows=[];actErreur=e&&e.status===404?'Le journal n\'est pas encore en place dans la base.':'Impossible de charger l\'activité.';
+      }).then(function(){actCharge=true;actEnCours=null;});
+    }
+    await actEnCours;
+  }
+  actDessiner();
+}
+async function actPlusAnciens(btn){
+  if(btn){btn.disabled=true;btn.textContent='Chargement…';}
+  try{await actCharger(true);}catch(e){showToast('Impossible de charger les jours précédents.');}
+  actDessiner();
+}
+function actChercher(v){actQ=v||'';actDessiner();}
+function actFiltrer(email){actQui=actQui===email?'':email;actDessiner();}
+function actOuvrir(id,sp){openFiche(id,null,null,sp||undefined);}
+
+// ── Traduction d'une ligne du journal en phrase ──
+// Chaque phrase : texte (apres le prenom), ctx (ou), detail (avant -> apres),
+// cat (pastille), compte (false : gestes automatiques, pas comptes dans le
+// resume), serie (cle de regroupement) + serieTxt(n) + sous (une ligne de la
+// liste du groupe), remettre (un element supprime qu'on peut remettre).
+// null : ligne technique, jamais affichee (jour de coche du report, faitLe,
+// coches d'un concert supprime).
+var ACT_CATS={plan:{l:'Plan',cls:'p-gen'},concert:{l:'Infos',cls:'p-gen'},sponso:{l:'Sponso',cls:'p-sp'},rs:{l:'RS',cls:'p-rs'},taches:{l:'Tâches',cls:'p-gen'},report:{l:'Report',cls:'p-prod'},photos:{l:'Photos',cls:'p-ph'},reglages:{l:'Réglages',cls:'p-bud'}};
+function actB(t){return '<b>'+esc(t)+'</b>';}
+function actAvantApres(a,b){return (a?'<s>'+esc(a)+'</s> → ':'')+esc(b||'—');}
+function actDate(d){return d?dateCourte(d):'';}
+function actPluriel(n,s,p){return n+' '+(n>1?(p||s+'s'):s);}
+function actSujetLien(s,repli){
+  if(!s)return repli?actB(repli):'un concert supprimé';
+  var fid=s.spectacle?s.evenement.id:s.id,sp=s.spectacle?s.id:'';
+  return '<button type="button" class="act-lien" onclick="actOuvrir(\''+escJs(fid)+'\',\''+escJs(sp)+'\')">'+esc(s.art||'Sans nom')+'</button>';
+}
+function actSujetCtx(s){
+  if(!s)return '';
+  return [s.spectacle?s.evenement.art:'',lieuTexte(s),actDate(s.dc)].filter(Boolean).join(' · ');
+}
+function actTache(tid){
+  var t=process.find(function(x){return String(x.id)===String(tid);})||customTasks.find(function(x){return String(x.id)===String(tid);});
+  return t?t.nom:'une tâche';
+}
+// Un texte long (notes, legende) : le nouveau en deux lignes, l'ancien a deplier.
+function actTexte(a,b){
+  a=String(a==null?'':a);b=String(b==null?'':b);
+  if(a.length<=60&&b.length<=60&&a.indexOf('\n')<0&&b.indexOf('\n')<0)return actAvantApres(a,b||'vide');
+  return '<span class="act-long">'+(b?'« '+esc(b)+' »':'Texte effacé')+'</span>'
+    +(a?'<details class="act-avant"><summary>Voir l\'ancien texte</summary><span>« '+esc(a)+' »</span></details>':'');
+}
+function actValeur(v){
+  if(v==null||v==='')return '';
+  if(typeof v==='boolean')return v?'oui':'non';
+  if(typeof v==='object')return '';
+  return String(v);
+}
+
+// Coches et reglages des taches (taskstates) : <sujet>-<tache>, ou prefixe.
+var ACT_PREFIXES={annonce:1,datemod:1,fait:1,hl:1,na:1,skip:1};
+function actPhraseEtat(r){
+  var k=r.item,pre='',m=/^([a-z]+)-(.+)$/.exec(k);
+  if(m&&ACT_PREFIXES[m[1]]){pre=m[1];k=m[2];}
+  if(pre==='fait')return null; // jour de la coche, pour le report : la coche suffit
+  var sid=k,tid='';
+  if(pre!=='annonce'){var i=k.lastIndexOf('-');if(i<0)return null;sid=k.slice(0,i);tid=k.slice(i+1);}
+  var s=sujetParId(sid);
+  if(!s)return null; // cles d'un concert supprime, effacees avec lui
+  var on=r.op!=='remove'&&!!r.new_value&&r.new_value!=='false',lien=actSujetLien(s),ctx=actSujetCtx(s);
+  var t=tid?actTache(tid):'',p={cat:ACT_CATS.plan,ctx:ctx,sujet:s.art};
+  if(!pre){
+    p.texte=(on?'a coché ':'a décoché ')+actB(t)+' · '+lien;
+    p.serie=(on?'coche:':'decoche:')+sid;p.sous=esc(t);p.icone=on?'check':'minus';
+    p.serieTxt=function(n){return (on?'a coché ':'a décoché ')+actPluriel(n,'tâche')+' · '+lien;};
+    p.coche=on;
+  }else if(pre==='na'){
+    p.texte=(on?'a marqué inutile ':'a remis à faire ')+actB(t)+' · '+lien;
+    p.serie=(on?'na:':'nana:')+sid;p.sous=esc(t);p.icone=on?'ban':'rotate';
+    p.serieTxt=function(n){return (on?'a marqué inutiles ':'a remis à faire ')+actPluriel(n,'tâche')+' · '+lien;};
+  }else if(pre==='hl'){
+    p.texte=(on?'a surligné ':'a retiré le surlignage de ')+actB(t)+' · '+lien;
+  }else if(pre==='annonce'){
+    p.texte=(on?'a marqué annoncé ':'a retiré « annoncé » de ')+lien;
+  }else if(pre==='skip'){
+    var lib=tid==='sp'?'Sponso gérée par la prod':tid==='col'?'Pas d\'affiche dispo':tid;
+    p.texte=(on?'a indiqué ':'a retiré ')+'« '+esc(lib)+' » · '+lien;
+    if(tid==='sp')p.cat=ACT_CATS.sponso;
+  }else if(pre==='datemod'){
+    p.texte=(on?'a déplacé l\'échéance de ':'a remis l\'échéance calculée de ')+actB(t)+' · '+lien;
+    if(on)p.detail=actAvantApres(actDate(r.old_value),actDate(r.new_value));
+  }
+  return p;
+}
+
+// Concerts et evenements : un champ, ou plusieurs, d'une meme fiche.
+var ACT_CHAMPS={art:'le nom',dc:'la date',dcFin:'le dernier jour',da:'la date d\'annonce',salle:'la salle',ville:'la ville',budget:'le budget',ventes:'les ventes',medias:'les médias',jeux:'le jeu concours',notes:'les notes',contrat:'le contrat',prog:'le programme',sponso:'la sponso',parSpectacle:'la répartition des tâches',evt:'le type'};
+var ACT_DATES={dc:1,dcFin:1,da:1};
+function actVentes(v){var x=VENTES.find(function(o){return o.id===+v;});return x?x.label:'';}
+function actParId(l){var o={};(Array.isArray(l)?l:[]).forEach(function(x){if(x&&x.id!=null)o[x.id]=x;});return o;}
+// Programme d'un evenement : spectacles ajoutes, retires, modifies.
+function actProg(a,b){
+  var A=actParId(a),B=actParId(b),out=[];
+  Object.keys(B).forEach(function(id){if(!A[id])out.push(icon('plus')+esc(B[id].art||'Spectacle')+(B[id].dc?' · '+actDate(B[id].dc):''));});
+  Object.keys(A).forEach(function(id){if(!B[id])out.push(icon('minus')+esc(A[id].art||'Spectacle')+' retiré');});
+  Object.keys(B).forEach(function(id){if(A[id]&&JSON.stringify(A[id])!==JSON.stringify(B[id]))out.push(icon('pencil')+esc(B[id].art||'Spectacle')+' modifié');});
+  return out;
+}
+// Sponso : vagues ajoutees, retirees, dates changees ; puis le reste.
+function actSponso(a,b){
+  a=a||{};b=b||{};
+  var A=actParId(a.vagues),B=actParId(b.vagues),out=[];
+  function per(v){return v.debut||v.fin?'du '+actDate(v.debut)+' au '+actDate(v.fin):'';}
+  Object.keys(B).forEach(function(id){if(!A[id])out.push(icon('plus')+'Vague ajoutée '+esc(per(B[id])));});
+  Object.keys(A).forEach(function(id){if(!B[id])out.push(icon('minus')+'Vague retirée '+esc(per(A[id])));});
+  Object.keys(B).forEach(function(id){if(A[id]&&JSON.stringify(A[id])!==JSON.stringify(B[id]))out.push(icon('pencil')+'Vague '+(per(A[id])!==per(B[id])?actAvantApres(per(A[id]),per(B[id])):'modifiée'));});
+  var noms={billet:'lien billetterie',legende:'légende',crea:'créa',ville:'ville ciblée',rayon:'rayon'};
+  Object.keys(noms).forEach(function(k){if((a[k]||'')!==(b[k]||''))out.push(icon('pencil')+esc(noms[k]));});
+  return out;
+}
+function actPhraseConcert(r){
+  var c=r.op==='remove'?r.old_value:(sujetParId(r.item)||r.new_value)||{};
+  var evt=!!(c.evt),nom=evt?'l\'événement ':'le concert ';
+  var lien=r.op==='remove'?actB(c.art||'Sans nom'):actSujetLien(sujetParId(r.item),c.art);
+  var p={cat:ACT_CATS.concert,ctx:actSujetCtx(c.id?c:null),sujet:c.art};
+  if(r.op==='add'){p.texte='a créé '+nom+lien;return p;}
+  if(r.op==='remove'){p.texte='a supprimé définitivement '+nom+lien;return p;}
+  var a=r.old_value||{},b=r.new_value||{},champs=Object.keys(b);
+  if(champs.length===1&&champs[0]==='supprime'){p.texte=b.supprime?'a déplacé '+lien+' vers les concerts passés':'a remis '+lien+' dans les concerts actifs';return p;}
+  if(champs.length===1&&champs[0]==='annule'){p.texte=b.annule?'a marqué '+lien+' comme annulé':'a retiré « annulé » de '+lien;return p;}
+  var libs=[],det=[];
+  champs.forEach(function(k){
+    if(k==='supprime'||k==='annule'){libs.push(k==='annule'?'l\'annulation':'l\'archivage');return;}
+    libs.push(ACT_CHAMPS[k]||k);
+    if(ACT_DATES[k])det.push(actAvantApres(actDate(a[k])||(a[k]===undefined?'':'à fixer'),actDate(b[k])||'à fixer'));
+    else if(k==='ventes')det.push(actAvantApres(actVentes(a[k]),actVentes(b[k])));
+    else if(k==='prog')det=det.concat(actProg(a.prog,b.prog));
+    else if(k==='sponso')det=det.concat(actSponso(a.sponso,b.sponso));
+    else if(typeof b[k]!=='object'&&typeof a[k]!=='object')det.push(actTexte(actValeur(a[k]),actValeur(b[k])));
+  });
+  if(champs.length===1&&champs[0]==='sponso')p.cat=ACT_CATS.sponso;
+  var dernier=libs.pop();
+  p.texte='a modifié '+esc((libs.length?libs.join(', ')+' et ':'')+dernier)+' · '+lien;
+  p.detail=det.join('<br>');
+  return p;
+}
+
+// Planning RS.
+var ACT_RS_CHAMPS={date:'la date',legend:'la légende',status:'le statut',validated:'la validation',ready:'le statut',format:'le format',type:'le type',note:'la note',link:'le lien',insta:'les réseaux',fb:'les réseaux',linkedin:'les réseaux',tiktok:'les réseaux',concertId:'le concert lié',concert:'le concert lié',proj:'le planning',projs:'le planning'};
+var ACT_RS_STATUTS={'':'à faire',ready:'prêt',posted:'publié'};
+function actPostNom(p){
+  var s=p.concertId?sujetParId(p.concertId):null;
+  var t=RS_TYPES[p.type]?RS_TYPES[p.type].label:'';
+  return (s?s.art:p.concert)||t||'sans titre';
+}
+function actPostCtx(p){
+  var col=tkCols.find(function(x){return x.id===p.proj;});
+  return ['Planning RS',col?col.nom:'',RS_TYPES[p.type]?RS_TYPES[p.type].label.toLowerCase():''].filter(Boolean).join(' · ');
+}
+function actPhrasePost(r){
+  var cur=rsPosts.find(function(x){return String(x.id)===String(r.item);});
+  var post=r.op==='add'?r.new_value:r.op==='remove'?r.old_value:Object.assign({},cur||{},r.new_value);
+  post=post||{};
+  var nom=actPostNom(post),quand=post.date?' du '+actDate(post.date):'';
+  var p={cat:ACT_CATS.rs,ctx:actPostCtx(post),sujet:nom};
+  if(r.op==='add'){
+    if(post.autoRef){p.auto=true;p.sous='post d\'annonce créé · '+esc(nom);return p;}
+    p.texte='a ajouté le post '+actB(nom)+esc(quand);p.serie='rs+';p.sous=esc(nom+quand);
+    p.serieTxt=function(n){return 'a ajouté '+actPluriel(n,'post');};
+    return p;
+  }
+  if(r.op==='remove'){
+    if(post.date&&new Date(r.at)-new Date(post.date+'T00:00:00')>183*864e5){p.auto=true;p.sous=esc('post du '+actDate(post.date)+' (plus de six mois)');return p;}
+    // Post d'annonce automatique : l'appli le retire elle-meme (doublon, concert passe).
+    if(post.autoRef){p.auto=true;p.sous='post d\'annonce automatique retiré · '+esc(nom);return p;}
+    p.texte='a supprimé le post '+actB(nom)+esc(quand);p.remettre='rsposts';
+    return p;
+  }
+  var a=r.old_value||{},b=r.new_value||{},libs={},det=[];
+  Object.keys(b).forEach(function(k){
+    var l=ACT_RS_CHAMPS[k]||k;libs[l]=1;
+    if(k==='date')det.push(actAvantApres(actDate(a.date),actDate(b.date)));
+    else if(k==='legend'||k==='note')det.push(actTexte(a[k],b[k]));
+    else if(k==='status')det.push(actAvantApres(ACT_RS_STATUTS[a.status||'']||a.status,ACT_RS_STATUTS[b.status||'']||b.status));
+    else if(k==='validated')det.push(b.validated?'validé':'validation retirée');
+  });
+  if(b.status==='posted'&&Object.keys(b).every(function(k){return k==='status'||k==='ready';})){p.texte='a marqué publié le post '+actB(nom)+esc(quand);return p;}
+  var l=Object.keys(libs),dernier=l.pop();
+  p.texte='a modifié '+esc((l.length?l.join(', ')+' et ':'')+dernier)+' du post '+actB(nom)+esc(quand);
+  p.detail=det.join('<br>');
+  return p;
+}
+
+// Taches par projet (tktasks) et projets (tkcols).
+var ACT_TK_CHAMPS={nom:'le nom',date:'l\'échéance',colId:'le projet',prio:'la priorité',note:'la note',delegue:'la délégation',recur:'la récurrence'};
+function actPhraseTk(r){
+  var cur=tkTasks.find(function(x){return String(x.id)===String(r.item);});
+  var t=r.op==='add'?r.new_value:r.op==='remove'?r.old_value:Object.assign({},cur||{},r.new_value);
+  t=t||{};
+  var col=tkCols.find(function(x){return x.id===t.colId;});
+  var p={cat:ACT_CATS.taches,ctx:'Tâches par projet'+(col?' · '+col.nom:''),sujet:t.nom};
+  if(r.op==='add'){p.texte='a ajouté la tâche '+actB(t.nom||'')+(t.date?' · pour le '+esc(actDate(t.date)):'');return p;}
+  if(r.op==='remove'){
+    if(t.done&&t.faitLe&&new Date(r.at)-new Date(t.faitLe)>30*864e5){p.auto=true;p.sous=esc('tâche faite il y a plus de 30 jours · '+(t.nom||''));return p;}
+    p.texte='a supprimé la tâche '+actB(t.nom||'');p.remettre='tktasks';return p;
+  }
+  var a=r.old_value||{},b=r.new_value||{},champs=Object.keys(b).filter(function(k){return k!=='faitLe';});
+  if(!champs.length)return null; // jour de la coche pose par le menage : technique
+  if(champs.indexOf('done')>=0&&champs.length===1){
+    p.texte=(b.done?'a coché ':'a décoché ')+actB(t.nom||'');p.coche=!!b.done;
+    p.serie=(b.done?'tk+:':'tk-:')+(t.colId||'');p.sous=esc(t.nom||'');p.icone=b.done?'check':'minus';
+    p.serieTxt=function(n){return (b.done?'a coché ':'a décoché ')+actPluriel(n,'tâche');};
+    return p;
+  }
+  var libs=[],det=[];
+  champs.forEach(function(k){
+    if(k==='done'){libs.push(b.done?'coché':'décoché');return;}
+    libs.push(ACT_TK_CHAMPS[k]||k);
+    if(k==='date')det.push(actAvantApres(actDate(a.date),actDate(b.date)||'sans date'));
+    else if(k==='colId'){var ca=tkCols.find(function(x){return x.id===a.colId;}),cb=tkCols.find(function(x){return x.id===b.colId;});det.push(actAvantApres(ca?ca.nom:'',cb?cb.nom:''));}
+    else if(k==='nom'||k==='note')det.push(actTexte(a[k],b[k]));
+  });
+  var dernier=libs.pop();
+  p.texte='a modifié '+esc((libs.length?libs.join(', ')+' et ':'')+dernier)+' de la tâche '+actB(t.nom||'');
+  p.detail=det.join('<br>');
+  return p;
+}
+function actPhraseCol(r){
+  var p={cat:ACT_CATS.taches,ctx:'Tâches par projet'};
+  var a=r.old_value||{},b=r.new_value||{};
+  if(r.op==='add')p.texte='a créé le projet '+actB(b.nom||'');
+  else if(r.op==='remove')p.texte='a supprimé le projet '+actB(a.nom||'');
+  else{p.texte='a renommé un projet';p.detail=actAvantApres(a.nom,b.nom);}
+  return p;
+}
+// Taches ajoutees a la main sur un concert (concert_tasks).
+function actPhraseTacheConcert(r){
+  var t=(r.op==='remove'?r.old_value:Object.assign({},customTasks.find(function(x){return String(x.id)===String(r.item);})||{},r.new_value))||{};
+  var s=sujetParId(t.concertId),p={cat:ACT_CATS.plan,ctx:actSujetCtx(s),sujet:s&&s.art};
+  var lien=actSujetLien(s);
+  if(r.op==='add')p.texte='a ajouté la tâche '+actB(t.nom||'')+' · '+lien;
+  else if(r.op==='remove'){p.texte='a supprimé la tâche '+actB(t.nom||'')+' · '+lien;if(s)p.remettre='concert_tasks';}
+  else{p.texte='a modifié la tâche '+actB(t.nom||'')+' · '+lien;if(r.new_value&&'nom' in r.new_value)p.detail=actTexte(r.old_value.nom,r.new_value.nom);}
+  return p;
+}
+// Report de communication (concert_media).
+function actPhraseReport(r){
+  var x=(r.op==='remove'?r.old_value:Object.assign({},rpTrouve(r.item)||{},r.new_value))||{};
+  if(x.type==='photo'&&r.op==='remove'&&x.expiresAt&&new Date(x.expiresAt)<=new Date(r.at)){return {auto:true,cat:ACT_CATS.report,sous:'photo de report expirée'};}
+  var s=x.concertId?sujetParId(x.concertId):null,lien=actSujetLien(s);
+  var p={cat:ACT_CATS.report,ctx:'Report'+(s?' · '+actSujetCtx(s):''),sujet:s&&s.art};
+  var act=x.actionId?rpTrouve(x.actionId):null,titre=x.titre||(act&&act.titre)||'';
+  if(x.type==='photo'){
+    var verbe=r.op==='add'?'a ajouté':r.op==='remove'?'a retiré':'a recadré';
+    p.texte=verbe+' une photo'+(titre?' à '+actB(titre):'')+' · '+lien;
+    p.serie='photo'+r.op+':'+x.concertId;p.sous=titre?esc(titre):'photo';p.icone='image';
+    p.serieTxt=function(n){return verbe+' '+actPluriel(n,'photo')+' · '+lien;};
+    return p;
+  }
+  if(x.type==='support'){p.ctx='Report · bibliothèque de logos';p.texte=(r.op==='remove'?'a retiré le logo ':'a ajouté le logo ')+actB(x.nom||'');return p;}
+  if(x.type==='ignore'){p.texte='a écarté une suggestion du report · '+lien;return p;}
+  if(r.op==='add'){p.texte='a ajouté l\'action '+actB(titre)+' au report · '+lien;return p;}
+  if(r.op==='remove'){p.texte='a retiré l\'action '+actB(titre)+' du report · '+lien;return p;}
+  p.texte='a modifié l\'action '+actB(titre)+' du report · '+lien;
+  var a=r.old_value||{},b=r.new_value||{},det=[];
+  // Chiffres de l'action, et ceux de chaque vague sponso.
+  function chiffres(o,n,pre){
+    o=o||{};n=n||{};
+    Object.keys(n).forEach(function(k){
+      if(typeof n[k]==='object'||typeof o[k]==='object'||o[k]===n[k])return;
+      det.push(esc(pre+k)+' '+actAvantApres(actValeur(o[k]),actValeur(n[k])));
+    });
+  }
+  if('chiffres' in b)chiffres(a.chiffres,b.chiffres,'');
+  if('vagues' in b&&b.vagues&&typeof b.vagues==='object')Object.keys(b.vagues).forEach(function(id){
+    var vo=(a.vagues||{})[id]||{},vn=b.vagues[id]||{};chiffres(vo,vn,(vn.nom||'vague')+' · ');
+  });
+  if('texte' in b)det.push(actTexte(a.texte,b.texte));
+  p.detail=det.slice(0,6).join('<br>');
+  return p;
+}
+function actPhrasePhoto(r){
+  var c=concerts.find(function(x){return artKey(x.art)===r.item;});
+  var nom=c?c.art:String(r.item||'').toUpperCase();
+  var p={cat:ACT_CATS.photos,ctx:'Photo d\'artiste',sujet:nom};
+  if(r.op==='remove'){
+    // Menage automatique : plus aucun concert de l'artiste depuis six mois.
+    var limite=new Date(r.at);limite.setDate(limite.getDate()-183);
+    var recent=concerts.some(function(x){return artKey(x.art)===r.item&&(!x.dc||new Date(x.dc)>=limite);});
+    if(!recent){p.auto=true;p.sous=esc('photo de '+nom+' (dernier concert il y a plus de six mois)');return p;}
+    p.texte='a retiré la photo de '+actB(nom);return p;
+  }
+  if(r.op==='add'){p.texte='a ajouté la photo de '+actB(nom);return p;}
+  var a=r.old_value||{},b=r.new_value||{};
+  p.texte=(a.url===b.url&&a.path===b.path?'a recadré la photo de ':'a changé la photo de ')+actB(nom);
+  return p;
+}
+function actPhraseReglage(r){
+  var p={cat:ACT_CATS.reglages};
+  if(r.key==='process'){
+    var a=r.old_value||{},b=r.new_value||{};
+    p.ctx='Process';
+    p.texte=r.op==='add'?'a ajouté l\'étape '+actB(b.nom||''):r.op==='remove'?'a supprimé l\'étape '+actB(a.nom||''):'a modifié l\'étape '+actB(b.nom||(process.find(function(x){return String(x.id)===String(r.item);})||{}).nom||'');
+    return p;
+  }
+  var lib={budget_templates:'les règles du budget promo',regles_salles:'les règles des salles',style_adjustments:'les réglages de style',city_groups:'les groupes de villes de la newsletter'}[r.key]||r.key;
+  p.texte='a modifié '+esc(lib);p.serie='reglage:'+r.key;p.serieTxt=function(){return 'a modifié '+esc(lib);};
+  return p;
+}
+var ACT_PHRASES={taskstates:actPhraseEtat,concerts:actPhraseConcert,rsposts:actPhrasePost,tktasks:actPhraseTk,tkcols:actPhraseCol,concert_tasks:actPhraseTacheConcert,concert_media:actPhraseReport,artist_photos:actPhrasePhoto};
+// Une cle notee d'un bloc (item vide) : la base n'a pas pu comparer element
+// par element (liste dont un element n'a pas d'id). Pas de detail : la base
+// ne garde pas une valeur entiere de plus de 8 000 caracteres.
+var ACT_EN_BLOC={taskstates:['les coches des tâches','plan'],concerts:['la liste des concerts','concert'],rsposts:['le planning RS','rs'],tktasks:['les tâches par projet','taches'],tkcols:['les projets','taches'],concert_tasks:['les tâches ajoutées aux concerts','plan'],concert_media:['les reports','report'],artist_photos:['les photos d\'artistes','photos']};
+function actPhrase(r){
+  var f=ACT_PHRASES[r.key]||actPhraseReglage,p=null,b=ACT_EN_BLOC[r.key];
+  if(r.item===''&&b)f=function(){return {cat:ACT_CATS[b[1]],texte:'a modifié '+esc(b[0])+' en bloc'};};
+  try{p=f(r);}catch(e){console.error('Activité : ligne illisible',r,e);p={cat:ACT_CATS.reglages,texte:'a modifié '+esc(r.key)};}
+  if(!p)return null;
+  p.r=r;p.at=new Date(r.at);p.email=(r.email||'').toLowerCase();
+  if(p.auto){p.serie='auto';p.icone='repeat';}
+  return p;
+}
+
+// ── Regroupement : un meme geste en serie (meme personne, meme cle de serie,
+// meme jour, moins de 45 min entre deux) devient une ligne et sa liste ──
+function actGroupes(phrases){
+  var out=[],ouverts={};
+  phrases.forEach(function(p){
+    var jour=p.at.toDateString();
+    if(p.serie){
+      var k=p.email+'|'+p.serie+'|'+jour,g=ouverts[k];
+      if(g&&g.dernier-p.at<=ACT_SERIE_MIN*6e4){g.items.push(p);g.dernier=p.at;return;}
+      g={items:[p],dernier:p.at};ouverts[k]=g;out.push(g);return;
+    }
+    out.push({items:[p],dernier:p.at});
+  });
+  return out;
+}
+function actHeure(d){return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
+var _actTxt=null;
+function actTexteBrut(html){if(!_actTxt)_actTxt=document.createElement('div');_actTxt.innerHTML=html;return _actTxt.textContent||'';}
+
+function actDessiner(){
+  var el=document.getElementById('act-fil'),eq=document.getElementById('act-equipe');if(!el||!eq)return;
+  if(!isAdmin())return;
+  if(!actCharge){renderActivite(false);return;}
+  if(actErreur){eq.innerHTML='';el.innerHTML='<div class="empty-state">'+esc(actErreur)+'<br><button class="btn" onclick="renderActivite(true)">Réessayer</button></div>';return;}
+  var phrases=actRows.map(actPhrase).filter(Boolean);
+  // Resume par personne : derniere activite et les 7 derniers jours, jour par jour.
+  var auj=new Date();auj.setHours(0,0,0,0);
+  var gens={};Object.keys(teamNames).forEach(function(e){gens[e]=1;});
+  phrases.forEach(function(p){if(p.email)gens[p.email]=1;});
+  var emails=Object.keys(gens).sort(function(a,b){return teamDisplayName(a).localeCompare(teamDisplayName(b),'fr');});
+  function tuile(email,nom,init,liste){
+    var parJour=[0,0,0,0,0,0,0],dernier=null,n=0;
+    liste.forEach(function(p){
+      if(!dernier||p.at>dernier)dernier=p.at;
+      if(p.auto)return;
+      var j=Math.floor((auj-new Date(p.at.getFullYear(),p.at.getMonth(),p.at.getDate()))/864e5);
+      if(j>=0&&j<7){parJour[6-j]++;n++;}
+    });
+    var max=Math.max.apply(null,parJour)||1;
+    var barres=parJour.map(function(v,i){return '<i class="'+(i===6?'auj':'')+'" style="height:'+(v?Math.max(12,Math.round(v/max*100)):4)+'%"></i>';}).join('');
+    var quand=!dernier?'Rien depuis 7 jours':dernier>=auj?'Aujourd\'hui, '+actHeure(dernier):dateCourte(dernier,true);
+    return '<button type="button" class="act-tuile'+(actQui===email?' on':'')+'" aria-pressed="'+(actQui===email)+'" onclick="actFiltrer(\''+escJs(email)+'\')">'
+      +'<span class="act-tuile-haut"><span class="act-initiale">'+(init?esc(init):icon('user'))+'</span><span class="act-tuile-nom"><span class="act-nom">'+esc(nom)+'</span><span class="act-quand">'+esc(quand)+'</span></span></span>'
+      +'<span class="act-tuile-bas"><span class="act-barres" aria-hidden="true">'+barres+'</span><span class="act-compte">'+actPluriel(n,'modification')+' <br>en 7 jours</span></span></button>';
+  }
+  eq.innerHTML=tuile('','Tout le monde','',phrases)+emails.map(function(e){
+    var nom=teamDisplayName(e);return tuile(e,nom,nom.trim().charAt(0).toUpperCase(),phrases.filter(function(p){return p.email===e;}));
+  }).join('');
+  // Le fil
+  var q=cmdkNorm(actQ).trim();
+  var vis=phrases.filter(function(p){return !actQui||p.email===actQui;});
+  var groupes=actGroupes(vis);
+  var html='',jourCourant='',nb=0;
+  var hier=new Date(auj);hier.setDate(hier.getDate()-1);
+  groupes.forEach(function(g){
+    var p=g.items[0],n=g.items.length,qui=p.email?teamDisplayName(p.email):'Modification directe en base';
+    var texte,detail=p.detail||'',h=actHeure(p.at),h0=n===1&&p.r.writes>1&&p.r.first_at?actHeure(new Date(p.r.first_at)):h;
+    if(p.auto){
+      texte='Ménage automatique à l\'ouverture de l\'appli'+(p.email?' (chez '+esc(qui)+')':'')+' : '+actPluriel(n,'élément retiré','éléments retirés');
+      detail=g.items.filter(function(x){return x.sous;}).map(function(x){return '<span>· '+x.sous+'</span>';}).join('');
+    }else if(n>1){
+      texte=actB(qui)+' '+p.serieTxt(n);
+      detail=g.items.filter(function(x){return x.sous;}).map(function(x){return '<span>'+icon(x.icone||'check')+x.sous+'</span>';}).join('');
+    }else texte=actB(qui)+' '+p.texte;
+    var bloc='<div class="act-ligne'+(p.auto?' act-auto':'')+'">'
+      +'<span class="act-heure">'+h+'</span>'
+      +(p.auto?'<span class="act-avatar act-avatar-auto">'+icon('repeat')+'</span>':'<span class="act-avatar">'+esc(qui.trim().charAt(0).toUpperCase())+'</span>')
+      +'<div class="act-corps"><div class="act-texte">'+texte+'</div>'
+      +(p.ctx&&!p.auto?'<div class="act-contexte">'+esc(p.ctx)+(h0!==h?' · entre '+h0+' et '+h:'')+'</div>':'')
+      +(detail?'<div class="act-detail">'+detail+'</div>':'')
+      +(n===1&&p.remettre?actBoutonRemettre(p):'')
+      +'</div>'
+      +(p.auto?'<span></span>':'<span class="pill '+p.cat.cls+'">'+esc(p.cat.l)+'</span>')
+      +'</div>';
+    if(q&&cmdkNorm(actTexteBrut(bloc)).indexOf(q)<0)return;
+    var jour=p.at.toDateString();
+    if(jour!==jourCourant){
+      jourCourant=jour;
+      var j0=new Date(p.at);j0.setHours(0,0,0,0);
+      var lib=(+j0===+auj?'Aujourd\'hui · ':+j0===+hier?'Hier · ':'')+dateCourte(p.at,true);
+      html+='<div class="act-jour">'+esc(lib)+'</div>';
+    }
+    html+=bloc;nb++;
+  });
+  if(!nb)html='<div class="empty-state compact">'+(q||actQui?'Rien ne correspond sur cette période.':'Rien d\'enregistré sur cette période.')+'</div>';
+  var depuis=actDepuis?dateCourte(actDepuis,true):'';
+  html+='<div class="act-pied">'
+    +(actPlus?'<button class="btn" onclick="actPlusAnciens(this)">Voir les '+ACT_JOURS+' jours précédents</button>':'<span class="act-pied-note">Début de l\'historique.</span>')
+    +'<span class="act-pied-note">Affiché depuis le '+esc(depuis)+' · conservé deux mois, effacé chaque nuit au-delà</span></div>';
+  el.innerHTML=html;
+}
+
+// ── Remettre un element supprime (post, tache) : le journal en garde une
+// copie entiere. Il repart par scheduleSave(), comme toute modification :
+// version, fusion avec les collegues, et une ligne de plus dans le journal. ──
+var ACT_LISTES={rsposts:function(){return rsPosts;},tktasks:function(){return tkTasks;},concert_tasks:function(){return customTasks;}};
+var ACT_REMIS={rsposts:'Post remis dans le planning.',tktasks:'Tâche remise dans son projet.',concert_tasks:'Tâche remise sur le concert.'};
+function actBoutonRemettre(p){
+  var l=ACT_LISTES[p.remettre]&&ACT_LISTES[p.remettre]();if(!l||!p.r.old_value)return '';
+  if(l.some(function(x){return String(x.id)===String(p.r.item);}))return '<div class="act-remis">'+icon('check')+'Remis depuis</div>';
+  return '<button type="button" class="btn-link act-remettre" onclick="actRemettre(\''+escJs(p.r.id)+'\')">'+icon('rotate')+'Remettre</button>';
+}
+function actRemettre(id){
+  var r=actRows.find(function(x){return String(x.id)===String(id);});
+  if(!r||r.op!=='remove'||!r.old_value||!ACT_LISTES[r.key])return;
+  var l=ACT_LISTES[r.key]();
+  if(l.some(function(x){return String(x.id)===String(r.item);})){actDessiner();return;}
+  l.push(JSON.parse(JSON.stringify(r.old_value)));
+  scheduleSave(r.key);render();
+  showToast(ACT_REMIS[r.key]);
+}
+
 // ── RECADRAGE PHOTO : glisser + zoomer dans un cadre 16:9 fixe avant
 // upload, pour que toutes les photos (artistes, article, annonces) aient
 // le meme format. Pas de dependance externe : juste canvas + evenements
@@ -3527,7 +4008,7 @@ var TAB_PARENT={past:'concerts',taches:'kanban'};
 // ne suffisait pas : ils restaient atteignables par la recherche ⌘K et en
 // tapant #process ou #budgetconfig dans l'URL. La garde est ici, au seul
 // passage oblige pour afficher un onglet.
-var ADMIN_TABS={process:1,budgetconfig:1,team:1};
+var ADMIN_TABS={process:1,budgetconfig:1,team:1,activite:1};
 // Entree d'une page (style.css, .entree) : ses blocs arrivent l'un apres
 // l'autre quand on l'ouvre, jamais quand elle se redessine (synchro, fiche
 // refermee). La classe tombe apres 1,6 s, le temps de la derniere carte.
@@ -3587,6 +4068,7 @@ function showTab(id,btn){
   animerEntree(panel);
   currentTab=id;
   if(id==='team')renderTeam();
+  else if(id==='activite')renderActivite(true);
   else renderTab(id); // render() ne dessine que l'onglet visible : on dessine celui qu'on ouvre
   pushRoute(id,null);
   window.scrollTo(0,0);
@@ -3595,7 +4077,7 @@ function showTab(id,btn){
 // Permet de rafraichir sans revenir au Tableau de bord, d'envoyer le lien
 // d'une fiche, et d'utiliser le bouton retour du navigateur (il ferme la
 // fiche, puis revient a l'onglet precedent).
-var TAB_IDS=['rs','kanban','concerts','past','taches','sponso','process','budgetconfig','team'];
+var TAB_IDS=['rs','kanban','concerts','past','taches','sponso','process','budgetconfig','team','activite'];
 var _routing=false; // vrai pendant applyRoute() : on ne re-pousse pas l'URL
 // Page d'un evenement : #onglet/idEvenement/idSpectacle pour l'un de ses
 // spectacles.
@@ -10796,7 +11278,7 @@ function budChemin(o,ch){return ch===''?o:ch.split('.').reduce(function(x,k){ret
 // fiche redessinaient les huit vues, onglets masques compris, et le widget
 // Taches et les filtres deux fois chacun. Le travail sur les donnees (taches
 // recurrentes, posts auto) reste fait a chaque fois, quel que soit l'onglet.
-var TAB_RENDER={kanban:renderKanban,concerts:renderConcerts,past:renderPastConcerts,process:renderProcess,taches:renderTaches,rs:renderRS,sponso:renderSponso,budgetconfig:renderBudgetConfig};
+var TAB_RENDER={kanban:renderKanban,concerts:renderConcerts,past:renderPastConcerts,process:renderProcess,taches:renderTaches,rs:renderRS,sponso:renderSponso,budgetconfig:renderBudgetConfig,activite:actDessiner};
 function renderTab(id){
   if(!appDataLoaded)return; // avant le chargement, on garde les squelettes
   var f=TAB_RENDER[id];if(f)f();
@@ -10804,7 +11286,7 @@ function renderTab(id){
 function render(){tkAdvanceRecurringTasks();majPostsAuto();renderTab(currentTab);}
 // ── RECHERCHE GLOBALE (⌘K / Ctrl+K / "/") ──────────────────────────
 var cmdkItems=[],cmdkIdx=0;
-var CMDK_TABS=[{id:'kanban',label:'Tableau de bord'},{id:'concerts',label:'Concerts'},{id:'past',label:'Concerts passés'},{id:'taches',label:'Tâches'},{id:'rs',label:'Plannings RS'},{id:'sponso',label:'Sponso'},{id:'process',label:'Process'}];
+var CMDK_TABS=[{id:'kanban',label:'Tableau de bord'},{id:'concerts',label:'Concerts'},{id:'past',label:'Concerts passés'},{id:'taches',label:'Tâches'},{id:'rs',label:'Plannings RS'},{id:'sponso',label:'Sponso'},{id:'process',label:'Process'},{id:'activite',label:'Activité'}];
 function cmdkNorm(s){return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function openCmdK(){
   var inp=document.getElementById('cmdk-input');inp.value='';cmdkRender('');
