@@ -1,6 +1,3 @@
--- A APPLIQUER (pas encore en base au 14/10) : renommer ce fichier avec la
--- version que Supabase lui donne, une fois appliquee (§6.9 de la passation).
---
 -- Journal d'activite (demande de Mathieu du 14/10/2026) : qui a modifie quoi
 -- dans app_data, garde deux mois, lisible par les seuls administrateurs.
 --
@@ -16,6 +13,12 @@
 -- d'intervalle sont regroupees en une ligne (une saisie de notes enregistree
 -- toutes les 1,5 s ne fait qu'une ligne) ; un aller-retour (cocher puis
 -- decocher) ne laisse rien.
+--
+-- Teste a blanc le 14/10 sur la base (transaction annulee) : membre et anonyme
+-- ne lisent rien, personne n'ecrit ni n'efface le journal, regroupement,
+-- retour a l'identique sans trace, suppression gardee entiere puis remise sans
+-- trace, deux personnes = deux lignes, valeur sans id reduite a une empreinte ;
+-- +17 ms sur l'ecriture de concert_media (160 Ko).
 create table if not exists public.activity_log (
   id bigint generated always as identity primary key,
   first_at timestamptz not null default now(),
