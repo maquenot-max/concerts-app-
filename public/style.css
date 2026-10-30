@@ -1612,6 +1612,68 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
   .act-ligne{grid-template-columns:40px minmax(0,1fr);column-gap:10px}
   .act-ligne .act-avatar,.act-ligne>.pill,.act-ligne>span:last-child:empty{display:none}
 }
+/* ── RAPPELS PAR MAIL (30/10) : une carte par ville, maquette B ──────────
+   https://claude.ai/artifact/J56TKRjzvwxRbJHsX5dwqF */
+.rml-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;align-items:start}
+.rml-ville,.rml-bloc{display:flex;flex-direction:column;gap:12px;min-width:0;padding:16px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.rml-ville-ajout{border-style:dashed;background:transparent}
+.rml-ville-tete,.rml-bloc-tete{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rml-ville-nom{margin:0;flex:1;min-width:0;font-family:'Geist Mono',ui-monospace,monospace;font-size:13px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}
+.rml-bloc h3{margin:0;font-size:15px;font-weight:600;letter-spacing:-.01em}
+.rml-bloc-tete h3{flex:1}
+.rml-projets{margin-top:16px}
+.rml-compte{font-size:12px;color:var(--text-3);font-weight:400}
+.rml-mini{margin:0;font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+.rml-quand{color:var(--accent)}
+.rml-aide{margin:0;font-size:12px;line-height:1.5;color:var(--text-3)}
+.rml-vide{font-size:13px;color:var(--text-3)}
+.rml-puces{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.rml-puce{display:inline-flex;align-items:center;gap:2px;height:28px;padding:0 4px 0 10px;border-radius:var(--radius-pill);background:var(--surface-2);border:1px solid var(--border);font-size:12px;font-weight:500;color:var(--text);white-space:nowrap}
+.rml-puce:not(:has(button)){padding-right:10px}
+.rml-puce-x,.rml-x{position:relative;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:24px;height:24px;padding:0;border:none;border-radius:var(--radius-xs);background:none;color:var(--text-4);cursor:pointer;transition:color .15s,box-shadow .3s var(--sortie)}
+.rml-puce-x{border-radius:50%;width:22px;height:22px}
+.rml-puce-x:hover,.rml-x:hover{color:var(--text);box-shadow:var(--survol-ombre)}
+.rml-puce-x::after,.rml-x::after{content:'';position:absolute;inset:-6px}
+.rml-choix{height:28px;max-width:100%;padding:0 8px;border:1px dashed var(--border-strong);border-radius:var(--radius-pill);background:transparent;color:var(--accent);font-size:12px;font-weight:500;cursor:pointer}
+.rml-choix-large{margin-top:8px;border-radius:var(--radius-sm)}
+.rml-choix option,.rml-champ option{color:var(--text);background:var(--surface)}
+.rml-taches{display:flex;flex-direction:column}
+.rml-ligne{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border-light);font-size:13px}
+.rml-taches .rml-ligne:first-child{border-top:none}
+.rml-ligne-nom{flex:1;min-width:0;overflow-wrap:anywhere}
+.rml-sous{display:block;font-size:12px;color:var(--text-3)}
+.rml-j{flex-shrink:0;font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:500;color:var(--amber);white-space:nowrap}
+.rml-j-neutre{color:var(--text-3);min-width:96px}
+.rml-erreur{color:var(--red);font-size:12px}
+.rml-artistes{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:var(--radius-sm);background:var(--surface-2)}
+.rml-art-ligne{display:flex;align-items:center;gap:10px;font-size:13px}
+.rml-art{font-family:'Anton','Oswald',Impact,sans-serif;font-size:15px;font-weight:400;letter-spacing:.012em;text-transform:uppercase;line-height:1.2}
+.rml-art-ligne .rml-art{flex-shrink:0;max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rml-art-regle{flex:1;min-width:0;color:var(--text-2)}
+.rml-lien{align-self:flex-start;padding:0;border:none;background:none;color:var(--accent);font-size:13px;font-weight:500;cursor:pointer;text-align:left}
+.rml-lien:hover{color:var(--accent-hover)}
+.rml-form{display:flex;flex-direction:column;gap:10px}
+.rml-form-ligne{flex-direction:row;flex-wrap:wrap;align-items:flex-end;padding-top:12px;border-top:1px solid var(--border-light)}
+.rml-form-ligne .rml-champ-lab{flex:1 1 180px}
+.rml-champ-lab{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500;color:var(--text-3)}
+.rml-champ{width:100%;height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:13px;outline:none;box-sizing:border-box}
+.rml-champ:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-ring)}
+.rml-form-bas{display:flex;justify-content:flex-end;gap:8px}
+.rml-bas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:16px;align-items:start}
+.rml-mien{cursor:pointer}
+.rml-sw input[type=checkbox]{-webkit-appearance:none;appearance:none;position:relative;display:block;width:32px;height:18px;margin:0;padding:0;border:none;border-radius:99px;background:rgba(255,255,255,.16);cursor:pointer;transition:background .25s}
+.rml-sw input[type=checkbox]::before{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:99px;background:#f4f2ec;transition:transform .4s var(--ressort),background .25s}
+.rml-sw input[type=checkbox]:checked{background:var(--corail-plein)}
+.rml-sw input[type=checkbox]:checked::before{transform:translateX(14px);background:#0a0a0d}
+.rml-sw input[type=checkbox]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rml-qui{display:flex;align-items:center;gap:10px;width:100%;padding:6px 8px;margin:0 -8px;border:none;border-radius:var(--radius-sm);background:none;color:var(--text);font-size:13px;text-align:left;cursor:pointer;width:calc(100% + 16px)}
+.rml-qui:hover{box-shadow:var(--survol-ombre)}
+.rml-apercu{display:flex;flex-direction:column;gap:6px;padding:4px 0 8px 38px}
+.rml-apercu .rml-mini{margin-top:6px}
+.rml-g-retard{color:var(--red)}
+.rml-g-auj{color:var(--amber)}
+.rml-item{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--text-2)}
+.rml-item .rml-art{color:var(--text);font-size:14px}
 .pwd-box{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:16px;letter-spacing:.08em;padding:12px;background:var(--bg);border:1px dashed var(--border-strong);border-radius:var(--radius-sm);text-align:center;user-select:all;margin:6px 0 10px}
 
 /* ── RESPONSIVE (mobile/tablette) ─────────────────────── */
