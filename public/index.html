@@ -3318,6 +3318,7 @@ var rappels={};
 var rmlForm=null;    // formulaire ouvert : {type:'art',ville,...} ou {type:'projet',...}
 var rmlApercu='';    // personne dont on deplie le prochain mail
 var rmlEnvois=null;  // derniers envois (admins), lus a l'ouverture de la page
+var rmlEnvoisEnCours=false;
 function rmlR(){if(!syncIsPlain(rappels))rappels={};return rappels;}
 function rmlMoi(){return String(currentMember&&currentMember.email||currentUser&&currentUser.email||'').toLowerCase();}
 function rmlEquipe(){var e={};Object.keys(teamNames).forEach(function(k){e[k]=1;});return e;}
@@ -3389,6 +3390,9 @@ function renderRappels(){
   h+=rmlProjetsHtml(r,admin);
   h+='<div class="rml-bas">'+rmlMesRappelsHtml(r)+rmlProchainHtml(r)+(admin?rmlEnvoisHtml():'')+'</div>';
   el.innerHTML=h;
+  // Page ouverte par son adresse (#rappels) : elle s'affiche avant que l'on
+  // sache qui est admin, et le premier chargement des envois etait saute.
+  if(admin&&rmlEnvois===null&&!rmlEnvoisEnCours)rmlChargerEnvois();
 }
 function rmlVilleHtml(v,cfg,nb,admin){
   var dest=Array.isArray(cfg.dest)?cfg.dest:[],suivies=syncIsPlain(cfg.taches)?cfg.taches:{};
@@ -3517,12 +3521,14 @@ function rmlEnvoisHtml(){
   }).join('')+'</section>';
 }
 async function rmlChargerEnvois(){
-  if(!isAdmin())return;
+  if(!isAdmin()||rmlEnvoisEnCours)return;
+  rmlEnvoisEnCours=true;
   var d=new Date();d.setDate(d.getDate()-10);
   try{
     var r=await fetch(SUPABASE_URL+'/rest/v1/rappels_envois?select=jour,email,statut,essai,nb&jour=gte.'+rmlIso(d)+'&order=jour.desc&limit=200',{headers:await authHeaders()});
     rmlEnvois=r.ok?await r.json():'absent';
   }catch(e){rmlEnvois='absent';}
+  rmlEnvoisEnCours=false;
   if(currentTab==='rappels')renderRappels();
 }
 function openRappels(){rmlForm=null;rmlEnvois=null;renderRappels();rmlChargerEnvois();}
