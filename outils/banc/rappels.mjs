@@ -45,7 +45,8 @@ const MEMBRES = [
 
 // ── Fausse base : juste ce que la fonction appelle ──
 const tables = {
-  app_data: Object.entries(data).map(([key, value]) => ({ key, value })),
+  // Comme en base : value est une colonne texte (du JSON a relire).
+  app_data: Object.entries(data).map(([key, value]) => ({ key, value: JSON.stringify(value) })),
   team_members: MEMBRES,
   backup_config: [{ secret: 'secret-banc' }],
   rappels_envois: [],

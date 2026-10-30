@@ -165,12 +165,12 @@ function rmlCalcul(r,jour,equipe){
     (it.ecart===0?o.auj:it.ecart<0?o.retard:o.bientot).push(it);
   }
   rmlSujets().forEach(function(x){
-    var s=x.s,faites={};
+    var s=x.s;
     x.villes.forEach(function(v){
       var vr=rmlVilleReglee(r,v);if(!vr)return;
       var cfg=vr.cfg,suivies=syncIsPlain(cfg.taches)?cfg.taches:{};
       sansEtapesSautees(s,etapesSujet(s)).forEach(function(t){
-        if(!suivies[t.id]||faites[t.id]||isNA(s,t)||taskStates[tk(s.id,t.id)]||!isUnlocked(s,t))return;
+        if(!suivies[t.id]||isNA(s,t)||taskStates[tk(s.id,t.id)]||!isUnlocked(s,t))return;
         var aj=rmlAjustement(cfg,s.art,t.id);
         if(aj&&aj.coupe)return;
         var j=aj&&aj.jours!==null&&aj.jours!==undefined&&aj.jours!==''&&isFinite(+aj.jours)?+aj.jours:null;
