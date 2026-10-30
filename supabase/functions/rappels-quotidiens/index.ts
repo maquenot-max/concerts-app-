@@ -70,7 +70,7 @@ function lieu(it: Item) {
 }
 
 function sujet(m: Mail) {
-  const p = [];
+  const p: string[] = [];
   if (m.auj.length) p.push(pluriel(m.auj.length, "tâche") + " aujourd'hui");
   if (m.retard.length) p.push(m.retard.length + " en retard");
   return p.join(", ") || "Rien à faire aujourd'hui";
@@ -162,8 +162,12 @@ Deno.serve(async (req: Request) => {
     ]);
     if (e1) throw e1;
     if (e2) throw e2;
+    // value est une colonne texte : du JSON a relire, comme dans backup-daily.
     const donnees: Record<string, unknown> = {};
-    for (const l of lignes || []) donnees[l.key] = l.value;
+    for (const l of lignes || []) {
+      try { donnees[l.key] = typeof l.value === "string" ? JSON.parse(l.value) : l.value; }
+      catch { throw new Error("Clé illisible dans app_data : " + l.key); }
+    }
     const prenoms: Record<string, string> = {}, equipe: Record<string, number> = {};
     for (const m of membres || []) {
       const e = String(m.email || "").toLowerCase();
@@ -183,7 +187,7 @@ Deno.serve(async (req: Request) => {
       if ((count || 0) >= ESSAIS_MAX) return json({ error: `Déjà ${ESSAIS_MAX} essais aujourd'hui.` }, 429);
       const m = mails[moi] || { auj: [], retard: [], bientot: [] };
       const nb = m.auj.length + m.retard.length;
-      let statut = "envoye", detail = null;
+      let statut = "envoye", detail: string | null = null;
       try {
         await envoyer(moi, "[Essai] " + sujet(m), mailHtml(prenoms[moi], m, jour, true), mailTexte(prenoms[moi], m, jour));
       } catch (e) { statut = "erreur"; detail = String((e as Error).message || e); }

@@ -70,7 +70,8 @@ sans Deno ni réseau : `node outils/banc/rappels.mjs` (simulation, envoi de
 9 h rejoué deux fois, essai ; mails écrits en HTML dans
 `outils/banc/captures/rappels/`).
 
-Mise en service (dans cet ordre) :
+Mise en service (dans cet ordre ; étapes 1 à 3 faites le 30/10 : migration
+`20261030093126`, `rappels-quotidiens` v1, `backup-daily` v4, script Google v1) :
 1. Migration `20261030000000_rappels_par_mail` (clé `rappels`, table
    `rappels_envois`), avant de mettre l'appli en ligne : sans elle,
    l'enregistrement des réglages est refusé.
