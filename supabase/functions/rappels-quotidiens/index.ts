@@ -13,9 +13,11 @@
 //  - l'appli (bouton « M'envoyer un essai ») avec la session d'un membre : son
 //    mail du jour, a lui seul, ESSAIS_MAX fois par jour au plus.
 //
-// Envoi par Resend (https://resend.com) : secrets RESEND_API_KEY et
-// RAPPELS_FROM (« Please Please <rappels@pleaseplease.fr> », domaine verifie
-// chez Resend). Seuls les membres de team_members recoivent un mail.
+// Envoi par le script Google google/rappels-mail (MailApp, compte de
+// Mathieu) : secrets RAPPELS_SCRIPT_URL (son adresse /exec) et
+// RAPPELS_SCRIPT_SECRET. Les DNS de pleaseplease.fr sont inaccessibles, ce
+// qui excluait un service d'envoi a domaine verifie (Resend, Brevo...).
+// Seuls les membres de team_members recoivent un mail.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { dateCourte, lieuTexte, rappelsDuJour } from "./calcul.mjs";
 
@@ -115,15 +117,20 @@ function mailTexte(prenom: string, m: Mail, jour: string) {
     g("Dans les jours qui viennent", m.bientot) + `\nTableau de bord : ${SITE}\nGérer mes rappels : ${SITE}#rappels\n`;
 }
 
+// Apps Script repond 200 meme en cas d'erreur, apres une redirection que
+// fetch suit : seul le champ ok de la reponse dit si le mail est parti.
 async function envoyer(to: string, subject: string, html: string, text: string) {
-  const cle = Deno.env.get("RESEND_API_KEY");
-  if (!cle) throw new Error("RESEND_API_KEY manquant");
-  const r = await fetch("https://api.resend.com/emails", {
+  const url = Deno.env.get("RAPPELS_SCRIPT_URL"), secret = Deno.env.get("RAPPELS_SCRIPT_SECRET");
+  if (!url || !secret) throw new Error("RAPPELS_SCRIPT_URL ou RAPPELS_SCRIPT_SECRET manquant");
+  const r = await fetch(url, {
     method: "POST",
-    headers: { Authorization: "Bearer " + cle, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: Deno.env.get("RAPPELS_FROM") || "Please Please <onboarding@resend.dev>", to: [to], subject, html, text }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ secret, to, subject, html, text }),
   });
-  if (!r.ok) throw new Error("Resend " + r.status + " : " + (await r.text()).slice(0, 300));
+  const brut = await r.text();
+  let rep: { ok?: boolean; error?: string } = {};
+  try { rep = JSON.parse(brut); } catch { throw new Error("Script Google : réponse illisible (" + r.status + ") " + brut.slice(0, 120)); }
+  if (!rep.ok) throw new Error("Script Google : " + (rep.error || "HTTP " + r.status));
 }
 
 Deno.serve(async (req: Request) => {

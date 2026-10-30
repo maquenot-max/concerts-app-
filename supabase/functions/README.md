@@ -14,7 +14,7 @@ rien ne synchronise les deux automatiquement.
 | `backup-daily` | Sauvegarde quotidienne de `app_data` dans le bucket privé `backups`, rétention 30 jours | la tâche `pg_cron` `sauvegarde-app`, chaque nuit à 03h15 UTC |
 | `team-admin` | Gestion de l'équipe (ajout, mot de passe, rôle, 2FA) | la page *Équipe* de l'application |
 | `purge-media` | Supprime du bucket public `concert-media` les photos du report de communication expirées (60 jours après le concert) ou plus référencées, et les photos de newsletter de plus de 6 mois (jamais `artist-photos/` ni `report-logos/`) | la tâche `pg_cron` `purge-medias`, chaque nuit à 03h30 UTC (après la sauvegarde) |
-| `rappels-quotidiens` | Le mail du matin de chaque membre (page *Rappels par mail*) : tâches du jour, en retard (3 relances au plus) et des trois jours suivants, envoyées par Resend ; essai à la demande | la tâche `pg_cron` `rappels-mail` à 7 h et 8 h UTC (seul le passage de 9 h à Paris envoie), et le bouton *M'envoyer un essai* |
+| `rappels-quotidiens` | Le mail du matin de chaque membre (page *Rappels par mail*) : tâches du jour, en retard (3 relances au plus) et des trois jours suivants, envoyées par le script Google `google/rappels-mail` ; essai à la demande | la tâche `pg_cron` `rappels-mail` à 7 h et 8 h UTC (seul le passage de 9 h à Paris envoie), et le bouton *M'envoyer un essai* |
 
 **`purge-media` est en service depuis le 01/10/2026.** Déployée à la main par
 Mathieu (éditeur du tableau de bord, version 1, *Verify JWT* activé), puis
@@ -74,11 +74,12 @@ Mise en service (dans cet ordre) :
 1. Migration `20261030000000_rappels_par_mail` (clé `rappels`, table
    `rappels_envois`), avant de mettre l'appli en ligne : sans elle,
    l'enregistrement des réglages est refusé.
-2. Compte Resend, domaine d'envoi vérifié (enregistrements DNS de
-   `pleaseplease.fr`), puis deux secrets dans Supabase → Edge Functions →
-   *Secrets* : `RESEND_API_KEY` et `RAPPELS_FROM`
-   (`Please Please <rappels@pleaseplease.fr>`). Sans domaine vérifié, Resend
-   n'envoie qu'à l'adresse du compte, depuis `onboarding@resend.dev`.
+2. Script Google d'envoi (`google/rappels-mail/README.md`), installé sous
+   maquenot@gmail.com, puis deux secrets dans Supabase → Edge Functions →
+   *Secrets* : `RAPPELS_SCRIPT_URL` (son adresse `/exec`) et
+   `RAPPELS_SCRIPT_SECRET` (affiché par sa fonction `initialiser`). Pas de
+   service d'envoi à domaine vérifié : les DNS de `pleaseplease.fr` (OVH)
+   sont inaccessibles, et le Brevo du domaine est tenu par Gigz.
 3. Déployer `rappels-quotidiens` avec ses deux fichiers, *Verify JWT* activé.
 4. Bouton *M'envoyer un essai* de la page, puis simulation :
    ```sql
