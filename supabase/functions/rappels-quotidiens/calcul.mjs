@@ -170,17 +170,22 @@ function rmlCalcul(r,jour,equipe){
       var vr=rmlVilleReglee(r,v);if(!vr)return;
       var cfg=vr.cfg,suivies=syncIsPlain(cfg.taches)?cfg.taches:{};
       sansEtapesSautees(s,etapesSujet(s)).forEach(function(t){
-        if(!suivies[t.id]||isNA(s,t)||taskStates[tk(s.id,t.id)]||!isUnlocked(s,t))return;
-        var aj=rmlAjustement(cfg,s.art,t.id);
-        if(aj&&aj.coupe)return;
+        // Une etape que la ville ne rappelle pas part quand meme si un
+        // reglage d'artiste la vise nommement : a ses seules personnes en plus.
+        var aj=rmlAjustement(cfg,s.art,t.id),plus=aj&&Array.isArray(aj.plus)?aj.plus:[];
+        if(!suivies[t.id]&&!(aj&&aj.tache&&plus.length))return;
+        if((aj&&aj.coupe)||isNA(s,t)||taskStates[tk(s.id,t.id)]||!isUnlocked(s,t))return;
         var j=aj&&aj.jours!==null&&aj.jours!==undefined&&aj.jours!==''&&isFinite(+aj.jours)?+aj.jours:null;
         var d=calcDate(s,j===null?t:Object.assign({},t,{jours:j}));
         if(!d||isNaN(d.getTime()))return;
         var iso=rmlIso(d),n=rmlEcart(iso,jour);
         if(n<-RML_RELANCES||n>RML_BIENTOT)return;
         var it={type:'etape',ecart:n,echeance:iso,tache:t.nom||'',tid:t.id,art:s.art||'',dc:s.dc||'',salle:s.salle||'',ville:villeRegroupee(v),fid:x.fid,sp:x.sp};
-        (Array.isArray(cfg.dest)?cfg.dest:[]).concat(aj&&Array.isArray(aj.plus)?aj.plus:[]).forEach(function(e){
+        (suivies[t.id]&&Array.isArray(cfg.dest)?cfg.dest:[]).forEach(function(e){
           if(!rmlMuet(r,String(e).toLowerCase(),'v|'+vr.nom+'|'+t.id))ranger(e,s.id+'|'+t.id,it);
+        });
+        plus.forEach(function(e){
+          if(!rmlMuet(r,String(e).toLowerCase(),'a|'+aj.id))ranger(e,s.id+'|'+t.id,it);
         });
       });
     });
