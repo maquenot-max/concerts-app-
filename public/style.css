@@ -1636,6 +1636,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;bor
 .rml-puce-x::after,.rml-x::after{content:'';position:absolute;inset:-6px}
 .rml-choix{height:28px;max-width:100%;padding:0 8px;border:1px dashed var(--border-strong);border-radius:var(--radius-pill);background:transparent;color:var(--accent);font-size:12px;font-weight:500;cursor:pointer}
 .rml-choix-large{margin-top:8px;border-radius:var(--radius-sm)}
+/* Sans dessin natif : Safari en faisait une pilule grise bombee (tour du 30/10). */
+select.rml-choix,select.rml-champ{-webkit-appearance:none;appearance:none;padding-right:28px;background-repeat:no-repeat;background-position:right 10px center;background-size:12px 12px}
+select.rml-choix{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff8a64' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")}
+select.rml-champ{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238c8a95' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")}
 .rml-choix option,.rml-champ option{color:var(--text);background:var(--surface)}
 .rml-taches{display:flex;flex-direction:column}
 .rml-ligne{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border-light);font-size:13px}
