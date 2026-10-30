@@ -33,8 +33,15 @@ type Item = {
 };
 type Mail = { auj: Item[]; retard: Item[]; bientot: Item[] };
 
+// Le bouton d'essai appelle depuis le navigateur : il faut repondre a la
+// demande prealable (OPTIONS) et autoriser l'origine, comme team-admin.
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
 function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 }
 
 // Date et heure a Paris, quel que soit le fuseau du serveur (UTC).
@@ -134,6 +141,7 @@ async function envoyer(to: string, subject: string, html: string, text: string) 
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Méthode non autorisée" }, 405);
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
     auth: { persistSession: false, autoRefreshToken: false },

@@ -126,6 +126,9 @@ async function appel(corps, entetes) {
   return { status: r.status, corps: await r.json() };
 }
 
+// Demande prealable du navigateur (bouton d'essai) : 200 et l'origine autorisee.
+const pre = await gestionnaire(new Request('http://banc/', { method: 'OPTIONS', headers: { Origin: 'https://dashboardppcomm.netlify.app', 'Access-Control-Request-Method': 'POST' } }));
+console.log('Demande prealable (OPTIONS) :', pre.status, pre.headers.get('access-control-allow-origin'), pre.headers.get('access-control-allow-headers'));
 const sortie = path.join(ICI, 'captures', 'rappels');
 fs.mkdirSync(sortie, { recursive: true });
 horloge(9);
@@ -142,6 +145,8 @@ const deux = await appel({}, { 'x-backup-secret': 'secret-banc' });
 console.log('Second passage :', deux.status, JSON.stringify(deux.corps));
 const essai = await appel({ essai: true }, { Authorization: 'Bearer jeton-anne' });
 console.log('Essai d\'Anne-Claire :', essai.status, JSON.stringify(essai.corps));
+const essaiBrut = await gestionnaire(new Request('http://banc/', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer jeton-anne' }, body: '{"essai":true}' }));
+console.log('En-tete CORS sur la reponse de l\'essai :', essaiBrut.headers.get('access-control-allow-origin'));
 const intrus = await appel({ essai: true }, { Authorization: 'Bearer inconnu' });
 console.log('Essai sans session :', intrus.status);
 console.log('Journal :', tables.rappels_envois.map((r) => `${r.email} ${r.statut}${r.essai ? ' (essai)' : ''}`).join(' ; '));
