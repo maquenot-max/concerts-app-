@@ -3212,9 +3212,12 @@ function actRemettre(id){
 // Cle rappels d'app_data :
 //   villes  {Reims:{dest:[e-mails],taches:{<id d'etape>:true},
 //            artistes:[{id,art,tache,coupe,jours,plus:[e-mails]}]}}
+//            un seul reglage par artiste et par etape. Celui d'une etape que
+//            la ville ne rappelle pas ne vaut que pour ses personnes « plus ».
 //   projets [{id,colId,tache,dest:[e-mails]}]  (tache vide : tout le projet)
 //   muets   {<e-mail>:{<rappel>:true}}  chacun coupe un rappel pour lui :
-//            'v|Reims|<id d'etape>' ou 'p|<id du rappel>'.
+//            'v|Reims|<id d'etape>', 'a|<id du reglage d'artiste>'
+//            ou 'p|<id du rappel>'.
 // Un rappel tombe le jour de l'echeance de la tache, puis chaque jour tant
 // qu'elle est en retard (3 fois au plus). Le mail montre aussi ce qui arrive
 // dans les 3 jours, sans partir pour ca seulement.
@@ -3277,17 +3280,22 @@ function rmlCalcul(r,jour,equipe){
       var vr=rmlVilleReglee(r,v);if(!vr)return;
       var cfg=vr.cfg,suivies=syncIsPlain(cfg.taches)?cfg.taches:{};
       sansEtapesSautees(s,etapesSujet(s)).forEach(function(t){
-        if(!suivies[t.id]||isNA(s,t)||taskStates[tk(s.id,t.id)]||!isUnlocked(s,t))return;
-        var aj=rmlAjustement(cfg,s.art,t.id);
-        if(aj&&aj.coupe)return;
+        // Une etape que la ville ne rappelle pas part quand meme si un
+        // reglage d'artiste la vise nommement : a ses seules personnes en plus.
+        var aj=rmlAjustement(cfg,s.art,t.id),plus=aj&&Array.isArray(aj.plus)?aj.plus:[];
+        if(!suivies[t.id]&&!(aj&&aj.tache&&plus.length))return;
+        if((aj&&aj.coupe)||isNA(s,t)||taskStates[tk(s.id,t.id)]||!isUnlocked(s,t))return;
         var j=aj&&aj.jours!==null&&aj.jours!==undefined&&aj.jours!==''&&isFinite(+aj.jours)?+aj.jours:null;
         var d=calcDate(s,j===null?t:Object.assign({},t,{jours:j}));
         if(!d||isNaN(d.getTime()))return;
         var iso=rmlIso(d),n=rmlEcart(iso,jour);
         if(n<-RML_RELANCES||n>RML_BIENTOT)return;
         var it={type:'etape',ecart:n,echeance:iso,tache:t.nom||'',tid:t.id,art:s.art||'',dc:s.dc||'',salle:s.salle||'',ville:villeRegroupee(v),fid:x.fid,sp:x.sp};
-        (Array.isArray(cfg.dest)?cfg.dest:[]).concat(aj&&Array.isArray(aj.plus)?aj.plus:[]).forEach(function(e){
+        (suivies[t.id]&&Array.isArray(cfg.dest)?cfg.dest:[]).forEach(function(e){
           if(!rmlMuet(r,String(e).toLowerCase(),'v|'+vr.nom+'|'+t.id))ranger(e,s.id+'|'+t.id,it);
+        });
+        plus.forEach(function(e){
+          if(!rmlMuet(r,String(e).toLowerCase(),'a|'+aj.id))ranger(e,s.id+'|'+t.id,it);
         });
       });
     });
@@ -3355,12 +3363,16 @@ function rmlProcessTrie(){
   });
 }
 function rmlQuand(t,jours){return evtQuandCourt(jours===undefined?t:{ref:t.ref,jours:jours});}
-function rmlAjustTexte(a){
+// « aussi à » quand la ville rappelle deja l'etape ; sinon la personne est
+// seule a la recevoir, et l'echeance (absente de la carte) est rappelee.
+function rmlAjustTexte(a,suivies){
   var t=a.tache?rmlEtape(a.tache):null,quoi=a.tache?(t?t.nom:'Étape supprimée'):'toutes les étapes';
   if(a.coupe)return 'pas de rappel · '+quoi;
-  if(Array.isArray(a.plus)&&a.plus.length)return 'aussi à '+a.plus.map(rmlNom).join(', ')+' · '+quoi;
-  if(t&&a.jours!==null&&a.jours!==undefined&&a.jours!=='')return rmlQuand(t,+a.jours)+' · '+quoi;
-  return quoi;
+  var seule=a.tache&&!suivies[a.tache],l=[];
+  if(t&&a.jours!==null&&a.jours!==undefined&&a.jours!=='')l.push(rmlQuand(t,+a.jours));
+  else if(t&&seule)l.push(rmlQuand(t));
+  if(Array.isArray(a.plus)&&a.plus.length)l.push((seule?'à ':'aussi à ')+a.plus.map(rmlNom).join(', '));
+  return l.concat([quoi]).join(' · ');
 }
 function rmlPuce(texte,action){
   return '<span class="rml-puce">'+esc(texte)+(action?'<button type="button" class="rml-puce-x" aria-label="Retirer '+esc(texte)+'" onclick="'+action+'">'+icon('x')+'</button>':'')+'</span>';
@@ -3417,21 +3429,29 @@ function rmlVilleHtml(v,cfg,nb,admin){
   var arts=Array.isArray(cfg.artistes)?cfg.artistes.filter(syncIsPlain):[];
   h+='<div class="rml-artistes"><p class="rml-mini">Par artiste</p>'
     +(arts.length?arts.map(function(a){
-      return '<div class="rml-art-ligne"><span class="rml-art">'+esc(a.art||'')+'</span><span class="rml-art-regle">'+esc(rmlAjustTexte(a))+'</span>'
+      return '<div class="rml-art-ligne"><span class="rml-art">'+esc(a.art||'')+'</span><span class="rml-art-regle">'+esc(rmlAjustTexte(a,suivies))+'</span>'
         +(admin?'<button type="button" class="rml-x" aria-label="Retirer le réglage de '+esc(a.art||'')+'" onclick="rmlRetirerArt(\''+escJs(v)+'\',\''+escJs(String(a.id))+'\')">'+icon('x')+'</button>':'')+'</div>';
     }).join(''):'<span class="rml-vide">Aucun réglage particulier.</span>');
   if(admin)h+=rmlForm&&rmlForm.type==='art'&&rmlForm.ville===v?rmlFormArtHtml(v,ids):'<button type="button" class="rml-lien" onclick="rmlOuvrirArt(\''+escJs(v)+'\')">+ Ajuster pour un artiste</button>';
   return h+'</div></section>';
 }
+// Les etapes que la ville ne rappelle pas sont proposees aussi : pour un seul
+// artiste, a une personne (rien d'autre n'aurait d'effet).
 function rmlFormArtHtml(v,ids){
   var f=rmlForm,liste='rml-arts-'+Math.abs(rmlHash(v));
+  function suivie(id){return ids.some(function(t){return String(t.id)===String(id);});}
+  function opt(t,quand){return '<option value="'+esc(String(t.id))+'"'+(String(f.tache)===String(t.id)?' selected':'')+'>'+esc(t.nom)+(quand?' · '+esc(rmlQuand(t)):'')+'</option>';}
+  var autres=rmlProcessTrie().filter(function(t){return !suivie(t.id);}),seule=!!f.tache&&!suivie(f.tache);
+  if(seule)f.quoi='plus';
   var h='<div class="rml-form">'
     +'<label class="rml-champ-lab">Artiste<input class="rml-champ" list="'+liste+'" value="'+esc(f.art||'')+'" placeholder="Nom de l\'artiste" oninput="rmlForm.art=this.value"></label>'
     +'<datalist id="'+liste+'">'+rmlArtistesVille(v).map(function(a){return '<option value="'+esc(a)+'"></option>';}).join('')+'</datalist>'
     +'<label class="rml-champ-lab">Étape<select class="rml-champ" onchange="rmlForm.tache=this.value;renderRappels()"><option value="">Toutes les étapes rappelées</option>'
-    +ids.filter(function(t){return rmlEtape(t.id);}).map(function(t){return '<option value="'+esc(String(t.id))+'"'+(String(f.tache)===String(t.id)?' selected':'')+'>'+esc(t.nom)+'</option>';}).join('')+'</select></label>'
+    +ids.filter(function(t){return rmlEtape(t.id);}).map(function(t){return opt(t,false);}).join('')
+    +(autres.length?'<optgroup label="Pour cet artiste seulement">'+autres.map(function(t){return opt(t,true);}).join('')+'</optgroup>':'')+'</select></label>'
+    +(seule?'<p class="rml-aide">'+esc(v)+' ne rappelle pas cette étape : seules les personnes choisies ici la recevront, et pour cet artiste seulement.</p>':'')
     +'<label class="rml-champ-lab">Réglage<select class="rml-champ" onchange="rmlForm.quoi=this.value;renderRappels()">'
-    +[['date','Rappeler à une autre date'],['coupe','Ne pas rappeler'],['plus','Prévenir aussi quelqu\'un']].filter(function(o){return o[0]!=='date'||f.tache;}).map(function(o){return '<option value="'+esc(o[0])+'"'+(f.quoi===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select></label>';
+    +(seule?[['plus','Prévenir quelqu\'un']]:[['date','Rappeler à une autre date'],['coupe','Ne pas rappeler'],['plus','Prévenir aussi quelqu\'un']].filter(function(o){return o[0]!=='date'||f.tache;})).map(function(o){return '<option value="'+esc(o[0])+'"'+(f.quoi===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select></label>';
   if(f.quoi==='date'&&f.tache){
     var t=rmlEtape(f.tache),avant=t&&t.ref!=='annonce';
     h+='<label class="rml-champ-lab">'+(avant?'Jours avant le concert':'Jours après l\'annonce')+'<input class="rml-champ" type="number" min="0" max="365" value="'+esc(String(f.jours==null?'':f.jours))+'" placeholder="'+esc(String(Math.abs(t?+t.jours||0:0)))+'" oninput="rmlForm.jours=this.value"></label>';
@@ -3471,9 +3491,16 @@ function rmlProjetsHtml(r,admin){
 // Ce que je recois, avec un interrupteur par rappel (le mien seulement).
 function rmlMesRappelsHtml(r){
   var moi=rmlMoi(),l=[];
+  function dedans(liste){return Array.isArray(liste)&&liste.map(function(e){return String(e).toLowerCase();}).indexOf(moi)>=0;}
   Object.keys(r.villes||{}).forEach(function(v){
-    var cfg=r.villes[v];if(!syncIsPlain(cfg)||!Array.isArray(cfg.dest)||cfg.dest.map(function(e){return String(e).toLowerCase();}).indexOf(moi)<0)return;
-    rmlProcessTrie().forEach(function(t){if(syncIsPlain(cfg.taches)&&cfg.taches[t.id])l.push({cle:'v|'+v+'|'+t.id,txt:t.nom,sous:v+' · '+rmlQuand(t)});});
+    var cfg=r.villes[v];if(!syncIsPlain(cfg))return;
+    if(dedans(cfg.dest))rmlProcessTrie().forEach(function(t){if(syncIsPlain(cfg.taches)&&cfg.taches[t.id])l.push({cle:'v|'+v+'|'+t.id,txt:t.nom,sous:v+' · '+rmlQuand(t)});});
+    // Les reglages d'artiste qui me previennent en plus (ou moi seul).
+    (Array.isArray(cfg.artistes)?cfg.artistes:[]).forEach(function(a){
+      if(!syncIsPlain(a)||a.coupe||!dedans(a.plus))return;
+      var t=a.tache?rmlEtape(a.tache):null,j=a.jours!==null&&a.jours!==undefined&&a.jours!==''?+a.jours:undefined;
+      l.push({cle:'a|'+a.id,txt:a.tache?(t?t.nom:'Étape supprimée'):'Toutes les étapes rappelées',sous:(a.art||'')+' · '+v+(t?' · '+rmlQuand(t,j):'')});
+    });
   });
   (Array.isArray(r.projets)?r.projets:[]).forEach(function(p){
     if(!syncIsPlain(p)||!Array.isArray(p.dest)||p.dest.map(function(e){return String(e).toLowerCase();}).indexOf(moi)<0)return;
@@ -3559,16 +3586,18 @@ function rmlAjouterArt(v){
   var f=rmlForm;if(!f||!isAdmin())return;
   var art=String(f.art||'').trim();
   if(!art){showToast('Indique l\'artiste.');return;}
-  var a={id:uid('ra'),art:art,tache:f.tache||'',coupe:false,jours:null,plus:[]};
-  if(f.quoi==='coupe')a.coupe=true;
-  else if(f.quoi==='plus'){if(!f.plus){showToast('Choisis qui prévenir.');return;}a.plus=[f.plus];}
-  else{
-    var t=rmlEtape(f.tache),n=parseInt(f.jours,10);
-    if(!t||!(n>=0)){showToast('Indique le nombre de jours.');return;}
-    a.jours=t.ref==='annonce'?n:-n;
-  }
+  var t=rmlEtape(f.tache),n=parseInt(f.jours,10);
+  if(f.quoi==='plus'&&!f.plus){showToast('Choisis qui prévenir.');return;}
+  if(f.quoi==='date'&&(!t||!(n>=0))){showToast('Indique le nombre de jours.');return;}
+  // Un seul reglage par artiste et par etape (le calcul n'en lit qu'un) : une
+  // deuxieme personne, ou une date, completent celui qui existe deja.
   var c=rmlVille(v);if(!Array.isArray(c.artistes))c.artistes=[];
-  c.artistes.push(a);rmlForm=null;rmlEnregistrer();
+  var a=c.artistes.find(function(x){return syncIsPlain(x)&&rmlArtCle(x.art)===rmlArtCle(art)&&String(x.tache||'')===String(f.tache||'');});
+  if(!a){a={id:uid('ra'),art:art,tache:f.tache||'',coupe:false,jours:null,plus:[]};c.artistes.push(a);}
+  if(f.quoi==='coupe'){a.coupe=true;a.jours=null;a.plus=[];}
+  else if(f.quoi==='plus'){a.coupe=false;if(!Array.isArray(a.plus))a.plus=[];if(a.plus.indexOf(f.plus)<0)a.plus.push(f.plus);}
+  else{a.coupe=false;a.jours=t.ref==='annonce'?n:-n;}
+  rmlForm=null;rmlEnregistrer();
 }
 function rmlRetirerArt(v,id){if(!isAdmin())return;var c=rmlVille(v);c.artistes=(c.artistes||[]).filter(function(a){return String(a.id)!==id;});rmlEnregistrer();}
 function rmlAjouterProjet(){
