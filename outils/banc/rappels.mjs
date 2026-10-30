@@ -1,6 +1,6 @@
 // Banc de la fonction serveur rappels-quotidiens, sans Deno ni Supabase : le
 // vrai index.ts tourne sous Node (types retires par Node 22.6+) contre une
-// fausse base (une sauvegarde) et un faux Resend. Aucune requete ne sort.
+// fausse base (une sauvegarde) et un faux script Google. Aucune requete ne sort.
 //
 //   node outils/banc/rappels.mjs [sauvegarde.json] [--jour AAAA-MM-JJ] [--reglages rappels.json]
 //
@@ -40,6 +40,7 @@ const data = lignesDe(source);
 if (fichierReglages) data.rappels = JSON.parse(fs.readFileSync(fichierReglages, 'utf8'));
 const MEMBRES = [
   { email: 'test@banc.local', name: 'Banc' }, { email: 'louka@banc.local', name: 'Louka' }, { email: 'anne@banc.local', name: 'Anne-Claire' },
+  { email: 'echec@banc.local', name: 'Echec' },
 ];
 
 // ── Fausse base : juste ce que la fonction appelle ──
@@ -91,14 +92,20 @@ const envoyes = [];
 globalThis.__faux = client;
 let gestionnaire = null;
 globalThis.Deno = {
-  env: { get: (k) => ({ SUPABASE_URL: 'http://banc', SUPABASE_SERVICE_ROLE_KEY: 'x', RESEND_API_KEY: 'cle-banc', RAPPELS_FROM: 'Banc <rappels@banc.local>' })[k] },
+  env: { get: (k) => ({ SUPABASE_URL: 'http://banc', SUPABASE_SERVICE_ROLE_KEY: 'x', RAPPELS_SCRIPT_URL: 'https://script.google.com/macros/s/banc/exec', RAPPELS_SCRIPT_SECRET: 'secret-script' })[k] },
   serve: (f) => { gestionnaire = f; },
 };
 const vraiFetch = globalThis.fetch;
+// Faux script Google : memes reponses que google/rappels-mail/Code.gs (200
+// meme en cas d'erreur, le champ ok tranche). Un destinataire en « echec@ »
+// simule un refus de Gmail.
 globalThis.fetch = async (url, init) => {
-  if (String(url) !== 'https://api.resend.com/emails') throw new Error('requete bloquee : ' + url);
-  envoyes.push(JSON.parse(init.body));
-  return new Response('{"id":"banc"}', { status: 200 });
+  if (String(url) !== 'https://script.google.com/macros/s/banc/exec') throw new Error('requete bloquee : ' + url);
+  const b = JSON.parse(init.body);
+  if (b.secret !== 'secret-script') return new Response('{"error":"Secret invalide"}', { status: 200 });
+  if (b.to.startsWith('echec@')) return new Response('{"error":"Service invoked too many times"}', { status: 200 });
+  envoyes.push({ to: [b.to], subject: b.subject, html: b.html, text: b.text });
+  return new Response('{"ok":true,"reste":99}', { status: 200 });
 };
 await import(pathToFileURL(path.join(tmp, 'index.ts')).href);
 

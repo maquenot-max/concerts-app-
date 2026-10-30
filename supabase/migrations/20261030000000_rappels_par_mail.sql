@@ -1,7 +1,7 @@
 -- Rappels par mail (30/10/2026, demande d'Anne-Claire elargie par Mathieu) :
 -- reglages dans la cle rappels d'app_data, envois notes dans rappels_envois.
 -- La fonction rappels-quotidiens est planifiee a part
--- (rappels_par_mail_planifier), une fois Resend en place.
+-- (rappels_par_mail_planifier), une fois le script Google d'envoi en place.
 
 -- 1. Cle rappels. Ecriture ouverte a tout membre, comme les autres cles non
 -- reservees : chacun y coupe ses propres rappels (muets). Les destinataires
