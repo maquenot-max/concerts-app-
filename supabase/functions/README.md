@@ -70,9 +70,10 @@ sans Deno ni réseau : `node outils/banc/rappels.mjs` (simulation, envoi de
 9 h rejoué deux fois, essai ; mails écrits en HTML dans
 `outils/banc/captures/rappels/`).
 
-Mise en service (dans cet ordre ; étapes 1 à 3 faites le 30/10 : migration
-`20261030093126`, `rappels-quotidiens` v1, `backup-daily` v4, script Google v1) :
-1. Migration `20261030000000_rappels_par_mail` (clé `rappels`, table
+Mise en service (dans cet ordre ; étapes 1 à 5 faites le 30/10 : migration
+`20261030093126`, script Google v1, `rappels-quotidiens` v2, `backup-daily` v4,
+essai reçu, tâche `rappels-mail` jobid 6) :
+1. Migration `20261030093126_rappels_par_mail` (clé `rappels`, table
    `rappels_envois`), avant de mettre l'appli en ligne : sans elle,
    l'enregistrement des réglages est refusé.
 2. Script Google d'envoi (`google/rappels-mail/README.md`), installé sous
@@ -93,8 +94,8 @@ Mise en service (dans cet ordre ; étapes 1 à 3 faites le 30/10 : migration
      body := '{"dry": true}'::jsonb);
    select status_code, content from net._http_response order by created desc limit 1;
    ```
-5. Migration `20261030000001_rappels_par_mail_planifier` (tâche
-   `rappels-mail`). Contrôle le lendemain : bloc *Derniers envois* de la page,
+5. Migration `20261030095742_rappels_par_mail_planifier` (tâche
+   `rappels-mail`, même commande que `sauvegarde-app`, adresse changée). Contrôle le lendemain : bloc *Derniers envois* de la page,
    ou `select * from rappels_envois order by at desc limit 20`.
 
 **Recadrage des photos du report (30/09)** : une photo recadree garde son
