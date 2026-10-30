@@ -82,6 +82,10 @@ const ECRANS = [
   ['22-report-pages', "showTab('concerts');var c=C('EIFFEL');" + RP_DEMO + "openFiche(c.id);rpOuvrir(c.id);rpTout=true;rpRendu()"],
   // Journal d'activite (14/10) : une semaine de gestes de demonstration.
   ['23-activite', "if(!__banc.activite.length)__banc.activiteDemo();showTab('activite')"],
+  // Rappels par mail (30/10) : deux villes reglees, un artiste ajuste, un projet.
+  ['24-rappels', "var q=Object.keys(teamNames);rappels={villes:{Reims:{dest:[q[0]],taches:{23:true,24:true,25:true},"
+    + "artistes:[{id:'ra1',art:'EIFFEL',tache:'24',coupe:false,jours:-10,plus:[]},{id:'ra2',art:'AMBRE',tache:'',coupe:true,jours:null,plus:[]}]},"
+    + "Dijon:{dest:q,taches:{25:true},artistes:[]}},projets:[{id:'rp1',colId:tkCols[0].id,tache:'',dest:[q[0]]}],muets:{}};showTab('rappels')"],
 ].filter(([n]) => n.includes(FILTRE));
 
 // Transitions et animations coupees : une fenetre Safari cachee derriere
