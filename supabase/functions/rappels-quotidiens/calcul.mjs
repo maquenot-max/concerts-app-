@@ -215,4 +215,4 @@ export function rappelsDuJour(d, jour, equipe) {
   tkTasks = Array.isArray(d.tktasks) ? d.tktasks : [];
   return rmlCalcul(d.rappels, jour, equipe);
 }
-export { lieuTexte, dateCourte, rmlIso };
+export { lieuTexte, dateCourte, normaliserLieu, rmlIso };

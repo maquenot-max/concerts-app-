@@ -39,7 +39,7 @@ if (!source) {
 const data = lignesDe(source);
 if (fichierReglages) data.rappels = JSON.parse(fs.readFileSync(fichierReglages, 'utf8'));
 const MEMBRES = [
-  { email: 'test@banc.local', name: 'Banc' }, { email: 'louka@banc.local', name: 'Louka' }, { email: 'anne@banc.local', name: 'Anne-Claire' },
+  { email: 'test@banc.local', name: 'Banc', role: 'admin' }, { email: 'louka@banc.local', name: 'Louka' }, { email: 'anne@banc.local', name: 'Anne-Claire' },
   { email: 'echec@banc.local', name: 'Echec' },
 ];
 
@@ -78,7 +78,7 @@ function requete(table) {
   }
   return q;
 }
-const client = { from: requete, auth: { getUser: async (j) => ({ data: { user: j === 'jeton-anne' ? { email: 'Anne@banc.local' } : null } }) } };
+const client = { from: requete, auth: { getUser: async (j) => ({ data: { user: ({ 'jeton-anne': { email: 'Anne@banc.local' }, 'jeton-admin': { email: 'test@banc.local' } })[j] || null } }) } };
 
 // ── index.ts sous Node : import npm: remplace par la fausse base ──
 // Copie dans site/ (ignore par Git, refait a chaque passage).
@@ -147,6 +147,15 @@ const essai = await appel({ essai: true }, { Authorization: 'Bearer jeton-anne' 
 console.log('Essai d\'Anne-Claire :', essai.status, JSON.stringify(essai.corps));
 const essaiBrut = await gestionnaire(new Request('http://banc/', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer jeton-anne' }, body: '{"essai":true}' }));
 console.log('En-tete CORS sur la reponse de l\'essai :', essaiBrut.headers.get('access-control-allow-origin'));
+// Un admin montre a Anne-Claire l'exemple d'un concert : le premier concert
+// de la sauvegarde et la premiere etape du process.
+const ex = { fid: data.concerts[0].id, tid: data.process[0].id };
+const pour = await appel({ essai: true, pour: 'anne@banc.local', exemple: ex }, { Authorization: 'Bearer jeton-admin' });
+console.log('Exemple envoye par un admin a Anne-Claire :', pour.status, JSON.stringify(pour.corps), '->', envoyes.at(-1)?.to[0], '«', envoyes.at(-1)?.subject, '»');
+const pasAdmin = await appel({ essai: true, pour: 'test@banc.local' }, { Authorization: 'Bearer jeton-anne' });
+console.log('Meme chose sans etre admin :', pasAdmin.status, JSON.stringify(pasAdmin.corps));
+const horsEquipe = await appel({ essai: true, pour: 'inconnu@ailleurs.fr' }, { Authorization: 'Bearer jeton-admin' });
+console.log('Destinataire hors equipe :', horsEquipe.status, JSON.stringify(horsEquipe.corps));
 const intrus = await appel({ essai: true }, { Authorization: 'Bearer inconnu' });
 console.log('Essai sans session :', intrus.status);
 console.log('Journal :', tables.rappels_envois.map((r) => `${r.email} ${r.statut}${r.essai ? ' (essai)' : ''}`).join(' ; '));
