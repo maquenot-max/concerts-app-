@@ -11,7 +11,10 @@
 //    renvoie rien. Corps {"dry": true} : simulation, ni envoi ni trace,
 //    avec {"jour": "AAAA-MM-JJ"} pour un autre jour.
 //  - l'appli (bouton « M'envoyer un essai ») avec la session d'un membre : son
-//    mail du jour, a lui seul, ESSAIS_MAX fois par jour au plus.
+//    mail du jour, a lui seul, ESSAIS_MAX fois par jour au plus. Un admin peut
+//    l'envoyer a un autre membre ({"pour": e-mail}) et montrer un exemple sur
+//    un concert precis ({"exemple": {"fid", "tid", "sp"?}}), comme s'il etait
+//    du jour (30/10 : montrer a Anne-Claire le rappel d'accreditation).
 //
 // Envoi par le script Google google/rappels-mail (MailApp, compte de
 // Mathieu) : secrets RAPPELS_SCRIPT_URL (son adresse /exec) et
@@ -19,7 +22,7 @@
 // qui excluait un service d'envoi a domaine verifie (Resend, Brevo...).
 // Seuls les membres de team_members recoivent un mail.
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { dateCourte, lieuTexte, rappelsDuJour } from "./calcul.mjs";
+import { dateCourte, lieuTexte, normaliserLieu, rappelsDuJour } from "./calcul.mjs";
 
 const CLES = ["concerts", "taskstates", "process", "tkcols", "tktasks", "rappels"];
 const SITE = "https://dashboardppcomm.netlify.app/";
@@ -107,6 +110,7 @@ ${it.type === "projet" && q ? `<div style="font:13px/18px Helvetica,Arial,sans-s
 <tr><td style="font:600 13px/16px Helvetica,Arial,sans-serif;letter-spacing:.04em;color:#141417"><span style="color:#ff7550">●</span> PLEASE PLEASE · RAPPELS${essai ? " · ESSAI" : ""}</td></tr>
 <tr><td style="padding-top:18px;font:600 22px/28px Helvetica,Arial,sans-serif;color:#141417">Bonjour ${esc(prenom)},</td></tr>
 <tr><td style="padding-top:8px;font:15px/22px Helvetica,Arial,sans-serif;color:#3d3b44">${esc(jourLong(jour))} : voici ce qui t'attend.</td></tr>
+${essai ? `<tr><td style="padding-top:12px;font:13px/19px Helvetica,Arial,sans-serif;color:#6b6973">Ceci est un mail d'essai : il montre à quoi ressemblent les rappels du tableau de bord. Le vrai part chaque matin à 9 h, seulement quand une tâche tombe ce jour-là ou reste en retard.</td></tr>` : ""}
 ${groupe("En retard", "#b0261d", m.retard)}
 ${groupe("Aujourd'hui", "#a86400", m.auj)}
 ${groupe("Dans les jours qui viennent", "#55535c", m.bientot)}
@@ -122,6 +126,20 @@ function mailTexte(prenom: string, m: Mail, jour: string) {
     "- " + (it.type === "projet" ? it.tache : it.art + " : " + it.tache) + " (" + lieu(it) + (quand(it) ? ", " + quand(it) : "") + ")\n  " + lien(it)).join("\n") + "\n";
   return `Bonjour ${prenom},\n\n${jourLong(jour)} : voici ce qui t'attend.\n` + g("En retard", m.retard) + g("Aujourd'hui", m.auj) +
     g("Dans les jours qui viennent", m.bientot) + `\nTableau de bord : ${SITE}\nGérer mes rappels : ${SITE}#rappels\n`;
+}
+
+// Une ligne de mail pour un concert et une etape donnes, comme si elle tombait
+// ce jour-la : l'exemple d'un essai, quelle que soit sa vraie echeance.
+function exemple(d: Record<string, unknown>, ex: { fid?: string; tid?: number | string; sp?: string }, jour: string): Item | null {
+  const concerts = Array.isArray(d.concerts) ? d.concerts as Record<string, any>[] : [];
+  const process = Array.isArray(d.process) ? d.process as Record<string, any>[] : [];
+  const c = concerts.find((x) => String(x.id) === String(ex.fid));
+  const t = process.find((x) => String(x.id) === String(ex.tid));
+  if (!c || !t) return null;
+  const p = ex.sp && Array.isArray(c.prog) ? c.prog.find((x: Record<string, any>) => String(x.id) === String(ex.sp)) : null;
+  const s = normaliserLieu(Object.assign({ salle: "" }, p || c));
+  return { type: "etape", ecart: 0, echeance: jour, tache: t.nom || "", art: s.art || "", dc: s.dc || "",
+    salle: s.salle || "", ville: s.ville || "", fid: c.id, sp: p ? p.id : null };
 }
 
 // Apps Script repond 200 meme en cas d'erreur, apres une redirection que
@@ -187,20 +205,36 @@ Deno.serve(async (req: Request) => {
     const jour = !moi && corps.dry && /^\d{4}-\d{2}-\d{2}$/.test(corps.jour || "") ? corps.jour : maintenant.jour;
     const mails = rappelsDuJour(donnees, jour, equipe) as Record<string, Mail>;
 
-    // 3a. Essai : le mail du jour de la personne, a elle seule.
+    // 3a. Essai : le mail du jour de la personne, a elle seule ; un admin
+    // peut viser un autre membre, ou montrer un exemple sur un concert.
     if (moi) {
+      let dest = moi;
+      if (corps.pour || corps.exemple) {
+        const { data: moiRow, error } = await admin.from("team_members").select("role").eq("email", moi).maybeSingle();
+        if (error) throw error;
+        if (moiRow?.role !== "admin") return json({ error: "Réservé aux administrateurs" }, 403);
+      }
+      if (corps.pour) {
+        dest = String(corps.pour).trim().toLowerCase();
+        if (!equipe[dest]) return json({ error: "Ce destinataire n'est pas dans l'équipe" }, 400);
+      }
       const { count, error } = await admin.from("rappels_envois").select("id", { count: "exact", head: true })
-        .eq("jour", maintenant.jour).eq("email", moi).eq("essai", true);
+        .eq("jour", maintenant.jour).eq("email", dest).eq("essai", true);
       if (error) throw error;
       if ((count || 0) >= ESSAIS_MAX) return json({ error: `Déjà ${ESSAIS_MAX} essais aujourd'hui.` }, 429);
-      const m = mails[moi] || { auj: [], retard: [], bientot: [] };
+      let m = mails[dest] || { auj: [], retard: [], bientot: [] };
+      if (corps.exemple) {
+        const it = exemple(donnees, corps.exemple, jour);
+        if (!it) return json({ error: "Concert ou étape introuvable" }, 404);
+        m = { auj: [it], retard: [], bientot: [] };
+      }
       const nb = m.auj.length + m.retard.length;
-      let statut = "envoye", detail: string | null = null;
+      let statut = "envoye", detail: string | null = dest === moi ? null : "envoyé par " + moi;
       try {
-        await envoyer(moi, "[Essai] " + sujet(m), mailHtml(prenoms[moi], m, jour, true), mailTexte(prenoms[moi], m, jour));
+        await envoyer(dest, "[Essai] " + sujet(m), mailHtml(prenoms[dest], m, jour, true), mailTexte(prenoms[dest], m, jour));
       } catch (e) { statut = "erreur"; detail = String((e as Error).message || e); }
-      await admin.from("rappels_envois").insert({ jour: maintenant.jour, email: moi, essai: true, statut, nb, detail });
-      return statut === "envoye" ? json({ email: moi, nb }) : json({ error: "L'essai n'est pas parti.", detail }, 502);
+      await admin.from("rappels_envois").insert({ jour: maintenant.jour, email: dest, essai: true, statut, nb, detail });
+      return statut === "envoye" ? json({ email: dest, nb }) : json({ error: "L'essai n'est pas parti.", detail }, 502);
     }
 
     // 3b. Simulation : ce qui partirait, sans rien envoyer ni noter.

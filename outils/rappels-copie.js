@@ -79,7 +79,7 @@ function generer() {
     '  tkTasks = Array.isArray(d.tktasks) ? d.tktasks : [];',
     '  return rmlCalcul(d.rappels, jour, equipe);',
     '}',
-    'export { lieuTexte, dateCourte, rmlIso };',
+    'export { lieuTexte, dateCourte, normaliserLieu, rmlIso };',
     '',
   ].join('\n');
 }
