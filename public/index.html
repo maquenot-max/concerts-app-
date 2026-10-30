@@ -87,6 +87,7 @@
         <button class="menu-item" onclick="closeUserMenu();openNewsletterModal()">Newsletter</button>
         <button class="menu-item" id="user-menu-team" onclick="closeUserMenu();showTab('team')" style="display:none">Équipe</button>
         <button class="menu-item" id="user-menu-activite" onclick="closeUserMenu();showTab('activite')" style="display:none">Activité</button>
+        <button class="menu-item" onclick="closeUserMenu();showTab('rappels')">Rappels par mail</button>
         <button class="menu-item" id="user-menu-process" onclick="closeUserMenu();showTab('process')" style="display:none">Process</button>
         <button class="menu-item" id="user-menu-budget" onclick="closeUserMenu();showTab('budgetconfig')" style="display:none">Budget</button>
         <button class="menu-item" onclick="closeUserMenu();openBackupModal()">Sauvegarde</button>
@@ -243,6 +244,15 @@
         <div class="act-equipe" id="act-equipe"></div>
         <label class="act-recherche"><svg class="ico" aria-hidden="true"><use href="#i-search"></use></svg><input type="search" id="act-q" placeholder="Un concert, une tâche, un post…" aria-label="Chercher dans l'activité" oninput="actChercher(this.value)"></label>
         <div id="act-fil"></div>
+      </div>
+    </div>
+    <div id="tab-rappels" class="panel">
+      <div class="card">
+        <div class="card-head">
+          <div><h2>Rappels par mail</h2><div class="card-desc">Un mail par personne, chaque matin à 9 h, avec ce qui tombe ce jour-là ou reste en retard sur ses villes. Rien ne part pour une tâche cochée.</div></div>
+          <button class="btn" onclick="rmlEssai(this)">M'envoyer un essai</button>
+        </div>
+        <div id="rml-corps"></div>
       </div>
     </div>
   </main>
@@ -976,7 +986,7 @@ async function saveAccountPassword(){
   showToast('Mot de passe modifié.');
 }
 // ── SAUVEGARDE : export (tous) / restauration (administrateurs) de toutes les cles ──
-var BACKUP_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','budget_templates','style_adjustments','regles_salles','concert_media','concert_tasks','artist_photos','city_groups'];
+var BACKUP_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','budget_templates','style_adjustments','regles_salles','concert_media','concert_tasks','artist_photos','city_groups','rappels'];
 function openBackupModal(){
   var w=document.getElementById('backup-restore-wrap');
   if(w)w.style.display=isAdmin()?'':'none';
@@ -3057,7 +3067,7 @@ function actPhraseReglage(r){
     p.texte=r.op==='add'?'a ajouté l\'étape '+actB(b.nom||''):r.op==='remove'?'a supprimé l\'étape '+actB(a.nom||''):'a modifié l\'étape '+actB(b.nom||(process.find(function(x){return String(x.id)===String(r.item);})||{}).nom||'');
     return p;
   }
-  var lib={budget_templates:'les règles du budget promo',regles_salles:'les règles des salles',style_adjustments:'les réglages de style',city_groups:'les groupes de villes de la newsletter'}[r.key]||r.key;
+  var lib={budget_templates:'les règles du budget promo',regles_salles:'les règles des salles',style_adjustments:'les réglages de style',city_groups:'les groupes de villes de la newsletter',rappels:'les rappels par mail'}[r.key]||r.key;
   p.texte='a modifié '+esc(lib);p.serie='reglage:'+r.key;p.serieTxt=function(){return 'a modifié '+esc(lib);};
   return p;
 }
@@ -3186,6 +3196,418 @@ function actRemettre(id){
   l.push(JSON.parse(JSON.stringify(r.old_value)));
   scheduleSave(r.key);render();
   showToast(ACT_REMIS[r.key]);
+}
+
+// ── RAPPELS PAR MAIL (30/10) : par ville, ajustables par artiste, a 9 h ──
+// Demande d'Anne-Claire (une accreditation oubliee), elargie par Mathieu : on
+// choisit par ville qui recoit quoi parmi les etapes du process, on ajuste
+// pour un artiste, et on peut suivre des taches par projet. Maquette B :
+// https://claude.ai/artifact/J56TKRjzvwxRbJHsX5dwqF. Detail : §37.
+// Les mails partent de la fonction serveur rappels-quotidiens (pg_cron, 9 h,
+// un mail par personne). Elle calcule avec une COPIE des fonctions de ce
+// bloc marquees « partage » et de celles du plan qu'elles appellent
+// (calcDate, isUnlocked...) : check.js (controle 9) verifie que la copie de
+// supabase/functions/rappels-quotidiens/calcul.mjs est identique. Une
+// modification de l'une d'elles = recopier, puis redeployer la fonction.
+// Cle rappels d'app_data :
+//   villes  {Reims:{dest:[e-mails],taches:{<id d'etape>:true},
+//            artistes:[{id,art,tache,coupe,jours,plus:[e-mails]}]}}
+//   projets [{id,colId,tache,dest:[e-mails]}]  (tache vide : tout le projet)
+//   muets   {<e-mail>:{<rappel>:true}}  chacun coupe un rappel pour lui :
+//            'v|Reims|<id d'etape>' ou 'p|<id du rappel>'.
+// Un rappel tombe le jour de l'echeance de la tache, puis chaque jour tant
+// qu'elle est en retard (3 fois au plus). Le mail montre aussi ce qui arrive
+// dans les 3 jours, sans partir pour ca seulement.
+// partage
+var RML_RELANCES=3,RML_BIENTOT=3;
+// partage
+function rmlIso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+// partage : ecart en jours entre deux dates AAAA-MM-JJ, sans fuseau horaire.
+function rmlEcart(iso,jour){
+  var a=Date.UTC(+iso.slice(0,4),+iso.slice(5,7)-1,+iso.slice(8,10)),b=Date.UTC(+jour.slice(0,4),+jour.slice(5,7)-1,+jour.slice(8,10));
+  return Math.round((a-b)/864e5);
+}
+// partage
+function rmlCleVille(v){return villeRegroupee(v).toLowerCase();}
+// partage : le reglage d'une ville, quelle que soit la casse saisie.
+function rmlVilleReglee(r,v){
+  var k=rmlCleVille(v);if(!k)return null;
+  var ns=Object.keys(r.villes||{});
+  for(var i=0;i<ns.length;i++)if(rmlCleVille(ns[i])===k&&syncIsPlain(r.villes[ns[i]]))return {nom:ns[i],cfg:r.villes[ns[i]]};
+  return null;
+}
+// partage
+function rmlArtCle(a){return String(a||'').trim().toLowerCase();}
+// partage : le reglage d'une etape precise passe avant « toutes les etapes ».
+function rmlAjustement(cfg,art,tid){
+  var a=rmlArtCle(art);if(!a)return null;
+  var l=(cfg.artistes||[]).filter(function(x){return x&&rmlArtCle(x.art)===a&&(!x.tache||String(x.tache)===String(tid));});
+  return l.filter(function(x){return x.tache;})[0]||l[0]||null;
+}
+// partage
+function rmlMuet(r,email,cle){var m=(r.muets||{})[email];return !!(m&&m[cle]);}
+// partage : un concert, ou un evenement (ses etapes communes, dans les villes
+// de ses spectacles) et chacun de ses spectacles suivis, dans sa ville.
+function rmlSujets(){
+  var out=[];
+  concerts.forEach(function(c){
+    if(!c||c.supprime||c.annule)return;
+    if(!estEvt(c)){out.push({s:c,villes:[c.ville],fid:c.id,sp:null});return;}
+    var vs=evtProg(c).filter(function(p){return !p.annule;}).map(function(p){return p.ville;});
+    out.push({s:c,villes:vs.length?vs:[c.ville],fid:c.id,sp:null});
+    evtSuivis(c).forEach(function(p){out.push({s:spSujet(c,p),villes:[p.ville],fid:c.id,sp:p.id});});
+  });
+  return out;
+}
+// partage : ce que chacun recoit le jour « jour » (AAAA-MM-JJ),
+// {e-mail:{auj:[],retard:[],bientot:[]}}. Seuls les membres de « equipe »
+// ({e-mail en minuscules:1}) recoivent ; personne sans rien du jour ou en retard.
+function rmlCalcul(r,jour,equipe){
+  var out={};
+  r=syncIsPlain(r)?r:{};
+  function ranger(email,cle,it){
+    email=String(email||'').toLowerCase();if(!equipe[email])return;
+    var o=out[email]||(out[email]={auj:[],retard:[],bientot:[],vus:{}});
+    if(o.vus[cle])return;o.vus[cle]=1;
+    (it.ecart===0?o.auj:it.ecart<0?o.retard:o.bientot).push(it);
+  }
+  rmlSujets().forEach(function(x){
+    var s=x.s,faites={};
+    x.villes.forEach(function(v){
+      var vr=rmlVilleReglee(r,v);if(!vr)return;
+      var cfg=vr.cfg,suivies=syncIsPlain(cfg.taches)?cfg.taches:{};
+      sansEtapesSautees(s,etapesSujet(s)).forEach(function(t){
+        if(!suivies[t.id]||faites[t.id]||isNA(s,t)||taskStates[tk(s.id,t.id)]||!isUnlocked(s,t))return;
+        var aj=rmlAjustement(cfg,s.art,t.id);
+        if(aj&&aj.coupe)return;
+        var j=aj&&aj.jours!==null&&aj.jours!==undefined&&aj.jours!==''&&isFinite(+aj.jours)?+aj.jours:null;
+        var d=calcDate(s,j===null?t:Object.assign({},t,{jours:j}));
+        if(!d||isNaN(d.getTime()))return;
+        var iso=rmlIso(d),n=rmlEcart(iso,jour);
+        if(n<-RML_RELANCES||n>RML_BIENTOT)return;
+        var it={type:'etape',ecart:n,echeance:iso,tache:t.nom||'',tid:t.id,art:s.art||'',dc:s.dc||'',salle:s.salle||'',ville:villeRegroupee(v),fid:x.fid,sp:x.sp};
+        (Array.isArray(cfg.dest)?cfg.dest:[]).concat(aj&&Array.isArray(aj.plus)?aj.plus:[]).forEach(function(e){
+          if(!rmlMuet(r,String(e).toLowerCase(),'v|'+vr.nom+'|'+t.id))ranger(e,s.id+'|'+t.id,it);
+        });
+      });
+    });
+  });
+  (Array.isArray(r.projets)?r.projets:[]).forEach(function(p){
+    var col=p&&tkCols.find(function(c){return c.id===p.colId;});if(!col)return;
+    tkTasks.forEach(function(t){
+      if(t.colId!==p.colId||t.done||!t.date||(p.tache&&t.id!==p.tache))return;
+      var iso=String(t.date).slice(0,10),n=rmlEcart(iso,jour);
+      if(isNaN(n)||n<-RML_RELANCES||n>RML_BIENTOT)return;
+      var it={type:'projet',ecart:n,echeance:iso,tache:t.nom||'',projet:col.nom||'',tkid:t.id};
+      (Array.isArray(p.dest)?p.dest:[]).forEach(function(e){
+        if(!rmlMuet(r,String(e).toLowerCase(),'p|'+p.id))ranger(e,'tk|'+t.id,it);
+      });
+    });
+  });
+  Object.keys(out).forEach(function(e){
+    var o=out[e];delete o.vus;
+    ['auj','retard','bientot'].forEach(function(k){o[k].sort(function(a,b){return a.echeance<b.echeance?-1:a.echeance>b.echeance?1:0;});});
+    if(!o.auj.length&&!o.retard.length)delete out[e];
+  });
+  return out;
+}
+
+// ── Rappels : la page (lecture pour tous, reglages pour les admins) ──
+var RML_FN_URL=SUPABASE_URL+'/functions/v1/rappels-quotidiens';
+var rappels={};
+var rmlForm=null;    // formulaire ouvert : {type:'art',ville,...} ou {type:'projet',...}
+var rmlApercu='';    // personne dont on deplie le prochain mail
+var rmlEnvois=null;  // derniers envois (admins), lus a l'ouverture de la page
+function rmlR(){if(!syncIsPlain(rappels))rappels={};return rappels;}
+function rmlMoi(){return String(currentMember&&currentMember.email||currentUser&&currentUser.email||'').toLowerCase();}
+function rmlEquipe(){var e={};Object.keys(teamNames).forEach(function(k){e[k]=1;});return e;}
+function rmlNom(e){return teamDisplayName(e)||e;}
+function rmlEtape(id){return process.find(function(t){return String(t.id)===String(id);})||null;}
+function rmlEtapeNom(id){var t=rmlEtape(id);return t?t.nom:'Étape supprimée';}
+// Prochain envoi : aujourd'hui avant 9 h, sinon demain.
+function rmlProchain(){var d=new Date();if(d.getHours()>=9)d.setDate(d.getDate()+1);return d;}
+function rmlEnregistrer(){scheduleSave('rappels');renderRappels();}
+// Villes des concerts a venir (spectacles compris), avec leur nombre.
+function rmlVillesAVenir(){
+  var auj=rmlIso(new Date()),n={},nom={};
+  function compter(v,dc){var x=villeRegroupee(v),k=x.toLowerCase();if(!k||!dc||dc<auj)return;n[k]=(n[k]||0)+1;if(!nom[k])nom[k]=x;}
+  concerts.forEach(function(c){
+    if(!c||c.supprime||c.annule)return;
+    if(estEvt(c))evtProg(c).forEach(function(p){if(!p.annule)compter(p.ville,p.dc);});
+    else compter(c.ville,c.dc);
+  });
+  return {n:n,nom:nom};
+}
+function rmlArtistesVille(v){
+  var k=rmlCleVille(v),auj=rmlIso(new Date()),a={};
+  concerts.forEach(function(c){
+    if(!c||c.supprime||c.annule)return;
+    if(estEvt(c))evtProg(c).forEach(function(p){if(p.art&&rmlCleVille(p.ville)===k&&(p.dc||'')>=auj)a[p.art.trim()]=1;});
+    else if(c.art&&rmlCleVille(c.ville)===k&&(c.dc||'')>=auj)a[c.art.trim()]=1;
+  });
+  return Object.keys(a).sort(function(x,y){return x.localeCompare(y,'fr');});
+}
+function rmlProcessTrie(){
+  return process.slice().sort(function(a,b){
+    if(a.ref!==b.ref)return a.ref==='annonce'?-1:1;
+    return (+a.jours||0)-(+b.jours||0);
+  });
+}
+function rmlQuand(t,jours){return evtQuandCourt(jours===undefined?t:{ref:t.ref,jours:jours});}
+function rmlAjustTexte(a){
+  var t=a.tache?rmlEtape(a.tache):null,quoi=a.tache?(t?t.nom:'Étape supprimée'):'toutes les étapes';
+  if(a.coupe)return 'pas de rappel · '+quoi;
+  if(Array.isArray(a.plus)&&a.plus.length)return 'aussi à '+a.plus.map(rmlNom).join(', ')+' · '+quoi;
+  if(t&&a.jours!==null&&a.jours!==undefined&&a.jours!=='')return rmlQuand(t,+a.jours)+' · '+quoi;
+  return quoi;
+}
+function rmlPuce(texte,action){
+  return '<span class="rml-puce">'+esc(texte)+(action?'<button type="button" class="rml-puce-x" aria-label="Retirer '+esc(texte)+'" onclick="'+action+'">'+icon('x')+'</button>':'')+'</span>';
+}
+function rmlChoixMembre(exclus,action,libelle){
+  var l=Object.keys(teamNames).filter(function(e){return exclus.indexOf(e)<0;}).sort(function(a,b){return rmlNom(a).localeCompare(rmlNom(b),'fr');});
+  if(!l.length)return '';
+  return '<select class="rml-choix" aria-label="'+esc(libelle)+'" onchange="'+action+'"><option value="">+ Ajouter</option>'
+    +l.map(function(e){return '<option value="'+esc(e)+'">'+esc(rmlNom(e))+'</option>';}).join('')+'</select>';
+}
+
+function renderRappels(){
+  var el=document.getElementById('rml-corps');if(!el)return;
+  var r=rmlR(),admin=isAdmin(),av=rmlVillesAVenir();
+  var noms=Object.keys(r.villes||{}).filter(function(v){return syncIsPlain(r.villes[v]);}).sort(function(a,b){return (av.n[b.toLowerCase()]||0)-(av.n[a.toLowerCase()]||0)||a.localeCompare(b,'fr');});
+  var h='<div class="rml-grille">'+noms.map(function(v){return rmlVilleHtml(v,r.villes[v],av.n[rmlCleVille(v)]||0,admin);}).join('');
+  if(admin){
+    var pris={};noms.forEach(function(v){pris[rmlCleVille(v)]=1;});
+    var autres=Object.keys(av.n).filter(function(k){return !pris[k];}).sort(function(a,b){return av.n[b]-av.n[a]||a.localeCompare(b,'fr');});
+    h+='<div class="rml-ville rml-ville-ajout"><p class="rml-mini">Ajouter une ville</p>'
+      +'<select class="rml-champ" aria-label="Ville à ajouter" onchange="rmlAjouterVille(this.value)"><option value="">Choisir une ville…</option>'
+      +autres.map(function(k){return '<option value="'+esc(av.nom[k])+'">'+esc(av.nom[k])+' · '+av.n[k]+' à venir</option>';}).join('')
+      +'</select><p class="rml-aide">Les villes des concerts à venir. Chenôve compte avec Dijon.</p></div>';
+  }
+  h+='</div>';
+  if(!noms.length&&!admin)h='<div class="empty-state compact">Aucun rappel n\'est encore réglé.</div>';
+  h+=rmlProjetsHtml(r,admin);
+  h+='<div class="rml-bas">'+rmlMesRappelsHtml(r)+rmlProchainHtml(r)+(admin?rmlEnvoisHtml():'')+'</div>';
+  el.innerHTML=h;
+}
+function rmlVilleHtml(v,cfg,nb,admin){
+  var dest=Array.isArray(cfg.dest)?cfg.dest:[],suivies=syncIsPlain(cfg.taches)?cfg.taches:{};
+  var h='<section class="rml-ville" aria-label="'+esc(v)+'"><div class="rml-ville-tete"><h3 class="rml-ville-nom">'+esc(v)+'</h3>'
+    +'<span class="rml-compte">'+(nb?evtPluriel(nb,'concert')+' à venir':'aucun concert à venir')+'</span>'
+    +(admin?'<button type="button" class="rml-x" aria-label="Retirer la ville '+esc(v)+'" onclick="rmlRetirerVille(\''+escJs(v)+'\')">'+icon('trash')+'</button>':'')+'</div>';
+  h+='<div class="rml-puces">'+(dest.length?'':'<span class="rml-vide">Personne ne reçoit ces rappels.</span>')
+    +dest.map(function(e){return rmlPuce(rmlNom(e),admin?'rmlRetirerDest(\''+escJs(v)+'\',\''+escJs(e)+'\')':'');}).join('')
+    +(admin?rmlChoixMembre(dest,'rmlAjouterDest(\''+escJs(v)+'\',this.value)','Ajouter une personne pour '+v):'')+'</div>';
+  var ids=rmlProcessTrie().filter(function(t){return suivies[t.id];});
+  Object.keys(suivies).forEach(function(id){if(suivies[id]&&!rmlEtape(id))ids.push({id:id,nom:'Étape supprimée du process',ref:'concert',jours:0});});
+  h+='<div class="rml-taches">'+(ids.length?ids.map(function(t){
+    return '<div class="rml-ligne"><span class="rml-ligne-nom">'+esc(t.nom)+'</span><span class="rml-j">'+esc(rmlQuand(t))+'</span>'
+      +(admin?'<button type="button" class="rml-x" aria-label="Ne plus rappeler '+esc(t.nom)+'" onclick="rmlSuivre(\''+escJs(v)+'\',\''+escJs(String(t.id))+'\',false)">'+icon('x')+'</button>':'')+'</div>';
+  }).join(''):'<div class="rml-ligne"><span class="rml-vide">Aucune étape rappelée.</span></div>');
+  if(admin){
+    var dispo=rmlProcessTrie().filter(function(t){return !suivies[t.id];});
+    if(dispo.length)h+='<select class="rml-choix rml-choix-large" aria-label="Rappeler une étape pour '+esc(v)+'" onchange="rmlSuivre(\''+escJs(v)+'\',this.value,true)"><option value="">+ Rappeler une étape</option>'
+      +dispo.map(function(t){return '<option value="'+esc(String(t.id))+'">'+esc(t.nom)+' · '+esc(rmlQuand(t))+'</option>';}).join('')+'</select>';
+  }
+  h+='</div>';
+  var arts=Array.isArray(cfg.artistes)?cfg.artistes.filter(syncIsPlain):[];
+  h+='<div class="rml-artistes"><p class="rml-mini">Par artiste</p>'
+    +(arts.length?arts.map(function(a){
+      return '<div class="rml-art-ligne"><span class="rml-art">'+esc(a.art||'')+'</span><span class="rml-art-regle">'+esc(rmlAjustTexte(a))+'</span>'
+        +(admin?'<button type="button" class="rml-x" aria-label="Retirer le réglage de '+esc(a.art||'')+'" onclick="rmlRetirerArt(\''+escJs(v)+'\',\''+escJs(String(a.id))+'\')">'+icon('x')+'</button>':'')+'</div>';
+    }).join(''):'<span class="rml-vide">Aucun réglage particulier.</span>');
+  if(admin)h+=rmlForm&&rmlForm.type==='art'&&rmlForm.ville===v?rmlFormArtHtml(v,ids):'<button type="button" class="rml-lien" onclick="rmlOuvrirArt(\''+escJs(v)+'\')">+ Ajuster pour un artiste</button>';
+  return h+'</div></section>';
+}
+function rmlFormArtHtml(v,ids){
+  var f=rmlForm,liste='rml-arts-'+Math.abs(rmlHash(v));
+  var h='<div class="rml-form">'
+    +'<label class="rml-champ-lab">Artiste<input class="rml-champ" list="'+liste+'" value="'+esc(f.art||'')+'" placeholder="Nom de l\'artiste" oninput="rmlForm.art=this.value"></label>'
+    +'<datalist id="'+liste+'">'+rmlArtistesVille(v).map(function(a){return '<option value="'+esc(a)+'"></option>';}).join('')+'</datalist>'
+    +'<label class="rml-champ-lab">Étape<select class="rml-champ" onchange="rmlForm.tache=this.value;renderRappels()"><option value="">Toutes les étapes rappelées</option>'
+    +ids.filter(function(t){return rmlEtape(t.id);}).map(function(t){return '<option value="'+esc(String(t.id))+'"'+(String(f.tache)===String(t.id)?' selected':'')+'>'+esc(t.nom)+'</option>';}).join('')+'</select></label>'
+    +'<label class="rml-champ-lab">Réglage<select class="rml-champ" onchange="rmlForm.quoi=this.value;renderRappels()">'
+    +[['date','Rappeler à une autre date'],['coupe','Ne pas rappeler'],['plus','Prévenir aussi quelqu\'un']].filter(function(o){return o[0]!=='date'||f.tache;}).map(function(o){return '<option value="'+esc(o[0])+'"'+(f.quoi===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select></label>';
+  if(f.quoi==='date'&&f.tache){
+    var t=rmlEtape(f.tache),avant=t&&t.ref!=='annonce';
+    h+='<label class="rml-champ-lab">'+(avant?'Jours avant le concert':'Jours après l\'annonce')+'<input class="rml-champ" type="number" min="0" max="365" value="'+esc(String(f.jours==null?'':f.jours))+'" placeholder="'+esc(String(Math.abs(t?+t.jours||0:0)))+'" oninput="rmlForm.jours=this.value"></label>';
+  }
+  if(f.quoi==='plus')h+='<label class="rml-champ-lab">Qui<select class="rml-champ" onchange="rmlForm.plus=this.value"><option value="">Choisir…</option>'
+    +Object.keys(teamNames).map(function(e){return '<option value="'+esc(e)+'"'+(f.plus===e?' selected':'')+'>'+esc(rmlNom(e))+'</option>';}).join('')+'</select></label>';
+  return h+'<div class="rml-form-bas"><button type="button" class="btn btn-sm" onclick="rmlForm=null;renderRappels()">Annuler</button><button type="button" class="btn btn-sm btn-primary" onclick="rmlAjouterArt(\''+escJs(v)+'\')">Ajouter</button></div></div>';
+}
+function rmlHash(s){var h=0;s=String(s);for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h;}
+function rmlProjetsHtml(r,admin){
+  var ps=(Array.isArray(r.projets)?r.projets:[]).filter(syncIsPlain);
+  if(!ps.length&&!admin)return '';
+  var h='<section class="rml-bloc rml-projets"><div class="rml-bloc-tete"><h3>Tâches par projet</h3><span class="rml-compte">hors villes : tout un projet, ou une tâche</span></div>';
+  h+=ps.map(function(p){
+    var col=tkCols.find(function(c){return c.id===p.colId;}),t=p.tache?tkTasks.find(function(x){return x.id===p.tache;}):null,dest=Array.isArray(p.dest)?p.dest:[];
+    var quoi=col?(p.tache?(t?'« '+(t.nom||'')+' »':'tâche supprimée'):'toutes les tâches datées'):'';
+    return '<div class="rml-ligne rml-projet"><span class="rml-ligne-nom"><strong>'+esc(col?col.nom||'Projet':'Projet supprimé')+'</strong> <span class="rml-compte">· '+esc(quoi)+'</span></span>'
+      +'<span class="rml-puces">'+dest.map(function(e){return rmlPuce(rmlNom(e),admin?'rmlProjetDest(\''+escJs(String(p.id))+'\',\''+escJs(e)+'\',false)':'');}).join('')
+      +(admin?rmlChoixMembre(dest,'rmlProjetDest(\''+escJs(String(p.id))+'\',this.value,true)','Ajouter une personne'):'')+'</span>'
+      +(admin?'<button type="button" class="rml-x" aria-label="Supprimer ce rappel" onclick="rmlRetirerProjet(\''+escJs(String(p.id))+'\')">'+icon('trash')+'</button>':'')+'</div>';
+  }).join('');
+  if(admin){
+    if(rmlForm&&rmlForm.type==='projet'){
+      var f=rmlForm,tks=f.colId?tkTasks.filter(function(t){return t.colId===f.colId&&!t.done;}):[];
+      h+='<div class="rml-form rml-form-ligne">'
+        +'<label class="rml-champ-lab">Projet<select class="rml-champ" onchange="rmlForm.colId=this.value;rmlForm.tache=\'\';renderRappels()"><option value="">Choisir…</option>'
+        +tkCols.map(function(c){return '<option value="'+esc(String(c.id))+'"'+(String(f.colId)===String(c.id)?' selected':'')+'>'+esc(c.nom||'')+'</option>';}).join('')+'</select></label>'
+        +'<label class="rml-champ-lab">Tâche<select class="rml-champ" onchange="rmlForm.tache=this.value"'+(f.colId?'':' disabled')+'><option value="">Toutes les tâches datées</option>'
+        +tks.map(function(t){return '<option value="'+esc(String(t.id))+'"'+(String(f.tache)===String(t.id)?' selected':'')+'>'+esc(t.nom||'')+(t.date?' · '+esc(dateCourte(new Date(t.date))):' · sans date')+'</option>';}).join('')+'</select></label>'
+        +'<label class="rml-champ-lab">Qui<select class="rml-champ" onchange="rmlForm.qui=this.value"><option value="">Choisir…</option>'
+        +Object.keys(teamNames).map(function(e){return '<option value="'+esc(e)+'"'+(f.qui===e?' selected':'')+'>'+esc(rmlNom(e))+'</option>';}).join('')+'</select></label>'
+        +'<div class="rml-form-bas"><button type="button" class="btn btn-sm" onclick="rmlForm=null;renderRappels()">Annuler</button><button type="button" class="btn btn-sm btn-primary" onclick="rmlAjouterProjet()">Ajouter</button></div></div>';
+    }else h+='<button type="button" class="rml-lien" onclick="rmlForm={type:\'projet\'};renderRappels()">+ Rappel sur un projet ou une tâche</button>';
+  }
+  return h+'</section>';
+}
+// Ce que je recois, avec un interrupteur par rappel (le mien seulement).
+function rmlMesRappelsHtml(r){
+  var moi=rmlMoi(),l=[];
+  Object.keys(r.villes||{}).forEach(function(v){
+    var cfg=r.villes[v];if(!syncIsPlain(cfg)||!Array.isArray(cfg.dest)||cfg.dest.map(function(e){return String(e).toLowerCase();}).indexOf(moi)<0)return;
+    rmlProcessTrie().forEach(function(t){if(syncIsPlain(cfg.taches)&&cfg.taches[t.id])l.push({cle:'v|'+v+'|'+t.id,txt:t.nom,sous:v+' · '+rmlQuand(t)});});
+  });
+  (Array.isArray(r.projets)?r.projets:[]).forEach(function(p){
+    if(!syncIsPlain(p)||!Array.isArray(p.dest)||p.dest.map(function(e){return String(e).toLowerCase();}).indexOf(moi)<0)return;
+    var col=tkCols.find(function(c){return c.id===p.colId;}),t=p.tache?tkTasks.find(function(x){return x.id===p.tache;}):null;
+    l.push({cle:'p|'+p.id,txt:t?t.nom||'':'Toutes les tâches',sous:col?col.nom||'':'Projet supprimé'});
+  });
+  var h='<section class="rml-bloc"><h3>Tes rappels</h3>';
+  if(!l.length)return h+'<p class="rml-vide">Tu ne reçois aucun rappel pour l\'instant.</p></section>';
+  h+='<p class="rml-aide">Coupe ceux dont tu n\'as pas besoin : les autres continuent de les recevoir.</p>';
+  return h+l.map(function(x){
+    var on=!rmlMuet(r,moi,x.cle);
+    return '<label class="rml-ligne rml-mien"><span class="rml-ligne-nom">'+esc(x.txt)+'<span class="rml-sous">'+esc(x.sous)+'</span></span>'
+      +'<span class="rml-sw"><input type="checkbox"'+(on?' checked':'')+' aria-label="Recevoir '+esc(x.txt)+'" onchange="rmlCouper(\''+escJs(x.cle)+'\',!this.checked)"></span></label>';
+  }).join('')+'</section>';
+}
+function rmlItemTexte(it){
+  if(it.type==='projet')return {qui:it.projet,quoi:it.tache};
+  return {qui:it.art,quoi:it.tache+' · '+lieuTexte({salle:it.salle,ville:it.ville})+(it.dc?' · '+dateCourte(new Date(it.dc+'T00:00:00')):'')};
+}
+function rmlProchainHtml(r){
+  var d=rmlProchain(),jour=rmlIso(d),mails=rmlCalcul(r,jour,rmlEquipe());
+  var qui=Object.keys(mails).sort(function(a,b){return rmlNom(a).localeCompare(rmlNom(b),'fr');});
+  var h='<section class="rml-bloc"><h3>Prochain envoi</h3><p class="rml-mini rml-quand">'+esc(evtJourMoyen(jour))+' · 9 h</p>';
+  if(!qui.length)return h+'<p class="rml-vide">Rien à envoyer ce jour-là.</p></section>';
+  return h+qui.map(function(e){
+    var m=mails[e],n=m.auj.length+m.retard.length,ouvert=rmlApercu===e;
+    var s='<button type="button" class="rml-qui" aria-expanded="'+(ouvert?'true':'false')+'" onclick="rmlApercu=rmlApercu===\''+escJs(e)+'\'?\'\':\''+escJs(e)+'\';renderRappels()"><span class="act-avatar">'+esc((rmlNom(e)||'?').charAt(0).toUpperCase())+'</span><span class="rml-ligne-nom">'+esc(rmlNom(e))+'</span><span class="rml-compte">'+evtPluriel(n,'tâche')+'</span></button>';
+    if(ouvert)s+='<div class="rml-apercu">'+[['retard','En retard'],['auj','Ce jour-là'],['bientot','Dans les jours qui suivent']].map(function(g){
+      if(!m[g[0]].length)return '';
+      return '<p class="rml-mini rml-g-'+esc(g[0])+'">'+g[1]+'</p>'+m[g[0]].map(function(it){var x=rmlItemTexte(it);return '<div class="rml-item"><span class="'+(it.type==='projet'?'':'rml-art')+'">'+esc(x.qui)+'</span><span>'+esc(x.quoi)+'</span></div>';}).join('');
+    }).join('')+'</div>';
+    return s;
+  }).join('')+'</section>';
+}
+function rmlEnvoisHtml(){
+  var h='<section class="rml-bloc"><h3>Derniers envois</h3>';
+  if(rmlEnvois===null)return h+'<p class="rml-vide">Chargement…</p></section>';
+  if(rmlEnvois==='absent')return h+'<p class="rml-vide">L\'envoi automatique n\'est pas encore en place.</p></section>';
+  if(!rmlEnvois.length)return h+'<p class="rml-vide">Aucun mail parti ces dix derniers jours.</p></section>';
+  var j={};rmlEnvois.forEach(function(x){(j[x.jour]=j[x.jour]||[]).push(x);});
+  return h+Object.keys(j).sort().reverse().map(function(k){
+    var l=j[k],ok=l.filter(function(x){return x.statut==='envoye';});
+    return '<div class="rml-ligne"><span class="rml-j rml-j-neutre">'+esc(evtJourMoyen(k))+'</span><span class="rml-ligne-nom">'+(ok.length?esc(ok.map(function(x){return rmlNom(x.email)+(x.essai?' (essai)':'');}).join(', ')):'')
+      +(ok.length<l.length?' <span class="rml-erreur">'+evtPluriel(l.length-ok.length,'échec')+'</span>':'')+'</span></div>';
+  }).join('')+'</section>';
+}
+async function rmlChargerEnvois(){
+  if(!isAdmin())return;
+  var d=new Date();d.setDate(d.getDate()-10);
+  try{
+    var r=await fetch(SUPABASE_URL+'/rest/v1/rappels_envois?select=jour,email,statut,essai,nb&jour=gte.'+rmlIso(d)+'&order=jour.desc&limit=200',{headers:await authHeaders()});
+    rmlEnvois=r.ok?await r.json():'absent';
+  }catch(e){rmlEnvois='absent';}
+  if(currentTab==='rappels')renderRappels();
+}
+function openRappels(){rmlForm=null;rmlEnvois=null;renderRappels();rmlChargerEnvois();}
+
+// ── Rappels : les gestes ──
+function rmlVille(v){var r=rmlR();if(!syncIsPlain(r.villes))r.villes={};if(!syncIsPlain(r.villes[v]))r.villes[v]={dest:[],taches:{},artistes:[]};return r.villes[v];}
+function rmlAjouterVille(v){
+  if(!v||!isAdmin())return;
+  if(rmlVilleReglee(rmlR(),v)){showToast(v+' a déjà ses rappels.');return;}
+  rmlVille(v);rmlEnregistrer();
+}
+function rmlRetirerVille(v){
+  var r=rmlR();if(!isAdmin()||!r.villes||!r.villes[v])return;
+  var avant=JSON.parse(JSON.stringify(r.villes[v]));
+  delete r.villes[v];rmlEnregistrer();
+  proposerAnnulation('Rappels de '+v+' supprimés','',function(){rmlR().villes=rmlR().villes||{};rmlR().villes[v]=avant;rmlEnregistrer();});
+}
+function rmlAjouterDest(v,e){if(!e||!isAdmin())return;var c=rmlVille(v);if(!Array.isArray(c.dest))c.dest=[];if(c.dest.indexOf(e)<0)c.dest.push(e);rmlEnregistrer();}
+function rmlRetirerDest(v,e){if(!isAdmin())return;var c=rmlVille(v);c.dest=(c.dest||[]).filter(function(x){return x!==e;});rmlEnregistrer();}
+function rmlSuivre(v,id,on){
+  if(!id||!isAdmin())return;
+  var c=rmlVille(v);if(!syncIsPlain(c.taches))c.taches={};
+  if(on)c.taches[id]=true;else delete c.taches[id];
+  rmlEnregistrer();
+}
+function rmlOuvrirArt(v){rmlForm={type:'art',ville:v,art:'',tache:'',quoi:'coupe',jours:null,plus:''};renderRappels();}
+function rmlAjouterArt(v){
+  var f=rmlForm;if(!f||!isAdmin())return;
+  var art=String(f.art||'').trim();
+  if(!art){showToast('Indique l\'artiste.');return;}
+  var a={id:uid('ra'),art:art,tache:f.tache||'',coupe:false,jours:null,plus:[]};
+  if(f.quoi==='coupe')a.coupe=true;
+  else if(f.quoi==='plus'){if(!f.plus){showToast('Choisis qui prévenir.');return;}a.plus=[f.plus];}
+  else{
+    var t=rmlEtape(f.tache),n=parseInt(f.jours,10);
+    if(!t||!(n>=0)){showToast('Indique le nombre de jours.');return;}
+    a.jours=t.ref==='annonce'?n:-n;
+  }
+  var c=rmlVille(v);if(!Array.isArray(c.artistes))c.artistes=[];
+  c.artistes.push(a);rmlForm=null;rmlEnregistrer();
+}
+function rmlRetirerArt(v,id){if(!isAdmin())return;var c=rmlVille(v);c.artistes=(c.artistes||[]).filter(function(a){return String(a.id)!==id;});rmlEnregistrer();}
+function rmlAjouterProjet(){
+  var f=rmlForm;if(!f||!isAdmin())return;
+  if(!f.colId){showToast('Choisis un projet.');return;}
+  if(!f.qui){showToast('Choisis qui reçoit ce rappel.');return;}
+  var r=rmlR();if(!Array.isArray(r.projets))r.projets=[];
+  r.projets.push({id:uid('rp'),colId:f.colId,tache:f.tache||'',dest:[f.qui]});
+  rmlForm=null;rmlEnregistrer();
+}
+function rmlProjetDest(id,e,on){
+  if(!e||!isAdmin())return;
+  var p=(rmlR().projets||[]).find(function(x){return String(x.id)===id;});if(!p)return;
+  if(!Array.isArray(p.dest))p.dest=[];
+  if(on){if(p.dest.indexOf(e)<0)p.dest.push(e);}else p.dest=p.dest.filter(function(x){return x!==e;});
+  rmlEnregistrer();
+}
+function rmlRetirerProjet(id){
+  var r=rmlR();if(!isAdmin()||!Array.isArray(r.projets))return;
+  var i=r.projets.findIndex(function(x){return String(x.id)===id;});if(i<0)return;
+  var avant=r.projets[i];r.projets.splice(i,1);rmlEnregistrer();
+  proposerAnnulation('Rappel supprimé','',function(){var l=rmlR().projets||(rmlR().projets=[]);l.splice(Math.min(i,l.length),0,avant);rmlEnregistrer();});
+}
+// Chacun pour soi : ecrit seulement sous son propre e-mail.
+function rmlCouper(cle,coupe){
+  var moi=rmlMoi();if(!moi)return;
+  var r=rmlR();if(!syncIsPlain(r.muets))r.muets={};
+  var m=syncIsPlain(r.muets[moi])?r.muets[moi]:(r.muets[moi]={});
+  if(coupe)m[cle]=true;else delete m[cle];
+  if(!Object.keys(m).length)delete r.muets[moi];
+  rmlEnregistrer();
+}
+// Le mail du jour de la personne connectee, envoye a elle seule par la
+// fonction serveur (meme gabarit que l'envoi de 9 h).
+async function rmlEssai(btn){
+  if(btn){btn.disabled=true;btn.textContent='Envoi…';}
+  try{
+    var r=await fetch(RML_FN_URL,{method:'POST',headers:Object.assign(await authHeaders(),{'Content-Type':'application/json'}),body:JSON.stringify({essai:true})});
+    var j=await r.json().catch(function(){return {};});
+    if(r.status===404)showToast('L\'envoi automatique n\'est pas encore en place.');
+    else if(!r.ok)showToast(j.error||'L\'essai n\'est pas parti.');
+    else showToast('Essai envoyé à '+(j.email||'ton adresse')+'.');
+    rmlChargerEnvois();
+  }catch(e){showToast('L\'essai n\'est pas parti.');}
+  if(btn){btn.disabled=false;btn.textContent='M\'envoyer un essai';}
 }
 
 // ── RECADRAGE PHOTO : glisser + zoomer dans un cadre 16:9 fixe avant
@@ -3565,7 +3987,7 @@ function teamDisplayName(email){
 // dans les 3 s suivant une modification locale, reecrivait la cle entiere et
 // effacait en silence le travail d'un collegue.
 var syncState={}; // cle -> {exists, at (updated_at serveur), base (copie de la valeur serveur)}
-var SYNC_OBJECT_KEYS={taskstates:1,artist_photos:1};
+var SYNC_OBJECT_KEYS={taskstates:1,artist_photos:1,rappels:1};
 // JSON a cles triees : deux objets egaux donnent la meme chaine, quel que soit
 // l'ordre dans lequel leurs champs ont ete ajoutes.
 function stableStr(v){
@@ -3677,6 +4099,7 @@ function setValueFor(key,v){
   else if(key==='artist_photos')artistPhotos=v;
   else if(key==='city_groups')cityGroups=v;
   else if(key==='budget_templates')budgetConfig=v;
+  else if(key==='rappels')rappels=v;
 }
 function syncRecord(key,exists,at,value){syncState[key]={exists:exists,at:at,base:syncClone(value)};}
 // Integre une version lue en base : fusion avec l'etat local, puis elle
@@ -3733,11 +4156,11 @@ function showSyncBanner(msg,fadeOut){
 // Une cle n'est ecrite que si sa version en base est toujours celle qu'on
 // connait (ecriture conditionnelle sur updated_at). Sinon, quelqu'un a ecrit
 // entre-temps : on relit, on fusionne (voir SYNCHRO), puis on reessaie.
-var ALL_SAVE_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media','concert_tasks','artist_photos','city_groups','budget_templates'];
+var ALL_SAVE_KEYS=['concerts','taskstates','process','tkcols','tktasks','rsposts','concert_media','concert_tasks','artist_photos','city_groups','budget_templates','rappels'];
 var pendingSaveKeys={}; // cle -> compteur de modifications en attente
 var saveRetryTimer=null,_restoring=false;
 function currentValueFor(key){
-  return {concerts:concerts,taskstates:taskStates,process:process,tkcols:tkCols,tktasks:tkTasks,rsposts:rsPosts,concert_media:concertMedia,concert_tasks:customTasks,artist_photos:artistPhotos,city_groups:cityGroups,budget_templates:budgetConfig}[key];
+  return {concerts:concerts,taskstates:taskStates,process:process,tkcols:tkCols,tktasks:tkTasks,rsposts:rsPosts,concert_media:concertMedia,concert_tasks:customTasks,artist_photos:artistPhotos,city_groups:cityGroups,budget_templates:budgetConfig,rappels:rappels}[key];
 }
 function scheduleSave(){
   if(!appDataLoaded){
@@ -4069,6 +4492,7 @@ function showTab(id,btn){
   currentTab=id;
   if(id==='team')renderTeam();
   else if(id==='activite')renderActivite(true);
+  else if(id==='rappels')openRappels();
   else renderTab(id); // render() ne dessine que l'onglet visible : on dessine celui qu'on ouvre
   pushRoute(id,null);
   window.scrollTo(0,0);
@@ -4077,7 +4501,7 @@ function showTab(id,btn){
 // Permet de rafraichir sans revenir au Tableau de bord, d'envoyer le lien
 // d'une fiche, et d'utiliser le bouton retour du navigateur (il ferme la
 // fiche, puis revient a l'onglet precedent).
-var TAB_IDS=['rs','kanban','concerts','past','taches','sponso','process','budgetconfig','team','activite'];
+var TAB_IDS=['rs','kanban','concerts','past','taches','sponso','process','budgetconfig','team','activite','rappels'];
 var _routing=false; // vrai pendant applyRoute() : on ne re-pousse pas l'URL
 // Page d'un evenement : #onglet/idEvenement/idSpectacle pour l'un de ses
 // spectacles.
@@ -11278,7 +11702,7 @@ function budChemin(o,ch){return ch===''?o:ch.split('.').reduce(function(x,k){ret
 // fiche redessinaient les huit vues, onglets masques compris, et le widget
 // Taches et les filtres deux fois chacun. Le travail sur les donnees (taches
 // recurrentes, posts auto) reste fait a chaque fois, quel que soit l'onglet.
-var TAB_RENDER={kanban:renderKanban,concerts:renderConcerts,past:renderPastConcerts,process:renderProcess,taches:renderTaches,rs:renderRS,sponso:renderSponso,budgetconfig:renderBudgetConfig,activite:actDessiner};
+var TAB_RENDER={kanban:renderKanban,concerts:renderConcerts,past:renderPastConcerts,process:renderProcess,taches:renderTaches,rs:renderRS,sponso:renderSponso,budgetconfig:renderBudgetConfig,activite:actDessiner,rappels:renderRappels};
 function renderTab(id){
   if(!appDataLoaded)return; // avant le chargement, on garde les squelettes
   var f=TAB_RENDER[id];if(f)f();
@@ -11286,7 +11710,7 @@ function renderTab(id){
 function render(){tkAdvanceRecurringTasks();majPostsAuto();renderTab(currentTab);}
 // ── RECHERCHE GLOBALE (⌘K / Ctrl+K / "/") ──────────────────────────
 var cmdkItems=[],cmdkIdx=0;
-var CMDK_TABS=[{id:'kanban',label:'Tableau de bord'},{id:'concerts',label:'Concerts'},{id:'past',label:'Concerts passés'},{id:'taches',label:'Tâches'},{id:'rs',label:'Plannings RS'},{id:'sponso',label:'Sponso'},{id:'process',label:'Process'},{id:'activite',label:'Activité'}];
+var CMDK_TABS=[{id:'kanban',label:'Tableau de bord'},{id:'concerts',label:'Concerts'},{id:'past',label:'Concerts passés'},{id:'taches',label:'Tâches'},{id:'rs',label:'Plannings RS'},{id:'sponso',label:'Sponso'},{id:'process',label:'Process'},{id:'activite',label:'Activité'},{id:'rappels',label:'Rappels par mail'}];
 function cmdkNorm(s){return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function openCmdK(){
   var inp=document.getElementById('cmdk-input');inp.value='';cmdkRender('');

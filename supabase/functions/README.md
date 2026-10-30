@@ -14,6 +14,7 @@ rien ne synchronise les deux automatiquement.
 | `backup-daily` | Sauvegarde quotidienne de `app_data` dans le bucket privé `backups`, rétention 30 jours | la tâche `pg_cron` `sauvegarde-app`, chaque nuit à 03h15 UTC |
 | `team-admin` | Gestion de l'équipe (ajout, mot de passe, rôle, 2FA) | la page *Équipe* de l'application |
 | `purge-media` | Supprime du bucket public `concert-media` les photos du report de communication expirées (60 jours après le concert) ou plus référencées, et les photos de newsletter de plus de 6 mois (jamais `artist-photos/` ni `report-logos/`) | la tâche `pg_cron` `purge-medias`, chaque nuit à 03h30 UTC (après la sauvegarde) |
+| `rappels-quotidiens` | Le mail du matin de chaque membre (page *Rappels par mail*) : tâches du jour, en retard (3 relances au plus) et des trois jours suivants, envoyées par Resend ; essai à la demande | la tâche `pg_cron` `rappels-mail` à 7 h et 8 h UTC (seul le passage de 9 h à Paris envoie), et le bouton *M'envoyer un essai* |
 
 **`purge-media` est en service depuis le 01/10/2026.** Déployée à la main par
 Mathieu (éditeur du tableau de bord, version 1, *Verify JWT* activé), puis
@@ -58,6 +59,41 @@ version, refaire soi-même :
    ```
    Contrôle : `net._http_response` le lendemain matin, comme pour la
    sauvegarde (`supprimes`, `rapports`, `newsletter` et la liste `fichiers`).
+
+**`rappels-quotidiens` (30/10, §37 de la passation).** Deux fichiers :
+`index.ts` (appels, gabarit du mail, envoi) et `calcul.mjs`, **généré** par
+`node outils/rappels-copie.js` à partir de `public/index.html` (le calcul des
+échéances du plan, recopié tel quel). `check.js` (contrôle 9) refuse un
+déploiement Netlify où la copie ne suit plus l'appli : régénérer, puis
+**redéployer la fonction**, sinon les mails suivent l'ancien calcul. Banc
+sans Deno ni réseau : `node outils/banc/rappels.mjs` (simulation, envoi de
+9 h rejoué deux fois, essai ; mails écrits en HTML dans
+`outils/banc/captures/rappels/`).
+
+Mise en service (dans cet ordre) :
+1. Migration `20261030000000_rappels_par_mail` (clé `rappels`, table
+   `rappels_envois`), avant de mettre l'appli en ligne : sans elle,
+   l'enregistrement des réglages est refusé.
+2. Compte Resend, domaine d'envoi vérifié (enregistrements DNS de
+   `pleaseplease.fr`), puis deux secrets dans Supabase → Edge Functions →
+   *Secrets* : `RESEND_API_KEY` et `RAPPELS_FROM`
+   (`Please Please <rappels@pleaseplease.fr>`). Sans domaine vérifié, Resend
+   n'envoie qu'à l'adresse du compte, depuis `onboarding@resend.dev`.
+3. Déployer `rappels-quotidiens` avec ses deux fichiers, *Verify JWT* activé.
+4. Bouton *M'envoyer un essai* de la page, puis simulation :
+   ```sql
+   select net.http_post(
+     url := 'https://vkehaerkbvfxlyjvrpzi.supabase.co/functions/v1/rappels-quotidiens',
+     headers := jsonb_build_object(
+       'Content-Type', 'application/json',
+       'Authorization', 'Bearer ' || (select regexp_replace(command, '.*Bearer ([^'']+)''.*', '\1') from cron.job where jobname = 'sauvegarde-app'),
+       'x-backup-secret', (select secret from public.backup_config)),
+     body := '{"dry": true}'::jsonb);
+   select status_code, content from net._http_response order by created desc limit 1;
+   ```
+5. Migration `20261030000001_rappels_par_mail_planifier` (tâche
+   `rappels-mail`). Contrôle le lendemain : bloc *Derniers envois* de la page,
+   ou `select * from rappels_envois order by at desc limit 20`.
 
 **Recadrage des photos du report (30/09)** : une photo recadree garde son
 originale (`orig.path`, dans le meme dossier `report/`). `purge-media` compte

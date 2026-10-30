@@ -21,7 +21,9 @@
  *     sauvegarde nocturne (artist_photos et city_groups non sauvegardees
  *     du 22 au 23/09) ;
  *  8. une taille de texte hors de l'echelle de style.css (12,5 / 13,5 /
- *     11,5 px arrives avec la newsletter et les evenements, revue du 25/09).
+ *     11,5 px arrives avec la newsletter et les evenements, revue du 25/09) ;
+ *  9. une copie perimee du calcul des taches dans la fonction des rappels
+ *     par mail (rappels-quotidiens, 30/10) : elle enverrait des mails faux.
  *
  * Usage : node check.js
  */
@@ -187,6 +189,20 @@ if (fs.existsSync(FICHIER_CSS)) {
     }
   }
 } else erreurs.push('public/style.css introuvable');
+
+// ── 9. La fonction des rappels calcule comme l'appli ────────────────────────
+// rappels-quotidiens (mails de 9 h, 30/10) sait ce qui est a faire grace a
+// une copie des fonctions du plan (calcDate, isUnlocked, etapes sautees...)
+// et des rappels, generee par outils/rappels-copie.js. Une de ces fonctions
+// modifiee dans index.html sans regenerer la copie ferait partir des mails
+// faux : on regenere en memoire et on compare. Apres `node
+// outils/rappels-copie.js`, redeployer la fonction (§37 de la passation).
+try {
+  const { generer, CIBLE } = require('./outils/rappels-copie.js');
+  const attendu = generer();
+  if (!fs.existsSync(CIBLE)) erreurs.push('supabase/functions/rappels-quotidiens/calcul.mjs introuvable : lancer node outils/rappels-copie.js');
+  else if (fs.readFileSync(CIBLE, 'utf8') !== attendu) erreurs.push('supabase/functions/rappels-quotidiens/calcul.mjs ne suit plus index.html (une fonction du plan ou des rappels a change) : lancer node outils/rappels-copie.js, puis redeployer rappels-quotidiens');
+} catch (e) { erreurs.push('copie des rappels : ' + e.message); }
 
 // ── Verdict ─────────────────────────────────────────────────────────────────
 if (erreurs.length) {

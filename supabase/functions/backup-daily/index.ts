@@ -21,6 +21,7 @@ const CLES = [
   "concerts", "taskstates", "process", "tkcols", "tktasks", "rsposts",
   "budget_templates", "style_adjustments", "regles_salles",
   "concert_media", "concert_tasks", "artist_photos", "city_groups",
+  "rappels",
 ];
 const BUCKET = "backups";
 const RETENTION_JOURS = 30;

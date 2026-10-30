@@ -18,11 +18,12 @@ Le document de référence est `passation.md`, **dans le dossier principal** `/U
 - Échappement : `esc()` pour le texte et les attributs ordinaires, `escJs()` dans un `onclick="fn('…')"`, `escUrl()` pour `href`/`src` (§6.6).
 - Tailles de texte : pixels entiers de l'échelle de `style.css`, jamais sous 12 px.
 - Ne jamais rouvrir l'accès `anon`/`public` en écriture sur `app_data` ou le bucket `concert-media`.
+- Toucher au calcul des tâches (`calcDate`, `isUnlocked`, étapes sautées…) ou aux fonctions « partage » des rappels : `node outils/rappels-copie.js`, puis redéployer `rappels-quotidiens` (contrôle 9 de `check.js`, §37).
 - `supabase/functions/`, `supabase/migrations/` et `google/budget-promo/` sont des copies de référence : un push ne déploie rien. Déployer d'abord, reporter dans le dépôt ensuite (§6.9).
 
 ## Vérifier
 
-- `node check.js` : huit contrôles, les mêmes que Netlify avant chaque déploiement. Un hook le relance déjà après chaque modification de `public/`.
+- `node check.js` : neuf contrôles, les mêmes que Netlify avant chaque déploiement. Un hook le relance déjà après chaque modification de `public/`.
 - Banc (fausse base, aucune requête vers Supabase) : `node outils/banc/prepare.js` après chaque modification, puis la config `banc` de `.claude/launch.json` (port 8766). Mode d'emploi : `outils/banc/README.md`.
 - Changement visuel : `node outils/banc/tour.mjs` (Safari et Chrome, trois largeurs), avant et après.
 
