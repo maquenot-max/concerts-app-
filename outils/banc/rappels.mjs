@@ -117,7 +117,9 @@ const VraiDate = Date;
 function horloge(heureParis) {
   const [a, m, j] = jour.split('-').map(Number);
   let t = VraiDate.UTC(a, m - 1, j, heureParis, 5) - 3600e3; // heure d'hiver
-  const h = Number(new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', hourCycle: 'h23' }).format(new VraiDate(t)));
+  // formatToParts : format() rend « 09 h », que Number() ne lit pas (l'heure
+  // d'hiver passait alors pour l'heure d'ete).
+  const h = Number(new Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', hourCycle: 'h23' }).formatToParts(new VraiDate(t)).find((p) => p.type === 'hour').value);
   if (h !== heureParis) t -= 3600e3;                            // heure d'ete
   globalThis.Date = class extends VraiDate { constructor(...x) { super(...(x.length ? x : [t])); } static now() { return t; } };
 }
