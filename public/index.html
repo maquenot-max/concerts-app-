@@ -8670,7 +8670,7 @@ async function resetFicheTasks(){
   if(!await customConfirm('Réinitialiser toutes les tâches de '+c.art+' ?'+(estEvt(c)?' Celles de ses spectacles ne changent pas.':'')))return;
   // Taches du process ET taches ajoutees a la main sur ce concert (avant le
   // 23/09, ces dernieres restaient cochees), surlignage compris.
-  sortedProcess(c).forEach(function(t){['','na-','datemod-','hl-','fait-'].forEach(function(pre){delete taskStates[pre?pre+c.id+'-'+t.id:tk(c.id,t.id)];});});
+  sortedProcess(c).forEach(function(t){['','na-','datemod-','hl-','dl-','fait-'].forEach(function(pre){delete taskStates[pre?pre+c.id+'-'+t.id:tk(c.id,t.id)];});});
   scheduleSave('taskstates');ficheApresTache();renderKanban();renderConcerts();
 }
 var customTaskEditCid=null,customTaskEditId=null;
@@ -9567,6 +9567,9 @@ function updateSkipButtons(){
   document.getElementById('skip-col-btn').hidden=!!s.spectacle&&!etapesSujet(s).some(function(t){return t.cat==='col'||t.cat==='affp';});
 }
 function toggleHighlight(cid,tid){var k="hl-"+cid+"-"+tid;if(taskStates[k])delete taskStates[k];else taskStates[k]=true;scheduleSave('taskstates');renderKanban();renderTkWidget();}
+// Meme principe que le surlignage, pour marquer deleguee une tache de concert
+// remontee dans le widget « Tâches par projet » (colonne Please Please).
+function toggleConcertDelegue(cid,tid){var k="dl-"+cid+"-"+tid;if(taskStates[k])delete taskStates[k];else taskStates[k]=true;scheduleSave('taskstates');renderTkWidget();}
 function startCellEdit(e,cid,field){
   e.stopPropagation();
   var cell=e.currentTarget;
@@ -9899,7 +9902,7 @@ function renderTkWidget(){
     if(c.supprime||c.annule)return;
     process.forEach(function(t){
       if(taskStates['hl-'+c.id+'-'+t.id]&&!taskStates[c.id+'-'+t.id]&&!isNA(c,t))
-        pinned.push({id:'hl-'+c.id+'-'+t.id,colId:'pp',nom:c.art+' - '+t.nom,isPinned:true,concertId:c.id,taskId:t.id});
+        pinned.push({id:'hl-'+c.id+'-'+t.id,colId:'pp',nom:c.art+' - '+t.nom,isPinned:true,concertId:c.id,taskId:t.id,delegue:!!taskStates['dl-'+c.id+'-'+t.id]});
     });
   });
   var html='<div class="tkw-board">';
@@ -9930,9 +9933,13 @@ function renderTkWidget(){
       var onChk=t.isPinned
         ?"toggleTask('"+escJs(t.concertId)+"',"+tidLit({id:t.taskId})+");toggleHighlight('"+escJs(t.concertId)+"',"+tidLit({id:t.taskId})+")"
         :"tkToggleDone('"+escJs(t.id)+"')";
+      // Une tache de concert epinglee se delegue depuis ce widget : c'est le
+      // seul endroit ou elle apparait (jamais dans l'onglet Taches par projet).
+      var delegBtn=t.isPinned?'<button type="button" class="tk-task-btn'+(t.delegue?' deleg-active':'')+'" style="margin-left:auto;flex-shrink:0" title="'+(t.delegue?'Délégué (cliquer pour reprendre)':'Déléguer')+'" onclick="event.stopPropagation();toggleConcertDelegue(\''+escJs(t.concertId)+'\','+tidLit({id:t.taskId})+')">'+icon('user')+'</button>':'';
       html+='<div class="tkw-task'+(t.delegue?' delegue':'')+(t.isPinned?' pinned':'')+'"'+(t.isPinned?'':' onclick="tkEditTask(\''+escJs(t.id)+'\')"')+'>'
         +'<button type="button" class="kb-chk" aria-label="Marquer comme fait" onclick="event.stopPropagation();cocherAnime(this,function(){'+onChk+'})"></button>'
         +'<span class="tkw-body"><span class="tkw-name">'+esc(t.nom)+'</span>'+meta+'</span>'
+        +delegBtn
         +'</div>';
     });
     html+='<button type="button" class="btn-link tkw-add" onclick="tkWidgetAdd(\''+escJs(col.id)+'\',\''+escJs(col.nom)+'\')">+ Ajouter</button></div>';
