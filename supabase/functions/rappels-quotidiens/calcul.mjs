@@ -51,9 +51,9 @@ function evtProg(c){return c&&Array.isArray(c.prog)?c.prog:[];}
 function evtFin(c){return c.dcFin&&c.dcFin>=(c.dc||'')?c.dcFin:c.dc;}
 function cFin(c){
   if(estEvt(c))return evtFin(c);
-  var f=c.dc||'';
-  if(Array.isArray(c.autresDates))c.autresDates.forEach(function(x){if(x&&x.dc&&x.dc>f)f=x.dc;});
-  return f;
+  var f=c.dc&&!c.dcAnnule?c.dc:'',g=c.dc||'';
+  if(Array.isArray(c.autresDates))c.autresDates.forEach(function(x){if(!x||!x.dc)return;if(x.dc>g)g=x.dc;if(!x.annule&&x.dc>f)f=x.dc;});
+  return f||g;
 }
 function evtTrie(l){
   return l.slice().sort(function(a,b){
@@ -188,8 +188,14 @@ function rmlCalcul(r,jour,equipe){
         var iso=rmlIso(d),n=rmlEcart(iso,jour);
         if(n<-RML_RELANCES||n>RML_BIENTOT)return;
         var it={type:'etape',ecart:n,echeance:iso,tache:t.nom||'',tid:t.id,art:s.art||'',dc:s.dc||'',salle:s.salle||'',ville:villeRegroupee(v),fid:x.fid,sp:x.sp};
-        // Plusieurs dates (25/11) : le mail les donne toutes.
-        if(!estEvt(s)&&Array.isArray(s.autresDates)){var au=s.autresDates.map(function(y){return y&&y.dc;}).filter(Boolean);if(au.length)it.autres=au;}
+        // Plusieurs dates (25/11) : le mail les donne toutes, sauf celles
+        // qui sont annulees (26/11 ; toutes, si aucune n'est maintenue).
+        if(!estEvt(s)&&Array.isArray(s.autresDates)){
+          var au=s.autresDates.filter(function(y){return y&&y.dc;}),am=au.filter(function(y){return !y.annule;}).map(function(y){return y.dc;}).sort();
+          if(s.dcAnnule&&!am.length)am=au.map(function(y){return y.dc;}).sort();
+          else if(s.dcAnnule)it.dc=am.shift();
+          if(am.length)it.autres=am;
+        }
         (suivies[t.id]&&Array.isArray(cfg.dest)?cfg.dest:[]).forEach(function(e){
           if(!rmlMuet(r,String(e).toLowerCase(),'v|'+vr.nom+'|'+t.id))ranger(e,s.id+'|'+t.id,it);
         });

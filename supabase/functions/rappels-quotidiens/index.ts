@@ -143,9 +143,15 @@ function exemple(d: Record<string, unknown>, ex: { fid?: string; tid?: number | 
   if (!c || !t) return null;
   const p = ex.sp && Array.isArray(c.prog) ? c.prog.find((x: Record<string, any>) => String(x.id) === String(ex.sp)) : null;
   const s = normaliserLieu(Object.assign({ salle: "" }, p || c));
-  const autres = !p && !c.evt && Array.isArray(c.autresDates)
-    ? c.autresDates.map((y: Record<string, any>) => y && y.dc).filter(Boolean) as string[] : [];
-  return { type: "etape", ecart: 0, echeance: jour, tache: t.nom || "", art: s.art || "", dc: s.dc || "",
+  // Plusieurs dates : celles qui sont maintenues (toutes, si aucune ne l'est),
+  // comme rmlCalcul dans calcul.mjs.
+  const toutes = !p && !c.evt && Array.isArray(c.autresDates)
+    ? c.autresDates.filter((y: Record<string, any>) => y && y.dc) as Record<string, any>[] : [];
+  let autres = toutes.filter((y) => !y.annule).map((y) => String(y.dc)).sort();
+  let dc = String(s.dc || "");
+  if (toutes.length && c.dcAnnule && !autres.length) autres = toutes.map((y) => String(y.dc)).sort();
+  else if (toutes.length && c.dcAnnule) dc = autres.shift() || dc;
+  return { type: "etape", ecart: 0, echeance: jour, tache: t.nom || "", art: s.art || "", dc,
     ...(autres.length ? { autres } : {}),
     salle: s.salle || "", ville: s.ville || "", fid: c.id, sp: p ? p.id : null };
 }

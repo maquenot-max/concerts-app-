@@ -169,7 +169,7 @@
             <div class="form-group"><label for="f-art" id="f-art-l">Artiste</label><input type="text" id="f-art" placeholder="Nom de l'artiste"></div>
             <div class="form-group" id="f-salle-g"><label for="f-salle">Salle</label><input type="text" id="f-salle" placeholder="Zénith" list="dl-salles" autocomplete="off"></div>
             <div class="form-group"><label for="f-ville" id="f-ville-l">Ville</label><input type="text" id="f-ville" placeholder="Dijon" list="dl-villes" autocomplete="off"></div>
-            <div class="form-group"><label for="f-dc" id="f-dc-l">Date du concert</label><input type="date" id="f-dc"></div>
+            <div class="form-group"><label for="f-dc" id="f-dc-l">Date du concert</label><input type="date" id="f-dc"><div class="nc-dates" id="f-autres"></div><button type="button" class="btn-link nc-date-ajout" id="f-dates-ajout" onclick="ncDateAjouter()"><svg class="ico" aria-hidden="true"><use href="#i-plus"></use></svg>Ajouter une date</button></div>
             <div class="form-group" id="f-dcfin-g" hidden><label for="f-dcfin">Dernier jour</label><input type="date" id="f-dcfin"></div>
             <div class="form-group"><label for="f-da">Date d'annonce</label><input type="date" id="f-da"></div>
           </div>
@@ -344,7 +344,7 @@
     <div class="fiche-panneau" id="fp-infos" role="tabpanel" aria-labelledby="fo-infos" hidden>
       <div class="fiche-props">
         <label class="fiche-prop"><span class="fiche-prop-l" id="fi-art-l">Artiste</span><input type="text" id="fi-art" class="fiche-champ" onchange="updateFicheField('art',this.value)"></label>
-        <label class="fiche-prop"><span class="fiche-prop-l" id="fi-dc-l">Date du concert</span><input type="date" id="fi-dc" class="fiche-champ" onchange="updateFicheField('dc',this.value)" onblur="ficheDatesRanger()"></label>
+        <div class="fiche-prop"><label class="fiche-prop-l" id="fi-dc-l" for="fi-dc">Date du concert</label><span class="fi-date fi-date-1"><input type="date" id="fi-dc" class="fiche-champ" onchange="updateFicheField('dc',this.value)" onblur="ficheDatesRanger()"><span class="fi-date-annule" id="fi-dc-annule" hidden></span><span class="fi-date-actions" id="fi-dc-actions" hidden></span></span></div>
         <label class="fiche-prop" id="fi-dcfin-row" hidden><span class="fiche-prop-l">Dernier jour</span><input type="date" id="fi-dcfin" class="fiche-champ" onchange="updateFicheField('dcFin',this.value)"></label>
         <div class="fiche-prop fiche-prop-haut" id="fi-dates-row"><span class="fiche-prop-l">Autres dates</span><div class="fi-dates" id="fi-dates" onfocusout="ficheDatesQuitte(event)"></div></div>
         <label class="fiche-prop" id="fi-salle-row"><span class="fiche-prop-l">Salle</span><input type="text" id="fi-salle" class="fiche-champ" placeholder="Zénith" list="dl-salles" autocomplete="off" onchange="updateFicheField('salle',this.value.trim())"></label>
@@ -1233,14 +1233,25 @@ function nlUpcomingConcerts(){
 }
 // « Dernieres annonces » : date d'annonce (c.da), pas date du concert (c.dc),
 // dans les N derniers jours, de la plus recente a la plus ancienne.
+// Une date ajoutee apres l'annonce (26/11) y remonte le concert a la date de
+// sa propre annonce (« Nouvelle date le 6 déc. » sur la carte).
 function nlRecentlyAnnouncedConcerts(jours){
   var today=new Date();today.setHours(0,0,0,0);
   var cutoff=new Date(today);cutoff.setDate(cutoff.getDate()-(jours||NL_RECENT_ANNOUNCE_DAYS));
+  var de=evtIso(cutoff),a=evtIso(today),cle={};
   return concerts.filter(function(c){
-    if(c.supprime||c.annule||!c.da)return false;
-    var d=new Date(c.da+'T00:00:00');
-    return d>=cutoff&&d<=today;
-  }).sort(function(a,b){return a.da<b.da?1:(a.da>b.da?-1:0);});
+    if(c.supprime||c.annule)return false;
+    var l=(c.da&&c.da>=de&&c.da<=a?[c.da]:[]).concat(dtNouvelles(c,de,a).map(function(x){return x.da;})).sort();
+    if(!l.length)return false;
+    cle[c.id]=l[l.length-1];
+    return true;
+  }).sort(function(x,y){return cle[x.id]<cle[y.id]?1:(cle[x.id]>cle[y.id]?-1:0);});
+}
+// Les nouvelles dates d'un concert, pour le bloc « Dernieres annonces ».
+function nlNouvellesDates(c,b){
+  var today=new Date();today.setHours(0,0,0,0);
+  var cutoff=new Date(today);cutoff.setDate(cutoff.getDate()-(b.jours||NL_RECENT_ANNOUNCE_DAYS));
+  return dtNouvelles(c,evtIso(cutoff),evtIso(today));
 }
 function nlCityList(){
   var n={};
@@ -1387,16 +1398,21 @@ function nlCarteConcert(c,b,x){
   var badge=el.complet&&cComplet(c)?nlBadgeComplet(r):'';
   var dComplets=dtListe(c).filter(function(x){return x.ventes===4;}).map(function(x){return x.dc;});
   var partiel=el.complet&&!badge&&dComplets.length?nlBadgeComplet(r,'Complet '+(dComplets.length>1?'les ':'le ')+dtEnum(dComplets,'short')):'';
+  // Dernieres annonces (26/11) : la date annoncee apres le concert.
+  var dNouv=b.type==='annonces'?nlNouvellesDates(c,b).map(function(x){return x.dc;}):[];
+  var nouv=dNouv.length?nlBadgeComplet(r,(dNouv.length>1?'Nouvelles dates les ':'Nouvelle date le ')+dtEnum(dNouv,'short'),pal.etFond,pal.etTexte):'';
   if(el.date&&c.dc)lignes.push({apres:12,pad:2,st:'font-family:\'Fraunces\', Georgia, serif;font-style:italic;font-weight:600;font-size:14px;color:'+cDate+';',html:esc(cPlageLongue(c))});
   if(el.artiste)lignes.push({apres:12,pad:2,st:'font-family:'+police+';font-size:16px;font-weight:700;color:#16171F;',html:esc(c.art)+(badge?' '+badge:'')});
   else if(badge)lignes.push({apres:12,pad:2,html:badge.replace('margin-left:4px;','')});
+  if(nouv)lignes.push({apres:12,pad:4,html:nouv.replace('margin-left:4px;','')});
   if(partiel)lignes.push({apres:12,pad:4,html:partiel.replace('margin-left:4px;','')});
   if(el.lieu&&lieuTexte(c))lignes.push({apres:12,pad:2,st:'font-family:Arial, Helvetica, sans-serif;font-size:11.5px;letter-spacing:0.4px;text-transform:uppercase;color:#9C9891;',html:esc(lieuTexte(c))});
   var txt=(b.boutonTxt||'').trim();
   if(el.bouton&&billet&&txt)lignes.push({apres:12,pad:10,html:nlPetitBouton(billet,txt,cols,pal)});
   return h+nlLignesHtml(lignes,!!h);
 }
-function nlBadgeComplet(r,texte){return '<span style="background-color:#F6E7E5;color:#A23B3B;font-family:Arial, Helvetica, sans-serif;font-size:9.5px;font-weight:bold;letter-spacing:0.4px;text-transform:uppercase;border-radius:'+r(9)+'px;padding:2px 7px;margin-left:4px;display:inline-block;vertical-align:middle;">'+esc(texte||'Complet')+'</span>';}
+// fond, encre : « Nouvelle date », aux couleurs des etiquettes de la palette.
+function nlBadgeComplet(r,texte,fond,encre){return '<span style="background-color:'+(fond||'#F6E7E5')+';color:'+(encre||'#A23B3B')+';font-family:Arial, Helvetica, sans-serif;font-size:9.5px;font-weight:bold;letter-spacing:0.4px;text-transform:uppercase;border-radius:'+r(9)+'px;padding:2px 7px;margin-left:4px;display:inline-block;vertical-align:middle;">'+esc(texte||'Complet')+'</span>';}
 // Carte d'un spectacle : memes elements qu'une carte de concert ; la date est
 // l'horaire (le jour est dans l'intertitre), la photo celle de l'artiste.
 function nlCarteSpectacle(p,b,x,avecJour){
@@ -2040,11 +2056,14 @@ function nlListeConcerts(b){
 }
 function nlLigneConcert(b,c){
   var ph=nlPhotoArtiste(c),billet=nlBillet(c),exclu=!!b.exclus[c.id],cid=c.id;
-  var dt=b.type==='annonces'?dateCourte(c.da):cPlage(c);
+  var dt=b.type==='annonces'?dateCourte(c.da):cPlage(c),quoi=b.type==='annonces'?'annoncé le ':'';
+  // Remonte par une date annoncee apres lui (26/11) : celle-ci, et son annonce.
+  var nv=b.type==='annonces'?nlNouvellesDates(c,b):[];
+  if(nv.length){var dn=nv.map(function(x){return x.da;}).sort().pop();quoi=(nv.length>1?'nouvelles dates ':'nouvelle date ')+dtEnum(nv.map(function(x){return x.dc;}),'short')+' annoncée'+(nv.length>1?'s':'')+' le ';dt=dateCourte(dn);}
   return '<div class="nl-crow'+(exclu?' exclu':'')+'">'
     +'<label class="nl-crow-lbl"><input type="checkbox" data-nl="excl" data-b="'+esc(b.id)+'" data-c="'+esc(cid)+'"'+(exclu?'':' checked')+'>'
       +(ph?'<img class="nl-cthumb" src="'+escUrl(ph)+'" alt="">':'<span class="nl-cthumb vide">'+icon('image')+'</span>')
-      +'<span class="nl-cinfo"><b>'+esc(c.art)+'</b><span>'+(b.type==='annonces'?'annoncé le ':'')+esc(dt)+(c.ville?' · '+esc(c.ville):'')+'</span></span></label>'
+      +'<span class="nl-cinfo"><b>'+esc(c.art)+'</b><span>'+esc(quoi+dt)+(c.ville?' · '+esc(c.ville):'')+'</span></span></label>'
     +'<span class="nl-cflags">'
       +(cComplet(c)?'<span class="tag tag-green">Complet</span>':cCompletsTxt(c)?'<span class="tag tag-green">'+esc(cCompletsTxt(c))+'</span>':'')
       +(ph?'':(nlEnvoi['c:'+cid]?'<span class="tag tag-neutral">Envoi…</span>'
@@ -2863,8 +2882,8 @@ function actPhraseEtat(r){
 }
 
 // Concerts et evenements : un champ, ou plusieurs, d'une meme fiche.
-var ACT_CHAMPS={art:'le nom',dc:'la date',dcFin:'le dernier jour',autresDates:'les autres dates',da:'la date d\'annonce',salle:'la salle',ville:'la ville',budget:'le budget',ventes:'les ventes',medias:'les médias',jeux:'le jeu concours',notes:'les notes',contrat:'le contrat',prog:'le programme',sponso:'la sponso',parSpectacle:'la répartition des tâches',evt:'le type'};
-var ACT_DATES={dc:1,dcFin:1,da:1};
+var ACT_CHAMPS={art:'le nom',dc:'la date',dcFin:'le dernier jour',autresDates:'les autres dates',dcAnnule:'l\'annulation de la première date',dcDa:'l\'annonce de la première date',da:'la date d\'annonce',salle:'la salle',ville:'la ville',budget:'le budget',ventes:'les ventes',medias:'les médias',jeux:'le jeu concours',notes:'les notes',contrat:'le contrat',prog:'le programme',sponso:'la sponso',parSpectacle:'la répartition des tâches',evt:'le type'};
+var ACT_DATES={dc:1,dcFin:1,da:1,dcDa:1};
 function actVentes(v){var x=VENTES.find(function(o){return o.id===+v;});return x?x.label:'';}
 function actParId(l){var o={};(Array.isArray(l)?l:[]).forEach(function(x){if(x&&x.id!=null)o[x.id]=x;});return o;}
 // Programme d'un evenement : spectacles ajoutes, retires, modifies.
@@ -3296,8 +3315,14 @@ function rmlCalcul(r,jour,equipe){
         var iso=rmlIso(d),n=rmlEcart(iso,jour);
         if(n<-RML_RELANCES||n>RML_BIENTOT)return;
         var it={type:'etape',ecart:n,echeance:iso,tache:t.nom||'',tid:t.id,art:s.art||'',dc:s.dc||'',salle:s.salle||'',ville:villeRegroupee(v),fid:x.fid,sp:x.sp};
-        // Plusieurs dates (25/11) : le mail les donne toutes.
-        if(!estEvt(s)&&Array.isArray(s.autresDates)){var au=s.autresDates.map(function(y){return y&&y.dc;}).filter(Boolean);if(au.length)it.autres=au;}
+        // Plusieurs dates (25/11) : le mail les donne toutes, sauf celles
+        // qui sont annulees (26/11 ; toutes, si aucune n'est maintenue).
+        if(!estEvt(s)&&Array.isArray(s.autresDates)){
+          var au=s.autresDates.filter(function(y){return y&&y.dc;}),am=au.filter(function(y){return !y.annule;}).map(function(y){return y.dc;}).sort();
+          if(s.dcAnnule&&!am.length)am=au.map(function(y){return y.dc;}).sort();
+          else if(s.dcAnnule)it.dc=am.shift();
+          if(am.length)it.autres=am;
+        }
         (suivies[t.id]&&Array.isArray(cfg.dest)?cfg.dest:[]).forEach(function(e){
           if(!rmlMuet(r,String(e).toLowerCase(),'v|'+vr.nom+'|'+t.id))ranger(e,s.id+'|'+t.id,it);
         });
@@ -4862,7 +4887,7 @@ function filtered(){
     if(v&&concertVilles(c).indexOf(v)<0)return false;
     // Evenement : il passe le filtre si l'un de ses spectacles a ce niveau de ventes.
     // Plusieurs dates : il passe si l'une d'elles a ce niveau.
-    if(window._vf!=null&&!(estEvt(c)?evtProg(c).some(function(p){return evtVentes(p)===window._vf;}):[dtVentes(c.ventes)].concat(dtAutres(c).map(function(x){return dtVentes(x.ventes);})).indexOf(window._vf)>=0))return false;
+    if(window._vf!=null&&!(estEvt(c)?evtProg(c).some(function(p){return evtVentes(p)===window._vf;}):dtListe(c).concat(c.dc?[]:[{ventes:dtVentes(c.ventes)}]).some(function(x){return x.ventes===window._vf;})))return false;
     if(p&&(c.dc||'').indexOf(p)<0)return false;
     if(!matchesCategoryFilter(c,cat))return false;
     return true;
@@ -4967,7 +4992,9 @@ function ficheDateLongue(iso){
 }
 function ficheJours(c){
   if(!c.dc)return null;
-  var d=new Date(c.dc+'T00:00:00');if(isNaN(d.getTime()))return null;
+  // Premiere date annulee (26/11) : on compte jusqu'a la premiere maintenue.
+  var iso=!c.spectacle&&dtMulti(c)?dtIsos(c)[0]||c.dc:c.dc;
+  var d=new Date(iso+'T00:00:00');if(isNaN(d.getTime()))return null;
   var t=new Date();t.setHours(0,0,0,0);
   return Math.round((d-t)/86400000);
 }
@@ -5097,6 +5124,8 @@ function ficheFilHtml(c){
 function fichePucesHtml(c,statique){
   var h='';
   if(c.annule)h+='<span class="tag tag-red">Annulé</span>';
+  var na=c.annule?0:dtAnnulees(c).length;
+  if(na)h+='<span class="tag tag-red" title="'+esc(dtAnnulees(c).map(function(x){return dateCourte(x.dc);}).join(', '))+'">'+na+(na>1?' dates annulées':' date annulée')+'</span>';
   var j=ficheJours(c);
   // Un evenement commence avant de finir : entre les deux, il est en cours.
   if((estEvt(c)||dtMulti(c))&&j!==null&&j<0&&cFin(c)>=spTodayStr())h+='<span class="tag tag-neutral">En cours</span>';
@@ -5270,7 +5299,7 @@ function ficheMajInfos(c){
   document.getElementById('fi-dc-l').textContent=evt?'Premier jour':dtMulti(c)?'Première date':'Date du concert';
   document.getElementById('fi-dcfin-row').hidden=!evt;
   document.getElementById('fi-dates-row').hidden=evt;
-  if(!evt)ficheMajDates(c);
+  if(!evt)ficheMajDates(c);else ficheMajPremiereDate(c);
   document.getElementById('fi-salle-row').hidden=evt;
   document.getElementById('fi-ville-l').textContent=evt?'Lieu':'Ville';
   document.getElementById('fi-ville').placeholder=evt?'Dijon et alentours':'Dijon';
@@ -5329,14 +5358,66 @@ function updateFicheField(field,val){
 
 // Autres dates (25/11) : une ligne par date, modifiable sur place, et
 // « Ajouter une date » propose le lendemain de la derniere.
+// Une date se retire (×, une erreur de saisie) ou s'annule (26/11 : le soir
+// n'a pas lieu) : annulee, elle reste ecrite, barree, avec « Retablir ».
+// Ajoutee apres l'annonce du concert, elle a sa date d'annonce (« Nouvelle
+// date » dans la newsletter) ; sinon elle est annoncee avec le concert.
 function ficheMajDates(c){
+  ficheMajPremiereDate(c);
   var el=document.getElementById('fi-dates');if(!el)return;
   if(el.contains(document.activeElement)&&document.activeElement.type==='date')return;
   el.innerHTML=dtAutres(c).map(function(x){
-    return '<span class="fi-date"><input type="date" class="fiche-champ" value="'+esc(x.dc)+'" aria-label="Autre date" onchange="ficheDateModif(\''+escJs(x.id)+'\',this.value)">'
-      +'<button type="button" class="fi-date-x" onclick="ficheDateRetirer(\''+escJs(x.id)+'\')" title="Retirer cette date" aria-label="Retirer le '+esc(dateCourte(x.dc))+'">'+icon('x')+'</button></span>';
+    var j=dateCourte(x.dc);
+    var retirer='<button type="button" class="fi-date-x" onclick="ficheDateRetirer(\''+escJs(x.id)+'\')" title="Retirer cette date (erreur de saisie)" aria-label="Retirer le '+esc(j)+'">'+icon('x')+'</button>';
+    if(x.annule)return '<div class="fi-date annulee"><s class="fi-date-txt">'+esc(dateCourte(x.dc,true))+'</s><span class="fi-date-etat">Annulée</span>'
+      +'<button type="button" class="btn-link fi-date-act" onclick="ficheDateAnnuler(\''+escJs(x.id)+'\')">Rétablir</button>'+retirer+'</div>';
+    return '<div class="fi-date"><input type="date" class="fiche-champ" value="'+esc(x.dc)+'" aria-label="Autre date" onchange="ficheDateModif(\''+escJs(x.id)+'\',this.value)">'
+      +'<button type="button" class="btn-link fi-date-act" onclick="ficheDateAnnuler(\''+escJs(x.id)+'\')" title="Ce soir-là n\'a pas lieu : la date reste écrite, barrée, et sort de la newsletter, du calendrier et des mails">Annuler</button>'+retirer
+      +'<span class="fi-date-da">'+(x.da?'<label for="fi-da-'+esc(x.id)+'">Annoncée le</label><input type="date" class="fiche-champ" id="fi-da-'+esc(x.id)+'" value="'+esc(x.da)+'" onchange="ficheDateAnnonce(\''+escJs(x.id)+'\',this.value)">'
+        :'<button type="button" class="btn-link" onclick="ficheDateAnnonce(\''+escJs(x.id)+'\',spTodayStr(),true)" title="Annoncée plus tard que le concert ? Cliquer pour indiquer le jour de son annonce">Annoncée avec le concert</button>')+'</span></div>';
   }).join('')
     +'<button type="button" class="btn-link fi-date-ajout" onclick="ficheDateAjouter()">'+icon('plus')+'Ajouter une date</button>';
+}
+// La premiere date : « Annuler » des qu'il y en a d'autres ; annulee, elle
+// est ecrite barree a la place du champ.
+function ficheMajPremiereDate(c){
+  var multi=!estEvt(c)&&dtMulti(c),ann=multi&&!!c.dcAnnule;
+  var champ=document.getElementById('fi-dc'),txt=document.getElementById('fi-dc-annule'),act=document.getElementById('fi-dc-actions');
+  if(!champ||!txt||!act)return;
+  champ.hidden=ann;
+  txt.hidden=!ann;
+  txt.innerHTML=ann?'<s class="fi-date-txt">'+esc(dateCourte(c.dc,true))+'</s><span class="fi-date-etat">Annulée</span>':'';
+  act.hidden=!multi;
+  act.innerHTML=multi?'<button type="button" class="btn-link fi-date-act" onclick="ficheDateAnnuler(\'\')"'+(ann?'>Rétablir':' title="Ce soir-là n\'a pas lieu : la date reste écrite, barrée, et sort de la newsletter, du calendrier et des mails">Annuler')+'</button>':'';
+}
+// id '' : la premiere date. La derniere date maintenue ne s'annule pas seule :
+// c'est alors le concert qu'on annule.
+function ficheDateAnnuler(id){
+  var c=ficheConcert();if(!c||estEvt(c)||!dtMulti(c))return;
+  var x=id?dtAutres(c).find(function(y){return y.id===id;}):null;
+  if(id&&!x)return;
+  var annulee=id?!!x.annule:!!c.dcAnnule;
+  if(!annulee&&dtToutes(c).filter(function(y){return !y.annule;}).length<2){
+    showToast('C\'est la dernière date maintenue : pour l\'annuler, annule le concert (en bas de l\'onglet Infos).');return;
+  }
+  if(id){if(annulee)delete x.annule;else x.annule=true;}
+  else{if(annulee)delete c.dcAnnule;else c.dcAnnule=true;}
+  scheduleSave('concerts');
+  ficheMajInfos(c);ficheMajTete(c);renderFicheTasks(c);renderFicheApercu(c);spRenderFiche(c.id);
+  showToast(annulee?'Date rétablie.':'Date annulée : elle reste barrée dans la fiche.');
+}
+// La date d'annonce d'une autre date ; vide : annoncee avec le concert. Le
+// champ envoie une date a chaque chiffre tape (voir dtRanger) : rien n'est
+// redessine pendant la saisie, la liste l'est en la quittant. ouvrir : le
+// lien « Annoncee avec le concert » devient le champ, pret a corriger.
+function ficheDateAnnonce(id,val,ouvrir){
+  var c=ficheConcert();if(!c)return;
+  var x=dtAutres(c).find(function(y){return y.id===id;});if(!x)return;
+  if(val)x.da=val;else delete x.da;
+  scheduleSave('concerts');
+  if(!ouvrir)return;
+  ficheMajDates(c);
+  var f=document.getElementById('fi-da-'+id);if(f)f.focus();
 }
 // Pendant la saisie, rien n'est reclasse ni redessine (voir dtRanger) : on
 // le fait en quittant la liste, ou le champ de la premiere date.
@@ -5365,8 +5446,11 @@ function ficheDateAjouter(){
   if(!c.dc){showToast('Indique d\'abord la date du concert.');return;}
   var d=dtJour(cFin(c));d.setDate(d.getDate()+1);
   if(!Array.isArray(c.autresDates))c.autresDates=[];
-  var id=uid('dt');
-  c.autresDates.push({id:id,dc:evtIso(d),ventes:0});
+  var id=uid('dt'),x0={id:id,dc:evtIso(d),ventes:0};
+  // Concert deja annonce : la date l'est le jour ou on l'ajoute (modifiable).
+  var t=spTodayStr();
+  if(taskStates['annonce-'+c.id]||(c.da&&c.da<t))x0.da=t;
+  c.autresDates.push(x0);
   ficheApresDates(c);
   var champs=document.querySelectorAll('#fi-dates input[type=date]'),x=dtAutres(c).find(function(y){return y.id===id;});
   for(var i=0;i<champs.length;i++)if(x&&champs[i].value===x.dc){champs[i].focus();break;}
@@ -5383,12 +5467,15 @@ function ficheDateRetirer(id){
   var c=ficheConcert();if(!c||!Array.isArray(c.autresDates))return;
   var i=c.autresDates.findIndex(function(y){return y.id===id;});if(i<0)return;
   var x=c.autresDates[i];
+  if(x&&!x.annule&&dtToutes(c).filter(function(y){return !y.annule;}).length<2){
+    showToast('C\'est la dernière date maintenue : rétablis d\'abord une date annulée.');return;
+  }
   c.autresDates.splice(i,1);
   ficheApresDates(c);
   proposerAnnulation('Date retirée',[c.art,dateCourte(x.dc)].filter(Boolean).join(' · '),function(){
     var cc=concerts.find(function(y){return y.id===c.id;});if(!cc)return;
     if(!Array.isArray(cc.autresDates))cc.autresDates=[];
-    if(dtIsos(cc).indexOf(x.dc)<0)cc.autresDates.push(x);
+    if(!dtToutes(cc).some(function(y){return y.dc===x.dc;}))cc.autresDates.push(x);
     dtRanger(cc);scheduleSave('concerts');
     if(currentFicheId===cc.id){ficheMajInfos(cc);ficheMajTete(cc);renderFicheTasks(cc);}
     render();
@@ -5527,10 +5614,12 @@ function ficheMontantHtml(t){
   var n=parseInt(m[1].replace(/\D/g,''),10);
   return '<span data-n="'+esc(String(n))+'" data-suite="'+esc(m[2])+'">'+esc(t)+'</span>';
 }
-// Plusieurs dates : une ligne par date, chacune avec ses ventes.
+// Plusieurs dates : une ligne par date, chacune avec ses ventes ; une date
+// annulee reste, barree, sans jauge.
 function ficheTuileVentesDatesHtml(c){
   return '<div class="fa-tuile statique fa-vdates"><span class="fa-l">Ventes</span>'
-    +dtListe(c).map(function(x){
+    +dtToutes(c).map(function(x){
+      if(x.annule)return '<div class="fa-vdate annulee" title="'+esc(dateCourte(x.dc,true)+' : date annulée (onglet Infos pour la rétablir)')+'"><s class="fa-vdate-j">'+esc(dateCourte(x.dc))+'</s><span class="fa-vdate-v">Annulée</span></div>';
       return '<button type="button" class="fa-vdate ventes-'+esc(x.ventes)+'" onclick="ficheVentes(\''+escJs(x.id)+'\')" title="'+esc(dateCourte(x.dc,true)+' : '+FICHE_VENTES[x.ventes]+'. Cliquer pour changer')+'">'
         +'<span class="fa-vdate-j">'+esc(dateCourte(x.dc))+'</span>'
         +'<span class="ventes-gauge" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'
@@ -5652,20 +5741,40 @@ function evtPlage(c,avecJour){
 // migration, et la fusion a trois voies traite les tableaux par id.
 // Ce qui se fait apres le concert (report…) part de la derniere (cFin).
 // Un evenement garde son premier et son dernier jour (dc, dcFin).
+// Une seule date annulee (26/11) : annule:true sur une autre date, c.dcAnnule
+// pour la premiere. Elle reste barree dans la fiche et sort du reste (dtIsos,
+// ventes, calendrier, newsletter, report, mails). Une date ajoutee apres
+// l'annonce du concert a la sienne (da ; c.dcDa si elle passe en tete) :
+// « Nouvelle date » dans les dernieres annonces de la newsletter.
+// Derniere date maintenue (toutes, si aucune ne l'est). Recopiee dans
+// calcul.mjs (rappels) : elle doit rester autonome.
 function cFin(c){
   if(estEvt(c))return evtFin(c);
-  var f=c.dc||'';
-  if(Array.isArray(c.autresDates))c.autresDates.forEach(function(x){if(x&&x.dc&&x.dc>f)f=x.dc;});
-  return f;
+  var f=c.dc&&!c.dcAnnule?c.dc:'',g=c.dc||'';
+  if(Array.isArray(c.autresDates))c.autresDates.forEach(function(x){if(!x||!x.dc)return;if(x.dc>g)g=x.dc;if(!x.annule&&x.dc>f)f=x.dc;});
+  return f||g;
 }
 function dtAutres(c){return c&&!estEvt(c)&&Array.isArray(c.autresDates)?c.autresDates.filter(function(x){return x&&x.dc;}):[];}
 function dtMulti(c){return dtAutres(c).length>0;}
 function dtVentes(v){v=parseInt(v,10);return v>=0&&v<VENTES.length?v:0;}
-// Toutes les dates, la premiere comprise (id ''), de la plus tot a la plus tard.
-function dtListe(c){
-  var l=c&&c.dc?[{id:'',dc:c.dc,ventes:dtVentes(c.ventes)}]:[];
-  dtAutres(c).forEach(function(x){l.push({id:x.id,dc:x.dc,ventes:dtVentes(x.ventes)});});
+// Toutes les dates, annulees comprises, la premiere avec l'id '', de la plus
+// tot a la plus tard.
+function dtToutes(c){
+  var l=c&&c.dc?[{id:'',dc:c.dc,ventes:dtVentes(c.ventes),annule:!!c.dcAnnule&&dtMulti(c),da:c.dcDa||''}]:[];
+  dtAutres(c).forEach(function(x){l.push({id:x.id,dc:x.dc,ventes:dtVentes(x.ventes),annule:!!x.annule,da:x.da||''});});
   return l.sort(function(a,b){return a.dc<b.dc?-1:a.dc>b.dc?1:0;});
+}
+// Les dates maintenues ; toutes, si aucune ne l'est (c'est alors le concert
+// qu'on annule, pas ses dates une a une).
+function dtListe(c){
+  var l=dtToutes(c),m=l.filter(function(x){return !x.annule;});
+  return m.length?m:l;
+}
+function dtAnnulees(c){var l=dtToutes(c);return dtListe(c).length<l.length?l.filter(function(x){return x.annule;}):[];}
+// Dates annoncees apres le concert (« Nouvelle date ») dont l'annonce tombe
+// entre de et a (iso, bornes comprises).
+function dtNouvelles(c,de,a){
+  return dtListe(c).filter(function(x){return x.da&&x.da>=de&&x.da<=a&&(!c.da||x.da>c.da);});
 }
 function dtIsos(c){var v={};return dtListe(c).map(function(x){return x.dc;}).filter(function(d){if(v[d])return false;v[d]=1;return true;});}
 function dtJour(iso){return new Date(iso+'T00:00:00');}
@@ -5730,10 +5839,16 @@ function dtRanger(c){
   l.forEach(function(x){if(!min||x.dc<min.dc)min=x;});
   if(min&&(!c.dc||min.dc<c.dc)){
     l=l.filter(function(x){return x!==min;});
-    if(c.dc)l.push({id:uid('dt'),dc:c.dc,ventes:dtVentes(c.ventes)});
+    // Ce qui est propre a une date la suit : la premiere garde le sien dans
+    // c.ventes, c.dcAnnule et c.dcDa.
+    if(c.dc){var p={id:uid('dt'),dc:c.dc,ventes:dtVentes(c.ventes)};if(c.dcAnnule)p.annule=true;if(c.dcDa)p.da=c.dcDa;l.push(p);}
     c.dc=min.dc;c.ventes=dtVentes(min.ventes);
+    if(min.annule)c.dcAnnule=true;else delete c.dcAnnule;
+    if(min.da)c.dcDa=min.da;else delete c.dcDa;
   }
   c.autresDates=l.sort(function(a,b){return a.dc<b.dc?-1:a.dc>b.dc?1:0;});
+  // Seule, la premiere date n'a plus rien a porter a part.
+  if(!l.length){delete c.dcAnnule;delete c.dcDa;}
   return doublons;
 }
 function evtJourCourt(iso){var d=new Date((iso||'')+'T00:00:00');return isNaN(d.getTime())?'Sans date':evtCap(d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'}));}
@@ -7497,12 +7612,13 @@ function rpDatePoints(iso){return iso.slice(8,10)+'.'+iso.slice(5,7)+'.'+iso.sli
 function rpQui(c){
   var d='';
   if(c.dc){
-    d=rpDatePoints(c.dc);
-    var f=rpFin(c),l=dtIsos(c);
+    // Premiere date annulee (26/11) : on part de la premiere maintenue.
+    var f=rpFin(c),l=dtIsos(c),d0=l[0]||c.dc;
+    d=rpDatePoints(d0);
     // Plusieurs dates qui ne se suivent pas : « 04 et 06.12.2026 ».
     if(l.length>1&&!(l.length>2&&dtSuite(l)))d=l.every(function(x){return x.slice(0,7)===l[0].slice(0,7);})
       ?dtEt(l.slice(0,-1).map(function(x){return x.slice(8,10);}).concat([rpDatePoints(f)])):dtEt(l.map(rpDatePoints));
-    else if(f&&f!==c.dc)d=c.dc.slice(8,10)+(c.dc.slice(0,7)===f.slice(0,7)?'':'.'+c.dc.slice(5,7))+' → '+rpDatePoints(f);
+    else if(f&&f!==d0)d=d0.slice(8,10)+(d0.slice(0,7)===f.slice(0,7)?'':'.'+d0.slice(5,7))+' → '+rpDatePoints(f);
   }
   return [c.art,c.ville,d].map(function(x){return String(x||'').trim();}).filter(Boolean).join(' · ');
 }
@@ -9083,11 +9199,20 @@ async function addConcert(){
   var nc={id:Date.now().toString(),art:art,salle:salle,ville:ville,dc:dc,da:da,medias:'',jeux:'',budget:'',notes:'',ventes:0};
   if(evt){nc.evt=true;nc.dcFin=dcfin||dc;nc.prog=[];nc.parSpectacle=evtEtapesProposees(null);}
   else nc=normaliserLieu(nc);
+  // Plusieurs dates des la creation (26/11) : rangees comme dans la fiche (la
+  // plus tot devient la premiere, une date en double n'est gardee qu'une fois).
+  var doublons=0;
+  if(!evt){
+    var autres=ncAutresDates();
+    if(autres.length){nc.autresDates=autres.map(function(d){return {id:uid('dt'),dc:d,ventes:0};});doublons=dtRanger(nc);}
+  }
   concerts.push(nc);
   concerts.sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
   document.getElementById('f-art').value='';document.getElementById('f-salle').value='';document.getElementById('f-ville').value='';
   document.getElementById('f-dc').value='';document.getElementById('f-da').value='';document.getElementById('f-dcfin').value='';
+  document.getElementById('f-autres').innerHTML='';
   scheduleSave('concerts');render();btn.disabled=false;
+  if(doublons)showToast('Une date était en double : elle n\'est comptée qu\'une fois.');
   var f=document.getElementById('new-concert-form');if(f)f.style.display='none';
   var b=document.getElementById('btn-new-concert');if(b){b.textContent='+ Nouveau concert';b.classList.add('btn-primary');}
   ncType('concert');
@@ -9095,8 +9220,23 @@ async function addConcert(){
   // « Coller le programme ») : on l'ouvre tout de suite.
   if(evt)openFiche(nc.id);
 }
-// Formulaire « Nouveau concert » : concert (une date) ou evenement (du … au …,
-// ses spectacles s'ajoutent ensuite dans son programme).
+// Autres dates du formulaire : un champ par date, « Ajouter une date » propose
+// le lendemain de la derniere saisie.
+function ncAutresDates(){
+  return Array.prototype.map.call(document.querySelectorAll('#f-autres input[type=date]'),function(i){return i.value;}).filter(Boolean);
+}
+function ncDateAjouter(){
+  var dc=document.getElementById('f-dc').value;
+  if(!dc){showToast('Indique d\'abord la date du concert.');document.getElementById('f-dc').focus();return;}
+  var fin=[dc].concat(ncAutresDates()).sort().pop(),d=dtJour(fin);d.setDate(d.getDate()+1);
+  var el=document.createElement('span');el.className='fi-date nc-date';
+  el.innerHTML='<input type="date" aria-label="Autre date" value="'+esc(evtIso(d))+'">'
+    +'<button type="button" class="fi-date-x" onclick="this.parentNode.remove()" title="Retirer cette date" aria-label="Retirer cette date">'+icon('x')+'</button>';
+  document.getElementById('f-autres').appendChild(el);
+  el.querySelector('input').focus();
+}
+// Formulaire « Nouveau concert » : concert (une ou plusieurs dates) ou
+// evenement (du … au …, ses spectacles s'ajoutent ensuite dans son programme).
 var ncTypeCourant='concert';
 function ncType(t){
   var evt=t==='evt';ncTypeCourant=evt?'evt':'concert';
@@ -9111,6 +9251,7 @@ function ncType(t){
   document.getElementById('f-ville').setAttribute('list',evt?'':'dl-villes');
   document.getElementById('f-dc-l').textContent=evt?'Premier jour':'Date du concert';
   document.getElementById('f-dcfin-g').hidden=!evt;
+  document.getElementById('f-autres').hidden=evt;document.getElementById('f-dates-ajout').hidden=evt;
   document.getElementById('add-btn').textContent=evt?'Créer l\'événement':'Ajouter le concert';
 }
 function restoreConcert(id){
@@ -9223,7 +9364,7 @@ function renderAnnonces(){
       +'<div class="ann-body"><span class="ann-art">'+esc(c.art)+cancelBadge(c)+'</span>'
       +(lieuTexte(c)?'<span class="ann-lieu">'+esc(lieuTexte(c))+'</span>':'')
       +(estEvt(c)?'<span class="ann-evt">'+esc(evtProg(c).length?evtPluriel(evtProg(c).length,'spectacle'):'Événement')+'</span>':'')
-      +(dtMulti(c)?'<span class="ann-evt">'+esc(evtPluriel(dtIsos(c).length,'date'))+'</span>':'')
+      +(dtIsos(c).length>1?'<span class="ann-evt">'+esc(evtPluriel(dtIsos(c).length,'date'))+'</span>':'')
       +(tag?'<span class="tag '+tagCls+'">'+tag+'</span>':'')+'</div>'
       +'<button class="ann-done" onclick="event.stopPropagation();annonceDone(\''+escJs(c.id)+'\')" title="Marquer comme annoncé" aria-label="Marquer comme annoncé">'+icon('check')+'</button>'
       +'</div>';
@@ -9596,6 +9737,10 @@ function calElements(liste,y,m){
       ld.forEach(function(j,i){ajout(dansLeMois(j),{type:'concert',c:c,titre:c.art,sous:[lieuTexte(c),ld.length>1?'date '+(i+1)+'/'+ld.length:''].filter(Boolean).join(' · '),act:{fiche:c.id}});});
     }
     if(calCouches.annonces&&c.da)ajout(dansLeMois(c.da),{type:'annonce',c:c,titre:c.art,sous:'Annonce'+(lieuTexte(c)?' · '+lieuTexte(c):''),act:{fiche:c.id}});
+    // Une date annoncee apres le concert (26/11) : son annonce a elle.
+    if(calCouches.annonces&&!estEvt(c))dtListe(c).forEach(function(x){
+      if(x.da&&x.da!==c.da)ajout(dansLeMois(x.da),{type:'annonce',c:c,titre:c.art,sous:'Annonce de la date du '+dateCourte(x.dc)+(lieuTexte(c)?' · '+lieuTexte(c):''),act:{fiche:c.id}});
+    });
     if(calCouches.sponso)spVaguesTriees(c).forEach(function(v,i){
       ajout(dansLeMois(v.debut),{type:'sponso',c:c,titre:c.art,sous:'Sponso V'+(i+1)+(v.budget?' · '+spEuro(v.budget):'')+(v.fin?' · jusqu\'au '+dateCourte(v.fin):''),act:{sponso:c.id,vague:v.id}});
     });
@@ -11683,7 +11828,21 @@ function budProposer(c,m,cfg){
 // Ecrite telle quelle en D2 (« LE K, Reims ») : depuis le 24/09, le script
 // retire de chaque budget la liste deroulante des salles de la trame.
 function budLibelleSalle(lieu){return [lieu.salle.toUpperCase(),lieu.ville].filter(Boolean).join(', ');}
-function budNomFichier(c,lieu){return (c.dc||'').replace(/-/g,'')+'_'+(c.art||'').toUpperCase()+' '+lieu.ville.toUpperCase()+'_BUDGET PROMO';}
+// Plusieurs dates (26/11) : « 20261124-25 », la premiere en entier, puis le
+// jour des suivantes ; le mois (« 20261130-1201 ») ou l'annee s'ajoutent
+// quand ils changent. Le tri par date du Drive reste celui de la premiere.
+function budDatesFichier(c){
+  var l=dtIsos(c);if(!l.length)return (c.dc||'').replace(/-/g,'');
+  return l.map(function(iso,i){
+    var x=iso.replace(/-/g,''),p=i?l[i-1]:'';
+    if(!i||p.slice(0,4)!==iso.slice(0,4))return x;
+    return p.slice(0,7)===iso.slice(0,7)?x.slice(6):x.slice(4);
+  }).join('-');
+}
+// D3 : la date du concert, ou « Les 24 et 25 novembre 2026 » (texte, ecrit
+// tel quel par le script : aucune formule de la trame ne lit D3).
+function budDatesTexte(c){return dtIsos(c).length>1?cPlageLongue(c):'';}
+function budNomFichier(c,lieu){return budDatesFichier(c)+'_'+(c.art||'').toUpperCase()+' '+lieu.ville.toUpperCase()+'_BUDGET PROMO';}
 function budDateLongue(iso){if(!iso)return '—';var d=new Date(iso+'T00:00:00');return isNaN(d.getTime())?'—':d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
 
 // ── Fenetre « Budget promo » (depuis la fiche) ──
@@ -11717,7 +11876,7 @@ function budRendre(){
     +'<div class="bud-sec"><div class="nl-label">Repris de la fiche</div><div class="bud-repris">'
     +'<span class="k">Spectacle</span><span>'+esc((c.art||'').toUpperCase())+'<span class="bud-cell">D1</span></span>'
     +'<span class="k">Salle</span><span>'+(salle?esc(salle):'<span class="bud-muted">pas de salle dans la fiche : laissée vide</span>')+'<span class="bud-cell">D2</span></span>'
-    +'<span class="k">Date du concert</span><span>'+esc(budDateLongue(c.dc))+'<span class="bud-cell">D3</span></span>'
+    +'<span class="k">'+(budDatesTexte(c)?'Dates du concert':'Date du concert')+'</span><span>'+esc(budDatesTexte(c)||budDateLongue(dtIsos(c)[0]||c.dc))+'<span class="bud-cell">D3</span></span>'
     +'<span class="k">Mise en vente</span><span>'+(c.da?esc(budDateLongue(c.da))+' <span class="bud-muted">(date d\'annonce)</span>':'<span class="bud-muted">pas de date d\'annonce dans la fiche : laissée vide</span>')+'<span class="bud-cell">F7</span></span>'
     +'<span class="k">Nom du fichier</span><span class="bud-mono">'+esc(budNomFichier(c,lieu))+'</span>'
     +'</div></div>'
@@ -11799,7 +11958,7 @@ async function budCreer(){
     if(!jeton)throw new Error('Session expirée : reconnecte-toi.');
     var corps={token:jeton,budget:{fichier:nom,artiste:(c.art||'').toUpperCase(),
       salle:{nom:lieu.salle,ville:lieu.ville,libelle:budLibelleSalle(lieu)},
-      date:c.dc||'',miseEnVente:c.da||'',contrat:etat.contrat,montant:+etat.montant,
+      date:dtIsos(c)[0]||c.dc||'',datesTexte:budDatesTexte(c),miseEnVente:c.da||'',contrat:etat.contrat,montant:+etat.montant,
       lignes:{street:propre(etat.lignes.street),espaces:propre(etat.lignes.espaces),digital:propre(etat.lignes.digital),radio:propre(etat.lignes.radio)}}};
     var r,d;
     try{r=await fetch(budgetConfig.script,{method:'POST',body:JSON.stringify(corps)});}
