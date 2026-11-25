@@ -2815,3 +2815,27 @@ select.rp-in{padding-right:8px}
   .spe-art .spe-vagues{grid-column:1/3;grid-row:2}
 }
 .spe-jours{position:absolute;top:50%;height:10px;min-width:9px;margin-top:-5px;border-radius:5px;background:rgba(244,242,236,.38);z-index:1}
+
+/* ── DATES MULTIPLES (25/11) : un concert, plusieurs soirs ─────────────── */
+.fi-dates{display:flex;flex-wrap:wrap;align-items:center;gap:2px 14px;min-width:0}
+.fi-date{display:inline-flex;align-items:center;gap:2px}
+.fi-date .fiche-champ{width:auto}
+.fi-date-x{position:relative;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:24px;height:24px;padding:0;border:none;border-radius:var(--radius-xs);background:none;color:var(--text-4);cursor:pointer;transition:color .15s,box-shadow .3s var(--sortie)}
+.fi-date-x:hover{color:var(--text);box-shadow:var(--survol-ombre)}
+.fi-date-x::after{content:'';position:absolute;inset:-6px}
+.fi-date-x .ico{width:14px;height:14px}
+.btn-link.fi-date-ajout{display:inline-flex;align-items:center;gap:6px;padding:6px 0}
+.fi-date-ajout .ico{width:14px;height:14px}
+.fa-vdates{gap:4px}
+.fa-vdates .fa-l{margin-bottom:4px}
+.fa-vdate{display:flex;align-items:center;gap:8px;width:calc(100% + 12px);margin:0 -6px;padding:5px 6px;border:none;border-radius:var(--radius-xs);background:none;font:inherit;font-size:13px;color:var(--text);text-align:left;cursor:pointer;transition:box-shadow .3s var(--sortie)}
+.fa-vdate:hover{box-shadow:var(--survol-ombre)}
+.fa-vdate-j{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fa-vdate-v{min-width:52px;font-size:12px;color:var(--text-3);text-align:right}
+.fa-vdate.ventes-4 .fa-vdate-v{color:var(--text)}
+/* Telephone : la tuile Ventes d'un concert a plusieurs dates passe sous les
+   deux autres, sur toute la largeur (a 110 px, les dates ne tenaient plus). */
+@media (max-width:768px){
+  .fa-tuiles:has(.fa-vdates){grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fa-tuiles .fa-vdates{grid-column:1/-1}
+}

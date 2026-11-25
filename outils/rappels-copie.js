@@ -23,7 +23,7 @@ const CIBLE = path.join(RACINE, 'supabase', 'functions', 'rappels-quotidiens', '
 const NOMS = [
   'syncIsPlain', 'VENTES', 'SP_VIDE', 'KNOWN_SALLES',
   'villeRegroupee', 'lieuDepuisTexte', 'normaliserLieu', 'lieuTexte', 'dateCourte',
-  'tk', 'isNA', 'estEvt', 'evtProg', 'evtFin', 'evtTrie', 'evtApart', 'evtEtapesSp',
+  'tk', 'isNA', 'estEvt', 'evtProg', 'evtFin', 'cFin', 'evtTrie', 'evtApart', 'evtEtapesSp',
   'evtSuivis', 'evtVentes', 'spSujet', 'spPorteur', 'spRead', 'spVaguesTriees',
   'etapeNumVague', 'vagueDeLEtape', 'calcDate', 'prerequisLeve', 'isUnlocked',
   'etapesSujet', 'skipActif', 'sansEtapesSautees',

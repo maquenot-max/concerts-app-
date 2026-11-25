@@ -344,8 +344,9 @@
     <div class="fiche-panneau" id="fp-infos" role="tabpanel" aria-labelledby="fo-infos" hidden>
       <div class="fiche-props">
         <label class="fiche-prop"><span class="fiche-prop-l" id="fi-art-l">Artiste</span><input type="text" id="fi-art" class="fiche-champ" onchange="updateFicheField('art',this.value)"></label>
-        <label class="fiche-prop"><span class="fiche-prop-l" id="fi-dc-l">Date du concert</span><input type="date" id="fi-dc" class="fiche-champ" onchange="updateFicheField('dc',this.value)"></label>
+        <label class="fiche-prop"><span class="fiche-prop-l" id="fi-dc-l">Date du concert</span><input type="date" id="fi-dc" class="fiche-champ" onchange="updateFicheField('dc',this.value)" onblur="ficheDatesRanger()"></label>
         <label class="fiche-prop" id="fi-dcfin-row" hidden><span class="fiche-prop-l">Dernier jour</span><input type="date" id="fi-dcfin" class="fiche-champ" onchange="updateFicheField('dcFin',this.value)"></label>
+        <div class="fiche-prop fiche-prop-haut" id="fi-dates-row"><span class="fiche-prop-l">Autres dates</span><div class="fi-dates" id="fi-dates" onfocusout="ficheDatesQuitte(event)"></div></div>
         <label class="fiche-prop" id="fi-salle-row"><span class="fiche-prop-l">Salle</span><input type="text" id="fi-salle" class="fiche-champ" placeholder="Zénith" list="dl-salles" autocomplete="off" onchange="updateFicheField('salle',this.value.trim())"></label>
         <label class="fiche-prop"><span class="fiche-prop-l" id="fi-ville-l">Ville</span><input type="text" id="fi-ville" class="fiche-champ" placeholder="Dijon" list="dl-villes" autocomplete="off" onchange="updateFicheField('ville',this.value.trim())"></label>
         <label class="fiche-prop"><span class="fiche-prop-l">Date d'annonce</span><input type="date" id="fi-da" class="fiche-champ" onchange="updateFicheField('da',this.value)"></label>
@@ -1227,7 +1228,7 @@ function nlItemDe(b,iid){return b&&b.items?b.items.find(function(it){return it.i
 // ── Concerts proposes ──
 function nlUpcomingConcerts(){
   var today=new Date();today.setHours(0,0,0,0);
-  return concerts.filter(function(c){return !c.supprime&&!c.annule&&c.dc&&new Date(c.dc)>=today;})
+  return concerts.filter(function(c){return !c.supprime&&!c.annule&&c.dc&&new Date(cFin(c))>=today;})
     .sort(function(a,b){return a.dc<b.dc?-1:(a.dc>b.dc?1:0);});
 }
 // « Dernieres annonces » : date d'annonce (c.da), pas date du concert (c.dc),
@@ -1381,17 +1382,21 @@ function nlCarteConcert(c,b,x){
   var photo=nlPhotoArtiste(c),billet=nlBillet(c),h='',lignes=[];
   x.concerts[c.id]=1;
   if(el.photo&&photo){var img=nlImgCarte(escUrl(photo),c.art,cols,r);h=billet?'<a href="'+esc(billet)+'" target="_blank">'+img+'</a>':img;}
-  // Badge « Complet » : reflete la jauge de ventes de la fiche (ventes=4).
-  var badge=el.complet&&c.ventes===4?nlBadgeComplet(r):'';
-  if(el.date&&c.dc)lignes.push({apres:12,pad:2,st:'font-family:\'Fraunces\', Georgia, serif;font-style:italic;font-weight:600;font-size:14px;color:'+cDate+';',html:esc(estEvt(c)?nlPlageLongue(c):new Date(c.dc+'T00:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}))});
+  // Badge « Complet » : reflete la jauge de ventes de la fiche (ventes=4) ;
+  // plusieurs dates (25/11) : toutes completes, ou « Complet le 4 déc. ».
+  var badge=el.complet&&cComplet(c)?nlBadgeComplet(r):'';
+  var dComplets=dtListe(c).filter(function(x){return x.ventes===4;}).map(function(x){return x.dc;});
+  var partiel=el.complet&&!badge&&dComplets.length?nlBadgeComplet(r,'Complet '+(dComplets.length>1?'les ':'le ')+dtEnum(dComplets,'short')):'';
+  if(el.date&&c.dc)lignes.push({apres:12,pad:2,st:'font-family:\'Fraunces\', Georgia, serif;font-style:italic;font-weight:600;font-size:14px;color:'+cDate+';',html:esc(cPlageLongue(c))});
   if(el.artiste)lignes.push({apres:12,pad:2,st:'font-family:'+police+';font-size:16px;font-weight:700;color:#16171F;',html:esc(c.art)+(badge?' '+badge:'')});
   else if(badge)lignes.push({apres:12,pad:2,html:badge.replace('margin-left:4px;','')});
+  if(partiel)lignes.push({apres:12,pad:4,html:partiel.replace('margin-left:4px;','')});
   if(el.lieu&&lieuTexte(c))lignes.push({apres:12,pad:2,st:'font-family:Arial, Helvetica, sans-serif;font-size:11.5px;letter-spacing:0.4px;text-transform:uppercase;color:#9C9891;',html:esc(lieuTexte(c))});
   var txt=(b.boutonTxt||'').trim();
   if(el.bouton&&billet&&txt)lignes.push({apres:12,pad:10,html:nlPetitBouton(billet,txt,cols,pal)});
   return h+nlLignesHtml(lignes,!!h);
 }
-function nlBadgeComplet(r){return '<span style="background-color:#F6E7E5;color:#A23B3B;font-family:Arial, Helvetica, sans-serif;font-size:9.5px;font-weight:bold;letter-spacing:0.4px;text-transform:uppercase;border-radius:'+r(9)+'px;padding:2px 7px;margin-left:4px;display:inline-block;vertical-align:middle;">Complet</span>';}
+function nlBadgeComplet(r,texte){return '<span style="background-color:#F6E7E5;color:#A23B3B;font-family:Arial, Helvetica, sans-serif;font-size:9.5px;font-weight:bold;letter-spacing:0.4px;text-transform:uppercase;border-radius:'+r(9)+'px;padding:2px 7px;margin-left:4px;display:inline-block;vertical-align:middle;">'+esc(texte||'Complet')+'</span>';}
 // Carte d'un spectacle : memes elements qu'une carte de concert ; la date est
 // l'horaire (le jour est dans l'intertitre), la photo celle de l'artiste.
 function nlCarteSpectacle(p,b,x,avecJour){
@@ -2035,13 +2040,13 @@ function nlListeConcerts(b){
 }
 function nlLigneConcert(b,c){
   var ph=nlPhotoArtiste(c),billet=nlBillet(c),exclu=!!b.exclus[c.id],cid=c.id;
-  var d=b.type==='annonces'?c.da:c.dc,dt=dateCourte(d);
+  var dt=b.type==='annonces'?dateCourte(c.da):cPlage(c);
   return '<div class="nl-crow'+(exclu?' exclu':'')+'">'
     +'<label class="nl-crow-lbl"><input type="checkbox" data-nl="excl" data-b="'+esc(b.id)+'" data-c="'+esc(cid)+'"'+(exclu?'':' checked')+'>'
       +(ph?'<img class="nl-cthumb" src="'+escUrl(ph)+'" alt="">':'<span class="nl-cthumb vide">'+icon('image')+'</span>')
       +'<span class="nl-cinfo"><b>'+esc(c.art)+'</b><span>'+(b.type==='annonces'?'annoncé le ':'')+esc(dt)+(c.ville?' · '+esc(c.ville):'')+'</span></span></label>'
     +'<span class="nl-cflags">'
-      +(c.ventes===4?'<span class="tag tag-green">Complet</span>':'')
+      +(cComplet(c)?'<span class="tag tag-green">Complet</span>':cCompletsTxt(c)?'<span class="tag tag-green">'+esc(cCompletsTxt(c))+'</span>':'')
       +(ph?'':(nlEnvoi['c:'+cid]?'<span class="tag tag-neutral">Envoi…</span>'
         :'<button type="button" class="tag tag-amber" data-nl="photo-artiste" data-c="'+esc(cid)+'" data-depot="1" title="Ajouter une photo de '+esc(c.art)+' (elle sert pour tous ses concerts)">'+icon('image')+'Photo</button>'))
       +(billet?'':'<button type="button" class="tag tag-amber" data-nl="billet" data-c="'+esc(cid)+'" title="Ajouter le lien billetterie (enregistré dans la fiche)">'+icon('link')+'Billetterie</button>')
@@ -2858,7 +2863,7 @@ function actPhraseEtat(r){
 }
 
 // Concerts et evenements : un champ, ou plusieurs, d'une meme fiche.
-var ACT_CHAMPS={art:'le nom',dc:'la date',dcFin:'le dernier jour',da:'la date d\'annonce',salle:'la salle',ville:'la ville',budget:'le budget',ventes:'les ventes',medias:'les médias',jeux:'le jeu concours',notes:'les notes',contrat:'le contrat',prog:'le programme',sponso:'la sponso',parSpectacle:'la répartition des tâches',evt:'le type'};
+var ACT_CHAMPS={art:'le nom',dc:'la date',dcFin:'le dernier jour',autresDates:'les autres dates',da:'la date d\'annonce',salle:'la salle',ville:'la ville',budget:'le budget',ventes:'les ventes',medias:'les médias',jeux:'le jeu concours',notes:'les notes',contrat:'le contrat',prog:'le programme',sponso:'la sponso',parSpectacle:'la répartition des tâches',evt:'le type'};
 var ACT_DATES={dc:1,dcFin:1,da:1};
 function actVentes(v){var x=VENTES.find(function(o){return o.id===+v;});return x?x.label:'';}
 function actParId(l){var o={};(Array.isArray(l)?l:[]).forEach(function(x){if(x&&x.id!=null)o[x.id]=x;});return o;}
@@ -3291,6 +3296,8 @@ function rmlCalcul(r,jour,equipe){
         var iso=rmlIso(d),n=rmlEcart(iso,jour);
         if(n<-RML_RELANCES||n>RML_BIENTOT)return;
         var it={type:'etape',ecart:n,echeance:iso,tache:t.nom||'',tid:t.id,art:s.art||'',dc:s.dc||'',salle:s.salle||'',ville:villeRegroupee(v),fid:x.fid,sp:x.sp};
+        // Plusieurs dates (25/11) : le mail les donne toutes.
+        if(!estEvt(s)&&Array.isArray(s.autresDates)){var au=s.autresDates.map(function(y){return y&&y.dc;}).filter(Boolean);if(au.length)it.autres=au;}
         (suivies[t.id]&&Array.isArray(cfg.dest)?cfg.dest:[]).forEach(function(e){
           if(!rmlMuet(r,String(e).toLowerCase(),'v|'+vr.nom+'|'+t.id))ranger(e,s.id+'|'+t.id,it);
         });
@@ -3343,7 +3350,7 @@ function rmlVillesAVenir(){
   concerts.forEach(function(c){
     if(!c||c.supprime||c.annule)return;
     if(estEvt(c))evtProg(c).forEach(function(p){if(!p.annule)compter(p.ville,p.dc);});
-    else compter(c.ville,c.dc);
+    else compter(c.ville,cFin(c));
   });
   return {n:n,nom:nom};
 }
@@ -3352,7 +3359,7 @@ function rmlArtistesVille(v){
   concerts.forEach(function(c){
     if(!c||c.supprime||c.annule)return;
     if(estEvt(c))evtProg(c).forEach(function(p){if(p.art&&rmlCleVille(p.ville)===k&&(p.dc||'')>=auj)a[p.art.trim()]=1;});
-    else if(c.art&&rmlCleVille(c.ville)===k&&(c.dc||'')>=auj)a[c.art.trim()]=1;
+    else if(c.art&&rmlCleVille(c.ville)===k&&cFin(c)>=auj)a[c.art.trim()]=1;
   });
   return Object.keys(a).sort(function(x,y){return x.localeCompare(y,'fr');});
 }
@@ -3518,7 +3525,8 @@ function rmlMesRappelsHtml(r){
 }
 function rmlItemTexte(it){
   if(it.type==='projet')return {qui:it.projet,quoi:it.tache};
-  return {qui:it.art,quoi:it.tache+' · '+lieuTexte({salle:it.salle,ville:it.ville})+(it.dc?' · '+dateCourte(new Date(it.dc+'T00:00:00')):'')};
+  var d=[it.dc].concat(it.autres||[]).filter(Boolean).sort().map(function(x){return dateCourte(new Date(x+'T00:00:00'));});
+  return {qui:it.art,quoi:it.tache+' · '+lieuTexte({salle:it.salle,ville:it.ville})+(d.length?' · '+dtEt(d):'')};
 }
 function rmlProchainHtml(r){
   var d=rmlProchain(),jour=rmlIso(d),mails=rmlCalcul(r,jour,rmlEquipe());
@@ -4309,7 +4317,7 @@ function checkArchiveSuggestion(){
 }
 function oldUnarchivedConcerts(){
   var threshold=new Date();threshold.setHours(0,0,0,0);threshold.setDate(threshold.getDate()-7);
-  return concerts.filter(function(c){return !c.supprime&&c.dc&&new Date(c.dc)<threshold;});
+  return concerts.filter(function(c){return !c.supprime&&c.dc&&new Date(cFin(c))<threshold;});
 }
 function dismissArchiveSuggestion(){
   sessionStorage.setItem('archive_suggestion_dismissed','1');
@@ -4594,9 +4602,10 @@ function calcDate(c,t){
   if(override)return new Date(override);
   var vg=vagueDeLEtape(c,t);
   if(vg&&vg.debut)return new Date(vg.debut);
-  // Un evenement dure plusieurs jours : ce qui se fait apres (report comm a
-  // J+1) part de son dernier jour, le reste de son premier.
-  var base=t.ref==='annonce'?c.da:(t.jours>0&&estEvt(c)?evtFin(c):c.dc);if(!base)return null;var d=new Date(base);d.setDate(d.getDate()+t.jours);return d;
+  // Un evenement, ou un concert a plusieurs dates (25/11), dure plusieurs
+  // jours : ce qui se fait apres (report comm a J+1) part du dernier, le
+  // reste du premier.
+  var base=t.ref==='annonce'?c.da:(t.jours>0?cFin(c):c.dc);if(!base)return null;var d=new Date(base);d.setDate(d.getDate()+t.jours);return d;
 }
 // Echappement HTML : toute donnee saisie par un utilisateur (nom d'artiste, notes,
 // taches...) doit passer par esc() avant d'etre inseree dans une chaine HTML/attribut,
@@ -4852,7 +4861,8 @@ function filtered(){
     if(s&&!concertCorrespond(c,s))return false;
     if(v&&concertVilles(c).indexOf(v)<0)return false;
     // Evenement : il passe le filtre si l'un de ses spectacles a ce niveau de ventes.
-    if(window._vf!=null&&!(estEvt(c)?evtProg(c).some(function(p){return evtVentes(p)===window._vf;}):(c.ventes||0)===window._vf))return false;
+    // Plusieurs dates : il passe si l'une d'elles a ce niveau.
+    if(window._vf!=null&&!(estEvt(c)?evtProg(c).some(function(p){return evtVentes(p)===window._vf;}):[dtVentes(c.ventes)].concat(dtAutres(c).map(function(x){return dtVentes(x.ventes);})).indexOf(window._vf)>=0))return false;
     if(p&&(c.dc||'').indexOf(p)<0)return false;
     if(!matchesCategoryFilter(c,cat))return false;
     return true;
@@ -5005,6 +5015,8 @@ function closeFicheBtn(){
     ov.classList.add('fermeture');clearTimeout(ov._ferm);
     ov._ferm=setTimeout(function(){ov.classList.remove('fermeture');},320);
   }
+  // Une date en cours de saisie : reclassee avant de quitter (dtRanger).
+  var fc=ficheConcert();if(fc&&!estEvt(fc)&&Array.isArray(fc.autresDates)){dtRanger(fc);scheduleSave('concerts');}
   closeFicheMenu();ov.classList.remove('open');document.body.style.overflow='';currentFicheId=null;ficheSpId=null;ficheMenuTel=false;render();
   if(!_routing){
     // Fiche ouverte par un clic (entree d'historique a nous) : on revient en
@@ -5058,7 +5070,7 @@ function ficheMajTete(c){
   sur.innerHTML=p?'<button type="button" class="fiche-sur-evt" onclick="ficheVersEvt()">'+esc(e.art)+'</button><span>'+esc(evtJourLong(p.dc))+'</span>':'';
   var heure=p?evtHeure(p.h):'';
   document.getElementById('fiche-sub').textContent=p?[lieuTexte(c),ficheDateLongue(p.dc)+(heure?' · '+heure.replace(':','h'):'')].filter(Boolean).join(' · ')
-    :evt?[lieuTexte(c),evtPlage(c,true),evtResume(c)].filter(Boolean).join(' · '):[lieuTexte(c),ficheDateLongue(c.dc)].filter(Boolean).join(' · ');
+    :evt?[lieuTexte(c),evtPlage(c,true),evtResume(c)].filter(Boolean).join(' · '):[lieuTexte(c),dtMulti(c)?cPlage(c,true):ficheDateLongue(c.dc)].filter(Boolean).join(' · ');
   document.getElementById('fiche-autres').innerHTML=p||evt?'':ficheAutresHtml(c);
   document.getElementById('fi-evt-nl').hidden=!(evt&&evtProg(c).length);
   document.getElementById('fiche-puces').innerHTML=fichePucesHtml(c);
@@ -5087,7 +5099,7 @@ function fichePucesHtml(c,statique){
   if(c.annule)h+='<span class="tag tag-red">Annulé</span>';
   var j=ficheJours(c);
   // Un evenement commence avant de finir : entre les deux, il est en cours.
-  if(estEvt(c)&&j!==null&&j<0&&evtFin(c)>=spTodayStr())h+='<span class="tag tag-neutral">En cours</span>';
+  if((estEvt(c)||dtMulti(c))&&j!==null&&j<0&&cFin(c)>=spTodayStr())h+='<span class="tag tag-neutral">En cours</span>';
   else if(j!==null)h+='<span class="tag tag-neutral">'+(j>1?'Dans '+j+' jours':j===1?'Demain':j===0?'Aujourd\'hui':j===-1?'Hier':'Il y a '+(-j)+' jours')+'</span>';
   if(!c.annule){
     // Un spectacle sans date d'annonce a lui est annonce avec son evenement :
@@ -5105,6 +5117,12 @@ function fichePucesHtml(c,statique){
   }
   // Evenement : les ventes sont celles de chaque spectacle (programme).
   if(estEvt(c)){var ct=evtCompletsTxt(c);if(ct)h+='<span class="tag tag-neutral evt-complets"><i aria-hidden="true"></i>'+esc(ct)+'</span>';return h;}
+  // Plusieurs dates : leurs ventes se changent une a une, dans l'Apercu.
+  if(dtMulti(c)){
+    var vm=cVentesMin(c),cc=cCompletsTxt(c);
+    return h+'<span class="tag tag-neutral fiche-ventes ventes-'+esc(vm)+'" title="'+esc(cVentesDetail(c))+'">'
+      +'<span class="ventes-gauge" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'+esc(cc||FICHE_VENTES[vm])+'</span>';
+  }
   var v=ficheVentesNiveau(c);
   h+='<button type="button" class="tag tag-neutral fiche-ventes ventes-'+v+'" onclick="ficheVentes()" title="Statut des ventes : cliquer pour changer">'
     +'<span class="ventes-gauge" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'+FICHE_VENTES[v]+'</button>';
@@ -5119,7 +5137,7 @@ function ficheAutresHtml(c){
   if(!autres.length)return '';
   return '<span>Aussi :</span>'+autres.slice(0,2).map(function(x){
     return '<button type="button" class="fiche-autre" onclick="openFiche(\''+escJs(x.id)+'\',null,true)">'
-      +esc([lieuTexte(x),ficheCourt(x.dc,true)].filter(Boolean).join(', '))+icon('arrow-right')+'</button>';
+      +esc([lieuTexte(x),cPlage(x,true)].filter(Boolean).join(', '))+icon('arrow-right')+'</button>';
   }).join('')+(autres.length>2?'<span>+'+(autres.length-2)+'</span>':'');
 }
 function updateFicheAnnonceUndoBtn(){
@@ -5137,11 +5155,15 @@ function ficheAnnonceFaite(){
   annonceDone(s.id);
   ficheMajTete(s);
 }
-function ficheVentes(){
+// did : l'une des autres dates du concert (absent : la premiere).
+function ficheVentes(did){
   var s=ficheSujet();if(!s)return;
   var v=(ficheVentesNiveau(s)+1)%VENTES.length;
   if(s.spectacle){s.spectacle.ventes=v;evtEnregistrer(s.evenement,true);return;}
-  s.ventes=v;
+  if(did){
+    var x=dtAutres(s).find(function(y){return y.id===did;});if(!x)return;
+    x.ventes=(dtVentes(x.ventes)+1)%VENTES.length;
+  }else s.ventes=v;
   scheduleSave('concerts');
   ficheMajTete(s);renderFicheApercu(s);
 }
@@ -5245,8 +5267,10 @@ function ficheMajInfos(c){
   if(sj&&sj.spectacle){renderFicheSpInfos(sj.evenement,sj.spectacle);return;}
   var s=spRead(c),evt=estEvt(c);
   document.getElementById('fi-art-l').textContent=evt?'Nom':'Artiste';
-  document.getElementById('fi-dc-l').textContent=evt?'Premier jour':'Date du concert';
+  document.getElementById('fi-dc-l').textContent=evt?'Premier jour':dtMulti(c)?'Première date':'Date du concert';
   document.getElementById('fi-dcfin-row').hidden=!evt;
+  document.getElementById('fi-dates-row').hidden=evt;
+  if(!evt)ficheMajDates(c);
   document.getElementById('fi-salle-row').hidden=evt;
   document.getElementById('fi-ville-l').textContent=evt?'Lieu':'Ville';
   document.getElementById('fi-ville').placeholder=evt?'Dijon et alentours':'Dijon';
@@ -5301,6 +5325,74 @@ function updateFicheField(field,val){
   if(field==='dc')spRenderFiche(c.id);
   if(estEvt(c)&&(field==='dc'||field==='dcFin'))renderFicheMenu(c);
   if(field==='budget'){ficheMajLien('fi-budget-lien',val);ficheMajBudget(c);}
+}
+
+// Autres dates (25/11) : une ligne par date, modifiable sur place, et
+// « Ajouter une date » propose le lendemain de la derniere.
+function ficheMajDates(c){
+  var el=document.getElementById('fi-dates');if(!el)return;
+  if(el.contains(document.activeElement)&&document.activeElement.type==='date')return;
+  el.innerHTML=dtAutres(c).map(function(x){
+    return '<span class="fi-date"><input type="date" class="fiche-champ" value="'+esc(x.dc)+'" aria-label="Autre date" onchange="ficheDateModif(\''+escJs(x.id)+'\',this.value)">'
+      +'<button type="button" class="fi-date-x" onclick="ficheDateRetirer(\''+escJs(x.id)+'\')" title="Retirer cette date" aria-label="Retirer le '+esc(dateCourte(x.dc))+'">'+icon('x')+'</button></span>';
+  }).join('')
+    +'<button type="button" class="btn-link fi-date-ajout" onclick="ficheDateAjouter()">'+icon('plus')+'Ajouter une date</button>';
+}
+// Pendant la saisie, rien n'est reclasse ni redessine (voir dtRanger) : on
+// le fait en quittant la liste, ou le champ de la premiere date.
+function ficheDatesQuitte(e){
+  var el=document.getElementById('fi-dates');
+  if(el&&e.relatedTarget&&el.contains(e.relatedTarget))return;
+  var id=currentFicheId;
+  setTimeout(function(){ficheDatesRanger(id);},0);
+}
+// id : le concert dont on quitte le champ (la fiche a pu changer depuis).
+function ficheDatesRanger(id){
+  var c=id?concerts.find(function(x){return x.id===id;}):ficheConcert();
+  if(!c||estEvt(c)||!Array.isArray(c.autresDates))return;
+  if(currentFicheId!==c.id){dtRanger(c);scheduleSave('concerts');return;}
+  if(ficheApresDates(c))showToast('Le concert avait déjà cette date : elle n\'est comptée qu\'une fois.');
+}
+function ficheApresDates(c){
+  var doublons=dtRanger(c);
+  concerts.sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
+  scheduleSave('concerts');
+  ficheMajInfos(c);ficheMajTete(c);renderFicheTasks(c);spRenderFiche(c.id);
+  return doublons;
+}
+function ficheDateAjouter(){
+  var c=ficheConcert();if(!c||estEvt(c))return;
+  if(!c.dc){showToast('Indique d\'abord la date du concert.');return;}
+  var d=dtJour(cFin(c));d.setDate(d.getDate()+1);
+  if(!Array.isArray(c.autresDates))c.autresDates=[];
+  var id=uid('dt');
+  c.autresDates.push({id:id,dc:evtIso(d),ventes:0});
+  ficheApresDates(c);
+  var champs=document.querySelectorAll('#fi-dates input[type=date]'),x=dtAutres(c).find(function(y){return y.id===id;});
+  for(var i=0;i<champs.length;i++)if(x&&champs[i].value===x.dc){champs[i].focus();break;}
+}
+function ficheDateModif(id,val){
+  var c=ficheConcert();if(!c)return;
+  var x=dtAutres(c).find(function(y){return y.id===id;});if(!x)return;
+  if(!val)return;
+  x.dc=val;
+  scheduleSave('concerts');
+  ficheMajTete(c);renderFicheTasks(c);
+}
+function ficheDateRetirer(id){
+  var c=ficheConcert();if(!c||!Array.isArray(c.autresDates))return;
+  var i=c.autresDates.findIndex(function(y){return y.id===id;});if(i<0)return;
+  var x=c.autresDates[i];
+  c.autresDates.splice(i,1);
+  ficheApresDates(c);
+  proposerAnnulation('Date retirée',[c.art,dateCourte(x.dc)].filter(Boolean).join(' · '),function(){
+    var cc=concerts.find(function(y){return y.id===c.id;});if(!cc)return;
+    if(!Array.isArray(cc.autresDates))cc.autresDates=[];
+    if(dtIsos(cc).indexOf(x.dc)<0)cc.autresDates.push(x);
+    dtRanger(cc);scheduleSave('concerts');
+    if(currentFicheId===cc.id){ficheMajInfos(cc);ficheMajTete(cc);renderFicheTasks(cc);}
+    render();
+  });
 }
 
 // ── Plan de communication ──
@@ -5435,6 +5527,16 @@ function ficheMontantHtml(t){
   var n=parseInt(m[1].replace(/\D/g,''),10);
   return '<span data-n="'+esc(String(n))+'" data-suite="'+esc(m[2])+'">'+esc(t)+'</span>';
 }
+// Plusieurs dates : une ligne par date, chacune avec ses ventes.
+function ficheTuileVentesDatesHtml(c){
+  return '<div class="fa-tuile statique fa-vdates"><span class="fa-l">Ventes</span>'
+    +dtListe(c).map(function(x){
+      return '<button type="button" class="fa-vdate ventes-'+esc(x.ventes)+'" onclick="ficheVentes(\''+escJs(x.id)+'\')" title="'+esc(dateCourte(x.dc,true)+' : '+FICHE_VENTES[x.ventes]+'. Cliquer pour changer')+'">'
+        +'<span class="fa-vdate-j">'+esc(dateCourte(x.dc))+'</span>'
+        +'<span class="ventes-gauge" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'
+        +'<span class="fa-vdate-v">'+esc(FICHE_VENTES_COURT[x.ventes])+'</span></button>';
+    }).join('')+'</div>';
+}
 function renderFicheApercu(c,g){
   var el=document.getElementById('fp-apercu');if(!el||!c)return;
   c=ficheCible(c);
@@ -5464,9 +5566,10 @@ function renderFicheApercu(c,g){
       +'<button type="button" class="fa-tuile" onclick="ficheOnglet(\'sponso\')"><span class="fa-l">Sponso</span>'
         +'<span class="fa-v">'+ficheMontantHtml(sp.total)+'</span><span class="fa-s '+sp.cls+'">'+esc(sp.sous)+'</span>'
         +(sp.sous2?'<span class="fa-s2">'+esc(sp.sous2)+'</span>':'')+'</button>'
-      +'<button type="button" class="fa-tuile ventes-'+v+'" onclick="ficheVentes()" title="Statut des ventes : cliquer pour changer"><span class="fa-l">Ventes</span>'
+      +(dtMulti(c)?ficheTuileVentesDatesHtml(c)
+      :'<button type="button" class="fa-tuile ventes-'+v+'" onclick="ficheVentes()" title="Statut des ventes : cliquer pour changer"><span class="fa-l">Ventes</span>'
         +'<span class="fa-v">'+FICHE_VENTES_COURT[v]+'</span>'
-        +'<span class="ventes-gauge fa-jauge" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="fa-s2">Changer</span></button>';
+        +'<span class="ventes-gauge fa-jauge" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="fa-s2">Changer</span></button>');
   el.innerHTML=(evt&&!evtProg(c).length?evtProgVideHtml():'')
     +'<section class="fa-bloc">'
       +'<div class="fa-tete"><h3>À faire en priorité</h3><button type="button" class="btn-link" onclick="ficheOnglet(\'plan\')">Tout le plan'+icon('arrow-right')+'</button></div>'
@@ -5541,6 +5644,98 @@ function evtPlage(c,avecJour){
   if(!memeAn)o1.year='numeric';
   return d1.toLocaleDateString('fr-FR',o1)+' → '+d2.toLocaleDateString('fr-FR',o2);
 }
+// ── DATES MULTIPLES (25/11) : un meme concert, plusieurs soirs ──
+// Double, triple, quadruple date : une seule fiche, un seul plan promo.
+// c.dc reste la premiere date (tri, echeances, annonce) et c.ventes ses
+// ventes ; les suivantes sont dans c.autresDates [{id, dc, ventes}], a la
+// suite ou non (« 4 et 6 dec. »), imbriquees comme la sponso : aucune
+// migration, et la fusion a trois voies traite les tableaux par id.
+// Ce qui se fait apres le concert (report…) part de la derniere (cFin).
+// Un evenement garde son premier et son dernier jour (dc, dcFin).
+function cFin(c){
+  if(estEvt(c))return evtFin(c);
+  var f=c.dc||'';
+  if(Array.isArray(c.autresDates))c.autresDates.forEach(function(x){if(x&&x.dc&&x.dc>f)f=x.dc;});
+  return f;
+}
+function dtAutres(c){return c&&!estEvt(c)&&Array.isArray(c.autresDates)?c.autresDates.filter(function(x){return x&&x.dc;}):[];}
+function dtMulti(c){return dtAutres(c).length>0;}
+function dtVentes(v){v=parseInt(v,10);return v>=0&&v<VENTES.length?v:0;}
+// Toutes les dates, la premiere comprise (id ''), de la plus tot a la plus tard.
+function dtListe(c){
+  var l=c&&c.dc?[{id:'',dc:c.dc,ventes:dtVentes(c.ventes)}]:[];
+  dtAutres(c).forEach(function(x){l.push({id:x.id,dc:x.dc,ventes:dtVentes(x.ventes)});});
+  return l.sort(function(a,b){return a.dc<b.dc?-1:a.dc>b.dc?1:0;});
+}
+function dtIsos(c){var v={};return dtListe(c).map(function(x){return x.dc;}).filter(function(d){if(v[d])return false;v[d]=1;return true;});}
+function dtJour(iso){return new Date(iso+'T00:00:00');}
+function dtSuite(l){
+  for(var i=1;i<l.length;i++)if(Math.round((dtJour(l[i])-dtJour(l[i-1]))/86400000)!==1)return false;
+  return true;
+}
+function dtEt(l){return l.length<2?(l[0]||''):l.slice(0,-1).join(', ')+' et '+l[l.length-1];}
+// Le mois (et l'annee) une seule fois par groupe : « 30 nov. et 4 déc. ».
+function dtEnum(l,mois,avecJour,anDernier){
+  var an=new Date().getFullYear();
+  return dtEt(l.map(function(iso,i){
+    var d=dtJour(iso),n=i<l.length-1?dtJour(l[i+1]):null,o={day:'numeric'};
+    if(avecJour)o.weekday='short';
+    if(!n||n.getMonth()!==d.getMonth()||n.getFullYear()!==d.getFullYear())o.month=mois;
+    if(n?n.getFullYear()!==d.getFullYear():(anDernier||d.getFullYear()!==an))o.year='numeric';
+    var s=d.toLocaleDateString('fr-FR',o);
+    return mois==='long'&&d.getDate()===1?s.replace(/\b1\b/,'1er'):s;
+  }));
+}
+// Cartes et listes : « 4 déc. », « 4 et 6 déc. », « 24 → 27 nov. » (trois
+// dates ou plus, a la suite) ; avecJour : « ven. 4 et dim. 6 déc. ».
+function cPlage(c,avecJour){
+  if(estEvt(c))return evtPlage(c,avecJour);
+  var l=dtIsos(c);
+  if(l.length<2)return l.length?dateCourte(l[0],avecJour):'';
+  if(l.length>2&&dtSuite(l))return evtPlage({dc:l[0],dcFin:l[l.length-1]},avecJour);
+  return dtEnum(l,'short',avecJour);
+}
+// Newsletter, report : « 4 décembre 2026 », « Les 4 et 6 décembre 2026 »,
+// « Du 24 au 27 novembre 2026 ».
+function cPlageLongue(c){
+  if(estEvt(c))return nlPlageLongue(c);
+  var l=dtIsos(c);if(!l.length)return '';
+  if(l.length===1||(l.length>2&&dtSuite(l)))return nlPlageLongue({dc:l[0],dcFin:l[l.length-1]});
+  return 'Les '+dtEnum(l,'long',false,true);
+}
+// Ventes de l'ensemble : la date la moins vendue (« Complet » seulement si
+// toutes le sont).
+function cVentesMin(c){
+  var l=dtListe(c);
+  return l.length?Math.min.apply(null,l.map(function(x){return x.ventes;})):dtVentes(c.ventes);
+}
+function cComplet(c){return cVentesMin(c)===4;}
+// « 1 complet sur 2 » ; rien quand aucune date, ou toutes, sont completes.
+function cCompletsTxt(c){
+  var l=dtListe(c),k=l.filter(function(x){return x.ventes===4;}).length;
+  return k&&k<l.length?evtPluriel(k,'complet')+' sur '+l.length:'';
+}
+// « 4 déc. : Complet · 6 déc. : Bon »
+function cVentesDetail(c){return dtListe(c).map(function(x){return dateCourte(x.dc)+' : '+VENTES[x.ventes].label;}).join(' · ');}
+// c.dc reste la plus tot : une date saisie avant elle prend sa place, avec
+// ses ventes, et l'ancienne premiere rejoint les autres. Une date en double
+// n'est gardee qu'une fois ; renvoie combien ont ete retirees. A n'appeler
+// qu'une saisie finie : le navigateur envoie une date a chaque chiffre tape
+// (« 2 » puis « 26 »), et un reclassement en cours de frappe la deplacerait.
+function dtRanger(c){
+  if(!c||estEvt(c)||!Array.isArray(c.autresDates))return 0;
+  var vu={},doublons=0,l=[],min=null;
+  if(c.dc)vu[c.dc]=1;
+  c.autresDates.forEach(function(x){if(!x||!x.dc)return;if(vu[x.dc]){doublons++;return;}vu[x.dc]=1;l.push(x);});
+  l.forEach(function(x){if(!min||x.dc<min.dc)min=x;});
+  if(min&&(!c.dc||min.dc<c.dc)){
+    l=l.filter(function(x){return x!==min;});
+    if(c.dc)l.push({id:uid('dt'),dc:c.dc,ventes:dtVentes(c.ventes)});
+    c.dc=min.dc;c.ventes=dtVentes(min.ventes);
+  }
+  c.autresDates=l.sort(function(a,b){return a.dc<b.dc?-1:a.dc>b.dc?1:0;});
+  return doublons;
+}
 function evtJourCourt(iso){var d=new Date((iso||'')+'T00:00:00');return isNaN(d.getTime())?'Sans date':evtCap(d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'}));}
 function evtJourLong(iso){var d=new Date((iso||'')+'T00:00:00');return isNaN(d.getTime())?'Sans date':evtCap(d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}));}
 function evtHeure(h){var m=String(h||'').trim().match(/^(\d{1,2}):(\d{2})$/);return m?(m[1].length<2?'0'+m[1]:m[1])+':'+m[2]:'';}
@@ -5580,10 +5775,7 @@ function moisDe(iso){
   var t=d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
   return t.charAt(0).toUpperCase()+t.slice(1);
 }
-function concertDateTxt(c){
-  if(estEvt(c))return evtPlage(c);
-  return c.dc?dateCourte(c.dc):'';
-}
+function concertDateTxt(c){return cPlage(c);}
 // Colonne Ventes d'un evenement : ses complets (chaque spectacle a sa jauge).
 function evtCompletsHtml(c){
   var n=evtProg(c).length,k=evtComplets(c);
@@ -6763,7 +6955,7 @@ function rpRub(id){return RP_RUBRIQUES.find(function(r){return r.id===id;})||RP_
 function rpRubIndex(id){var i=RP_RUBRIQUES.findIndex(function(r){return r.id===id;});return i<0?2:i;}
 function rpAuj(){return spTodayStr();}
 function rpPlusJours(iso,n){var d=new Date(String(iso).slice(0,10)+'T00:00:00');if(isNaN(d.getTime()))return null;d.setDate(d.getDate()+n);return evtIso(d);}
-function rpFin(c){return estEvt(c)?evtFin(c):c.dc;}
+function rpFin(c){return cFin(c);}
 // Jour a partir duquel un element du report est supprime : 60 jours apres le
 // concert, et jamais moins de 60 jours apres sa creation. Sans date de
 // concert : garde (null).
@@ -7132,7 +7324,7 @@ function rpCopieOuvrir(a){
   rpCopieId=a.id;
   var g=rpGroupe(a),d=rpDatesCopie(c),nph=rpPhotos(a.id).length;
   function ligne(x){
-    var deja=rpAGroupe(x.id,g),info=[lieuTexte(x),x.dc?dateCourte(x.dc,true):'sans date'].filter(Boolean).join(' · ');
+    var deja=rpAGroupe(x.id,g),info=[lieuTexte(x),x.dc?cPlage(x,true):'sans date'].filter(Boolean).join(' · ');
     var cherche=rpNorm([x.art,x.ville,x.salle].join(' '));
     return '<label class="rp-copie-l'+(deja?' deja':'')+'" data-cherche="'+esc(cherche)+'"><input type="checkbox" data-cp="'+esc(x.id)+'"'+(deja?' checked disabled':'')+'>'
       +'<span class="rp-copie-art">'+esc(x.art||'Sans nom')+'</span><span class="rp-copie-info">'+esc(info)+(deja?' · <em>déjà dans son report</em>':'')+'</span></label>';
@@ -7306,13 +7498,17 @@ function rpQui(c){
   var d='';
   if(c.dc){
     d=rpDatePoints(c.dc);
-    var f=rpFin(c);
-    if(f&&f!==c.dc)d=c.dc.slice(8,10)+(c.dc.slice(0,7)===f.slice(0,7)?'':'.'+c.dc.slice(5,7))+' → '+rpDatePoints(f);
+    var f=rpFin(c),l=dtIsos(c);
+    // Plusieurs dates qui ne se suivent pas : « 04 et 06.12.2026 ».
+    if(l.length>1&&!(l.length>2&&dtSuite(l)))d=l.every(function(x){return x.slice(0,7)===l[0].slice(0,7);})
+      ?dtEt(l.slice(0,-1).map(function(x){return x.slice(8,10);}).concat([rpDatePoints(f)])):dtEt(l.map(rpDatePoints));
+    else if(f&&f!==c.dc)d=c.dc.slice(8,10)+(c.dc.slice(0,7)===f.slice(0,7)?'':'.'+c.dc.slice(5,7))+' → '+rpDatePoints(f);
   }
   return [c.art,c.ville,d].map(function(x){return String(x||'').trim();}).filter(Boolean).join(' · ');
 }
 function rpDateLongue(c){
   if(!c.dc)return '';
+  if(dtMulti(c))return cPlageLongue(c);
   var o={weekday:'long',day:'numeric',month:'long',year:'numeric'},d=new Date(c.dc+'T00:00:00'),f=rpFin(c);
   if(isNaN(d.getTime()))return '';
   if(f&&f!==c.dc){
@@ -7836,7 +8032,7 @@ function rpMajEnregistre(){
 function rpHtmlBarre(c){
   var retourPage=rpTel==='page'&&rpEstTel();
   return '<button type="button" class="btn rp-retour" data-a="fermer">'+icon('arrow-left')+'<span>'+(retourPage?'Report':'Fiche')+'</span></button>'
-    +'<div class="rp-titre"><span class="rp-art">'+esc(c.art)+'</span><span class="rp-sous">Report · '+esc([lieuTexte(c),c.dc?dateCourte(c.dc,true):''].filter(Boolean).join(' · '))+'</span></div>'
+    +'<div class="rp-titre"><span class="rp-art">'+esc(c.art)+'</span><span class="rp-sous">Report · '+esc([lieuTexte(c),cPlage(c,true)].filter(Boolean).join(' · '))+'</span></div>'
     +'<span class="rp-etat" id="rp-etat"></span>'
     +'<button type="button" class="btn rp-b-tout" data-a="tout">'+icon(rpTout?'pencil':'eye')+'<span>'+(rpTout?'Revenir à l\'édition':'Voir tout le report')+'</span></button>'
     +'<button type="button" class="btn btn-primary rp-b-pdf" data-a="pdf">'+icon('download')+'<span class="fb-long">Télécharger le PDF</span><span class="fb-court">PDF</span></button>';
@@ -9027,6 +9223,7 @@ function renderAnnonces(){
       +'<div class="ann-body"><span class="ann-art">'+esc(c.art)+cancelBadge(c)+'</span>'
       +(lieuTexte(c)?'<span class="ann-lieu">'+esc(lieuTexte(c))+'</span>':'')
       +(estEvt(c)?'<span class="ann-evt">'+esc(evtProg(c).length?evtPluriel(evtProg(c).length,'spectacle'):'Événement')+'</span>':'')
+      +(dtMulti(c)?'<span class="ann-evt">'+esc(evtPluriel(dtIsos(c).length,'date'))+'</span>':'')
       +(tag?'<span class="tag '+tagCls+'">'+tag+'</span>':'')+'</div>'
       +'<button class="ann-done" onclick="event.stopPropagation();annonceDone(\''+escJs(c.id)+'\')" title="Marquer comme annoncé" aria-label="Marquer comme annoncé">'+icon('check')+'</button>'
       +'</div>';
@@ -9066,14 +9263,14 @@ function renderDashLine(today){
   var el=document.getElementById('dash-line');if(!el)return;
   var groups=[];
   // Un evenement en cours (commence, pas fini) reste le « prochain ».
-  var nextC=concerts.filter(function(c){return !c.supprime&&!c.annule&&c.dc&&new Date(estEvt(c)?evtFin(c):c.dc)>=today;}).sort(function(a,b){return new Date(a.dc)-new Date(b.dc);})[0];
+  var nextC=concerts.filter(function(c){return !c.supprime&&!c.annule&&c.dc&&new Date(cFin(c))>=today;}).sort(function(a,b){return new Date(a.dc)-new Date(b.dc);})[0];
   if(nextC){
     var d=new Date(nextC.dc);d.setHours(0,0,0,0);
     var diff=Math.round((d-today)/86400000);
     var cnt=diff<0?'En cours':diff===0?"Aujourd'hui":diff===1?'Demain':'J-'+diff;
     groups.push('<span class="dash-line-group prochain"><span class="dash-line-label">Prochain concert</span>'
       +'<a href="#" class="crow-name dash-line-art" onclick="event.preventDefault();openFiche(\''+escJs(nextC.id)+'\')">'+esc(nextC.art)+cancelBadge(nextC)+'</a>'
-      +'<span class="dash-line-sub">'+(lieuTexte(nextC)?esc(lieuTexte(nextC))+' · ':'')+(estEvt(nextC)?esc(evtPlage(nextC)):esc(dateCourte(d)))+'</span>'
+      +'<span class="dash-line-sub">'+(lieuTexte(nextC)?esc(lieuTexte(nextC))+' · ':'')+esc(cPlage(nextC))+'</span>'
       +'<span class="tag '+(diff<=7?'dash-jx':'tag-neutral')+'">'+cnt+'</span></span>');
   }
   var todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
@@ -9142,7 +9339,7 @@ function kbGroupeHtml(c,g,meta){
 // dans une ligne qui est deja un lien), ville et date.
 function afConcertHtml(c,lien){
   var ph=nlPhotoArtiste(c),evt=estEvt(c);
-  var ou=[evt?lieuTexte(c):String(c.ville||'').trim(),evt?evtPlage(c):dateCourte(c.dc)].filter(Boolean).join(' · ');
+  var ou=[evt?lieuTexte(c):String(c.ville||'').trim(),cPlage(c)].filter(Boolean).join(' · ');
   var art=esc(c.art)+cancelBadge(c);
   return '<span class="af-meta">'+(safeUrl(ph)?'<img class="af-vignette" src="'+escUrl(ph)+'" alt="" loading="lazy" decoding="async">':'<span class="af-vignette vide"></span>')
     +(lien?'<a href="#" class="af-art" onclick="event.preventDefault();event.stopPropagation();openFiche(\''+escJs(c.id)+'\')">'+art+'</a>':'<span class="af-art">'+art+'</span>')
@@ -9184,7 +9381,7 @@ function renderKanban(){
     // les siennes. Toujours une seule carte.
     var evt=estEvt(c),groupes=evt?evtUrgencesSp(c):[];
     var hasLate=lateTasks.length>0||groupes.length>0;
-    var ds=dateCourte(c.dc);
+    var ds=cPlage(c);
     var body='';
     if(liste){
       // Toutes les taches partent dans la liste ; la carte garde son point.
@@ -9198,9 +9395,8 @@ function renderKanban(){
         +(reste?'<a href="#" class="kb-more" onclick="event.preventDefault();openFiche(\''+escJs(c.id)+'\',\'plan\')">+ '+reste+(reste>1?' autres tâches':' autre tâche')+'</a>':'')
         +'</div>';
     }
-    // Un evenement : une seule carte, ses dates du … au …, son programme en
-    // une ligne (les ventes sont celles de chaque spectacle).
-    if(evt)ds=evtPlage(c);
+    // Un evenement : une seule carte, ses dates du … au … (ds), son programme
+    // en une ligne (les ventes sont celles de chaque spectacle).
     var nomHtml=evt?'<span class="kb-nom"><span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>'+evtTagHtml()+'</span>'
       :'<span class="crow-name">'+esc(c.art)+cancelBadge(c)+'</span>';
     var photo=nlPhotoArtiste(c),tete;
@@ -9394,7 +9590,11 @@ function calElements(liste,y,m){
         var n=evtParJour(evtProg(c),j).length;
         ajout(dansLeMois(j),{type:'evt',c:c,titre:c.art,sous:n?evtPluriel(n,'spectacle'):(lieuTexte(c)||'Événement'),act:{fiche:c.id}});
       });
-    } else ajout(dansLeMois(c.dc),{type:'concert',c:c,titre:c.art,sous:lieuTexte(c),act:{fiche:c.id}});
+    } else{
+      // Plusieurs dates (25/11) : le concert sur chacune, « date 2/3 ».
+      var ld=dtIsos(c);
+      ld.forEach(function(j,i){ajout(dansLeMois(j),{type:'concert',c:c,titre:c.art,sous:[lieuTexte(c),ld.length>1?'date '+(i+1)+'/'+ld.length:''].filter(Boolean).join(' · '),act:{fiche:c.id}});});
+    }
     if(calCouches.annonces&&c.da)ajout(dansLeMois(c.da),{type:'annonce',c:c,titre:c.art,sous:'Annonce'+(lieuTexte(c)?' · '+lieuTexte(c):''),act:{fiche:c.id}});
     if(calCouches.sponso)spVaguesTriees(c).forEach(function(v,i){
       ajout(dansLeMois(v.debut),{type:'sponso',c:c,titre:c.art,sous:'Sponso V'+(i+1)+(v.budget?' · '+spEuro(v.budget):'')+(v.fin?' · jusqu\'au '+dateCourte(v.fin):''),act:{sponso:c.id,vague:v.id}});
@@ -9558,7 +9758,14 @@ function toggleVentes(e,cid){
   c.ventes=((c.ventes||0)+1)%VENTES.length;
   scheduleSave('concerts');renderConcerts();renderKanban();
 }
+// Plusieurs dates : le niveau de la moins vendue, « 1 complet sur 2 » s'il y
+// a lieu ; le clic ouvre la fiche, ou les ventes se changent date par date.
 function ventesHtml(c,onclick){
+  if(dtMulti(c)){
+    var vm=VENTES[cVentesMin(c)],cc=cCompletsTxt(c);
+    return '<span class="ventes-badge '+vm.cls+'" title="'+esc(cVentesDetail(c))+'" onclick="event.stopPropagation();openFiche(\''+escJs(c.id)+'\',\'apercu\')">'
+      +'<span class="ventes-gauge" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'+esc(cc||vm.label)+'</span>';
+  }
   var v=VENTES[c.ventes||0];
   return '<span class="ventes-badge '+v.cls+'" onclick="'+onclick+'">'
     +'<span class="ventes-gauge" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'+v.label+'</span>';
@@ -10284,7 +10491,7 @@ function rsFillConcertSelect(sel, selectedVal){
   // concerts du meme artiste.
   var sorted=concerts.filter(function(c){return !c.supprime;}).sort(function(a,b){return new Date(a.dc)-new Date(b.dc);});
   sorted.forEach(function(c){
-    var dateStr=dateCourte(c.dc);
+    var dateStr=cPlage(c);
     var label=c.art+(dateStr?' — '+dateStr:'');
     html+='<option value="'+esc(c.id)+'">'+esc(label)+'</option>';
   });
@@ -10863,7 +11070,7 @@ function spFicheFriseHtml(c){
     var d=jourDe(v.debut);if(!d)return;
     if(spStatut(v)==='encours'||(dcd&&dcd<t)){var m0=new Date(d.getFullYear(),d.getMonth(),1);if(m0<debut)debut=m0;}
   });
-  var derniere=dcd&&dcd>t?dcd:t;
+  var dfin=jourDe(cFin(c)),derniere=dfin&&dfin>t?dfin:t;
   datees.forEach(function(v){var f=jourDe(v.fin);if(f&&f>derniere)derniere=f;});
   var fin=new Date(derniere.getFullYear(),derniere.getMonth()+1,1);
   var min=new Date(debut.getFullYear(),debut.getMonth()+3,1),max=new Date(debut.getFullYear(),debut.getMonth()+8,1);
@@ -10888,7 +11095,8 @@ function spFicheFriseHtml(c){
     barres+='<div class="sp-bar '+SP_STATUTS[st].cls+(nt?' sp-nontransmise':'')+'" style="left:'+gauche+'%;width:'+Math.max(droite-gauche,0)+'%" title="'+esc(tip)+'" onclick="spFicheOuvrir(\''+escJs(v.id)+'\')">'
       +'<span>'+esc(v.budget?spEuroCourt(v.budget):'V'+(i+1))+'</span></div>';
   });
-  if(dcd){var dm=dcd.getTime();if(dm>=a0&&dm<=a1)barres+='<div class="sp-dc" style="left:'+pc(dm)+'%" title="'+esc('Concert · '+spFmtDate(c.dc))+'"></div>';}
+  // Un losange par date du concert (plusieurs dates : 25/11).
+  dtIsos(c).forEach(function(iso){var dd=jourDe(iso);if(!dd)return;var dm=dd.getTime();if(dm>=a0&&dm<=a1)barres+='<div class="sp-dc" style="left:'+pc(dm)+'%" title="'+esc('Concert · '+spFmtDate(iso))+'"></div>';});
   return '<div class="spf-mois">'+mois+'</div><div class="spf-piste">'+deco+barres+'</div>';
 }
 
@@ -11200,9 +11408,12 @@ function renderSponso(){
     });
     // Repere de la date du concert : on voit d'un coup d'oeil si les vagues
     // tombent bien avant la date, et ce qu'il reste de place pour en caler une.
-    var dcms=c.dc?ms(c.dc):NaN;
-    if(!isNaN(dcms)&&dcms>=winStart&&dcms<=winEnd)
-      bars+='<div class="sp-dc" style="left:'+pct(dcms)+'%" title="'+esc('Concert · '+spFmtDate(c.dc))+'"></div>';
+    // Un losange par date (plusieurs dates : 25/11).
+    dtIsos(c).forEach(function(iso){
+      var dcms=ms(iso);
+      if(!isNaN(dcms)&&dcms>=winStart&&dcms<=winEnd)
+        bars+='<div class="sp-dc" style="left:'+pct(dcms)+'%" title="'+esc('Concert · '+spFmtDate(iso))+'"></div>';
+    });
 
     var chips='';
     undated.forEach(function(u){
@@ -11215,7 +11426,7 @@ function renderSponso(){
       +'<div class="sp-row-info" onclick="spOpenConcert(\''+escJs(c.id)+'\')" title="Ouvrir la sponso de ce concert">'
       +'<div class="sp-row-top"><div class="sp-row-art">'+esc(c.art||'Concert')+'</div>'
       +(tot?'<div class="sp-row-tot" title="Budget sponso de ce concert">'+esc(spEuro(tot))+'</div>':'')+'</div>'
-      +'<div class="sp-row-sub">'+esc([lieuTexte(c),c.dc?spFmtDate(c.dc):''].filter(Boolean).join(' · '))+'</div>'
+      +'<div class="sp-row-sub">'+esc([lieuTexte(c),cPlage(c)].filter(Boolean).join(' · '))+'</div>'
       +(cible?'<div class="sp-row-cible">'+icon('map-pin')+' '+esc(cible)+'</div>':'')
       +(spSkipProd(c.id)?'<div class="sp-row-prod">'+icon('alert')+' Sponso prod</div>':'')
       +'</div>'
@@ -11241,7 +11452,7 @@ function renderSponso(){
         var nb=spRead(c).vagues.length,t=spTotal(c);
         return '<div class="sp-done-row" onclick="spOpenConcert(\''+escJs(c.id)+'\')">'
           +'<span class="sp-done-art">'+esc(c.art||'Concert')+'</span>'
-          +'<span class="sp-done-sub">'+esc([lieuTexte(c),c.dc?spFmtDate(c.dc):''].filter(Boolean).join(' · '))+'</span>'
+          +'<span class="sp-done-sub">'+esc([lieuTexte(c),cPlage(c)].filter(Boolean).join(' · '))+'</span>'
           +'<span class="sp-done-meta">'+nb+' vague'+(nb>1?'s':'')+(t?' · '+esc(spEuro(t)):'')+'</span>'
           +'</div>';
       }).join('')
@@ -11264,7 +11475,7 @@ function renderSponso(){
     if(spVue==='ville'){var vl=spVilleDe(c);if(vl!==villeTel){villeTel=vl;grp='<div class="sp-group">'+esc(vl)+'</div>';}}
     return grp+'<button type="button" class="sp-tel-concert" onclick="spOpenConcert(\''+escJs(c.id)+'\')">'
       +'<span class="sp-tel-tete"><span class="sp-row-art">'+esc(c.art||'Concert')+'</span>'+(tot?'<span class="sp-row-tot">'+esc(spEuro(tot))+'</span>':'')+'</span>'
-      +'<span class="sp-row-sub">'+esc([lieuTexte(c),c.dc?spFmtDate(c.dc):''].filter(Boolean).join(' · '))+'</span>'
+      +'<span class="sp-row-sub">'+esc([lieuTexte(c),cPlage(c)].filter(Boolean).join(' · '))+'</span>'
       +spVaguesTriees(c).map(function(v,i){
         var st=spStatut(v),m=SP_STATUTS[st];
         return '<span class="sp-tel-vague'+(spNonTransmise(v)?' sp-nontransmise':'')+'"><span class="spf-num">V'+(i+1)+'</span><span class="spf-dates">'+esc(spPlage(v))+'</span>'
@@ -11770,7 +11981,7 @@ function cmdkRender(q){
   var nq=cmdkNorm(q).trim();
   var today=new Date();today.setHours(0,0,0,0);
   var list=concerts.filter(function(c){
-    if(!nq)return !c.supprime&&c.dc&&new Date(c.dc)>=today; // sans requete : les prochains concerts
+    if(!nq)return !c.supprime&&c.dc&&new Date(cFin(c))>=today; // sans requete : les prochains concerts
     return cmdkNorm(c.art).indexOf(nq)>=0||cmdkNorm(lieuTexte(c)).indexOf(nq)>=0||cmdkProg(c,nq).length>0;
   }).sort(function(a,b){
     // Pertinence d'abord (26/09) : l'artiste qui commence par la saisie, puis

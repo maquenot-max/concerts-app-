@@ -49,6 +49,12 @@ function isNA(c,t){return !!taskStates['na-'+c.id+'-'+t.id];}
 function estEvt(c){return !!(c&&c.evt);}
 function evtProg(c){return c&&Array.isArray(c.prog)?c.prog:[];}
 function evtFin(c){return c.dcFin&&c.dcFin>=(c.dc||'')?c.dcFin:c.dc;}
+function cFin(c){
+  if(estEvt(c))return evtFin(c);
+  var f=c.dc||'';
+  if(Array.isArray(c.autresDates))c.autresDates.forEach(function(x){if(x&&x.dc&&x.dc>f)f=x.dc;});
+  return f;
+}
 function evtTrie(l){
   return l.slice().sort(function(a,b){
     var x=(a.dc||'9999-99-99')+(a.h||'99:99'),y=(b.dc||'9999-99-99')+(b.h||'99:99');
@@ -90,9 +96,10 @@ function calcDate(c,t){
   if(override)return new Date(override);
   var vg=vagueDeLEtape(c,t);
   if(vg&&vg.debut)return new Date(vg.debut);
-  // Un evenement dure plusieurs jours : ce qui se fait apres (report comm a
-  // J+1) part de son dernier jour, le reste de son premier.
-  var base=t.ref==='annonce'?c.da:(t.jours>0&&estEvt(c)?evtFin(c):c.dc);if(!base)return null;var d=new Date(base);d.setDate(d.getDate()+t.jours);return d;
+  // Un evenement, ou un concert a plusieurs dates (25/11), dure plusieurs
+  // jours : ce qui se fait apres (report comm a J+1) part du dernier, le
+  // reste du premier.
+  var base=t.ref==='annonce'?c.da:(t.jours>0?cFin(c):c.dc);if(!base)return null;var d=new Date(base);d.setDate(d.getDate()+t.jours);return d;
 }
 function prerequisLeve(s,tid){
   if(taskStates[tk(s.id,tid)]||taskStates['na-'+s.id+'-'+tid])return true;
@@ -181,6 +188,8 @@ function rmlCalcul(r,jour,equipe){
         var iso=rmlIso(d),n=rmlEcart(iso,jour);
         if(n<-RML_RELANCES||n>RML_BIENTOT)return;
         var it={type:'etape',ecart:n,echeance:iso,tache:t.nom||'',tid:t.id,art:s.art||'',dc:s.dc||'',salle:s.salle||'',ville:villeRegroupee(v),fid:x.fid,sp:x.sp};
+        // Plusieurs dates (25/11) : le mail les donne toutes.
+        if(!estEvt(s)&&Array.isArray(s.autresDates)){var au=s.autresDates.map(function(y){return y&&y.dc;}).filter(Boolean);if(au.length)it.autres=au;}
         (suivies[t.id]&&Array.isArray(cfg.dest)?cfg.dest:[]).forEach(function(e){
           if(!rmlMuet(r,String(e).toLowerCase(),'v|'+vr.nom+'|'+t.id))ranger(e,s.id+'|'+t.id,it);
         });
