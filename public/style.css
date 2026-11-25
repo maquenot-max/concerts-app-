@@ -2817,14 +2817,31 @@ select.rp-in{padding-right:8px}
 .spe-jours{position:absolute;top:50%;height:10px;min-width:9px;margin-top:-5px;border-radius:5px;background:rgba(244,242,236,.38);z-index:1}
 
 /* ── DATES MULTIPLES (25/11) : un concert, plusieurs soirs ─────────────── */
-.fi-dates{display:flex;flex-wrap:wrap;align-items:center;gap:2px 14px;min-width:0}
-.fi-date{display:inline-flex;align-items:center;gap:2px}
+/* Une date par ligne (26/11) : son champ, « Annuler », ×, puis son annonce. */
+.fi-dates{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+.fi-date{display:flex;flex-wrap:wrap;align-items:center;column-gap:4px;max-width:100%}
 .fi-date .fiche-champ{width:auto}
+.btn-link.fi-date-act{padding:6px 8px;color:var(--text-3)}
+.btn-link.fi-date-act:hover{color:var(--text)}
+.fi-date-annule{display:inline-flex;align-items:center;gap:8px}
+.fi-date-annule[hidden]{display:none}
+.fi-date-txt{padding:6px 0;font-size:13px;color:var(--text-3)}
+.fi-date-etat{font-size:12px;font-weight:600;color:var(--red)}
+.fi-date-da{display:flex;align-items:center;gap:6px;flex-basis:100%;margin-top:-6px;font-size:12px;color:var(--text-3)}
+.fi-date-da .fiche-champ{padding:2px 0;font-size:12px;color:var(--text-2)}
+.fi-date-da .btn-link{padding:2px 0;font-weight:400;color:var(--text-3);text-decoration:underline dotted;text-underline-offset:3px}
+.fi-date-da .btn-link:hover{color:var(--text)}
 .fi-date-x{position:relative;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:24px;height:24px;padding:0;border:none;border-radius:var(--radius-xs);background:none;color:var(--text-4);cursor:pointer;transition:color .15s,box-shadow .3s var(--sortie)}
 .fi-date-x:hover{color:var(--text);box-shadow:var(--survol-ombre)}
 .fi-date-x::after{content:'';position:absolute;inset:-6px}
 .fi-date-x .ico{width:14px;height:14px}
 .btn-link.fi-date-ajout{display:inline-flex;align-items:center;gap:6px;padding:6px 0}
+/* Formulaire « Nouveau concert » : les autres dates, une par ligne (26/11). */
+.nc-dates{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.nc-dates:empty,.nc-dates[hidden],.btn-link.nc-date-ajout[hidden]{display:none}
+.form-group .nc-date input{flex:1;min-width:0}
+.btn-link.nc-date-ajout{display:inline-flex;align-items:center;gap:6px;padding:6px 0;margin-top:2px}
+.nc-date-ajout .ico{width:14px;height:14px}
 .fi-date-ajout .ico{width:14px;height:14px}
 .fa-vdates{gap:4px}
 .fa-vdates .fa-l{margin-bottom:4px}
@@ -2833,6 +2850,9 @@ select.rp-in{padding-right:8px}
 .fa-vdate-j{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fa-vdate-v{min-width:52px;font-size:12px;color:var(--text-3);text-align:right}
 .fa-vdate.ventes-4 .fa-vdate-v{color:var(--text)}
+.fa-vdate.annulee{cursor:default;color:var(--text-3)}
+.fa-vdate.annulee:hover{box-shadow:none}
+.fa-vdate.annulee .fa-vdate-v{color:var(--red)}
 /* Telephone : la tuile Ventes d'un concert a plusieurs dates passe sous les
    deux autres, sur toute la largeur (a 110 px, les dates ne tenaient plus). */
 @media (max-width:768px){

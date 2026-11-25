@@ -73,5 +73,12 @@ sections. Couleurs, libellés, formules, logo, liste des salles : tout peut
 changer sans toucher au script. Si une de ces cellules ou lignes bouge, mettre à
 jour `SECTIONS` et `doPost` dans `Code.gs`, puis le test.
 
+Concert à plusieurs dates (version `2026-11-26`) : l'appli envoie aussi
+`datesTexte` (« Les 24 et 25 novembre 2026 »), que le script écrit en D3 au
+format texte à la place de la date. Aucune formule de la trame ne lit D3
+(vérifié le 25/11/2026 sur un export) : si une formule venait à la lire, elle
+ne verrait plus de date pour ces concerts-là. Une version plus ancienne du
+script ignore `datesTexte` et écrit la première date.
+
 Si la trame est remplacée par un autre fichier, changer `TRAME_ID` (l'identifiant
 dans son adresse : `docs.google.com/spreadsheets/d/<TRAME_ID>/edit`).

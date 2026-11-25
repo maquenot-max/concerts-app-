@@ -19,7 +19,7 @@
  * de référence ; le code qui tourne est celui du projet Apps Script.
  */
 
-var VERSION = '2026-09-24.2';
+var VERSION = '2026-11-26';
 var TRAME_ID = '1lkKhbzUofW0ZBOIxgIRl0w3HXiwJLd8bT90tlChtCQo';
 var FEUILLE = 'PREV';
 // Publics par conception (déjà dans le code du site) : ils ne donnent accès à
@@ -68,7 +68,11 @@ function doPost(e) {
     f.getRange('D2').clearDataValidations().setValue(salle);
     // Dates toujours écrites : la trame contient des dates d'exemple
     // (01/01/2026) qu'il ne faut jamais laisser passer pour de vraies.
-    f.getRange('D3').setValue(b.date ? dateDe_(b.date) : '');
+    // Concert à plusieurs dates (26/11) : « Les 24 et 25 novembre 2026 »,
+    // écrit en texte (format « @ », pour que Sheets ne tente pas de le lire
+    // comme une date) ; aucune formule de la trame ne lit D3.
+    if (b.datesTexte) f.getRange('D3').setNumberFormat('@').setValue(String(b.datesTexte));
+    else f.getRange('D3').setValue(b.date ? dateDe_(b.date) : '');
     if (b.contrat) f.getRange('D4').setValue(b.contrat);
     f.getRange('B7').setValue(Number(b.montant) || 0);
     f.getRange('F7').setValue(b.miseEnVente ? dateDe_(b.miseEnVente) : '');

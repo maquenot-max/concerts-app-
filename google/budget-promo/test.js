@@ -59,6 +59,7 @@ function ecrire(f, ref, v) {
 function plage(f, a1) {
   return {
     setValue(v) { ecrire(f, a1, v); return this; },
+    setNumberFormat(x) { (f.formats = f.formats || {})[a1] = x; return this; },
     setValues(t) { const cs = cellules(a1); assert.strictEqual(t.length, cs.length, 'setValues ' + a1 + ' : nombre de lignes'); cs.forEach((l, i) => { assert.strictEqual(t[i].length, l.length, 'setValues ' + a1 + ' : nombre de colonnes'); l.forEach((ref, j) => ecrire(f, ref, t[i][j])); }); return this; },
     getDataValidation() { return f.validations[a1] || null; },
     setDataValidation(r) { f.validations[a1] = r; return this; },
@@ -208,6 +209,20 @@ cas('radio au-delà de 5 lignes : lignes insérées avant la dernière, mise en 
 cas('concert sans date d\'annonce : la date d\'exemple de la trame est effacée', () => {
   const w = monde(), r = poster(w, { token: 'bon', budget: budget({ miseEnVente: '' }) });
   assert.ok(r.ok, r.error); assert.strictEqual(w.derniere().feuille.valeurs.F7, '');
+});
+
+cas('une seule date : D3 reçoit une vraie date, format de la trame gardé', () => {
+  const w = monde(), r = poster(w, { token: 'bon', budget: budget() });
+  assert.ok(r.ok, r.error); const f = w.derniere().feuille;
+  assert.strictEqual(Object.prototype.toString.call(f.valeurs.D3), '[object Date]'); assert.strictEqual(f.valeurs.D3.getDate(), 6);
+  assert.ok(!(f.formats && f.formats.D3), 'format de D3 inchangé');
+});
+
+cas('plusieurs dates : D3 reçoit le texte, en format texte', () => {
+  const w = monde(), r = poster(w, { token: 'bon', budget: budget({ fichier: '20261124-25_GUIHOME REIMS_BUDGET PROMO', date: '2026-11-24', datesTexte: 'Les 24 et 25 novembre 2026' }) });
+  assert.ok(r.ok, r.error); const f = w.derniere().feuille;
+  assert.strictEqual(f.valeurs.D3, 'Les 24 et 25 novembre 2026'); assert.strictEqual(f.formats.D3, '@');
+  assert.match(w.journal.join(' '), /copie « 20261124-25_GUIHOME REIMS_BUDGET PROMO »/);
 });
 
 cas('capacité dépassée en Street : refus, aucune copie', () => {
