@@ -31,7 +31,7 @@ const HEURE_ENVOI = 9;
 
 type Item = {
   type: string; ecart: number; echeance: string; tache: string;
-  art?: string; dc?: string; salle?: string; ville?: string; fid?: string; sp?: string | null;
+  art?: string; dc?: string; autres?: string[]; salle?: string; ville?: string; fid?: string; sp?: string | null;
   projet?: string;
 };
 type Mail = { auj: Item[]; retard: Item[]; bientot: Item[] };
@@ -65,6 +65,11 @@ function jourLong(iso: string) {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 function dateIso(iso?: string) { return iso ? dateCourte(new Date(iso + "T00:00:00")) : ""; }
+// Un concert a plusieurs dates (25/11) : « 4 déc. et 6 déc. ».
+function dates(it: Item) {
+  const l = [it.dc, ...(it.autres || [])].filter((x): x is string => !!x).sort().map(dateIso);
+  return l.length < 2 ? (l[0] || "") : l.slice(0, -1).join(", ") + " et " + l[l.length - 1];
+}
 function lien(it: Item) {
   if (it.type === "projet") return SITE + "#taches";
   return SITE + "#kanban/" + encodeURIComponent(it.fid || "") + (it.sp ? "/" + encodeURIComponent(it.sp) : "");
@@ -76,7 +81,7 @@ function quand(it: Item) {
 }
 function lieu(it: Item) {
   return it.type === "projet" ? "Projet « " + (it.projet || "") + " »"
-    : [lieuTexte({ salle: it.salle, ville: it.ville }), dateIso(it.dc)].filter(Boolean).join(" · ");
+    : [lieuTexte({ salle: it.salle, ville: it.ville }), dates(it)].filter(Boolean).join(" · ");
 }
 
 function sujet(m: Mail) {
@@ -138,7 +143,10 @@ function exemple(d: Record<string, unknown>, ex: { fid?: string; tid?: number | 
   if (!c || !t) return null;
   const p = ex.sp && Array.isArray(c.prog) ? c.prog.find((x: Record<string, any>) => String(x.id) === String(ex.sp)) : null;
   const s = normaliserLieu(Object.assign({ salle: "" }, p || c));
+  const autres = !p && !c.evt && Array.isArray(c.autresDates)
+    ? c.autresDates.map((y: Record<string, any>) => y && y.dc).filter(Boolean) as string[] : [];
   return { type: "etape", ecart: 0, echeance: jour, tache: t.nom || "", art: s.art || "", dc: s.dc || "",
+    ...(autres.length ? { autres } : {}),
     salle: s.salle || "", ville: s.ville || "", fid: c.id, sp: p ? p.id : null };
 }
 
