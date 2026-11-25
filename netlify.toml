@@ -9,4 +9,9 @@
   # On ne construit donc que si ce qui est publie, ou sa verification, a
   # change : un push qui ne touche que supabase/ (fonctions, migrations) ne
   # declenche pas de deploiement. Code de sortie 0 = ignorer le build.
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- public/ check.js netlify.toml"
+  # Le commit de reference (CACHED_COMMIT_REF) n'est fiable que s'il precede
+  # le commit construit : le 25/11, la fusion de la PR #15 a ete ignoree
+  # (« no content change ») alors que public/ avait change. Reference absente,
+  # egale au commit (cache perdu, relance) ou prise ailleurs (l'apercu de la
+  # PR, au meme contenu, construit juste avant) : on construit.
+  ignore = '[ "$CACHED_COMMIT_REF" != "$COMMIT_REF" ] && git merge-base --is-ancestor "$CACHED_COMMIT_REF" "$COMMIT_REF" && git diff --quiet "$CACHED_COMMIT_REF" "$COMMIT_REF" -- public/ check.js netlify.toml'
